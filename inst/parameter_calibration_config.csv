@@ -1,0 +1,11 @@
+﻿par_names,par_names_save,par_nml,par_init,par_init_lowerbound,par_init_upperbound,par_lowerbound,par_upperbound,inflat_pars,par_units
+sed_temp_mean,zone1temp,glm3.nml,12,10,20,-100,100,1.02,deg_C
+sed_temp_mean,zone2temp,glm3.nml,15,10,20,-100,100,1.02,deg_C
+sw_factor,sw_factor,glm3.nml,0.9,0.5,1.5,-10,10,1.02,unitless
+Fsed_oxy,Fsed_oxy_zone1,aed2.nml,-40,-40,-10,-1000,1000,1.02,mmol_m3_day
+Fsed_oxy,Fsed_oxy_zone2,aed2.nml,-40,-30,20,-1000,1000,1.02,mmol_m3_day
+Rdomr_minerl,Rdomr_minerl,aed2.nml,0.000102192,0.0005,0.005,0,1,1.02,per_day
+pd%R_resp,R_resp,aed2_phyto_pars.nml,0.12,0.05,0.15,0.001,1,1.02,per_day
+Rnitrif,Rnitrif,aed2.nml,0.013,0.005,0.05,0,1,1.02,mmol_m3_day
+pd%K_N,K_N,aed2_phyto_pars.nml,2,2,4,0.26,10,1.02,mmol_m3
+pd%K_P,K_P,aed2_phyto_pars.nml,0.05,0.1,0.2,0.04,1,1.02,mmol_m3
