@@ -67,10 +67,10 @@ hist_days <- as.numeric(difftime(as_date(forecast_start_day_local),as_date(start
 
 forecast_sss_on <- FALSE
 
-source(paste0(code_folder_old,"/","Rscripts/edit_nml_functions.R"))
-source(paste0(code_folder_old,"/","Rscripts/archive_forecast.R"))
-source(paste0(code_folder,"/","R/write_forecast_netcdf.R"))
-source(paste0(code_folder,"/","R/run_EnKF.R"))
+#source(paste0(code_folder_old,"/","Rscripts/edit_nml_functions.R"))
+#source(paste0(code_folder_old,"/","Rscripts/archive_forecast.R"))
+#source(paste0(code_folder,"/","R/write_forecast_netcdf.R"))
+#source(paste0(code_folder,"/","R/run_EnKF.R"))
 source(paste0(code_folder_old,"/","Rscripts/met_downscale/process_downscale_GEFS.R"))
 source(paste0(code_folder_old,"/","Rscripts/update_qt.R"))
 source(paste0(code_folder_old,"/","Rscripts/glmtools.R"))
@@ -80,13 +80,13 @@ source(paste0(code_folder_old,"/","Rscripts/create_obs_met_input.R"))
 source(paste0(code_folder_old,"/","Rscripts/create_sss_input_output.R"))
 source(paste0(code_folder_old,"/","Rscripts/create_inflow_outflow_file.R"))
 source(paste0(code_folder_old,"/","Rscripts/read_sss_files.R"))
-source(paste0(code_folder,"/","R/create_flare_eml.R"))
+#source(paste0(code_folder,"/","R/create_flare_eml.R"))
 
 source(paste0(code_folder_old,"/","Rscripts/",lake_name_code,"/in_situ_qaqc.R"))
 source(paste0(code_folder_old,"/","Rscripts/",lake_name_code,"/met_qaqc.R"))
 source(paste0(code_folder_old,"/","Rscripts/",lake_name_code,"/inflow_qaqc.R"))
 
-source(paste0(code_folder,"/","R/define_model_",model_name,".R"))
+#source(paste0(code_folder,"/","R/define_model_",model_name,".R"))
 
 ### METEROLOGY DOWNSCALING OPTIONS
 if(is.na(downscaling_coeff)){

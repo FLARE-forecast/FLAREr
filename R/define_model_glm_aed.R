@@ -250,7 +250,7 @@ run_model <- function(i,
         output_vars_multi_depth <- states_config$state_names
         output_vars_no_depth <- NA
 
-        GLM_temp_wq_out <- get_glm_nc_var_all_wq(ncFile = "/output.nc",
+        GLM_temp_wq_out <- flare::get_glm_nc_var_all_wq(ncFile = "/output.nc",
                                                  working_dir = working_directory,
                                                  z_out = modeled_depths,
                                                  vars_depth = output_vars_multi_depth,
