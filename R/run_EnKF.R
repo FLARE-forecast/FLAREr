@@ -83,7 +83,7 @@ run_EnKF <- function(x_init,
 
   glm_salt <- array(NA, dim = c(nmembers, 500))
 
-  set_up_model(executable_location = paste0(code_folder,"/inst/"),
+  set_up_model(executable_location = paste0(find.package("flare"),"/exec/"),
                working_directory,
                base_GLM_nml = config$base_GLM_nml,
                num_wq_vars,

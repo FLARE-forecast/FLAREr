@@ -242,7 +242,7 @@ run_model <- function(i,
     }
 
     if(file.exists(paste0(working_directory, "/output.nc")) &
-       !has_error(nc <- nc_open(paste0(working_directory, "/output.nc")))){
+       !has_error(nc <- ncdf4::nc_open(paste0(working_directory, "/output.nc")))){
 
       if(length(ncvar_get(nc, "time")) > 1){
         nc_close(nc)
@@ -337,7 +337,7 @@ set_up_model <- function(executable_location,
                          include_wq){
 
 
-  GLM_folder <- paste0(executable_location, "/", "glm", "/", machine)
+  GLM_folder <-executable_locationnc
   fl <- c(list.files(GLM_folder, full.names = TRUE))
   tmp <- file.copy(from = fl, to = working_directory, overwrite = TRUE)
 
