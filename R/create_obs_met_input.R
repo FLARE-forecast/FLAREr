@@ -25,7 +25,7 @@ create_obs_met_input <- function(fname,
                                  hist_days,
                                  missing_met_data_threshold) {
 
-  full_time_hour_local <- seq(full_time_local[1] - days(5),
+  full_time_hour_local <- seq(full_time_local[1] - lubridate::days(5),
                               full_time_local[length(full_time_local)],
                               by = "1 hour")
 

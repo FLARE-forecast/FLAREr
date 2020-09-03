@@ -1,25 +1,25 @@
-if (!"mvtnorm" %in% installed.packages()) install.packages("mvtnorm")
-if (!"ncdf4" %in% installed.packages()) install.packages("ncdf4")
-if (!"lubridate" %in% installed.packages()) install.packages("lubridate")
-if (!"testit" %in% installed.packages()) install.packages("testit")
-if (!"imputeTS" %in% installed.packages()) install.packages("imputeTS")
-if (!"tidyverse" %in% installed.packages()) install.packages("tidyverse")
-if (!"rMR" %in% installed.packages()) install.packages("rMR")
-if (!"patchwork" %in% installed.packages()) install.packages("patchwork")
-if (!"EML" %in% installed.packages()) install.packages("EML")
-if (!"uuid" %in% installed.packages()) install.packages("uuid")
-if (!"EFIstandards" %in% installed.packages()){
-  library(devtools)
-  install_github("eco4cast/EFIstandards")
-}
+#if (!"mvtnorm" %in% installed.packages()) install.packages("mvtnorm")
+#if (!"ncdf4" %in% installed.packages()) install.packages("ncdf4")
+#if (!"lubridate" %in% installed.packages()) install.packages("lubridate")
+#if (!"testit" %in% installed.packages()) install.packages("testit")
+#if (!"imputeTS" %in% installed.packages()) install.packages("imputeTS")
+#if (!"tidyverse" %in% installed.packages()) install.packages("tidyverse")
+#if (!"rMR" %in% installed.packages()) install.packages("rMR")
+#if (!"patchwork" %in% installed.packages()) install.packages("patchwork")
+#if (!"EML" %in% installed.packages()) install.packages("EML")
+#if (!"uuid" %in% installed.packages()) install.packages("uuid")
+#if (!"EFIstandards" %in% installed.packages()){
+#  library(devtools)
+#  install_github("eco4cast/EFIstandards")
+#}
 
-library(mvtnorm)
+#library(mvtnorm)
 #library(ncdf4)
-library(lubridate)
-library(testit)
+#library(lubridate)
+#library(testit)
 #library(imputeTS)
-library(tidyverse)
-library(tools)
+#library(tidyverse)
+#library(tools)
 library(rMR)
 #library(EML)
 #library(EFIstandards)
@@ -35,16 +35,16 @@ source(paste0(config$code_folder_old,"/","Rscripts/met_downscale/process_downsca
 #source(paste0(code_folder_old,"/","Rscripts/localization.R"))
 #source(paste0(code_folder_old,"/","Rscripts/extract_observations.R"))
 source(paste0(config$code_folder_old,"/","Rscripts/create_sss_input_output.R"))
-source(paste0(config$code_folder_old,"/","Rscripts/create_inflow_outflow_file.R"))
-source(paste0(config$code_folder_old,"/","Rscripts/read_sss_files.R"))
+#source(paste0(config$code_folder_old,"/","Rscripts/create_inflow_outflow_file.R"))
+#source(paste0(config$code_folder_old,"/","Rscripts/read_sss_files.R"))
 
-start_datetime_local <- as_datetime(paste0(config$run_config$start_day_local," ",config$run_config$start_time_local), tz = config$local_tzone)
-end_datetime_local <- as_datetime(paste0(config$run_config$end_day_local," ",config$run_config$start_time_local), tz = config$local_tzone)
+start_datetime_local <- lubridate::as_datetime(paste0(config$run_config$start_day_local," ",config$run_config$start_time_local), tz = config$local_tzone)
+end_datetime_local <- lubridate::as_datetime(paste0(config$run_config$end_day_local," ",config$run_config$start_time_local), tz = config$local_tzone)
 
 if(is.na(config$run_config$forecast_start_day_local)){
-  forecast_start_datetime_local <- as_datetime(paste0(config$run_config$end_datetime_local," ",config$run_config$start_time_local), tz = config$local_tzone)
+  forecast_start_datetime_local <- lubridate::as_datetime(paste0(config$run_config$end_datetime_local," ",config$run_config$start_time_local), tz = config$local_tzone)
 }else{
-  forecast_start_datetime_local <- as_datetime(paste0(config$run_config$forecast_start_day_local," ",config$run_config$start_time_local), tz = config$local_tzone)
+  forecast_start_datetime_local <- lubridate::as_datetime(paste0(config$run_config$forecast_start_day_local," ",config$run_config$start_time_local), tz = config$local_tzone)
 }
 
 forecast_days <- as.numeric(forecast_start_datetime_local - end_datetime_local)
@@ -64,15 +64,15 @@ switch(Sys.info() [["sysname"]],
        Windows = { config$machine <- "windows"})
 
 if(!is.na(config$par_file)){
-  config$pars_config <- read_csv(file.path(run_config$forecast_location, config$par_file), col_types = cols())
+  config$pars_config <- readr::read_csv(file.path(run_config$forecast_location, config$par_file), col_types = readr::cols())
   npars <- nrow(config$pars_config)
 }else{
   npars <- 0
 }
 
-config$obs_config <- read_csv(file.path(run_config$forecast_location, config$obs_config_file), col_types = cols())
+config$obs_config <- readr::read_csv(file.path(run_config$forecast_location, config$obs_config_file), col_types = readr::cols())
 
-config$states_config <- read_csv(file.path(run_config$forecast_location, config$states_config_file), col_types = cols())
+config$states_config <- readr::read_csv(file.path(run_config$forecast_location, config$states_config_file), col_types = readr::cols())
 
 nsteps <- length(full_time_local)
 
@@ -83,10 +83,10 @@ if(nrow(config$states_config) > 0){
 }
 
 ndepths_modeled <- length(config$modeled_depths)
-nstates <- ndepths_modeled * length(config$mstates_config$state_names)
-num_wq_vars <-  length(config$mstates_config$state_names) - 1
+nstates <- ndepths_modeled * length(config$states_config$state_names)
+num_wq_vars <-  length(config$states_config$state_names) - 1
 
-glm_output_vars <- config$mstates_config$state_names
+glm_output_vars <- config$states_config$state_names
 
 config$n_met_members <- 21
 # SET UP NUMBER OF ENSEMBLE MEMBERS
@@ -131,8 +131,8 @@ if(config$downscale_met == FALSE){
   FIT_PARAMETERS <- FALSE
 }
 
-start_datetime_GMT <- lubridate::with_tz(first(full_time_local), tzone = "GMT")
-end_datetime_GMT <- lubridate::with_tz(last(full_time_local), tzone = "GMT")
+start_datetime_GMT <- lubridate::with_tz(dplyr::first(full_time_local), tzone = "GMT")
+end_datetime_GMT <- lubridate::with_tz(dplyr::last(full_time_local), tzone = "GMT")
 forecast_start_time_GMT<- lubridate::with_tz(forecast_start_datetime_local, tzone = "GMT")
 
 forecast_start_time_GMT_past <- forecast_start_time_GMT - lubridate::days(1)
@@ -156,23 +156,23 @@ if(!lubridate::hour(forecast_start_time_GMT) %in% c(0,6,12,18) & forecast_days >
   }
 }
 
-if(day(forecast_start_time_GMT) < 10){
+if(lubridate::day(forecast_start_time_GMT) < 10){
   forecast_day_GMT <- paste0("0", lubridate::day(forecast_start_time_GMT))
 }else{
   forecast_day_GMT <- paste0(lubridate::day(forecast_start_time_GMT))
 }
-if(month(forecast_start_time_GMT) < 10){
+if(lubridate::month(forecast_start_time_GMT) < 10){
   forecast_month_GMT <- paste0("0", lubridate::month(forecast_start_time_GMT))
 }else{
   forecast_month_GMT <- paste0(lubridate::month(forecast_start_time_GMT))
 }
 
-if(day(forecast_start_time_GMT_past) < 10){
+if(lubridate::day(forecast_start_time_GMT_past) < 10){
   forecast_day_GMT_past <- paste0("0", lubridate::day(forecast_start_time_GMT_past))
 }else{
   forecast_day_GMT_past <- paste0(lubridate::day(forecast_start_time_GMT_past))
 }
-if(month(forecast_start_time_GMT_past) < 10){
+if(lubridate::month(forecast_start_time_GMT_past) < 10){
   forecast_month_GMT_past <- paste0("0", lubridate::month(forecast_start_time_GMT_past))
 }else{
   forecast_month_GMT_past <- paste0(lubridate::month(forecast_start_time_GMT_past))
@@ -624,7 +624,7 @@ if(hist_days == 0){
   }
 }
 
-management_input <- read_sss_files(full_time_local,
+management_input <- flare::read_sss_files(full_time_local,
                                    sss_file = file.path(config$data_location, config$sss_fname))
 
 ####################################################
@@ -666,7 +666,7 @@ enkf_output <- flare::run_EnKF(x_init,
 saved_file <- flare::write_forecast_netcdf(enkf_output,
                                            wq_start,
                                            wq_end,
-                                           forecast_location)
+                                           forecast_location = run_config$forecast_location)
 
 #Create EML Metadata
 flare::create_flare_eml(file_name = saved_file,

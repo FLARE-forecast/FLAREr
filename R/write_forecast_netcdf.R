@@ -56,10 +56,10 @@ write_forecast_netcdf <- function(enkf_output,
   #Set dimensions
   ens <- seq(1,dim(x)[2],1)
   depths <- config$modeled_depths
-  t <- as.numeric(as.POSIXct(with_tz(full_time_local),origin = '1970-01-01 00:00.00 UTC'))
+  t <- as.numeric(as.POSIXct(lubridate::with_tz(full_time_local),origin = '1970-01-01 00:00.00 UTC'))
   states <- seq(1,nstates,1)
   states_aug <- seq(1,dim(x)[3],1)
-  obs_states <- seq(1,dim(z)[3],1)
+  #obs_states <- seq(1,dim(obs)[3],1)
   mixing_restart_vars <- seq(1, dim(mixing_restart)[2], 1)
 
   restart_depths <- seq(1, dim(glm_depths_restart)[2])
@@ -76,7 +76,7 @@ write_forecast_netcdf <- function(enkf_output,
   timedim <- ncdf4::ncdim_def("time",units = 'seconds', longname = 'seconds since 1970-01-01 00:00.00 UTC',vals = t)
   statedim <- ncdf4::ncdim_def("states",units = '', vals = states)
   stateagudim <- ncdf4::ncdim_def("states_aug",units = '', vals = states_aug, longname = 'length of model states plus parameters')
-  obsdim <- ncdf4::ncdim_def("obs_dim",units = '', vals = obs_states, longname = 'length of ')
+  #obsdim <- ncdf4::ncdim_def("obs_dim",units = '', vals = obs_states, longname = 'length of ')
   snow_ice_dim <- ncdf4::ncdim_def("snow_ice_dim",units = "",vals = c(1, 2, 3), longname = 'snow ice dims')
   mixing_restart_vars_dim <- ncdf4::ncdim_def("mixing_restart_vars_dim",units = '', vals = mixing_restart_vars, longname = 'number of mixing restart variables')
   depth_restart_vars_dim <- ncdf4::ncdim_def("depth_restart_vars_dim",units = '', vals = restart_depths, longname = 'number of possible depths that are simulated in GLM')
@@ -168,7 +168,7 @@ write_forecast_netcdf <- function(enkf_output,
     }
   }
 
-  time_of_forecast <- with_tz(enkf_output$time_of_forecast, tzone = "UTC")
+  time_of_forecast <- lubridate::with_tz(enkf_output$time_of_forecast, tzone = "UTC")
 
   #Global file metadata
   ncdf4::ncatt_put(ncout,0,"title",enkf_output$config$metadata$forecast_title, prec =  "text")

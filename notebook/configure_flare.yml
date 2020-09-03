@@ -37,6 +37,8 @@ metadata:
               surName: "Thomas"
         electronicMailAddress:  "INSERT"
         id: INSERT ORCID
+        
+forecast_project_id: test
 
 ##########################
 # Management Options

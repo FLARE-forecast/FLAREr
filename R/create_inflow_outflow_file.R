@@ -123,12 +123,12 @@ create_inflow_outflow_file <- function(full_time_local,
   inflow1_file_names <- paste0("inflow", file_name_base)
   outflow_file_names <- paste0("outflow", file_name_base)
 
-  for(i in 1:n_distinct(tmp$ensemble)){
+  for(i in 1:dplyr::n_distinct(tmp$ensemble)){
     tmp2 <- tmp %>%
-      filter(ensemble == i) %>%
-      mutate(SALT = 0.0) %>%
+      dplyr::filter(ensemble == i) %>%
+      dplyr::mutate(SALT = 0.0) %>%
       dplyr::select(time, FLOW, TEMP, SALT, all_of(wq_names_tmp)) %>%
-      dplyr::mutate_at(vars(c("FLOW", "TEMP", "SALT", all_of(wq_names_tmp))), list(~round(., 4)))
+      dplyr::mutate_at(dplyr::vars(c("FLOW", "TEMP", "SALT", all_of(wq_names_tmp))), list(~round(., 4)))
 
     if("OGM_docr" %in% wq_names_tmp){
     tmp2 <- tmp2 %>%
@@ -148,7 +148,7 @@ create_inflow_outflow_file <- function(full_time_local,
               quote_escape = "none")
 
     tmp2 <- tmp2 %>%
-      select(time, FLOW)
+      dplyr::select(time, FLOW)
 
     readr::write_csv(x = tmp2,
               path = paste0(working_directory,"/",outflow_file_names[i]),

@@ -31,6 +31,10 @@ create_flare_eml <- function(file_name,
   data_assimilation <- ncdf4::ncvar_get(nc, "data_assimilation")
 
   forecast_issue_time <- ncdf4::ncatt_get(nc, varid = 0)$forecast_issue_time
+
+  #split_forecast_issue_time <- unlist(stringr::str_split(forecast_issue_time, " "))
+  forecast_issue_time <- lubridate::as_date(forecast_issue_time)
+  #forecast_issue_time <- paste0(split_forecast_issue_time[1],"T",split_forecast_issue_time[2])
   forecast_iteration_id <- ncdf4::ncatt_get(nc, varid = 0)$forecast_iteration_id
   forecast_project_id <- ncdf4::ncatt_get(nc, varid = 0)$forecast_project_id
 
@@ -60,7 +64,7 @@ create_flare_eml <- function(file_name,
 
   ncdf4::nc_close(nc)
 
-  attributes <- tibble(
+  attributes <- tibble::tibble(
     attributeName = attributeName,
     attributeDefinition = attributeDefinition,
     unit = unit,
@@ -77,7 +81,7 @@ create_flare_eml <- function(file_name,
   ## sets metadata about the file itself (name, file type, size, MD5, etc)
   physical <- EML::set_physical(basename(file_name))
   ## set metadata for the file as a whole
-  dataTable <- eml$otherEntity(
+  dataTable <- EML::eml$otherEntity(
     entityName = "forecast",  ## this is a standard name to allow us to distinguish this entity from
     entityDescription = "Forecast of water physics, chemistry, and biology",
     physical = physical,
@@ -85,12 +89,12 @@ create_flare_eml <- function(file_name,
 
   EML::set_unitList(data.frame(id = 'netcdf', unitType="dimensionless", "parentSI"="dimensionless", "multiplierToSI" = 1, "description"="units are defined in the netcdf file"))
 
-  coverage <- EML::set_coverage(begin = as_date(first(full_time)),
-                 end = as_date(last(full_time)),
+  coverage <- EML::set_coverage(begin = lubridate::as_date(dplyr::first(full_time)),
+                 end = lubridate::as_date(dplyr::last(full_time)),
                  #sci_names = "NA",
-                 geographicDescription = lake_name,
-                 west = lake_longitude, east = lake_longitude,
-                 north = lake_latitude, south = lake_latitude)
+                 geographicDescription = enkf_output$config$lake_name,
+                 west = enkf_output$config$lake_longitude, east = enkf_output$config$lake_longitude,
+                 north = enkf_output$config$lake_latitude, south = enkf_output$config$lake_latitude)
 
 
   keywordSet <- list(
@@ -103,11 +107,11 @@ create_flare_eml <- function(file_name,
 
   abstract <- enkf_output$config$abstract #system.file("extdata", "abstract.md", package="EFIstandards", mustWork = TRUE)
 
-  dataset = eml$dataset(
+  dataset = EML::eml$dataset(
     title = enkf_output$config$metadata$forecast_title,
     creator = enkf_output$config$metadata$me,
     contact = list(references=enkf_output$config$metadata$me$id),
-    pubDate = as_date(as_datetime(forecast_issue_time)),
+    pubDate = lubridate::as_date(lubridate::as_datetime(forecast_issue_time)),
     intellectualRights = enkf_output$config$metadata$intellectualRights,
     abstract =  abstract,
     dataTable = dataTable,
@@ -201,7 +205,7 @@ create_flare_eml <- function(file_name,
     forecast_horizon = 1
   }
 
-  additionalMetadata <- eml$additionalMetadata(
+  additionalMetadata <- EML::eml$additionalMetadata(
     #  describes="forecast",  ## not sure how to find the correct ID for this to be valid
     metadata = list(
       forecast = list(
@@ -211,6 +215,7 @@ create_flare_eml <- function(file_name,
         forecast_issue_time = forecast_issue_time,
         forecast_iteration_id = forecast_iteration_id,
         forecast_project_id = forecast_project_id,
+        metadata_standard_version = "0.2",
         model_description = enkf_output$config$metadata$model_description,
         ## UNCERTAINTY CLASSES
         initial_conditions = initial_conditions,
@@ -225,7 +230,7 @@ create_flare_eml <- function(file_name,
     ) # metadata
   ) # eml$additionalMetadata
 
-  my_eml <- eml$eml(dataset = dataset,
+  my_eml <- EML::eml$eml(dataset = dataset,
                     additionalMetadata = additionalMetadata,
                     packageId = forecast_project_id,
                     system = "uuid"  ## system used to generate packageId
@@ -235,6 +240,6 @@ create_flare_eml <- function(file_name,
 
   EFIstandards::forecast_validator(my_eml)
 
-  EML::write_eml(my_eml, paste0(forecast_location, "/", file_path_sans_ext(basename(file_name)),"-eml.xml"))
+  EML::write_eml(my_eml, paste0(run_config$forecast_location, "/", tools::file_path_sans_ext(basename(file_name)),"-eml.xml"))
 
 }

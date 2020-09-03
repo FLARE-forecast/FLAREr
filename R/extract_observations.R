@@ -30,18 +30,18 @@ extract_observations <- function(fname,
   full_time_local <- seq(start_datetime_local, end_datetime_local, by = "1 day")
 
   col_types <- readr::cols(
-    timestamp = col_datetime(format = ""),
-    depth = col_double(),
-    value = col_double(),
-    variable = col_character(),
-    method = col_character())
+    timestamp = readr::col_datetime(format = ""),
+    depth = readr::col_double(),
+    value = readr::col_double(),
+    variable = readr::col_character(),
+    method = readr::col_character())
 
   d <- readr::read_csv(fname,
                 col_types = col_types)
 
   d$timestamp <- lubridate::with_tz(d$timestamp, tzone = local_tzone)
 
-  obs <- array(NA,dim=c(length(full_time_local),length(modeled_depths)))
+  obs <- array(NA,dim = c(length(full_time_local),length(modeled_depths)))
 
   d <- d %>%
     dplyr::filter(variable == target_variable,

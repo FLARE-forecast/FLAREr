@@ -245,7 +245,7 @@ run_model <- function(i,
     }
 
     if(file.exists(paste0(working_directory, "/output.nc")) &
-       !has_error(nc <- ncdf4::nc_open(paste0(working_directory, "/output.nc")))){
+       !testit::has_error(nc <- ncdf4::nc_open(paste0(working_directory, "/output.nc")))){
 
       if(length(ncvar_get(nc, "time")) > 1){
         nc_close(nc)

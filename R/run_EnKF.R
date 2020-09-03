@@ -73,7 +73,7 @@ run_EnKF <- function(x_init,
     diagnostics <- NA
   }
 
-  num_phytos <- length(which(str_detect(config$states_config$state_names,"PHY_") & !str_detect(config$states_config$state_names,"_IP") & !str_detect(config$states_config$state_names,"_IN")))
+  num_phytos <- length(which(stringr::str_detect(config$states_config$state_names,"PHY_") & !stringr::str_detect(config$states_config$state_names,"_IP") & !stringr::str_detect(config$states_config$state_names,"_IN")))
 
   full_time_local_char <- strftime(full_time_local,
                                    format="%Y-%m-%d %H:%M",
@@ -490,28 +490,28 @@ run_EnKF <- function(x_init,
     }
   }
 
-  if(day(full_time_local[1]) < 10){
+  if(lubridate::day(full_time_local[1]) < 10){
     file_name_H_day <- paste0("0",lubridate::day(full_time_local[1]))
   }else{
     file_name_H_day <- lubridate::day(full_time_local[1])
   }
-  if(day(full_time_local[hist_days+1]) < 10){
+  if(lubridate::day(full_time_local[hist_days+1]) < 10){
     file_name_F_day <- paste0("0",lubridate::day(full_time_local[hist_days+1]))
   }else{
     file_name_F_day <- lubridate::day(full_time_local[hist_days+1])
   }
-  if(month(full_time_local[1]) < 10){
+  if(lubridate::month(full_time_local[1]) < 10){
     file_name_H_month <- paste0("0",lubridate::month(full_time_local[1]))
   }else{
     file_name_H_month <- lubridate::month(full_time_local[1])
   }
-  if(month(full_time_local[hist_days+1]) < 10){
+  if(lubridate::month(full_time_local[hist_days+1]) < 10){
     file_name_F_month <- paste0("0",lubridate::month(full_time_local[hist_days+1]))
   }else{
     file_name_F_month <- lubridate::month(full_time_local[hist_days+1])
   }
 
-  save_file_name <- paste0(config$sim_name, "_H_",
+  save_file_name <- paste0(run_config$sim_name, "_H_",
                            (lubridate::year(full_time_local[1])),"_",
                            file_name_H_month,"_",
                            file_name_H_day,"_",
@@ -526,7 +526,7 @@ run_EnKF <- function(x_init,
   curr_year <- lubridate::year(time_of_forecast)
   curr_hour <- lubridate::hour(time_of_forecast)
   curr_minute <- lubridate::minute(time_of_forecast)
-  curr_second <- round(second(time_of_forecast),0)
+  curr_second <- round(lubridate::second(time_of_forecast),0)
   if(curr_day < 10){curr_day <- paste0("0",curr_day)}
   if(curr_month < 10){curr_month <- paste0("0",curr_month)}
   if(curr_hour < 10){curr_hour <- paste0("0",curr_hour)}
