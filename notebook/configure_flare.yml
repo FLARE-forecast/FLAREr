@@ -1,0 +1,278 @@
+data_location: /Users/quinn/Dropbox/Research/SSC_forecasting/SCC_data/
+code_folder: Users/quinn/Dropbox/Research/SSC_forecasting/FLARE_package/flare/
+forecast_location: /Users/quinn/Dropbox/Research/SSC_forecasting/run_flare_package/
+execute_location: /Users/quinn/Dropbox/Research/SSC_forecasting/run_flare_package/
+code_folder_old: /Users/quinn/Dropbox/Research/SSC_forecasting/FLARE/
+sim_name: test
+
+##########################
+# Lake information
+###########################
+
+lake_name_code: fcre
+lake_name: Falling Creek Reservoir
+lake_latitude: 37.307   #Degrees North
+lake_longitude: 79.837  #Degrees West
+
+#Time zone that GLM is run in
+#Currently needed to be GMT so that it interfaces with the NOAA forecast
+#reference_tzone <<- "GMT"
+#Local time zone of the lake
+local_tzone: "EST"
+
+##########################
+#  Information required to generate EML metadata file
+##########################
+
+metadata:
+    generate_eml: TRUE
+    abstract: "This is where a longer description of the forest can be added"
+    forecast_title: FLARE
+    intellectualRights: insert license
+    model_description:
+        name: General Lake Model
+        type: process-based
+        repository: https://github.com/AquaticEcoDynamics/GLM/releases/tag/v3.1.0
+    me:
+        individualName:
+              givenName: "Quinn"
+              surName: "Thomas"
+        electronicMailAddress:  "INSERT"
+        id: INSERT ORCID
+
+##########################
+# Management Options
+###########################
+simulate_SSS: TRUE
+#Include SSS in data assimilation
+forecast_SSS: FALSE
+#Run forecasts without SSS turned on
+use_specified_sss: TRUE
+# Use SSS from file in forecast
+forecast_SSS_flow: 1000
+#m3/day rate of flow if SSS turned on in forecast
+forecast_SSS_Oxy: 500
+#umol/m3  of oxygen if SSS turned on in forecast
+sss_fname: manual-data/FCR_SSS_inflow_2013_2020.csv
+
+
+sss_inflow_factor: 1.0
+sss_depth: 8.0
+
+#####################
+# Weather forcing options
+######################
+use_future_met: TRUE
+#TRUE = use NOAA forecast for "Future"
+#FALSE = use observed weather for "Future"; only works if "forecasting" past dates
+
+DOWNSCALE_MET: TRUE
+#Downscale the coarse resolutoin NOAA data to the local
+#site using the meterology station at the lake
+
+noaa_location: FCRE
+
+downscaling_coeff: manual-data/debiased.coefficients.2018_07_12_2019_07_11.RData
+
+#file name of previous downscaling coefficients
+#use NA if not using an existing file
+
+met_ds_obs_start: 2018-07-12
+met_ds_obs_end: 2019-07-11
+#Dates to use to developing the downscaling coefficient
+
+missing_met_data_threshold: 100
+
+use_future_inflow: FALSE
+future_inflow_flow_coeff: [0.0010803, 0.9478724, 0.3478991]
+future_inflow_flow_error: 0.00965
+future_inflow_temp_coeff: [0.20291, 0.94214, 0.04278]
+future_inflow_temp_error: 0.943
+
+doc_scalar: 3.0
+
+############################
+# Run information
+#############################
+
+model_name: glm_aed" #other is "null"
+
+base_GLM_nml: glm3.nml
+base_AED_nml: aed2_20200701_2DOCpools.nml
+base_AED_phyto_pars_nml: aed2_phyto_pars_30June2020.nml
+base_AED_zoop_pars_nml: aed2_zoop_pars.nml
+
+#################################
+### Uncertainty simulated
+################################
+
+uncert_mode: 1
+#Choose the types of uncertainty include in foreast
+#1 = all types
+#2 = no uncertainty
+#3 = only process uncertainty
+#4 = only NOAA weather forecast uncertainty
+#5 = only initial condition uncertainty
+#6 = only initial condition uncertainty and no state updating  with EnKF
+#7 = only parameter uncertainty
+#8 = only meteorology downscaling uncertainty
+#9 = no sources of uncertainty and no state updating with EnKF
+single_run: FALSE
+#Removes uncertainty and only simulates 3 ensemble members
+
+
+#All sources of uncertainty and data used to constrain
+use_obs_constraint: TRUE
+observation_uncertainty: TRUE
+process_uncertainty: TRUE
+weather_uncertainty: TRUE
+initial_condition_uncertainty: TRUE
+parameter_uncertainty: TRUE
+met_downscale_uncertainty: TRUE
+inflow_process_uncertainty: TRUE
+
+
+
+#########################
+### Depth information
+#########################
+#Depths used in the EnKF
+#This are the depths that are saved between days
+#Init depth of lake
+lake_depth_init: 9.4  #not a modeled state
+
+modeled_depths: [0.10, 0.33, 0.67, 
+                1.00, 1.33, 1.67, 
+                2.00, 2.33, 2.67,
+                3.00, 3.33, 3.67,
+                4.00, 4.33, 4.67,
+                5.00, 5.33, 5.67,
+                6.00, 6.33, 6.67,
+                7.00, 7.33, 7.67,
+                8.00, 8.33, 8.67,
+                9.00]
+
+default_temp_init: [25.667, 24.9101, 23.067, 21.8815, 19.6658, 16.5739, 12.9292, 12.8456, 12.8127, 12.8079, 12.778]
+default_temp_init_depths: [0.127, 1.004, 2.005, 3.021, 4.002, 5.004, 6.004, 7.01, 8.001, 9.015, 9.518]
+the_sals_init: 0.0
+
+default_snow_thickness_init: 0.0
+default_white_ice_thickness_init: 0.0
+default_blue_ice_thickness_init: 0.0
+
+##############################
+##  EnKF setup
+##############################
+ensemble_size:  105
+n_ds_members: 5 #10
+n_inflow_outflow_members:  105
+localization_distance: NA #distance in meters were covariances in the model error are used
+vert_decorr_length: 4.0
+no_negative_states: TRUE
+
+#################################
+# Parameter calibration information
+#################################
+
+par_file: parameter_calibration_config.csv
+
+#####################################
+###  Observation information
+######################################
+
+obs_config_file: observations_config_ch4_dic.csv
+
+realtime_insitu_location: mia-data
+realtime_met_station_location: carina-data
+manual_data_location: manual-data
+realtime_inflow_data_location: diana-data
+
+combined_obs_file: manual-data/observations_postQAQC_long.csv
+insitu_obs_fname: mia-data/Catwalk.csv, manual-data/Catwalk_cleanedEDI.csv
+secchi_fname: manual-data/Secchi_depth_2013-2019.csv
+ctd_fname: manual-data/CTD_final_2013_2019.csv
+ch4_fname: manual-data/DATASET_for_EDI_LOL_MS_10May20.csv
+nutrients_fname: manual-data/chemistry.csv
+variable_obsevation_depths: FALSE
+exo_sensor_2_ctd_chla: [0, 1]  #c(-2.0430, 2.5314) #c(1.8795, 0.6662)
+exo_sensor_2_ctd_do: [0, 1] #c(8.3670, 0.7152)
+do_sensor_2_ctd_do_5: [0, 1] #c(19.6254, 0.8636)
+do_sensor_2_ctd_do_9: [0, 1] #c(11.0971, 0.9156)
+ctd_2_exo_sensor_chla: [0, 1]  #c(-2.0430, 2.5314) #c(-1.582, 1.335)
+ctd_2_exo_sensor_do: [0, 1] #c(-10.770, 1.061)
+exo_sensor_2_grab_sample_fdom: [-38.95, 22.47]
+focal_depths: NA
+
+specified_inflow1: manual-data/FCR_weir_inflow_2013_2019_20200624_allfractions_2poolsDOC.csv
+specified_inflow2: manual-data/FCR_wetland_inflow_2013_2019_20200713_allfractions_2DOCpools.csv
+specified_sss_inflow_file: manual-data/FCR_SSS_inflow_2013_2019_20200701_allfractions_2DOCpools.csv
+specified_sss_outflow_file: NA
+specified_outflow1: manual-data/FCR_spillway_outflow_SUMMED_WeirWetland_2013_2019_20200615.csv
+specified_metfile: NA #paste0(manual_data_location, "/met_full_postQAQC.csv")
+
+
+met_file: manual-data/met_full_postQAQC.csv
+met_raw_obs_fname: [carina-data/FCRmet.csv, manual-data/Met_final_2015_2019.csv]
+
+inflow1_file: manual_data_location/inflow_postQAQC.csv
+inflow_raw_file1: [diana-data/FCRweir.csv, manual-data/inflow_for_EDI_2013_06Mar2020.csv]
+
+outflow_file1: manual_data_location/FCR_spillway_outflow_newEDI_SUMMED_WeirWetland_2013_2018_20190912.csv
+
+inflow_file2: NA
+
+
+#########################################
+###  Water quality state information
+#########################################
+
+states_config_file: states_config_ch4_dic.csv
+
+#carbon to chlorophyll ratio (mg C/mg chla)
+#12 g/ mole of C vs. X g/ mole of chla
+#Initial concentration of phytoplankton (mmol C/m3)
+# biomass_to_chla <<- c((160/12),(60/12), (60/12))
+
+########################################
+# Dignostics
+#######################################
+
+diagnostics_names:  [extc_coef, 
+                    PHY_cyano_fI,
+                    PHY_cyano_fNit,
+                     PHY_cyano_fPho,
+                    PHY_cyano_fT,
+                     PHY_green_fI,
+                    PHY_green_fNit,
+                     PHY_green_fPho,
+                     PHY_green_fT,
+                     PHY_diatom_fI,
+                     PHY_diatom_fNit,
+                     PHY_diatom_fPho,
+                     PHY_diatom_fT,
+                     rad]
+
+#########################################
+# Archiving options
+#######################################
+
+#Pull data from github?
+#Push results to github?
+pull_from_git: TRUE
+push_to_git: FALSE
+
+#########################################
+# Plotting related options
+#######################################
+
+
+
+# Options for printing function
+# Depths (meters) that the water quality variables are plotted
+focal_depths_plotting: modeled_depths
+#Depths that are plotted for the manager plot
+focal_depths_manager: [1, 5, 8] #c(2, 4, 9) #c(4,16,25) #c(4,16,25)
+#Indexes for the depths that are compared to calculate turnover
+turnover_index_1: 1 #1 #4
+turnover_index_2: 8 #8 #25
+

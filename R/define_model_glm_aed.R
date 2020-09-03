@@ -337,7 +337,7 @@ set_up_model <- function(executable_location,
                          include_wq){
 
 
-  GLM_folder <-executable_locationnc
+  GLM_folder <-executable_location
   fl <- c(list.files(GLM_folder, full.names = TRUE))
   tmp <- file.copy(from = fl, to = working_directory, overwrite = TRUE)
 

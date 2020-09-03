@@ -358,7 +358,7 @@ run_EnKF <- function(x_init,
         psi_t <- curr_psi
       }
 
-      d_mat <- t(rmvnorm(n = nmembers, mean = zt, sigma=as.matrix(psi_t)))
+      d_mat <- t(mvtnorm::rmvnorm(n = nmembers, mean = zt, sigma=as.matrix(psi_t)))
 
       #Set any negative observations of water quality variables to zero
       d_mat[which(z_index > length(modeled_depths) & d_mat < 0.0)] <- 0.0
