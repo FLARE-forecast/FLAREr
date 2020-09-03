@@ -3,16 +3,6 @@ plotting_general <- function(pdf_file_name,
                              save_location,
                              qaqc_location){
 
-  setwd(realtime_insitu_location)
-  if(pull_from_git){
-    system(paste0("git pull"))
-  }
-
-  ###### EVERY THING ABOVE HERE SHOULD BE DEALT WITH IN THE QAQC CONTAINER###
-
-
-  ### EVERYTHING AFTER IS FOR THE PDF GENERATION ####
-
   pars <- read_csv(par_file)
 
   obs_config <- read_csv(obs_config_file)
