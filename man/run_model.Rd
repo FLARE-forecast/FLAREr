@@ -42,7 +42,8 @@ run_model(
   avg_surf_temp_start,
   nstates,
   states_config,
-  include_wq
+  include_wq,
+  specified_sss_inflow_file
 )
 }
 \arguments{
@@ -73,4 +74,3 @@ Download and Downscale NOAA GEFS for a single site
 \author{
 Quinn Thomas
 }
-\keyword{internal}

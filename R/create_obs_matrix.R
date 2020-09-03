@@ -35,8 +35,8 @@ create_obs_matrix <- function(cleaned_observations_file_long, config, start_date
 
   obs_list <- list()
   for(i in 1:length(config$obs_config$state_names_obs)){
-    print(paste0("Extracting ",obs_config$target_variable[i]))
-    obs_list[[i]] <- flare::extract_observations(fname = cleaned_observations_file_long,
+    print(paste0("Extracting ",config$obs_config$target_variable[i]))
+    obs_list[[i]] <- extract_observations(fname = cleaned_observations_file_long,
                                           start_datetime_local,
                                           end_datetime_local,
                                           modeled_depths = config$modeled_depths,
@@ -51,15 +51,14 @@ create_obs_matrix <- function(cleaned_observations_file_long, config, start_date
   #### STEP 7: CREATE THE Z ARRAY (OBSERVATIONS x TIME)
   ####################################################
 
-  z <- array(NA, dim = c(nsteps, ndepths_modeled, length(obs_config$state_names_obs)))
-  for(i in 1:nrow(obs_config)){
-    z[ , , i] <-  obs_list[[i]]
+  obs <- array(NA, dim = c(nsteps, ndepths_modeled, length(config$obs_config$state_names_obs)))
+  for(i in 1:nrow(config$obs_config)){
+    obs[ , , i] <-  obs_list[[i]]
   }
 
-  z_obs <- z
-  if(!use_obs_constraint){
-    z[, , ] <- NA
+  if(!config$use_obs_constraint){
+    obs[, , ] <- NA
   }
 
-  return(z)
+  return(obs)
 }

@@ -10,10 +10,10 @@
 ##' @param model_name, directory name for the 6-hr forecast, this will be used in directory and file name generation
 ##' @param model_name_ds, directory name for the 1-hr forecast, this will be used in directory and file name generation
 ##' @param output_directory, directory where the model output will be save
+##' @export
 ##'
 ##' @author Quinn Thomas
 ##'
-##'@keywords internal
 
 
 
@@ -29,7 +29,7 @@ extract_observations <- function(fname,
 
   full_time_local <- seq(start_datetime_local, end_datetime_local, by = "1 day")
 
-  col_types <- dplyr::cols(
+  col_types <- readr::cols(
     timestamp = col_datetime(format = ""),
     depth = col_double(),
     value = col_double(),

@@ -1,9 +1,7 @@
 data_location: /Users/quinn/Dropbox/Research/SSC_forecasting/SCC_data/
 code_folder: Users/quinn/Dropbox/Research/SSC_forecasting/FLARE_package/flare/
-forecast_location: /Users/quinn/Dropbox/Research/SSC_forecasting/run_flare_package/
-execute_location: /Users/quinn/Dropbox/Research/SSC_forecasting/run_flare_package/
 code_folder_old: /Users/quinn/Dropbox/Research/SSC_forecasting/FLARE/
-sim_name: test
+qaqc_data_location: /Users/quinn/Dropbox/Research/SSC_forecasting/run_flare_package/qaqc_data 
 
 ##########################
 # Lake information
@@ -66,7 +64,7 @@ use_future_met: TRUE
 #TRUE = use NOAA forecast for "Future"
 #FALSE = use observed weather for "Future"; only works if "forecasting" past dates
 
-DOWNSCALE_MET: TRUE
+downscale_met: TRUE
 #Downscale the coarse resolutoin NOAA data to the local
 #site using the meterology station at the lake
 
@@ -166,7 +164,7 @@ default_blue_ice_thickness_init: 0.0
 ensemble_size:  105
 n_ds_members: 5 #10
 n_inflow_outflow_members:  105
-localization_distance: NA #distance in meters were covariances in the model error are used
+localization_distance: .na #distance in meters were covariances in the model error are used
 vert_decorr_length: 4.0
 no_negative_states: TRUE
 
@@ -201,25 +199,26 @@ do_sensor_2_ctd_do_9: [0, 1] #c(11.0971, 0.9156)
 ctd_2_exo_sensor_chla: [0, 1]  #c(-2.0430, 2.5314) #c(-1.582, 1.335)
 ctd_2_exo_sensor_do: [0, 1] #c(-10.770, 1.061)
 exo_sensor_2_grab_sample_fdom: [-38.95, 22.47]
-focal_depths: NA
+focal_depths: .na
 
 specified_inflow1: manual-data/FCR_weir_inflow_2013_2019_20200624_allfractions_2poolsDOC.csv
 specified_inflow2: manual-data/FCR_wetland_inflow_2013_2019_20200713_allfractions_2DOCpools.csv
 specified_sss_inflow_file: manual-data/FCR_SSS_inflow_2013_2019_20200701_allfractions_2DOCpools.csv
-specified_sss_outflow_file: NA
+specified_sss_outflow_file: .na
 specified_outflow1: manual-data/FCR_spillway_outflow_SUMMED_WeirWetland_2013_2019_20200615.csv
-specified_metfile: NA #paste0(manual_data_location, "/met_full_postQAQC.csv")
+specified_metfile: .na #NA #paste0(manual_data_location, "/met_full_postQAQC.csv")
 
+maintenance_file: /mia-data/CAT_MaintenanceLog.txt
 
 met_file: manual-data/met_full_postQAQC.csv
 met_raw_obs_fname: [carina-data/FCRmet.csv, manual-data/Met_final_2015_2019.csv]
 
-inflow1_file: manual_data_location/inflow_postQAQC.csv
+inflow1_file: manual-data/inflow_postQAQC.csv
 inflow_raw_file1: [diana-data/FCRweir.csv, manual-data/inflow_for_EDI_2013_06Mar2020.csv]
 
-outflow_file1: manual_data_location/FCR_spillway_outflow_newEDI_SUMMED_WeirWetland_2013_2018_20190912.csv
+outflow_file1: manual-data/FCR_spillway_outflow_newEDI_SUMMED_WeirWetland_2013_2018_20190912.csv
 
-inflow_file2: NA
+inflow_file2: .na
 
 
 #########################################

@@ -1,4 +1,123 @@
+if (!"mvtnorm" %in% installed.packages()) install.packages("mvtnorm")
+if (!"ncdf4" %in% installed.packages()) install.packages("ncdf4")
+if (!"lubridate" %in% installed.packages()) install.packages("lubridate")
+if (!"testit" %in% installed.packages()) install.packages("testit")
+if (!"imputeTS" %in% installed.packages()) install.packages("imputeTS")
+if (!"tidyverse" %in% installed.packages()) install.packages("tidyverse")
+if (!"rMR" %in% installed.packages()) install.packages("rMR")
+if (!"patchwork" %in% installed.packages()) install.packages("patchwork")
+if (!"EML" %in% installed.packages()) install.packages("EML")
+if (!"uuid" %in% installed.packages()) install.packages("uuid")
+if (!"EFIstandards" %in% installed.packages()){
+  library(devtools)
+  install_github("eco4cast/EFIstandards")
+}
+
+library(mvtnorm)
+#library(ncdf4)
+library(lubridate)
+library(testit)
+#library(imputeTS)
+library(tidyverse)
+library(tools)
+library(rMR)
+#library(EML)
+#library(EFIstandards)
+
+
+config <- yaml::read_yaml("/Users/quinn/Dropbox/Research/SSC_forecasting/FLARE_package/flare/notebook/configure_flare.yml")
+run_config <- yaml::read_yaml("/Users/quinn/Dropbox/Research/SSC_forecasting/FLARE_package/flare/notebook/run_configuration.yml")
+
+config$run_config <- run_config
+
+source(paste0(config$code_folder_old,"/","Rscripts/met_downscale/process_downscale_GEFS.R"))
+#source(paste0(code_folder_old,"/","Rscripts/glmtools.R"))
+#source(paste0(code_folder_old,"/","Rscripts/localization.R"))
+#source(paste0(code_folder_old,"/","Rscripts/extract_observations.R"))
+source(paste0(config$code_folder_old,"/","Rscripts/create_sss_input_output.R"))
+source(paste0(config$code_folder_old,"/","Rscripts/create_inflow_outflow_file.R"))
+source(paste0(config$code_folder_old,"/","Rscripts/read_sss_files.R"))
+
+start_datetime_local <- as_datetime(paste0(config$run_config$start_day_local," ",config$run_config$start_time_local), tz = config$local_tzone)
+end_datetime_local <- as_datetime(paste0(config$run_config$end_day_local," ",config$run_config$start_time_local), tz = config$local_tzone)
+
+if(is.na(config$run_config$forecast_start_day_local)){
+  forecast_start_datetime_local <- as_datetime(paste0(config$run_config$end_datetime_local," ",config$run_config$start_time_local), tz = config$local_tzone)
+}else{
+  forecast_start_datetime_local <- as_datetime(paste0(config$run_config$forecast_start_day_local," ",config$run_config$start_time_local), tz = config$local_tzone)
+}
+
+forecast_days <- as.numeric(forecast_start_datetime_local - end_datetime_local)
+
+
+
+hist_days <- as.numeric(forecast_start_datetime_local - start_datetime_local)
+
+
 full_time_local <- seq(start_datetime_local, end_datetime_local, by = "1 day")
+
+
+
+switch(Sys.info() [["sysname"]],
+       Linux = { config$machine <- "unix" },
+       Darwin = { config$machine <- "mac" },
+       Windows = { config$machine <- "windows"})
+
+if(!is.na(config$par_file)){
+  config$pars_config <- read_csv(file.path(run_config$forecast_location, config$par_file), col_types = cols())
+  npars <- nrow(config$pars_config)
+}else{
+  npars <- 0
+}
+
+config$obs_config <- read_csv(file.path(run_config$forecast_location, config$obs_config_file), col_types = cols())
+
+config$states_config <- read_csv(file.path(run_config$forecast_location, config$states_config_file), col_types = cols())
+
+nsteps <- length(full_time_local)
+
+if(nrow(config$states_config) > 0){
+  config$include_wq <- TRUE
+}else{
+  config$include_wq <- FALSE
+}
+
+ndepths_modeled <- length(config$modeled_depths)
+nstates <- ndepths_modeled * length(config$mstates_config$state_names)
+num_wq_vars <-  length(config$mstates_config$state_names) - 1
+
+glm_output_vars <- config$mstates_config$state_names
+
+config$n_met_members <- 21
+# SET UP NUMBER OF ENSEMBLE MEMBERS
+if(forecast_days > 0 & config$use_future_met == TRUE  & (config$ensemble_size %% (config$n_met_members * config$n_ds_members)) != 0){
+  stop(paste0("ensemble_size (",config$ensemble_size,") is not a multiple of the number of
+                n_met_members (",config$n_met_members,
+              ") * n_ds_members (",config$n_ds_members,")"))
+}
+
+if(config$single_run){
+  config$n_met_members <- 3
+  config$n_ds_members <- 1
+}
+
+####################################################
+#### STEP 3: ORGANIZE FILES
+####################################################
+
+###CREATE DIRECTORY PATHS AND STRUCTURE
+working_directory <- paste0(run_config$execute_location, "/", "working_directory")
+if(!dir.exists(working_directory)){
+  dir.create(working_directory, showWarnings = FALSE)
+}
+####Clear out temp GLM working directory
+unlink(paste0(working_directory, "/*"), recursive = FALSE)
+
+####################################################
+#### STEP 4: PROCESS RAW INPUT AND OBSERVATION DATA
+####################################################
+
+#Container 1:  Downloading data
 
 ### All of this is for working with the NOAA data #####
 ### METEROLOGY DOWNSCALING OPTIONS
@@ -8,13 +127,13 @@ if(is.na(config$downscaling_coeff)){
   FIT_PARAMETERS <- FALSE
 }
 
-if(DOWNSCALE_MET == FALSE){
+if(config$downscale_met == FALSE){
   FIT_PARAMETERS <- FALSE
 }
 
 start_datetime_GMT <- lubridate::with_tz(first(full_time_local), tzone = "GMT")
 end_datetime_GMT <- lubridate::with_tz(last(full_time_local), tzone = "GMT")
-forecast_start_time_GMT<- lubridate::with_tz(forecast_start_time_local, tzone = "GMT")
+forecast_start_time_GMT<- lubridate::with_tz(forecast_start_datetime_local, tzone = "GMT")
 
 forecast_start_time_GMT_past <- forecast_start_time_GMT - lubridate::days(1)
 
@@ -82,21 +201,18 @@ met_forecast_base_file_name <- paste0("met_hourly_",
 met_file_names <- rep(NA, (config$n_met_members*config$n_ds_members))
 obs_met_outfile <- "met_historical.csv"
 
-cleaned_met_file <- paste0(working_directory, "/met_full_postQAQC.csv")
+cleaned_met_file <- paste0(config$qaqc_data_location, "/met_full_postQAQC.csv")
 
-if(is.na(forecast_start_datetime)){
-  forecast_start_datetime <- sim_end_datetime
-}
 
-hist_days <- as.numeric(forecast_start_datetime - start_datetime)
 
 if(is.na(config$specified_metfile)){
-  missing_met <- create_obs_met_input(fname = cleaned_met_file,
+  missing_met <- flare::create_obs_met_input(fname = cleaned_met_file,
                                       outfile = obs_met_outfile,
                                       full_time_local,
                                       config$local_tzone,
                                       working_directory,
-                                      hist_days)
+                                      hist_days,
+                                      missing_met_data_threshold = config$missing_met_data_threshold)
 }else{
   missing_met <- FALSE
   file.copy(config$specified_metfile, paste0(working_directory,"/",obs_met_outfile))
@@ -166,7 +282,7 @@ if(missing_met  == FALSE){
                                          compare_output_to_obs = FALSE,
                                          VarInfo,
                                          replaceObsNames,
-                                         downscaling_coeff = config$downscaling_coeff,
+                                         downscaling_coeff = file.path(config$data_location, config$downscaling_coeff),
                                          full_time_local,
                                          first_obs_date = lubridate::date(config$met_ds_obs_start),
                                          last_obs_date = lubridate::as_date(config$met_ds_obs_end),
@@ -236,7 +352,7 @@ if(forecast_days > 0 & config$use_future_met){
                                              compare_output_to_obs = FALSE,
                                              VarInfo,
                                              replaceObsNames,
-                                             downscaling_coeff = config$downscaling_coeff,
+                                             downscaling_coeff = file.path(config$data_location, config$downscaling_coeff),
                                              full_time_local,
                                              first_obs_date = lubridate::date(config$met_ds_obs_start),
                                              last_obs_date = lubridate::as_date(config$met_ds_obs_end),
@@ -254,41 +370,47 @@ if(config$weather_uncertainty == FALSE){
 
 ##CREATE INFLOW AND OUTFILE FILES
 
-inflow_outflow_files <- create_inflow_outflow_file(full_time_local,
+cleaned_inflow_file <- paste0(config$qaqc_data_location, "/inflow_postQAQC.csv")
+
+start_forecast_step <- as.numeric(forecast_start_datetime_local - start_datetime_local) + 1
+
+inflow_outflow_files <- flare::create_inflow_outflow_file(full_time_local,
                                                    working_directory,
                                                    input_file_tz = "EST",
                                                    start_forecast_step,
                                                    inflow_file1 = cleaned_inflow_file,
-                                                   inflow_file2,
-                                                   outflow_file1,
+                                                   inflow_file2 = config$inflow_file2,
+                                                   outflow_file1 = config$outflow_file1,
                                                    chemistry_file = cleaned_inflow_file,
-                                                   local_tzone,
+                                                   local_tzone = config$local_tzone,
                                                    met_file_names,
                                                    forecast_days,
-                                                   inflow_process_uncertainty,
-                                                   future_inflow_flow_coeff,
-                                                   future_inflow_flow_error,
-                                                   future_inflow_temp_coeff,
-                                                   future_inflow_temp_error,
-                                                   states_config,
-                                                   include_wq)
+                                                   inflow_process_uncertainty = config$inflow_process_uncertainty,
+                                                   future_inflow_flow_coeff  = config$future_inflow_flow_coeff,
+                                                   future_inflow_flow_error = config$future_inflow_flow_error,
+                                                   future_inflow_temp_coeff = config$future_inflow_temp_coeff,
+                                                   future_inflow_temp_error = config$future_inflow_temp_error,
+                                                   states_config = config$states_config,
+                                                   include_wq = config$include_wq,
+                                                   use_future_inflow = config$use_future_inflow,
+                                                   doc_scalar = config$doc_scalar)
 
 
-if(is.na(specified_inflow1)){
+if(is.na(config$specified_inflow1)){
   inflow_file_names <- cbind(inflow1 = inflow_outflow_files$inflow_file_names,
                              inflow2 = inflow_outflow_files$wetland_file_names)
   outflow_file_names <- cbind(inflow_outflow_files$spillway_file_names)
 }else{
-  inflow_file_names <- cbind(inflow1 = config$specified_inflow1,
-                             inflow2 = config$specified_inflow2)
-  outflow_file_names <- cbind(config$specified_outflow1)
+  inflow_file_names <- cbind(inflow1 = file.path(config$data_location, config$specified_inflow1),
+                             inflow2 = file.path(config$data_location, config$specified_inflow2))
+  outflow_file_names <- cbind(file.path(config$data_location, config$specified_outflow1))
 }
 
 
 
 #### END DRIVER CONTAINER ####
 
-cleaned_observations_file_long <- paste0(working_directory,
+cleaned_observations_file_long <- paste0(config$qaqc_data_location,
                                          "/observations_postQAQC_long.csv")
 
 obs <- flare::create_obs_matrix(cleaned_observations_file_long, config, start_datetime_local, end_datetime_local)
@@ -301,9 +423,9 @@ obs <- flare::create_obs_matrix(cleaned_observations_file_long, config, start_da
 init_depth <- list()
 for(i in 1:nrow(config$states_config)){
   if(!is.na(config$states_config$init_obs_name[i])){
-    obs_index <- which(obs_config$state_names_obs == states_config$init_obs_name[i])
+    obs_index <- which(config$obs_config$state_names_obs == config$states_config$init_obs_name[i])
     #init_obs <- z[1, ,obs_index] * (1/states_config$states_to_obs_mapping[[i]][1]) * states_config$init_obs_mapping[i]
-    init_obs <- z[1, ,obs_index] * (1/config$states_config$states_to_obs_mapping_1[i]) * config$states_config$init_obs_mapping[i]
+    init_obs <- obs[1, ,obs_index] * (1/config$states_config$states_to_obs_mapping_1[i]) * config$states_config$init_obs_mapping[i]
     if(length(which(!is.na(init_obs))) == 0){
       init_depth[[i]] <- rep(config$states_config$initial_conditions[i], ndepths_modeled)
       if(config$states_config$init_obs_name[i] == "temp"){
@@ -312,16 +434,18 @@ for(i in 1:nrow(config$states_config)){
     }else if(length(which(!is.na(init_obs))) == 1){
       init_depth[[i]] <- rep(init_obs[!is.na(init_obs)], ndepths_modeled)
     }else{
-      init_depth[[i]] <- approx(x = modeled_depths[!is.na(init_obs)], y = init_obs[!is.na(init_obs)], xout = modeled_depths, rule=2)$y
+      init_depth[[i]] <- approx(x = config$modeled_depths[!is.na(init_obs)], y = init_obs[!is.na(init_obs)], xout = config$modeled_depths, rule=2)$y
     }
   }else{
     init_depth[[i]] <- rep(config$states_config$initial_conditions[i], ndepths_modeled)
   }
 }
 
+num_wq_vars <- length(config$states_config$state_names) - 1
+
 wq_start <- NA
 wq_end <- NA
-if(include_wq){
+if(config$include_wq){
   temp_start <- 1
   temp_end <- ndepths_modeled
   wq_start <- rep(NA, num_wq_vars)
@@ -361,8 +485,8 @@ for(i in 1:length(config$obs_config$state_names_obs)){
 
 psi <- cbind(psi_intercept, psi_slope)
 
-states_to_obs_temp <- cbind(states_config$states_to_obs_1,states_config$states_to_obs_2, states_config$states_to_obs_3)
-states_to_obs_mapping_temp <- cbind(states_config$states_to_obs_mapping_1,states_config$states_to_obs_mapping_2, states_config$states_to_obs_mapping_3)
+states_to_obs_temp <- cbind(config$states_config$states_to_obs_1,config$states_config$states_to_obs_2, config$states_config$states_to_obs_3)
+states_to_obs_mapping_temp <- cbind(config$states_config$states_to_obs_mapping_1,config$states_config$states_to_obs_mapping_2, config$states_config$states_to_obs_mapping_3)
 
 states_to_obs <- list()
 states_to_obs_mapping <- list()
@@ -376,7 +500,7 @@ for(i in 1:nrow(states_to_obs_temp)){
   }else{
     values1 <- rep(NA,length(names_temp))
     for(j in 1:length(names_temp)){
-      values1[j] <- which(obs_config$state_names_obs == names_temp[j])
+      values1[j] <- which(config$obs_config$state_names_obs == names_temp[j])
     }
     values2 <- c(mapping_temp)
   }
@@ -384,26 +508,28 @@ for(i in 1:nrow(states_to_obs_temp)){
   states_to_obs_mapping[[i]] <- values2
 }
 
-states_config$states_to_obs <- states_to_obs
-states_config$states_to_obs_mapping <- states_to_obs_mapping
+config$states_config$states_to_obs <- states_to_obs
+config$states_config$states_to_obs_mapping <- states_to_obs_mapping
 
 ####################################################
 #### STEP 10: CREATE THE PROCESS UNCERTAINTY
 ####################################################
 
-combined_error <- states_config$process_error
-combined_init_error <- states_config$initial_error
+process_sd <- config$states_config$process_error
+init_sd <- config$states_config$initial_error
 
 ################################################################
 #### STEP 11: CREATE THE X ARRAY (STATES X TIME);INCLUDES INITIALATION
 ################################################################
 nmembers <- config$ensemble_size
 
+nstates <- ndepths_modeled * length(config$states_config$state_names)
+
 init <- list()
 init$x <- array(NA, dim=c(nmembers, nstates + npars))
 
 restart_present <- FALSE
-if(!is.na(restart_file)){
+if(!is.na(run_config$restart_file)){
   if(file.exists(restart_file)){
     restart_present <- TRUE
   }
@@ -419,7 +545,7 @@ if(!restart_present){
   init$mixing_vars <- array(NA, dim=c(nmembers, 17))
   init$glm_depths <- array(NA, dim = c(nmembers, 500))
 
-  alpha_v <- 1 - exp(-vert_decorr_length)
+  alpha_v <- 1 - exp(-config$vert_decorr_length)
 
   q_v <- rep(NA ,ndepths_modeled)
   w <- rep(NA, ndepths_modeled)
@@ -430,11 +556,11 @@ if(!restart_present){
   for(m in 1:nmembers){
     q_v[] <- NA
     w[] <- NA
-    for(jj in 1:length(combined_error)){
+    for(jj in 1:length(process_sd)){
       w[] <- rnorm(ndepths_modeled, 0, 1)
-      q_v[1] <- combined_error[jj] * w[1]
+      q_v[1] <- process_sd[jj] * w[1]
       for(kk in 2:ndepths_modeled){
-        q_v[kk] <- alpha_v * q_v[kk-1] + sqrt(1 - alpha_v^2) * combined_init_error[jj] * w[kk]
+        q_v[kk] <- alpha_v * q_v[kk-1] + sqrt(1 - alpha_v^2) * init_sd[jj] * w[kk]
       }
 
       if(config$single_run | (config$initial_condition_uncertainty == FALSE & hist_days == 0)){
@@ -448,9 +574,9 @@ if(!restart_present){
   }
 
   for(par in 1:npars){
-    init$x[ ,(nstates+par)] <- runif(n=nmembers,pars_config$par_init_lowerbound[par], pars_config$par_init_upperbound[par])
-    if(single_run){
-      init$x[ ,(nstates+par)] <-  rep(pars_config$par_init[par], nmembers)
+    init$x[ ,(nstates+par)] <- runif(n=nmembers,config$pars_config$par_init_lowerbound[par], config$pars_config$par_init_upperbound[par])
+    if(config$single_run){
+      init$x[ ,(nstates+par)] <-  rep(config$pars_config$par_init[par], nmembers)
     }
   }
 
@@ -471,7 +597,7 @@ if(!restart_present){
   init$mixing_vars[, ] <- 0.0
 
   for(m in 1:nmembers){
-    init$glm_depths[m, 1:ndepths_modeled] <- modeled_depths
+    init$glm_depths[m, 1:ndepths_modeled] <- config$modeled_depths
   }
 }else{
   #Restart from yesterday's run
@@ -499,7 +625,7 @@ if(hist_days == 0){
 }
 
 management_input <- read_sss_files(full_time_local,
-                                   sss_file = config$sss_fname)
+                                   sss_file = file.path(config$data_location, config$sss_fname))
 
 ####################################################
 #### STEP 12: Run Ensemble Kalman Filter
@@ -507,7 +633,7 @@ management_input <- read_sss_files(full_time_local,
 aux_states_init <- list()
 aux_states_init$snow_ice_thickness <- init$snow_ice_thickness
 aux_states_init$avg_surf_temp <- init$avg_surf_temp
-aux_states_init$the_sals_init <- the_sals_init
+aux_states_init$the_sals_init <- config$the_sals_init
 aux_states_init$mixing_vars <- init$mixing_vars
 aux_states_init$glm_depths <- init$glm_depths
 aux_states_init$surface_height <- init$surface_height
@@ -518,16 +644,16 @@ aux_states_init$surface_height <- init$surface_height
 x_init <- init$x
 
 enkf_output <- flare::run_EnKF(x_init,
-                               obs = z,
+                               obs,
                                psi,
-                               combined_error,
+                               process_sd,
                                working_directory,
                                met_file_names,
                                inflow_file_names,
                                outflow_file_names,
-                               sim_start_datetime,
-                               sim_end_datetime,
-                               forecast_start_datetime,
+                               sim_start_datetime = start_datetime_local,
+                               sim_end_datetime = end_datetime_local,
+                               forecast_start_datetime = forecast_start_datetime_local,
                                management_input,
                                wq_start,
                                wq_end,

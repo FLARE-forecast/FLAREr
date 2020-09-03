@@ -4,20 +4,7 @@
 \alias{set_up_model}
 \title{Download and Downscale NOAA GEFS for a single site}
 \usage{
-set_up_model(
-  executable_location,
-  working_directory,
-  base_GLM_nml,
-  num_wq_vars,
-  base_AED_nml,
-  base_AED_phyto_pars_nml,
-  base_AED_zoop_pars_nml,
-  ndepths_modeled,
-  modeled_depths,
-  the_sals_init,
-  machine,
-  include_wq
-)
+set_up_model(executable_location, config, working_directory, num_wq_vars)
 }
 \arguments{
 \item{site_index, }{index of site_list, lat_list, lon_list to be downloaded}
@@ -47,4 +34,3 @@ Download and Downscale NOAA GEFS for a single site
 \author{
 Quinn Thomas
 }
-\keyword{internal}

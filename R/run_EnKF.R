@@ -19,7 +19,7 @@
 run_EnKF <- function(x_init,
                      obs,
                      psi,
-                     combined_error,
+                     process_sd,
                      working_directory,
                      met_file_names,
                      inflow_file_names,
@@ -39,9 +39,9 @@ run_EnKF <- function(x_init,
     forecast_start_datetime <- sim_end_datetime
   }
 
-  hist_days <- as.numeric(forecast_start_datetime - start_datetime)
+  hist_days <- as.numeric(forecast_start_datetime - sim_start_datetime)
   start_forecast_step <- 1 + hist_days
-  full_time_local <- seq(start_datetime_local, end_datetime_local, by = "1 day")
+  full_time_local <- seq(sim_start_datetime, sim_end_datetime, by = "1 day")
 
 
   npars <- nrow(config$pars_config)
@@ -83,18 +83,10 @@ run_EnKF <- function(x_init,
 
   glm_salt <- array(NA, dim = c(nmembers, 500))
 
-  set_up_model(executable_location = paste0(find.package("flare"),"/exec/"),
-               working_directory,
-               base_GLM_nml = config$base_GLM_nml,
-               num_wq_vars,
-               base_AED_nml = config$base_AED_nml,
-               base_AED_phyto_pars_nml = config$base_AED_phyto_pars_nml,
-               base_AED_zoop_pars_nml = config$base_AED_zoop_pars_nml,
-               ndepths_modeled,
-               modeled_depths,
-               the_sals_init = aux_states_init$the_sals_init,
-               machine = config$machine,
-               include_wq = config$include_wq)
+  flare::set_up_model(executable_location = paste0(find.package("flare"),"/exec/"),
+                      config,
+                      working_directory,
+                      num_wq_vars)
 
   mixing_vars <- array(NA, dim = c(nsteps, nmembers, 17))
   glm_depths <- array(NA, dim = c(nsteps, nmembers, 500))
@@ -150,15 +142,15 @@ run_EnKF <- function(x_init,
         curr_pars <- x[i - 1, m , (nstates+1):(nstates+ npars)]
       }
 
-      out <- run_model(i,
+      out <- flare::run_model(i,
                        m,
                        mixing_vars_start = mixing_vars[i-1, m, ],
                        curr_start,
                        curr_stop,
-                       par_names = pars_config$par_names,
+                       par_names = config$pars_config$par_names,
                        curr_pars,
                        working_directory,
-                       par_nml = pars_config$par_nml,
+                       par_nml = config$pars_config$par_nml,
                        num_phytos,
                        glm_depths_start = glm_depths[i-1, m, ],
                        surface_height_start = surface_height[i-1, m],
@@ -187,7 +179,10 @@ run_EnKF <- function(x_init,
                        avg_surf_temp_start = avg_surf_temp[i-1, m],
                        nstates,
                        states_config = config$states_config,
-                       include_wq = config$include_wq)
+                       include_wq = config$include_wq,
+                       specified_sss_inflow_file = config$specified_sss_inflow_file,
+                       specified_sss_outflow_file =  config$specified_sss_outflow_file,
+                       data_location = config$data_location)
 
       x_star[m, ] <- out$x_star_end
       surface_height[i ,m ] <- out$surface_height_end
@@ -217,11 +212,11 @@ run_EnKF <- function(x_init,
 
       q_v[] <- NA
       w[] <- NA
-      for(jj in 1:length(combined_error)){
+      for(jj in 1:length(process_sd)){
         w[] <- rnorm(ndepths_modeled, 0, 1)
-        q_v[1] <- combined_error[jj] * w[1]
+        q_v[1] <- process_sd[jj] * w[1]
         for(kk in 2:ndepths_modeled){
-          q_v[kk] <- alpha_v * q_v[kk-1] + sqrt(1 - alpha_v^2) * combined_error[jj] * w[kk]
+          q_v[kk] <- alpha_v * q_v[kk-1] + sqrt(1 - alpha_v^2) * process_sd[jj] * w[kk]
         }
 
         x_corr[m, (((jj-1)*ndepths_modeled)+1):(jj*ndepths_modeled)] <-
@@ -263,7 +258,7 @@ run_EnKF <- function(x_init,
 
       if(i > (hist_days + 1)){
       data_assimilation_flag[i] <- 0
-      }else if(i <= (hist_days + 1) & use_obs_constraint){
+      }else if(i <= (hist_days + 1) & config$use_obs_constraint){
         data_assimilation_flag[i] <- 3
       }else{
         data_assimilation_flag[i] <- 1
@@ -312,18 +307,18 @@ run_EnKF <- function(x_init,
       zt <- zt[which(!is.na(zt))]
 
       #Assign which states have obs in the time step
-      h <- matrix(0, nrow = length(obs_config$state_names_obs) * ndepths_modeled, ncol = nstates)
+      h <- matrix(0, nrow = length(config$obs_config$state_names_obs) * ndepths_modeled, ncol = nstates)
 
        index <- 0
        for(k in 1:((nstates/ndepths_modeled))){
          for(j in 1:ndepths_modeled){
            index <- index + 1
-           if(!is.na(first(states_config$states_to_obs[[k]]))){
-             for(jj in 1:length(states_config$states_to_obs[[k]])){
-               if(!is.na((obs[i, j, states_config$states_to_obs[[k]][jj]]))){
-                 states_to_obs_index <- states_config$states_to_obs[[k]][jj]
+           if(!is.na(dplyr::first(config$states_config$states_to_obs[[k]]))){
+             for(jj in 1:length(config$states_config$states_to_obs[[k]])){
+               if(!is.na((obs[i, j, config$states_config$states_to_obs[[k]][jj]]))){
+                 states_to_obs_index <- config$states_config$states_to_obs[[k]][jj]
                  index2 <- (states_to_obs_index - 1) * ndepths_modeled + j
-                 h[index2,index] <- states_config$states_to_obs_mapping[[k]][jj]
+                 h[index2,index] <- config$states_config$states_to_obs_mapping[[k]][jj]
                }
              }
            }
@@ -361,7 +356,7 @@ run_EnKF <- function(x_init,
       d_mat <- t(mvtnorm::rmvnorm(n = nmembers, mean = zt, sigma=as.matrix(psi_t)))
 
       #Set any negative observations of water quality variables to zero
-      d_mat[which(z_index > length(modeled_depths) & d_mat < 0.0)] <- 0.0
+      d_mat[which(z_index > length(config$modeled_depths) & d_mat < 0.0)] <- 0.0
 
       #Ensemble mean
       ens_mean <- apply(x_corr[,], 2, mean)
@@ -402,7 +397,7 @@ run_EnKF <- function(x_init,
       }
 
       if(!is.na(config$localization_distance)){
-        p_t <- localization(p_t, nstates, modeled_depths, num_wq_vars, wq_start, wq_end)
+        p_t <- localization(p_t, nstates, config$modeled_depths, num_wq_vars, wq_start, wq_end)
       }
       #Kalman gain
       k_t <- p_t %*% t(h) %*% solve(h %*% p_t %*% t(h) + psi_t, tol = 1e-17)
@@ -496,41 +491,41 @@ run_EnKF <- function(x_init,
   }
 
   if(day(full_time_local[1]) < 10){
-    file_name_H_day <- paste0("0",day(full_time_local[1]))
+    file_name_H_day <- paste0("0",lubridate::day(full_time_local[1]))
   }else{
-    file_name_H_day <- day(full_time_local[1])
+    file_name_H_day <- lubridate::day(full_time_local[1])
   }
   if(day(full_time_local[hist_days+1]) < 10){
-    file_name_F_day <- paste0("0",day(full_time_local[hist_days+1]))
+    file_name_F_day <- paste0("0",lubridate::day(full_time_local[hist_days+1]))
   }else{
-    file_name_F_day <- day(full_time_local[hist_days+1])
+    file_name_F_day <- lubridate::day(full_time_local[hist_days+1])
   }
   if(month(full_time_local[1]) < 10){
-    file_name_H_month <- paste0("0",month(full_time_local[1]))
+    file_name_H_month <- paste0("0",lubridate::month(full_time_local[1]))
   }else{
-    file_name_H_month <- month(full_time_local[1])
+    file_name_H_month <- lubridate::month(full_time_local[1])
   }
   if(month(full_time_local[hist_days+1]) < 10){
-    file_name_F_month <- paste0("0",month(full_time_local[hist_days+1]))
+    file_name_F_month <- paste0("0",lubridate::month(full_time_local[hist_days+1]))
   }else{
-    file_name_F_month <- month(full_time_local[hist_days+1])
+    file_name_F_month <- lubridate::month(full_time_local[hist_days+1])
   }
 
-  save_file_name <- paste0(sim_name, "_H_",
-                           (year(full_time_local[1])),"_",
+  save_file_name <- paste0(config$sim_name, "_H_",
+                           (lubridate::year(full_time_local[1])),"_",
                            file_name_H_month,"_",
                            file_name_H_day,"_",
-                           (year(full_time_local[hist_days+1])),"_",
+                           (lubridate::year(full_time_local[hist_days+1])),"_",
                            file_name_F_month,"_",
                            file_name_F_day,"_F_",
                            forecast_days)
 
   time_of_forecast <- Sys.time()
-  curr_day <- day(time_of_forecast)
-  curr_month <- month(time_of_forecast)
-  curr_year <- year(time_of_forecast)
-  curr_hour <- hour(time_of_forecast)
-  curr_minute <- minute(time_of_forecast)
+  curr_day <- lubridate::day(time_of_forecast)
+  curr_month <- lubridate::month(time_of_forecast)
+  curr_year <- lubridate::year(time_of_forecast)
+  curr_hour <- lubridate::hour(time_of_forecast)
+  curr_minute <- lubridate::minute(time_of_forecast)
   curr_second <- round(second(time_of_forecast),0)
   if(curr_day < 10){curr_day <- paste0("0",curr_day)}
   if(curr_month < 10){curr_month <- paste0("0",curr_month)}
@@ -562,7 +557,6 @@ run_EnKF <- function(x_init,
               snow_ice_thickness = snow_ice_thickness,
               surface_height = surface_height,
               avg_surf_temp_restart = avg_surf_temp_restart,
-              running_residuals = running_residuals,
               mixing_restart = mixing_restart,
               glm_depths_restart = glm_depths_restart,
               diagnostics = diagnostics,

@@ -10,10 +10,10 @@
 ##' @param model_name, directory name for the 6-hr forecast, this will be used in directory and file name generation
 ##' @param model_name_ds, directory name for the 1-hr forecast, this will be used in directory and file name generation
 ##' @param output_directory, directory where the model output will be save
+##' @export
 ##'
 ##' @author Quinn Thomas
 ##'
-##'@keywords internal
 
 
 run_model <- function(i,
@@ -53,7 +53,10 @@ run_model <- function(i,
                       avg_surf_temp_start,
                       nstates,
                       states_config,
-                      include_wq){
+                      include_wq,
+                      specified_sss_inflow_file,
+                      specified_sss_outflow_file,
+                      data_location){
 
 
   update_glm_nml_list <- list()
@@ -132,9 +135,9 @@ run_model <- function(i,
                                 wq_start, management_input, hist_days,
                                 forecast_sss_on, sss_depth,use_specified_sss, states_config, include_wq)
       }else{
-        file.copy(specified_sss_inflow_file,paste0(working_directory,"/sss_inflow.csv"))
+        file.copy(file.path(data_location, specified_sss_inflow_file), paste0(working_directory,"/sss_inflow.csv"))
         if(!is.na(specified_sss_outflow_file)){
-          file.copy(specified_sss_outflow_file,paste0(working_directory,"/sss_outflow.csv"))
+          file.copy(file.path(data_location, specified_sss_outflow_file), paste0(working_directory,"/sss_outflow.csv"))
         }
       }
     }
@@ -318,47 +321,39 @@ run_model <- function(i,
 ##' @param model_name, directory name for the 6-hr forecast, this will be used in directory and file name generation
 ##' @param model_name_ds, directory name for the 1-hr forecast, this will be used in directory and file name generation
 ##' @param output_directory, directory where the model output will be save
+##' @export
 ##'
 ##' @author Quinn Thomas
 ##'
-##' @keywords internal
-##'
+
 set_up_model <- function(executable_location,
+                         config,
                          working_directory,
-                         base_GLM_nml,
-                         num_wq_vars,
-                         base_AED_nml,
-                         base_AED_phyto_pars_nml,
-                         base_AED_zoop_pars_nml,
-                         ndepths_modeled,
-                         modeled_depths,
-                         the_sals_init,
-                         machine,
-                         include_wq){
+                         num_wq_vars){
 
 
-  GLM_folder <-executable_location
+  GLM_folder <- executable_location
   fl <- c(list.files(GLM_folder, full.names = TRUE))
   tmp <- file.copy(from = fl, to = working_directory, overwrite = TRUE)
 
-  file.copy(from = paste0(base_GLM_nml),
+  file.copy(from = file.path(config$run_config$forecast_location, config$base_GLM_nml),
             to = paste0(working_directory, "/", "glm3.nml"), overwrite = TRUE)
 
   update_var(num_wq_vars, "num_wq_vars", working_directory, "glm3.nml") #GLM SPECIFIC
 
-  if(include_wq){
+  if(config$include_wq){
 
-    file.copy(from = paste0(base_AED_nml),
+    file.copy(from =  file.path(config$run_config$forecast_location,config$base_AED_nml),
               to = paste0(working_directory, "/", "aed2.nml"), overwrite = TRUE)
-    file.copy(from = paste0(base_AED_phyto_pars_nml),
+    file.copy(from =  file.path(config$run_config$forecast_location,config$base_AED_phyto_pars_nml),
               to = paste0(working_directory, "/", "aed2_phyto_pars.nml"), overwrite = TRUE)
-    file.copy(from = paste0(base_AED_zoop_pars_nml),
+    file.copy(from =  file.path(config$run_config$forecast_location,config$base_AED_zoop_pars_nml),
               to = paste0(working_directory, "/", "aed2_zoop_pars.nml"), overwrite = TRUE)
   }
 
-  update_var(ndepths_modeled, "num_depths", working_directory, "glm3.nml") #GLM SPECIFIC
-  update_var(modeled_depths, "the_depths", working_directory, "glm3.nml") #GLM SPECIFIC
-  update_var(rep(the_sals_init, ndepths_modeled), "the_sals", working_directory, "glm3.nml") #GLM SPECIFIC
+  update_var(length(config$modeled_depths), "num_depths", working_directory, "glm3.nml") #GLM SPECIFIC
+  update_var(config$modeled_depths, "the_depths", working_directory, "glm3.nml") #GLM SPECIFIC
+  update_var(rep(config$the_sals_init, length(config$modeled_depths)), "the_sals", working_directory, "glm3.nml") #GLM SPECIFIC
 
   #Create a copy of the NML to record starting initial conditions
   file.copy(from = paste0(working_directory, "/", "glm3.nml"), #GLM SPECIFIC

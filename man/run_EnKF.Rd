@@ -8,7 +8,7 @@ run_EnKF(
   x_init,
   obs,
   psi,
-  combined_error,
+  process_sd,
   working_directory,
   met_file_names,
   inflow_file_names,
