@@ -131,7 +131,7 @@ run_model <- function(i,
 
     if(simulate_SSS){
       if(is.na(specified_sss_inflow_file)){
-        create_sss_input_output(x_start, i, m, full_time_local, working_directory,
+        flare::create_sss_input_output(x_start, i, m, full_time_local, working_directory,
                                 wq_start, management_input, hist_days,
                                 forecast_sss_on, sss_depth,use_specified_sss, states_config, include_wq)
       }else{
