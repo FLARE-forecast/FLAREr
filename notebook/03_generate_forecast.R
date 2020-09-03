@@ -1,42 +1,10 @@
-#if (!"mvtnorm" %in% installed.packages()) install.packages("mvtnorm")
-#if (!"ncdf4" %in% installed.packages()) install.packages("ncdf4")
-#if (!"lubridate" %in% installed.packages()) install.packages("lubridate")
-#if (!"testit" %in% installed.packages()) install.packages("testit")
-#if (!"imputeTS" %in% installed.packages()) install.packages("imputeTS")
-#if (!"tidyverse" %in% installed.packages()) install.packages("tidyverse")
-#if (!"rMR" %in% installed.packages()) install.packages("rMR")
-#if (!"patchwork" %in% installed.packages()) install.packages("patchwork")
-#if (!"EML" %in% installed.packages()) install.packages("EML")
-#if (!"uuid" %in% installed.packages()) install.packages("uuid")
-#if (!"EFIstandards" %in% installed.packages()){
-#  library(devtools)
-#  install_github("eco4cast/EFIstandards")
-#}
-
-#library(mvtnorm)
-#library(ncdf4)
-#library(lubridate)
-#library(testit)
-#library(imputeTS)
-#library(tidyverse)
-#library(tools)
-#library(rMR)
-#library(EML)
-#library(EFIstandards)
-
-
 config <- yaml::read_yaml("/Users/quinn/Dropbox/Research/SSC_forecasting/FLARE_package/flare/notebook/configure_flare.yml")
 run_config <- yaml::read_yaml("/Users/quinn/Dropbox/Research/SSC_forecasting/FLARE_package/flare/notebook/run_configuration.yml")
 
 config$run_config <- run_config
 
 source(paste0(config$code_folder_old,"/","Rscripts/met_downscale/process_downscale_GEFS.R"))
-#source(paste0(code_folder_old,"/","Rscripts/glmtools.R"))
-#source(paste0(code_folder_old,"/","Rscripts/localization.R"))
-#source(paste0(code_folder_old,"/","Rscripts/extract_observations.R"))
 source(paste0(config$code_folder_old,"/","Rscripts/create_sss_input_output.R"))
-#source(paste0(config$code_folder_old,"/","Rscripts/create_inflow_outflow_file.R"))
-#source(paste0(config$code_folder_old,"/","Rscripts/read_sss_files.R"))
 
 start_datetime_local <- lubridate::as_datetime(paste0(config$run_config$start_day_local," ",config$run_config$start_time_local), tz = config$local_tzone)
 end_datetime_local <- lubridate::as_datetime(paste0(config$run_config$end_day_local," ",config$run_config$start_time_local), tz = config$local_tzone)
