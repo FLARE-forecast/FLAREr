@@ -20,31 +20,31 @@ create_obs_matrix <- function(cleaned_observations_file_long, config, start_date
 
   full_time_local <- seq(start_datetime_local, end_datetime_local, by = "1 day")
 
-  obs_methods_temp <- cbind(config$obs_config$method_1,config$obs_config$method_2,config$obs_config$method_3,config$obs_config$method_4)
-  obs_methods <- list()
-  for(i in 1:nrow(obs_methods_temp)){
+  d <- readr::read_csv(cleaned_observations_file_long,
+                       col_types = readr::cols())
 
-    values <- obs_methods_temp[i,which(!is.na(obs_methods_temp[i,]))]
-    if(length(values) == 0){
-      values <- NA
-    }
-    obs_methods[[i]] <- values
-  }
-  config$obs_config$obs_methods <- obs_methods
-
+  d$timestamp <- lubridate::with_tz(d$timestamp, tzone = config$local_tzone)
 
   obs_list <- list()
   for(i in 1:length(config$obs_config$state_names_obs)){
     print(paste0("Extracting ",config$obs_config$target_variable[i]))
-    obs_list[[i]] <- extract_observations(fname = cleaned_observations_file_long,
-                                          start_datetime_local,
-                                          end_datetime_local,
-                                          modeled_depths = config$modeled_depths,
-                                          local_tzone = config$local_tzone,
-                                          target_variable = config$obs_config$target_variable[i],
-                                          time_threshold_seconds = config$obs_config$time_threshold[i],
-                                          distance_threshold_meter = config$obs_config$distance_threshold[i],
-                                          methods = config$obs_config$obs_methods[[i]])
+
+    obs_tmp <- array(NA,dim = c(length(full_time_local),length(config$modeled_depths)))
+
+    for(k in 1:length(full_time_local)){
+      for(j in 1:length(config$modeled_depths)){
+        d1 <- d %>%
+          dplyr::filter(variable == config$obs_config$target_variable[i],
+                        timestamp == full_time_local[k],
+                        abs(depth-config$modeled_depths[j]) < config$obs_config$distance_threshold[i])
+
+        if(nrow(d1) == 1){
+          obs_tmp[k,j] <- d1$value
+        }
+      }
+    }
+
+    obs_list[[i]] <- obs_tmp
   }
 
   ####################################################

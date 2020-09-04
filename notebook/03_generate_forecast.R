@@ -4,7 +4,7 @@ run_config <- yaml::read_yaml("/Users/quinn/Dropbox/Research/SSC_forecasting/FLA
 config$run_config <- run_config
 
 source(paste0(config$code_folder_old,"/","Rscripts/met_downscale/process_downscale_GEFS.R"))
-source(paste0(config$code_folder_old,"/","Rscripts/create_sss_input_output.R"))
+#source(paste0(config$code_folder_old,"/","Rscripts/create_sss_input_output.R"))
 
 start_datetime_local <- lubridate::as_datetime(paste0(config$run_config$start_day_local," ",config$run_config$start_time_local), tz = config$local_tzone)
 end_datetime_local <- lubridate::as_datetime(paste0(config$run_config$end_day_local," ",config$run_config$start_time_local), tz = config$local_tzone)
@@ -639,6 +639,8 @@ saved_file <- flare::write_forecast_netcdf(enkf_output,
 #Create EML Metadata
 flare::create_flare_eml(file_name = saved_file,
                         enkf_output)
+
+unlink(working_directory)
 
 
 #### END START ARCHIVE CONTAINER

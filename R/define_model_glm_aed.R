@@ -131,9 +131,20 @@ run_model <- function(i,
 
     if(simulate_SSS){
       if(is.na(specified_sss_inflow_file)){
-        flare::create_sss_input_output(x_start, i, m, full_time_local, working_directory,
-                                wq_start, management_input, hist_days,
-                                forecast_sss_on, sss_depth,use_specified_sss, states_config, include_wq)
+        flare::create_sss_input_output(x_start,
+                                       i,
+                                       m,
+                                       full_time_local,
+                                       working_directory,
+                                       wq_start,
+                                       management_input,
+                                       hist_days,
+                                       forecast_sss_on,
+                                       sss_depth,
+                                       use_specified_sss,
+                                       states_config,
+                                       include_wq,
+                                       modeled_depths = config$modeled_depths)
       }else{
         file.copy(file.path(data_location, specified_sss_inflow_file), paste0(working_directory,"/sss_inflow.csv"))
         if(!is.na(specified_sss_outflow_file)){

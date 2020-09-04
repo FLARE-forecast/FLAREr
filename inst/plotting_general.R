@@ -1,92 +1,80 @@
-plotting_general <- function(pdf_file_name,
-                             output_file,
-                             save_location,
+plotting_general <- function(file_name,
                              qaqc_location){
 
-  pars <- read_csv(par_file)
+  secchi_fname <- NA
 
-  obs_config <- read_csv(obs_config_file)
+  pdf_file_name <- paste0(tools::file_path_sans_ext(file_name),".pdf")
 
-  states_config <- read_csv(states_config_file)
-
-  par_names <- pars$par_names_save
-
-  wq_names_potential <- c("temp",
-                          "OXY_oxy",
-                          "CAR_dic",
-                          "CAR_ch4",
-                          "SIL_rsi",
-                          "NIT_amm",
-                          "NIT_nit",
-                          "PHS_frp",
-                          "OGM_doc",
-                          "OGM_docr",
-                          "OGM_poc",
-                          "OGM_don",
-                          "OGM_donr",
-                          "OGM_pon",
-                          "OGM_dop",
-                          "OGM_dopr",
-                          "OGM_pop",
-                          "NCS_ss1",
-                          "PHS_frp_ads",
-                          "PHY_cyano",
-                          "PHY_cyano_IN",
-                          "PHY_cyano_IP",
-                          "PHY_green",
-                          "PHY_green_IN",
-                          "PHY_green_IP",
-                          "PHY_diatom",
-                          "PHY_diatom_IN",
-                          "PHY_diatom_IP")
-
-  combined_states_potential <- list(NIT_total = c("NIT_amm", "NIT_nit", "OGM_don","OGM_donr","OGM_pon"),
-                          PHS_total = c("PHS_frp","OGM_dop","OGM_dopr","OGM_pop"),
-                          #PHS_total = c("PHS_frp","OGM_dop","OGM_pop"),
-                          OGM_doc_total = c("OGM_doc","OGM_docr"),
-                          PHY_TCHLA = c("PHY_cyano","PHY_green","PHY_diatom"))
-
-  diagnostics_potential <- c("extc_coef",
-                             "PHY_cyano_fI",
-                             "PHY_cyano_fNit",
-                             "PHY_cyano_fPho",
-                             "PHY_cyano_fT",
-                             "PHY_green_fI",
-                             "PHY_green_fNit",
-                             "PHY_green_fPho",
-                             "PHY_green_fT",
-                             "PHY_diatom_fI",
-                             "PHY_diatom_fNit",
-                             "PHY_diatom_fPho",
-                             "PHY_diatom_fT",
-                             "rad")
-
-  biomass_to_chla <- 1/states_config$states_to_obs_mapping_1[which(str_detect(states_config$state_names, "PHY"))]
-  combined_states_conversion_potential <- list(NIT_total = c(1,1,1,1,1),
-                                     PHS_total = c(1,1,1,1,1),
-                                     OGM_doc_total = c(1,1),
-                                     PHY_TCHLA = c(1/biomass_to_chla[1], 1/biomass_to_chla[2], 1/biomass_to_chla[3]))
-
-
-  nc <- nc_open(output_file)
-  t <- ncvar_get(nc,'time')
-  local_tzone <- ncatt_get(nc, 0)$local_time_zone_of_simulation
+  nc <- ncdf4::nc_open(file_name)
+  t <- ncdf4::ncvar_get(nc,'time')
+  local_tzone <- ncdf4::ncatt_get(nc, 0)$local_time_zone_of_simulation
   full_time <- as.POSIXct(t,
                                 origin = '1970-01-01 00:00.00 UTC',
                                 tz = "UTC")
-  full_time_local <- with_tz(full_time, local_tzone)
-  full_time_day_local <- as_date(full_time_local)
+  full_time_local <- lubridate::with_tz(full_time, local_tzone)
+  full_time_day_local <- lubridate::as_date(full_time_local)
   nsteps <- length(full_time_day_local)
-  data_assimilation <- ncvar_get(nc, 'data_assimilation')
-  depths <- round(ncvar_get(nc, 'depth'),2)
+  data_assimilation <- ncdf4::ncvar_get(nc, 'data_assimilation')
+  depths <- round(ncdf4::ncvar_get(nc, 'depth'),2)
 
-  wq_names <- wq_names_potential[wq_names_potential %in% names(nc$var)]
-  combined_states_conversion <- combined_states_conversion_potential[names(combined_states_conversion_potential) %in% obs_config$state_names_obs]
-  combined_states <- combined_states_potential[names(combined_states_potential) %in% obs_config$state_names_obs]
+
+  focal_depths_plotting <- depths
+
+  var_names <- names(nc$var)
+  combined_states <- list()
+  combined_states_conversion <- list()
+  obs_methods <- list()
+  output_type <- rep(NA, length(var_names))
+  target_variable <- rep(NA, length(var_names))
+  time_threshold <- rep(NA, length(var_names))
+  distance_threshold <- rep(NA, length(var_names))
+  for(i in 1:length(var_names)){
+    tmp <- ncdf4::ncatt_get(nc, varid = var_names[i],attname = "long_name")$value
+    output_type[i] <- stringr::str_split(tmp, ":")[[1]][1]
+    combined_states[i] <- c(stringr::str_split(stringr::str_split(tmp, ":")[[1]][3], "-")[1])
+    combined_states_conversion[i] <- list(as.numeric(unlist(stringr::str_split(stringr::str_split(tmp, ":")[[1]][4], "-")[1])))
+    obs_methods[i] <- list(unlist(stringr::str_split(stringr::str_split(tmp, ":")[[1]][5], "-")[1]))
+    target_variable[i] <- list((unlist(stringr::str_split(stringr::str_split(tmp, ":")[[1]][6], "-")[1])))
+    time_threshold[i] <- list(as.numeric(unlist(stringr::str_split(stringr::str_split(tmp, ":")[[1]][7], "-")[1])))
+    distance_threshold[i] <- list(as.numeric(unlist(stringr::str_split(stringr::str_split(tmp, ":")[[1]][8], "-")[1])))
+  }
+
+  wq_names <- var_names[output_type  == "state"]
+  combined_states_conversion_index <- which(stringr::str_detect(var_names, "total") | stringr::str_detect(var_names, "PHY_TCHLA_observed"))
+
+  combined_states <- combined_states[combined_states_conversion_index]
+  combined_states_conversion <- combined_states_conversion[combined_states_conversion_index]
+
+  combined_states_names <- stringr::str_split(var_names[combined_states_conversion_index],"_")
+  for(i in 1:length(combined_states_names)){
+    combined_states_names[i] <- paste0(combined_states_names[[i]][1],"_",combined_states_names[[i]][2])
+  }
+
+  names(combined_states) <- combined_states_names
+  names(combined_states_conversion) <- combined_states_names
 
   state_names <- c(wq_names, names(combined_states))
 
-  diagnostics_names <- diagnostics_potential[diagnostics_potential %in% names(nc$var)]
+  diagnostics_names <- var_names[output_type  == "diagnostic"]
+
+  obs_names <- stringr::str_split(var_names[output_type  == "observed"],"_")
+
+
+  for(i in 1:length(obs_names)){
+    obs_names[i] <- paste0(obs_names[[i]][1],"_",obs_names[[i]][2])
+    if(obs_names[[i]] == "temp_observed"){
+      obs_names[[i]] <- "temp"
+    }
+  }
+
+  obs_methods <- obs_methods[output_type  == "observed"]
+  target_variable <- target_variable[output_type  == "observed"]
+  time_threshold <- time_threshold[output_type  == "observed"]
+  distance_threshold <- distance_threshold[output_type  == "observed"]
+
+
+  par_names <- var_names[output_type  == "parameter"]
+
 
 
   if(length(which(data_assimilation == 0)) > 0){
@@ -99,22 +87,22 @@ plotting_general <- function(pdf_file_name,
   par_list <- list()
   if(length(par_names) > 0){
     for(par in 1:length(par_names)){
-      par_list[[par]] <- ncvar_get(nc, par_names[par])
+      par_list[[par]] <- ncdf4::ncvar_get(nc, par_names[par])
     }
   }
 
   state_list <- list()
   for(s in 1:length(wq_names)){
-    state_list[[s]] <- ncvar_get(nc, wq_names[s])
+    state_list[[s]] <- ncdf4::ncvar_get(nc, wq_names[s])
   }
 
   if(length(combined_states) > 0){
   for(i in 1:length(combined_states)){
     for(s in 1:length(combined_states[[i]])){
       if(s > 1){
-        tmp_list <- tmp_list + ncvar_get(nc, combined_states[[i]][s]) * combined_states_conversion[[i]][s]
+        tmp_list <- tmp_list + ncdf4::ncvar_get(nc, combined_states[[i]][s]) * combined_states_conversion[[i]][s]
       }else{
-        tmp_list <- ncvar_get(nc, combined_states[[i]][s]) * combined_states_conversion[[i]][s]
+        tmp_list <- ncdf4::ncvar_get(nc, combined_states[[i]][s]) * combined_states_conversion[[i]][s]
       }
     }
     state_list[[length(wq_names)+i]] <- tmp_list
@@ -125,7 +113,7 @@ plotting_general <- function(pdf_file_name,
 
   diagnostic_list <- list()
   for(s in 1:length(diagnostics_names)){
-    diagnostic_list[[s]] <- ncvar_get(nc, diagnostics_names[s])
+    diagnostic_list[[s]] <- ncdf4::ncvar_get(nc, diagnostics_names[s])
   }
 
   names(diagnostic_list) <- diagnostics_names
@@ -134,55 +122,56 @@ plotting_general <- function(pdf_file_name,
 
   cleaned_observations_file_long <- paste0(qaqc_location,
                                            "/observations_postQAQC_long.csv")
+  d <- readr::read_csv(cleaned_observations_file_long,
+                       col_types = readr::cols())
+
+  d$timestamp <- lubridate::with_tz(d$timestamp, tzone = local_tzone)
 
   #####
 
-  obs_methods_temp <- cbind(obs_config$method_1,obs_config$method_2,obs_config$method_3,obs_config$method_4)
-  obs_methods <- list()
-  for(i in 1:nrow(obs_methods_temp)){
-
-    values <- obs_methods_temp[i,which(!is.na(obs_methods_temp[i,]))]
-    if(length(values) == 0){
-      values <- NA
-    }
-    obs_methods[[i]] <- values
-  }
-  obs_config$obs_methods <- obs_methods
-
-
   obs_list <- list()
-  for(i in 1:length(obs_config$state_names_obs)){
-    print(paste0("Extracting ",obs_config$target_variable[i]))
-    obs_list[[i]] <- extract_observations(fname = cleaned_observations_file_long,
-                                          full_time_local,
-                                          modeled_depths = modeled_depths,
-                                          local_tzone,
-                                          target_variable = obs_config$target_variable[i],
-                                          time_threshold_seconds = obs_config$time_threshold[i],
-                                          distance_threshold_meter = obs_config$distance_threshold[i],
-                                          methods = obs_config$obs_methods[[i]])
+  for(i in 1:length(obs_names)){
+    print(paste0("Extracting ",target_variable[i]))
+
+    obs_tmp <- array(NA,dim = c(length(full_time_local),length(depths)))
+
+    for(k in 1:length(full_time_local)){
+      for(j in 1:length(depths)){
+        d1 <- d %>%
+          dplyr::filter(variable == target_variable[i],
+                        timestamp == full_time_local[k],
+                        abs(depth-depths[j]) < distance_threshold[i])
+
+        if(nrow(d1) == 1){
+          obs_tmp[k,j] <- d1$value
+        }
+      }
+    }
+
+    obs_list[[i]] <- obs_tmp
   }
 
   ####################################################
   #### STEP 7: CREATE THE Z ARRAY (OBSERVATIONS x TIME)
   ####################################################
 
-  z <- array(NA, dim = c(nsteps, length(depths), length(obs_config$state_names_obs)))
-
-  for(i in 1:nrow(obs_config)){
-    z[ , , i] <-  obs_list[[i]]
+  obs <- array(NA, dim = c(nsteps, length(depths), length(obs_names)))
+  for(i in 1:length(obs_names)){
+    obs[ , , i] <-  obs_list[[i]]
   }
+
 
   if(length(focal_depths_plotting) < 4){
     plot_height <- 3
   }else{
     plot_height <- 8
   }
-  pdf(paste0(save_location,'/',pdf_file_name, ".pdf"),width = 11, height = plot_height)
+  pdf(pdf_file_name,width = 11, height = plot_height)
 
   for(i in 1:length(state_names)){
 
     curr_var <- state_list[[i]]
+    print(state_names[i])
 
 
     mean_var <- array(NA, dim = c(length(depths), length(full_time_local)))
@@ -201,18 +190,18 @@ plotting_general <- function(pdf_file_name,
       date <- c(date, rep(full_time_local[j], length(depths)))
     }
 
-    if(state_names[i] %in% obs_config$state_names_obs){
-      obs_index <- which(obs_config$state_names_obs == state_names[i])
-      obs <- c(t(z[, ,obs_index]))
+    if(state_names[i] %in% unlist(obs_names)){
+      obs_index <- which(obs_names == state_names[i])
+      obs_curr <- c(t(obs[, ,obs_index]))
     }else{
-      obs <- as.numeric(rep(NA, length(date)))
+      obs_curr <- as.numeric(rep(NA, length(date)))
     }
 
-    curr_tibble <- tibble(date = as_datetime(date),
+    curr_tibble <- tibble(date = lubridate::as_datetime(date),
                           curr_var = c(mean_var),
                           upper_var = c(upper_var),
                           lower_var = c(lower_var),
-                          observed = obs,
+                          observed = obs_curr,
                           depth = rep(depths, length(full_time_local))) %>%
       filter(depth %in% focal_depths_plotting)
 
@@ -243,7 +232,11 @@ plotting_general <- function(pdf_file_name,
     plist <- list()
 
     for(i in 1:length(par_names)){
-      curr_var <- ncvar_get(nc, par_names[i])
+
+      print(par_names[i])
+
+
+      curr_var <- par_list[[i]]
 
       mean_var <- array(NA, dim = c(length(full_time_local)))
       upper_var <- array(NA, dim = c(length(full_time_local)))
@@ -264,7 +257,7 @@ plotting_general <- function(pdf_file_name,
         forecast_start_day_alpha <- 0.0
       }
 
-      curr_tibble <- tibble(date = as_datetime(date),
+      curr_tibble <- tibble(date = lubridate::as_datetime(date),
                             curr_var = c(mean_var),
                             upper_var = c(upper_var),
                             lower_var = c(lower_var))
@@ -281,13 +274,15 @@ plotting_general <- function(pdf_file_name,
         theme(axis.text.x = element_text(angle = 90, size = 10))
     }
 
-    print(wrap_plots(plist))
+    print(patchwork::wrap_plots(plist))
   }
 
   if(length(diagnostics_names) > 0 )
     for(i in 1:length(diagnostics_names)){
-
+      print(diagnostics_names[i])
       curr_var <- diagnostic_list[[i]]
+
+
 
 
       mean_var <- array(NA, dim = c(length(depths), length(full_time_local)))
@@ -306,7 +301,7 @@ plotting_general <- function(pdf_file_name,
         date <- c(date, rep(full_time_local[j], length(depths)))
       }
 
-      curr_tibble <- tibble(date = as_datetime(date),
+      curr_tibble <- tibble(date = lubridate::as_datetime(date),
                             curr_var = c(mean_var),
                             upper_var = c(upper_var),
                             lower_var = c(lower_var),
@@ -337,8 +332,10 @@ plotting_general <- function(pdf_file_name,
 
   if("extc_coef" %in% diagnostics_names){
 
+    print("secchi")
+
     if(!is.na(secchi_fname)){
-      obs <- read_csv(secchi_fname) %>%
+      obs_curr <- read_csv(secchi_fname) %>%
         filter(Reservoir == "FCR" & Site == 50) %>%
         select(DateTime, Secchi_m) %>%
         mutate(DateTime = mdy_hm(DateTime)) %>%
@@ -348,9 +345,11 @@ plotting_general <- function(pdf_file_name,
 
 
       full_time_local_obs <- tibble(date = as_date(full_time_local))
-      obs <- obs %>%
+      obs_curr <- obs_curr %>%
         right_join(full_time_local_obs, by = "date") %>%
         select(Secchi_m)
+    }else{
+      obs_curr <- rep(NA, length(full_time_local))
     }
 
 
@@ -371,11 +370,11 @@ plotting_general <- function(pdf_file_name,
     }
 
 
-    curr_tibble <- tibble(date = as_datetime(full_time_local),
+    curr_tibble <- tibble(date = lubridate::as_datetime(full_time_local),
                           curr_var = c(mean_var),
                           upper_var = c(upper_var),
                           lower_var = c(lower_var),
-                          observed = unlist(obs))
+                          observed = unlist(obs_curr))
 
     if(forecast_index > 0){
       forecast_start_day <- full_time_local[forecast_index-1]
@@ -402,8 +401,8 @@ plotting_general <- function(pdf_file_name,
 
   dev.off()
 
-  if(file.exists(cleaned_observations_file_long)){
-    unlink(cleaned_observations_file_long)
-  }
+  #if(file.exists(cleaned_observations_file_long)){
+  #  unlink(cleaned_observations_file_long)
+  #}
 }
 

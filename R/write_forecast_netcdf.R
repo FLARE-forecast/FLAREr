@@ -100,29 +100,77 @@ write_forecast_netcdf <- function(enkf_output,
 
   index <- 11
 
+  obs_methods_temp <- cbind(config$obs_config$method_1,config$obs_config$method_2,config$obs_config$method_3,config$obs_config$method_4)
+  obs_methods <- list()
+  for(i in 1:nrow(obs_methods_temp)){
+
+    values <- obs_methods_temp[i,which(!is.na(obs_methods_temp[i,]))]
+    if(length(values) == 0){
+      values <- NA
+    }
+    obs_methods[[i]] <- values
+  }
+
 
   for(i in 1:length(config$obs_config$state_names_obs)){
-      def_list[[index+i]] <-ncdf4::ncvar_def(paste0(config$obs_config$state_names_obs[i],"_observed"),config$obs_config$obs_units[i],list(timedim, depthdim),fillvalue,paste0("observed: ", config$obs_config$state_names_obs[i]),prec="single")
+    long_name1 <- "observed"
+    long_name2 <- config$obs_config$state_names_obs[i]
+    long_name3 <- NULL
+    long_name4 <- NULL
+    long_name5 <- NULL
+
+    for(j in 1:length(unlist(obs_methods[i]))){
+      if(is.null(long_name5)){
+        long_name5 <- obs_methods[[i]][j]
+      }else{
+        long_name5 <- paste(long_name5, obs_methods[[i]][j], sep = "-")
+      }
+    }
+    long_name6 <- config$obs_config$target_variable[i]
+    long_name7 <- config$obs_config$time_threshold[i]
+    long_name8 <- config$obs_config$distance_threshold[i]
+
+    for(j in 1:nrow(config$states_config)){
+      for(k in 1:length(config$states_config$states_to_obs[[j]])){
+        if(!is.na(config$states_config$states_to_obs[[j]][k])){
+          if(config$states_config$states_to_obs[[j]][k] == i){
+            if(is.null(long_name3)){
+              long_name3 <- config$states_config$state_names[[j]]
+              long_name4 <- config$states_config$states_to_obs_mapping[[j]][k]
+            }else{
+              long_name3 <- paste(long_name3, config$states_config$state_names[[j]],sep="-")
+              long_name4 <- paste(long_name4, config$states_config$states_to_obs_mapping[[j]][k],sep="-")
+            }
+          }
+        }
+        long_name <- paste(long_name1,long_name2,long_name3,long_name4, long_name5, long_name6, long_name7, long_name8, sep = ":")
+      }
+    }
+
+
+
+
+    def_list[[index+i]] <-ncdf4::ncvar_def(paste0(config$obs_config$state_names_obs[i],"_observed"),config$obs_config$obs_units[i],list(timedim, depthdim),fillvalue,long_name,prec="single")
   }
 
   index <- index + length(config$obs_config$state_names_obs)
 
   if(npars > 0){
     for(par in 1:npars){
-      def_list[[index+par]] <-ncdf4::ncvar_def(config$pars_config$par_names_save[par],config$pars_config$par_units[par],list(timedim,ensdim),fillvalue,paste0("parameter :",config$pars_config$par_names_save[par]),prec="single")
+      def_list[[index+par]] <-ncdf4::ncvar_def(config$pars_config$par_names_save[par],config$pars_config$par_units[par],list(timedim,ensdim),fillvalue,paste0("parameter:",config$pars_config$par_names_save[par]),prec="single")
     }
   }
 
 
   if(config$include_wq){
     for(s in 2:length(config$states_config$state_names)){
-      def_list[[index+npars+s-1]]<- ncdf4::ncvar_def(config$states_config$state_names[s],"mmol m-3",list(timedim,depthdim, ensdim),fillvalue,paste("state :", config$states_config$state_names[s]),prec="single")
+      def_list[[index+npars+s-1]]<- ncdf4::ncvar_def(config$states_config$state_names[s],"mmol m-3",list(timedim,depthdim, ensdim),fillvalue,paste("state:", config$states_config$state_names[s]),prec="single")
     }
   }
 
   if(length(config$diagnostics_names) > 0){
     for(s in 1:length(config$diagnostics_names)){
-      def_list[[index+npars+length(config$states_config$state_names)-1 + s]]<- ncdf4::ncvar_def(config$diagnostics_names[s],"-",list(timedim,depthdim, ensdim),fillvalue,paste0("diagnostic: ",config$diagnostics_names[s]),prec="single")
+      def_list[[index+npars+length(config$states_config$state_names)-1 + s]]<- ncdf4::ncvar_def(config$diagnostics_names[s],"-",list(timedim,depthdim, ensdim),fillvalue,paste0("diagnostic:",config$diagnostics_names[s]),prec="single")
     }
   }
 

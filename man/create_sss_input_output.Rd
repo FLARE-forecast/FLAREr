@@ -17,7 +17,8 @@ create_sss_input_output(
   sss_depth,
   use_specified_sss,
   states_config,
-  include_wq
+  include_wq,
+  modeled_depths
 )
 }
 \arguments{

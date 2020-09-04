@@ -187,8 +187,10 @@ realtime_met_station_location: carina-data
 manual_data_location: manual-data
 realtime_inflow_data_location: diana-data
 
-combined_obs_file: manual-data/observations_postQAQC_long.csv
-insitu_obs_fname: mia-data/Catwalk.csv, manual-data/Catwalk_cleanedEDI.csv
+combined_obs_file: .na #manual-data/observations_postQAQC_long.csv
+insitu_obs_fname: 
+    - mia-data/Catwalk.csv
+    - manual-data/Catwalk_cleanedEDI.csv
 secchi_fname: manual-data/Secchi_depth_2013-2019.csv
 ctd_fname: manual-data/CTD_final_2013_2019.csv
 ch4_fname: manual-data/DATASET_for_EDI_LOL_MS_10May20.csv
@@ -203,20 +205,23 @@ ctd_2_exo_sensor_do: [0, 1] #c(-10.770, 1.061)
 exo_sensor_2_grab_sample_fdom: [-38.95, 22.47]
 focal_depths: .na
 
-specified_inflow1: manual-data/FCR_weir_inflow_2013_2019_20200624_allfractions_2poolsDOC.csv
-specified_inflow2: manual-data/FCR_wetland_inflow_2013_2019_20200713_allfractions_2DOCpools.csv
-specified_sss_inflow_file: manual-data/FCR_SSS_inflow_2013_2019_20200701_allfractions_2DOCpools.csv
+specified_inflow1: .na #manual-data/FCR_weir_inflow_2013_2019_20200624_allfractions_2poolsDOC.csv
+specified_inflow2: .na #manual-data/FCR_wetland_inflow_2013_2019_20200713_allfractions_2DOCpools.csv
+specified_sss_inflow_file: .na #manual-data/FCR_SSS_inflow_2013_2019_20200701_allfractions_2DOCpools.csv
 specified_sss_outflow_file: .na
-specified_outflow1: manual-data/FCR_spillway_outflow_SUMMED_WeirWetland_2013_2019_20200615.csv
+specified_outflow1: .na #manual-data/FCR_spillway_outflow_SUMMED_WeirWetland_2013_2019_20200615.csv
 specified_metfile: .na #NA #paste0(manual_data_location, "/met_full_postQAQC.csv")
 
 maintenance_file: /mia-data/CAT_MaintenanceLog.txt
 
-met_file: manual-data/met_full_postQAQC.csv
-met_raw_obs_fname: [carina-data/FCRmet.csv, manual-data/Met_final_2015_2019.csv]
-
-inflow1_file: manual-data/inflow_postQAQC.csv
-inflow_raw_file1: [diana-data/FCRweir.csv, manual-data/inflow_for_EDI_2013_06Mar2020.csv]
+met_file: .na #manual-data/met_full_postQAQC.csv
+met_raw_obs_fname: 
+    - carina-data/FCRmet.csv
+    - manual-data/Met_final_2015_2019.csv
+inflow1_file: .na #manual-data/inflow_postQAQC.csv
+inflow_raw_file1: 
+    - diana-data/FCRweir.csv 
+    - manual-data/inflow_for_EDI_2013_06Mar2020.csv
 
 outflow_file1: manual-data/FCR_spillway_outflow_newEDI_SUMMED_WeirWetland_2013_2018_20190912.csv
 
@@ -261,19 +266,4 @@ diagnostics_names:  [extc_coef,
 #Push results to github?
 pull_from_git: TRUE
 push_to_git: FALSE
-
-#########################################
-# Plotting related options
-#######################################
-
-
-
-# Options for printing function
-# Depths (meters) that the water quality variables are plotted
-focal_depths_plotting: modeled_depths
-#Depths that are plotted for the manager plot
-focal_depths_manager: [1, 5, 8] #c(2, 4, 9) #c(4,16,25) #c(4,16,25)
-#Indexes for the depths that are compared to calculate turnover
-turnover_index_1: 1 #1 #4
-turnover_index_2: 8 #8 #25
 

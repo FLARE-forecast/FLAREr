@@ -1,10 +1,21 @@
 config <- yaml::read_yaml("/Users/quinn/Dropbox/Research/SSC_forecasting/FLARE_package/flare/notebook/configure_flare.yml")
-config_run <- yaml::read_yaml("/Users/quinn/Dropbox/Research/SSC_forecasting/FLARE_package/flare/notebook/run_configuration.yml")
+run_config <- yaml::read_yaml("/Users/quinn/Dropbox/Research/SSC_forecasting/FLARE_package/flare/notebook/run_configuration.yml")
+config$obs_config <- readr::read_csv(file.path(run_config$forecast_location, config$obs_config_file), col_types = readr::cols())
 
+config$run_config <- run_config
 
-source(paste0(config$code_folder_old,"/","Rscripts/",config$lake_name_code,"/in_situ_qaqc.R"))
-source(paste0(config$code_folder_old,"/","Rscripts/",config$lake_name_code,"/met_qaqc.R"))
-source(paste0(config$code_folder_old,"/","Rscripts/",config$lake_name_code,"/inflow_qaqc.R"))
+library(tidyverse)
+library(lubridate)
+
+source(system.file("extract_CTD.R", package="flare"))
+source(system.file("extract_nutrients.R", package="flare"))
+source(system.file("temp_oxy_chla_qaqc.R", package="flare"))
+source(system.file("extract_ch4.R", package="flare"))
+source(system.file("extract_secchi.R", package="flare"))
+source(system.file("in_situ_qaqc.R", package="flare"))
+source(system.file("met_qaqc.R", package="flare"))
+source(system.file("inflow_qaqc.R", package="flare"))
+
 
 cleaned_met_file <- paste0(config$qaqc_data_location, "/met_full_postQAQC.csv")
 if(is.na(config$met_file)){
@@ -12,8 +23,7 @@ if(is.na(config$met_file)){
            qaqc_file = file.path(config$data_location, config$met_raw_obs_fname[2]),
            cleaned_met_file,
            input_file_tz = "EST",
-           config$local_tzone,
-           full_time_local)
+           config$local_tzone)
 }else{
   file.copy(file.path(config$data_location,config$met_file), cleaned_met_file, overwrite = TRUE)
 }
@@ -38,11 +48,12 @@ if(is.na(config$combined_obs_file)){
   in_situ_qaqc(insitu_obs_fname = file.path(config$data_location,config$insitu_obs_fname),
                data_location = config$data_location,
                maintenance_file = file.path(config$data_location,config$maintenance_file),
-               ctd_fname = config$ctd_fname,
-               nutrients_fname = config$nutrients_fname,
+               ctd_fname = file.path(config$data_location,config$ctd_fname),
+               nutrients_fname =  file.path(config$data_location, config$nutrients_fname),
                cleaned_observations_file_long = cleaned_observations_file_long,
-               config$lake_name_code,
-               config$code_folder)
+               lake_name_code = config$lake_name_code,
+               code_folder = config$code_folder,
+               config)
 }else{
   file.copy(file.path(config$data_location,config$combined_obs_file), cleaned_observations_file_long, overwrite = TRUE)
 }
