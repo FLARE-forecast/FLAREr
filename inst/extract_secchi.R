@@ -3,7 +3,8 @@ extract_secchi <- function(fname,
                         local_tzone,
                         focal_depths){
 
-  d <- read_csv(fname) %>%
+  d <- read_csv(fname,
+                col_types = readr::cols()) %>%
     filter(Reservoir == "FCR" & Site == 50) %>%
     select(DateTime, Secchi_m) %>%
     mutate(DateTime = mdy_hm(DateTime),

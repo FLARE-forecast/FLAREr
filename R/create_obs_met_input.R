@@ -29,7 +29,7 @@ create_obs_met_input <- function(fname,
                               full_time_local[length(full_time_local)],
                               by = "1 hour")
 
-  d <- readr::read_csv(fname)
+  d <- readr::read_csv(fname, col_types = readr::cols())
 
   d$time <- lubridate::force_tz(d$time, tz = local_tzone)
 

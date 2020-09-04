@@ -3,7 +3,8 @@ extract_CTD <- function(fname,
                         local_tzone,
                         focal_depths){
 
-  d <- read_csv(fname, guess_max = 1000000) %>%
+  d <- read_csv(fname, guess_max = 1000000,
+                col_types = readr::cols()) %>%
     mutate(Date = force_tz(Date, tzone = input_file_tz),
            Date = with_tz(Date, tzone = local_tzone)) %>%
     filter(Reservoir == "FCR" & Site == "50") %>%
