@@ -1,3 +1,21 @@
+##' @title Download and Downscale NOAA GEFS for a single site
+##' @return None
+##'
+##' @param site_index, index of site_list, lat_list, lon_list to be downloaded
+##' @param lat_list, vector of latitudes that correspond to site codes
+##' @param lon_list, vector of longitudes that correspond to site codes
+##' @param site_list, vector of site codes, used in directory and file name generation
+##' @param downscale, logical specifying whether to downscale from 6-hr to 1-hr
+##' @param overwrite, logical stating to overwrite any existing output_file
+##' @param model_name, directory name for the 6-hr forecast, this will be used in directory and file name generation
+##' @param model_name_ds, directory name for the 1-hr forecast, this will be used in directory and file name generation
+##' @param output_directory, directory where the model output will be save
+##' @export
+##'
+##' @author Quinn Thomas
+##'
+##'
+
 plotting_general <- function(file_name,
                              qaqc_location){
 
@@ -209,22 +227,22 @@ plotting_general <- function(file_name,
       forecast_start_day <- full_time_local[forecast_index-1]
       forecast_start_day_alpha <- 1.0
     }else{
-      forecast_start_day <- last(full_time_local)
+      forecast_start_day <- dplyr::last(full_time_local)
       forecast_start_day_alpha <- 0.0
     }
 
-    p <- ggplot2::ggplot(curr_tibble, aes(x = date)) +
+    p <- ggplot2::ggplot(curr_tibble, ggplot2::aes(x = date)) +
       ggplot2::facet_wrap(~depth, scales = "free") +
-      ggplot2::geom_ribbon(aes(ymin = lower_var, ymax = upper_var),
+      ggplot2::geom_ribbon(ggplot2::aes(ymin = lower_var, ymax = upper_var),
                   alpha = 0.70,
                   fill = "gray") +
-      ggplot2::geom_line(aes(y = curr_var), size = 0.5) +
+      ggplot2::geom_line(ggplot2::aes(y = curr_var), size = 0.5) +
       ggplot2::geom_vline(xintercept = forecast_start_day,
                  alpha = forecast_start_day_alpha) +
-      ggplot2::geom_point(aes(y = observed), size = 0.5, color = "red") +
+      ggplot2::geom_point(ggplot2::aes(y = observed), size = 0.5, color = "red") +
       ggplot2::theme_light() +
       ggplot2::labs(x = "Date", y = state_names[i], title = state_names[i]) +
-      ggplot2::theme(axis.text.x = element_text(angle = 90, size = 10))
+      ggplot2::theme(axis.text.x = ggplot2::element_text(angle = 90, size = 10))
     print(p)
   }
 
@@ -253,7 +271,7 @@ plotting_general <- function(file_name,
         forecast_start_day <- full_time_local[forecast_index-1]
         forecast_start_day_alpha <- 1.0
       }else{
-        forecast_start_day <- last(full_time_local)
+        forecast_start_day <- dplyr::last(full_time_local)
         forecast_start_day_alpha <- 0.0
       }
 
@@ -262,16 +280,16 @@ plotting_general <- function(file_name,
                             upper_var = c(upper_var),
                             lower_var = c(lower_var))
 
-      plist[[i]] <- ggplot2::ggplot(curr_tibble, aes(x = date)) +
-        ggplot2::geom_ribbon(aes(ymin = lower_var, ymax = upper_var),
+      plist[[i]] <- ggplot2::ggplot(curr_tibble, ggplot2::aes(x = date)) +
+        ggplot2::geom_ribbon(ggplot2::aes(ymin = lower_var, ymax = upper_var),
                     alpha = 0.70,
                     fill = "gray") +
-        ggplot2::geom_line(aes(y = curr_var), size = 0.5) +
+        ggplot2::geom_line(ggplot2::aes(y = curr_var), size = 0.5) +
         ggplot2::geom_vline(xintercept = forecast_start_day,
                    alpha = forecast_start_day_alpha) +
         ggplot2::theme_bw() +
         ggplot2::labs(x = "Date", y = par_names[i]) +
-        ggplot2::theme(axis.text.x = element_text(angle = 90, size = 10))
+        ggplot2::theme(axis.text.x = ggplot2::element_text(angle = 90, size = 10))
     }
 
     print(patchwork::wrap_plots(plist))
@@ -312,21 +330,21 @@ plotting_general <- function(file_name,
         forecast_start_day <- full_time_local[forecast_index-1]
         forecast_start_day_alpha <- 1.0
       }else{
-        forecast_start_day <- last(full_time_local)
+        forecast_start_day <- dplyr::last(full_time_local)
         forecast_start_day_alpha <- 0.0
       }
 
-      p <- ggplot2::ggplot(curr_tibble, aes(x = date)) +
+      p <- ggplot2::ggplot(curr_tibble, ggplot2::aes(x = date)) +
         ggplot2::facet_wrap(~depth) +
-        ggplot2::geom_ribbon(aes(ymin = lower_var, ymax = upper_var),
+        ggplot2::geom_ribbon(ggplot2::aes(ymin = lower_var, ymax = upper_var),
                     alpha = 0.70,
                     fill = "gray") +
-        ggplot2::geom_line(aes(y = curr_var), size = 0.5) +
+        ggplot2::geom_line(ggplot2::aes(y = curr_var), size = 0.5) +
         ggplot2::geom_vline(xintercept = forecast_start_day,
                    alpha = forecast_start_day_alpha) +
         ggplot2::theme_light() +
         ggplot2::labs(x = "Date", y = diagnostics_names[i], title = diagnostics_names[i]) +
-        ggplot2::theme(axis.text.x = element_text(angle = 90, size = 10))
+        ggplot2::theme(axis.text.x = ggplot2::element_text(angle = 90, size = 10))
       print(p)
     }
 
@@ -380,22 +398,22 @@ plotting_general <- function(file_name,
       forecast_start_day <- full_time_local[forecast_index-1]
       forecast_start_day_alpha <- 1.0
     }else{
-      forecast_start_day <- last(full_time_local)
+      forecast_start_day <- dplyr::last(full_time_local)
       forecast_start_day_alpha <- 0.0
     }
 
-    p <- ggplot2::ggplot(curr_tibble, aes(x = date)) +
-      ggplot2::geom_ribbon(aes(ymin = lower_var, ymax = upper_var),
+    p <- ggplot2::ggplot(curr_tibble, ggplot2::aes(x = date)) +
+      ggplot2::geom_ribbon(ggplot2::aes(ymin = lower_var, ymax = upper_var),
                   alpha = 0.70,
                   fill = "gray") +
-      ggplot2::geom_line(aes(y = curr_var), size = 0.5) +
+      ggplot2::geom_line(ggplot2::aes(y = curr_var), size = 0.5) +
       ggplot2::scale_y_reverse() +
       ggplot2::geom_vline(xintercept = forecast_start_day,
                  alpha = forecast_start_day_alpha) +
-      ggplot2::geom_point(aes(y = observed), size = 1, color = "red") +
+      ggplot2::geom_point(ggplot2::aes(y = observed), size = 1, color = "red") +
       ggplot2::theme_light() +
       ggplot2::labs(x = "Date", y = "Sechi depth (m)", title = "Sechi depth") +
-      ggplot2::theme(axis.text.x = element_text(angle = 90, size = 10))
+      ggplot2::theme(axis.text.x = ggplot2::element_text(angle = 90, size = 10))
     print(p)
   }
 

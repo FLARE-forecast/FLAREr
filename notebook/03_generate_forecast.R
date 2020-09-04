@@ -3,8 +3,27 @@ run_config <- yaml::read_yaml("/Users/quinn/Dropbox/Research/SSC_forecasting/FLA
 
 config$run_config <- run_config
 
-source(paste0(config$code_folder_old,"/","Rscripts/met_downscale/process_downscale_GEFS.R"))
-#source(paste0(config$code_folder_old,"/","Rscripts/create_sss_input_output.R"))
+#library(tidyverse)
+
+#Load the NOAA GEFS script because they aren't officially part of the
+#package yet
+#source(system.file("process_downscale_GEFS.R", package="flare"))
+#source(system.file("process_GEFS.R", package="flare"))
+#source(system.file("check_CI.R", package="flare"))
+#source(system.file("aggregate_to_daily.R", package="flare"))
+#source(system.file("aggregate_obs_to_hrly.R", package="flare"))
+#source(system.file("ShortWave_to_hrly.R", package="flare"))
+#source(system.file("daily_debias_from_coeff.R", package="flare"))
+#source(system.file("downscale_met.R", package="flare"))
+#source(system.file("fit_downscaling_parameters.R", package="flare"))
+#source(system.file("daily_to_6hr.R", package="flare"))
+#source(system.file("spline_to_hourly.R", package="flare"))
+#source(system.file("prep_for.R", package="flare"))
+#source(system.file("plot_downscaled_met.R", package="flare"))
+#source(system.file("add_noise.R", package="flare"))
+#source(system.file("repeat_6hr_to_hrly.R", package="flare"))
+#source(system.file("compare_output_to_obs.R", package="flare"))
+#source(system.file("solar_geom.R", package="flare"))
 
 start_datetime_local <- lubridate::as_datetime(paste0(config$run_config$start_day_local," ",config$run_config$start_time_local), tz = config$local_tzone)
 end_datetime_local <- lubridate::as_datetime(paste0(config$run_config$end_day_local," ",config$run_config$start_time_local), tz = config$local_tzone)
@@ -15,7 +34,7 @@ if(is.na(config$run_config$forecast_start_day_local)){
   forecast_start_datetime_local <- lubridate::as_datetime(paste0(config$run_config$forecast_start_day_local," ",config$run_config$start_time_local), tz = config$local_tzone)
 }
 
-forecast_days <- as.numeric(forecast_start_datetime_local - end_datetime_local)
+forecast_days <- as.numeric(end_datetime_local - forecast_start_datetime_local)
 
 
 
@@ -236,7 +255,7 @@ if(missing_met  == FALSE){
                        "LongWave" = "LongWave",
                        "Rain" = "Rain")
 
-  temp_met_file<- process_downscale_GEFS(folder = config$code_folder,
+  temp_met_file<- flare::process_downscale_GEFS(folder = config$code_folder,
                                          noaa_location = config$noaa_location,
                                          input_met_file = cleaned_met_file,
                                          working_directory,
@@ -245,7 +264,7 @@ if(missing_met  == FALSE){
                                          file_name,
                                          local_tzone = config$local_tzone,
                                          FIT_PARAMETERS,
-                                         DOWNSCALE_MET,
+                                         DOWNSCALE_MET = config$downscale_met,
                                          met_downscale_uncertainty = FALSE,
                                          compare_output_to_obs = FALSE,
                                          VarInfo,
@@ -256,14 +275,16 @@ if(missing_met  == FALSE){
                                          last_obs_date = lubridate::as_date(config$met_ds_obs_end),
                                          input_met_file_tz = config$local_tzone,
                                          weather_uncertainty = config$weather_uncertainty,
-                                         obs_met_outfile)
+                                         obs_met_outfile,
+                                         lake_latitude = config$lake_latitude,
+                                         lake_longitude = config$lake_longitude)
 
   met_file_names[1] <- temp_met_file[1]
 }
 
 ###CREATE FUTURE MET FILES
 if(forecast_days > 0 & config$use_future_met){
-  in_directory <- paste0(config$noaa_location)
+  in_directory <- file.path(config$data_location, config$noaa_location)
   out_directory <- working_directory
   file_name <- forecast_base_name
 
@@ -306,8 +327,8 @@ if(forecast_days > 0 & config$use_future_met){
                        "LongWave" = "LongWave",
                        "Rain" = "Rain")
 
-  met_file_names[] <- process_downscale_GEFS(folder = config$code_folder,
-                                             noaa_location = config$noaa_location,
+  met_file_names[] <- flare::process_downscale_GEFS(folder = config$code_folder,
+                                             noaa_location = file.path(config$data_location, config$noaa_location),
                                              input_met_file = cleaned_met_file,
                                              working_directory,
                                              n_ds_members = config$n_ds_members,
@@ -315,7 +336,7 @@ if(forecast_days > 0 & config$use_future_met){
                                              file_name,
                                              local_tzone = config$local_tzone,
                                              FIT_PARAMETERS,
-                                             DOWNSCALE_MET,
+                                             DOWNSCALE_MET = config$downscale_met,
                                              met_downscale_uncertainty = FALSE,
                                              compare_output_to_obs = FALSE,
                                              VarInfo,
@@ -326,8 +347,11 @@ if(forecast_days > 0 & config$use_future_met){
                                              last_obs_date = lubridate::as_date(config$met_ds_obs_end),
                                              input_met_file_tz = config$local_tzone,
                                              weather_uncertainty = config$weather_uncertainty,
-                                             obs_met_outfile)
-}
+                                             obs_met_outfile,
+                                             lake_latitude = config$lake_latitude,
+                                             lake_longitude = config$lake_longitude)
+
+  }
 
 inflow_met_file_names <- met_file_names
 

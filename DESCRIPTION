@@ -28,4 +28,7 @@ Imports:
     imputeTS,
     emld,
     tibble,
-    tools
+    tools,
+    plyr,
+    ggplot2,
+    rMR
