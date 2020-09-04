@@ -242,7 +242,12 @@ run_model <- function(i,
   while(!pass){
     unlink(paste0(working_directory, "/output.nc"))
 
-    if(machine == "unix" | machine == "mac"){
+    if(machine == "unix"){
+      system2(paste0(working_directory, "/", "glm_linux"),
+              stdout = FALSE,
+              stderr = FALSE,
+              env = paste0("DYLD_LIBRARY_PATH=",working_directory))
+    }else if(machine == "mac"){
       system2(paste0(working_directory, "/", "glm"),
               stdout = FALSE,
               stderr = FALSE,
