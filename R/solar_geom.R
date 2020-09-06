@@ -1,11 +1,11 @@
-##' @name solar_geom
-##' @title solar_geom
-##' @export
-##' @author Mike Dietze
-##' @description calculates potential top-of-atmosphere shortwave radiation as a function of day of year and location
-##' @param doy time as day of year. Integers indicated midnight.
-##' @param lon longitude
-##' @param lat latitude
+#' @name solar_geom
+#' @title solar_geom
+#' @author Mike Dietze
+#' @description calculates potential top-of-atmosphere shortwave radiation as a function of day of year and location
+#' @param doy time as day of year. Integers indicated midnight.
+#' @param lon longitude
+#' @param lat latitude
+#' @noRd
 solar_geom <- function(doy, lon, lat) {
 
   dt <- median(diff(doy)) * 86400 # average number of seconds in time interval

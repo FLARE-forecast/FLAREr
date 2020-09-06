@@ -18,7 +18,7 @@
 #'@examples
 #'glm_nml <- read_nml()
 #'print(glm_nml)
-#'@export
+#'@noRd
 read_nml  <-	function(nml_file = 'template'){
 
   #nml_file <- nml_path_norm(nml_file)
@@ -131,6 +131,7 @@ buildVal	<-	function(textLine, lineNum, blckName){
 #' @param values a vector of strings containing either .false. or .true.
 #' @return a logical vector
 #' @keywords internal
+#' @noRd
 from.glm_boolean <- function(values){
 
   logicals <- sapply(values, FUN = function(x){
@@ -310,7 +311,7 @@ print.nml <- function(x, ...){
     cat('/\n')
   }
 }
-#'@export
+#'@noRd
 summary.nml <- function(object,...){
   print(object,...)
 }
@@ -334,7 +335,7 @@ summary.nml <- function(object,...){
 #'surface <- get_surface_height(file = nc_file)
 #'surface_w_ice <- get_surface_height(file = nc_file, ice.rm = FALSE, snow.rm = FALSE)
 #'@importFrom ncdf4 ncvar_get
-#'@export
+#'@noRd
 get_surface_height  <-	function(file = 'output.nc', ice.rm = TRUE, snow.rm = TRUE, ...){
   glm_nc <- get_glm_nc(file)
   NS	<- 	ncvar_get(glm_nc, "NS")
@@ -486,7 +487,7 @@ get_UTM_offset <- function(){
 #'temp_out <- resample_sim(df = temp_surf, t_out = t_out, precision = 'days')
 #'
 #'temp_out <- resample_sim(df = temp_surf, t_out = t_out, method = 'interp', precision = 'hours')
-#'@export
+#'@noRd
 resample_sim <- function(df, t_out, method = 'match', precision = 'days'){
 
   if (missing(t_out)){

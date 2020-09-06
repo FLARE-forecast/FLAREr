@@ -3,22 +3,22 @@
 # Creator: Laura Puckett, December 20 2018
 # contact: plaura1@vt.edu
 # --------------------------------------
-##' @title Download and Downscale NOAA GEFS for a single site
-##' @return None
-##'
-##' @param site_index, index of site_list, lat_list, lon_list to be downloaded
-##' @param lat_list, vector of latitudes that correspond to site codes
-##' @param lon_list, vector of longitudes that correspond to site codes
-##' @param site_list, vector of site codes, used in directory and file name generation
-##' @param downscale, logical specifying whether to downscale from 6-hr to 1-hr
-##' @param overwrite, logical stating to overwrite any existing output_file
-##' @param model_name, directory name for the 6-hr forecast, this will be used in directory and file name generation
-##' @param model_name_ds, directory name for the 1-hr forecast, this will be used in directory and file name generation
-##' @param output_directory, directory where the model output will be save
-##' @export
-##'
-##' @author Quinn Thomas
-##'
+#' @title Download and Downscale NOAA GEFS for a single site
+#' @return None
+#'
+#' @param site_index, index of site_list, lat_list, lon_list to be downloaded
+#' @param lat_list, vector of latitudes that correspond to site codes
+#' @param lon_list, vector of longitudes that correspond to site codes
+#' @param site_list, vector of site codes, used in directory and file name generation
+#' @param downscale, logical specifying whether to downscale from 6-hr to 1-hr
+#' @param overwrite, logical stating to overwrite any existing output_file
+#' @param model_name, directory name for the 6-hr forecast, this will be used in directory and file name generation
+#' @param model_name_ds, directory name for the 1-hr forecast, this will be used in directory and file name generation
+#' @param output_directory, directory where the model output will be save
+#' @noRd
+#'
+#' @author Quinn Thomas
+#'
 
 ## setup
 
@@ -37,7 +37,7 @@ fit_downscaling_parameters <- function(observations,
                                        lake_longitude){
 
   # process and read in saved forecast data
-  flare::process_saved_forecasts(data.path = for.file.path,
+  process_saved_forecasts(data.path = for.file.path,
                           working_directory,
                           local_tzone) # geneartes flux.forecasts and state.forecasts dataframes
   NOAA.flux <- readRDS(paste(working_directory,"/NOAA.flux.forecasts", sep = ""))
@@ -45,7 +45,7 @@ fit_downscaling_parameters <- function(observations,
   NOAA.data <- dplyr::inner_join(NOAA.flux, NOAA.state, by = c("forecast.date","ensembles"))
   NOAA_input_tz <- attributes(NOAA.data$forecast.date)$tzone
 
-  forecasts <- flare::prep_for(NOAA.data, input_tz = NOAA_input_tz, local_tzone, weather_uncertainty = FALSE) %>%
+  forecasts <- prep_for(NOAA.data, input_tz = NOAA_input_tz, local_tzone, weather_uncertainty = FALSE) %>%
     dplyr::mutate(date = lubridate::as_date(timestamp)) %>%
     dplyr::group_by(NOAA.member, date)  %>%
     dplyr::mutate(n = n()) %>%
@@ -59,9 +59,9 @@ fit_downscaling_parameters <- function(observations,
   # 3. aggregate forecasts and observations to daily resolution and join datasets
   # -----------------------------------
 
-  daily.forecast <- flare::aggregate_to_daily(data = forecasts)
+  daily.forecast <- aggregate_to_daily(data = forecasts)
 
-  daily.obs <- flare::aggregate_to_daily(data = observations)
+  daily.obs <- aggregate_to_daily(data = observations)
   # might eventually alter this so days with at least a certain percentage of data remain in dataset (instead of becoming NA if a single minute of data is missing)
 
   joined.data.daily <- dplyr::inner_join(daily.forecast, daily.obs, by = "date", suffix = c(".for",".obs")) %>%
@@ -73,16 +73,16 @@ fit_downscaling_parameters <- function(observations,
   # -----------------------------------
   # 4. save linearly debias coefficients and do linear debiasing at daily resolution
   # -----------------------------------
-  out <- flare::get_daily_debias_coeff(joined.data = joined.data.daily, VarInfo = VarInfo, PLOT, working_directory)
+  out <- get_daily_debias_coeff(joined.data = joined.data.daily, VarInfo = VarInfo, PLOT, working_directory)
   debiased.coefficients <-  out[[1]]
   debiased.covar <-  out[[2]]
 
-  debiased <- flare::daily_debias_from_coeff(daily.forecast, debiased.coefficients, VarInfo)
+  debiased <- daily_debias_from_coeff(daily.forecast, debiased.coefficients, VarInfo)
 
   # -----------------------------------
   # 5.a. temporal downscaling step (a): redistribute to 6-hourly resolution
   # -----------------------------------
-  redistributed <- flare::daily_to_6hr(forecasts, daily.forecast, debiased, VarNames = VarInfo$VarNames)
+  redistributed <- daily_to_6hr(forecasts, daily.forecast, debiased, VarNames = VarInfo$VarNames)
 
   # -----------------------------------
   # 5.b. temporal downscaling step (b): temporally downscale from 6-hourly to hourly
@@ -107,7 +107,7 @@ fit_downscaling_parameters <- function(observations,
 
 
   ## downscale shortwave to hourly
-  ShortWave.ds <- flare::ShortWave_to_hrly(debiased, time0 = NA, lat = lake_latitude, lon = 360 - lake_longitude, local_tzone)
+  ShortWave.ds <- ShortWave_to_hrly(debiased, time0 = NA, lat = lake_latitude, lon = 360 - lake_longitude, local_tzone)
 
   # -----------------------------------
   # 6. join debiased forecasts of different variables into one dataframe
@@ -122,7 +122,7 @@ fit_downscaling_parameters <- function(observations,
   # -----------------------------------
 
   # get hourly dataframe of observations
-  hrly.obs <- flare::aggregate_obs_to_hrly(observations)
+  hrly.obs <- aggregate_obs_to_hrly(observations)
 
   # -----------------------------------
   # 8. join hourly observations and hourly debiased forecasts

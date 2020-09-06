@@ -8,7 +8,7 @@
 #' @param x A number.
 #' @param y A number.
 #' @return The sum of \code{x} and \code{y}.
-#' @export
+#' @noRd
 #' @examples
 #' add(1, 1)
 #' add(10, 1)
@@ -47,7 +47,7 @@ update_temps <- function(curr_temps,curr_depths,working_directory){
 #' @param x A number.
 #' @param y A number.
 #' @return The sum of \code{x} and \code{y}.
-#' @export
+#' @noRd
 #' @examples
 #' add(1, 1)
 #' add(10, 1)
@@ -94,7 +94,7 @@ update_nml <- function(var_list,var_name_list,working_directory, nml){
 #' @param x A number.
 #' @param y A number.
 #' @return The sum of \code{x} and \code{y}.
-#' @export
+#' @noRd
 #' @examples
 #' add(1, 1)
 #' add(10, 1)
@@ -122,7 +122,7 @@ update_time <- function(start_value,stop_value,working_directory){
 #' @param x A number.
 #' @param y A number.
 #' @return The sum of \code{x} and \code{y}.
-#' @export
+#' @noRd
 #' @examples
 #' add(1, 1)
 #' add(10, 1)
@@ -162,7 +162,7 @@ get_glm_nc_var <- function(ncFile,working_dir, z_out,var = 'temp'){
 #' @param x A number.
 #' @param y A number.
 #' @return The sum of \code{x} and \code{y}.
-#' @export
+#' @noRd
 #' @examples
 #' add(1, 1)
 #' add(10, 1)
@@ -204,7 +204,7 @@ update_phyto <- function(p_initial,nml_name = 'aed2_phyto_pars.nml'){
 #' @param x A number.
 #' @param y A number.
 #' @return The sum of \code{x} and \code{y}.
-#' @export
+#' @noRd
 #' @examples
 #' add(1, 1)
 #' add(10, 1)
@@ -232,22 +232,6 @@ get_glm_nc_var_all_wq <- function(ncFile,working_dir, z_out,vars_depth, vars_no_
     output[,v] <- var_modeled[1:tallest_layer, final_time_step]
   }
 
-
-  #if(length(vars_no_depth) > 0){
-  #  output_no_depth <- rep(NA, length(vars_no_depth))
-  #  for(v in 1:lengthlength(vars_no_depth)){
-  #    if(vars_no_depth[v] == "secchi"){
-  #      var_modeled <- ncvar_get(glm_nc, "extc_coef")
-  #      var_modeled <- var_modeled[1:tallest_layer, final_time_step]
-  #      output_no_depth[v] <- var_modeled[which.min(abs(heights_out - 1.0))]
-  #    }else{
-  #      output_no_depth[v] <- NA
-  #  }
-  #  }
-  #}else{
-  #  output_no_depth <- NA
-  #}
-
   output_no_depth <- NA
 
   if(length(diagnostic_vars) > 0){
@@ -262,6 +246,8 @@ get_glm_nc_var_all_wq <- function(ncFile,working_dir, z_out,vars_depth, vars_no_
 
   mixing_vars <- ncdf4::ncvar_get(glm_nc, "restart_variables")
 
+  salt <- ncdf4::ncvar_get(glm_nc, "salt")[1:tallest_layer, final_time_step]
+
   ncdf4::nc_close(glm_nc)
   return(list(output = output,
               output_no_depth = output_no_depth,
@@ -270,6 +256,7 @@ get_glm_nc_var_all_wq <- function(ncFile,working_dir, z_out,vars_depth, vars_no_
               snow_wice_bice = c(snow, ice_white, ice_blue),
               avg_surf_temp = avg_surf_temp,
               mixing_vars = mixing_vars,
+              salt = salt,
               diagnostics_output = diagnostics_output))
 }
 

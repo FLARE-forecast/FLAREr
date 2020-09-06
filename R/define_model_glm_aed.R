@@ -1,19 +1,19 @@
-##' @title Download and Downscale NOAA GEFS for a single site
-##' @return None
-##'
-##' @param site_index, index of site_list, lat_list, lon_list to be downloaded
-##' @param lat_list, vector of latitudes that correspond to site codes
-##' @param lon_list, vector of longitudes that correspond to site codes
-##' @param site_list, vector of site codes, used in directory and file name generation
-##' @param downscale, logical specifying whether to downscale from 6-hr to 1-hr
-##' @param overwrite, logical stating to overwrite any existing output_file
-##' @param model_name, directory name for the 6-hr forecast, this will be used in directory and file name generation
-##' @param model_name_ds, directory name for the 1-hr forecast, this will be used in directory and file name generation
-##' @param output_directory, directory where the model output will be save
-##' @export
-##'
-##' @author Quinn Thomas
-##'
+#' @title Download and Downscale NOAA GEFS for a single site
+#' @return None
+#'
+#' @param site_index, index of site_list, lat_list, lon_list to be downloaded
+#' @param lat_list, vector of latitudes that correspond to site codes
+#' @param lon_list, vector of longitudes that correspond to site codes
+#' @param site_list, vector of site codes, used in directory and file name generation
+#' @param downscale, logical specifying whether to downscale from 6-hr to 1-hr
+#' @param overwrite, logical stating to overwrite any existing output_file
+#' @param model_name, directory name for the 6-hr forecast, this will be used in directory and file name generation
+#' @param model_name_ds, directory name for the 1-hr forecast, this will be used in directory and file name generation
+#' @param output_directory, directory where the model output will be save
+#' @noRd
+#'
+#' @author Quinn Thomas
+#'
 
 
 run_model <- function(i,
@@ -28,16 +28,12 @@ run_model <- function(i,
                       num_phytos,
                       glm_depths_start,
                       surface_height_start,
-                      simulate_SSS,
                       x_start,
                       full_time_local,
                       wq_start,
                       wq_end,
-                      management_input,
+                      management = NULL,
                       hist_days,
-                      forecast_sss_on,
-                      sss_depth,
-                      use_specified_sss,
                       modeled_depths,
                       ndepths_modeled,
                       curr_met_file,
@@ -46,17 +42,26 @@ run_model <- function(i,
                       outflow_file_names,
                       glm_output_vars,
                       diagnostics_names,
-                      machine,
                       npars,
                       num_wq_vars,
                       snow_ice_thickness_start,
                       avg_surf_temp_start,
+                      salt_start,
                       nstates,
-                      states_config,
+                      state_names,
                       include_wq,
-                      specified_sss_inflow_file,
-                      specified_sss_outflow_file,
                       data_location){
+
+  switch(Sys.info() [["sysname"]],
+         Linux = { machine <- "unix" },
+         Darwin = { machine <- "mac" },
+         Windows = { machine <- "windows"})
+
+  if(is.null(management)){
+    simulate_sss <- FALSE
+  }else{
+    simulate_sss <- management$simulate_sss
+  }
 
 
   update_glm_nml_list <- list()
@@ -120,7 +125,7 @@ run_model <- function(i,
     wq_init_vals <- c()
 
     for(wq in 1:num_wq_vars){
-      wq_enkf_tmp <- x_start[wq_start[wq]:wq_end[wq]]
+      wq_enkf_tmp <- x_start[wq_start[wq + 1]:wq_end[wq + 1]]
       wq_enkf_tmp[wq_enkf_tmp < 0] <- 0
       wq_init_vals <- c(wq_init_vals,
                         approx(modeled_depths,wq_enkf_tmp, glm_depths_mid, rule = 2)$y)
@@ -129,26 +134,28 @@ run_model <- function(i,
     update_glm_nml_names[list_index] <- "wq_init_vals"
     list_index <- list_index + 1
 
-    if(simulate_SSS){
-      if(is.na(specified_sss_inflow_file)){
-        flare::create_sss_input_output(x_start,
+    if(simulate_sss){
+      if(is.na(management$specified_sss_inflow_file)){
+        create_sss_input_output(x_start,
                                        i,
                                        m,
                                        full_time_local,
                                        working_directory,
                                        wq_start,
-                                       management_input,
+                                       management$management_input,
                                        hist_days,
-                                       forecast_sss_on,
-                                       sss_depth,
-                                       use_specified_sss,
+                                       management$forecast_sss_on,
+                                       management$sss_depth,
+                                       management$use_specified_sss,
                                        states_config,
                                        include_wq,
-                                       modeled_depths = config$modeled_depths)
+                                       modeled_depths = config$modeled_depths,
+                                       forecast_sss_flow = management$forecast_sss_flow,
+                                       forecast_sss_oxy = management$forecast_sss_oxy)
       }else{
-        file.copy(file.path(data_location, specified_sss_inflow_file), paste0(working_directory,"/sss_inflow.csv"))
-        if(!is.na(specified_sss_outflow_file)){
-          file.copy(file.path(data_location, specified_sss_outflow_file), paste0(working_directory,"/sss_outflow.csv"))
+        file.copy(file.path(data_location, management$specified_sss_inflow_file), paste0(working_directory,"/sss_inflow.csv"))
+        if(!is.na(management$specified_sss_outflow_file)){
+          file.copy(file.path(data_location, management$specified_sss_outflow_file), paste0(working_directory,"/sss_outflow.csv"))
         }
       }
     }
@@ -162,7 +169,8 @@ run_model <- function(i,
   update_glm_nml_names[list_index] <- "the_temps"
   list_index <- list_index + 1
 
-  update_glm_nml_list[[list_index]] <- rep(0.0,length(the_temps_glm))
+  the_sals_glm <- approx(modeled_depths,salt_start, glm_depths_mid, rule = 2)$y
+  update_glm_nml_list[[list_index]] <- round(the_sals_glm, 4)
   update_glm_nml_names[list_index] <- "the_sals"
   list_index <- list_index + 1
 
@@ -266,10 +274,10 @@ run_model <- function(i,
       if(length(ncvar_get(nc, "time")) > 1){
         nc_close(nc)
 
-        output_vars_multi_depth <- states_config$state_names
+        output_vars_multi_depth <- state_names
         output_vars_no_depth <- NA
 
-        GLM_temp_wq_out <- flare::get_glm_nc_var_all_wq(ncFile = "/output.nc",
+        GLM_temp_wq_out <- get_glm_nc_var_all_wq(ncFile = "/output.nc",
                                                  working_dir = working_directory,
                                                  z_out = modeled_depths,
                                                  vars_depth = output_vars_multi_depth,
@@ -286,10 +294,12 @@ run_model <- function(i,
 
         x_star_end[1:ndepths_modeled] <- approx(glm_depths_mid,glm_temps, modeled_depths, rule = 2)$y
 
+        salt_end <- approx(glm_depths_mid, GLM_temp_wq_out$salt_end, modeled_depths, rule = 2)$y
+
         if(include_wq){
           for(wq in 1:num_wq_vars){
             glm_wq <-  rev(GLM_temp_wq_out$output[ ,1+wq])
-            x_star_end[wq_start[wq]:wq_end[wq]] <- approx(glm_depths_mid,glm_wq, modeled_depths, rule = 2)$y
+            x_star_end[wq_start[1 + wq]:wq_end[1 + wq]] <- approx(glm_depths_mid,glm_wq, modeled_depths, rule = 2)$y
           }
         }
 
@@ -320,32 +330,38 @@ run_model <- function(i,
                 snow_ice_thickness_end  = GLM_temp_wq_out$snow_wice_bice,
                 avg_surf_temp_end  = GLM_temp_wq_out$avg_surf_temp,
                 mixing_vars_end = GLM_temp_wq_out$mixing_vars,
+                salt_end = salt_end,
                 diagnostics_end  = diagnostics,
                 glm_depths_end  = glm_depths_end))
   }
 }
 
-##' @title Download and Downscale NOAA GEFS for a single site
-##' @return None
-##'
-##' @param site_index, index of site_list, lat_list, lon_list to be downloaded
-##' @param lat_list, vector of latitudes that correspond to site codes
-##' @param lon_list, vector of longitudes that correspond to site codes
-##' @param site_list, vector of site codes, used in directory and file name generation
-##' @param downscale, logical specifying whether to downscale from 6-hr to 1-hr
-##' @param overwrite, logical stating to overwrite any existing output_file
-##' @param model_name, directory name for the 6-hr forecast, this will be used in directory and file name generation
-##' @param model_name_ds, directory name for the 1-hr forecast, this will be used in directory and file name generation
-##' @param output_directory, directory where the model output will be save
-##' @export
-##'
-##' @author Quinn Thomas
-##'
+#' @title Download and Downscale NOAA GEFS for a single site
+#' @return None
+#'
+#' @param site_index, index of site_list, lat_list, lon_list to be downloaded
+#' @param lat_list, vector of latitudes that correspond to site codes
+#' @param lon_list, vector of longitudes that correspond to site codes
+#' @param site_list, vector of site codes, used in directory and file name generation
+#' @param downscale, logical specifying whether to downscale from 6-hr to 1-hr
+#' @param overwrite, logical stating to overwrite any existing output_file
+#' @param model_name, directory name for the 6-hr forecast, this will be used in directory and file name generation
+#' @param model_name_ds, directory name for the 1-hr forecast, this will be used in directory and file name generation
+#' @param output_directory, directory where the model output will be save
+#' @noRd
+#'
+#' @author Quinn Thomas
+#'
 
 set_up_model <- function(executable_location,
                          config,
                          working_directory,
                          num_wq_vars){
+
+  switch(Sys.info() [["sysname"]],
+         Linux = { machine <- "unix" },
+         Darwin = { machine <- "mac" },
+         Windows = { machine <- "windows"})
 
 
   GLM_folder <- executable_location

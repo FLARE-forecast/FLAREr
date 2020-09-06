@@ -1,20 +1,20 @@
-##' @title Download and Downscale NOAA GEFS for a single site
-##' @return None
-##'
-##' @param site_index, index of site_list, lat_list, lon_list to be downloaded
-##' @param lat_list, vector of latitudes that correspond to site codes
-##' @param lon_list, vector of longitudes that correspond to site codes
-##' @param site_list, vector of site codes, used in directory and file name generation
-##' @param downscale, logical specifying whether to downscale from 6-hr to 1-hr
-##' @param overwrite, logical stating to overwrite any existing output_file
-##' @param model_name, directory name for the 6-hr forecast, this will be used in directory and file name generation
-##' @param model_name_ds, directory name for the 1-hr forecast, this will be used in directory and file name generation
-##' @param output_directory, directory where the model output will be save
-##' @export
-##'
-##' @author Quinn Thomas
-##'
-##'
+#' @title Download and Downscale NOAA GEFS for a single site
+#' @return None
+#'
+#' @param site_index, index of site_list, lat_list, lon_list to be downloaded
+#' @param lat_list, vector of latitudes that correspond to site codes
+#' @param lon_list, vector of longitudes that correspond to site codes
+#' @param site_list, vector of site codes, used in directory and file name generation
+#' @param downscale, logical specifying whether to downscale from 6-hr to 1-hr
+#' @param overwrite, logical stating to overwrite any existing output_file
+#' @param model_name, directory name for the 6-hr forecast, this will be used in directory and file name generation
+#' @param model_name_ds, directory name for the 1-hr forecast, this will be used in directory and file name generation
+#' @param output_directory, directory where the model output will be save
+#' @export
+#'
+#' @author Quinn Thomas
+#'
+#'
 
 create_inflow_outflow_file <- function(full_time_local,
                                        working_directory,

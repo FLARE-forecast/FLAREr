@@ -6,22 +6,22 @@
 # summary: this calls all other functions required to downscale future GEFS forecasts to a specific site using the relationship between saved forecasts and site observations
 # --------------------------------------
 
-##' @title Download and Downscale NOAA GEFS for a single site
-##' @return None
-##'
-##' @param site_index, index of site_list, lat_list, lon_list to be downloaded
-##' @param lat_list, vector of latitudes that correspond to site codes
-##' @param lon_list, vector of longitudes that correspond to site codes
-##' @param site_list, vector of site codes, used in directory and file name generation
-##' @param downscale, logical specifying whether to downscale from 6-hr to 1-hr
-##' @param overwrite, logical stating to overwrite any existing output_file
-##' @param model_name, directory name for the 6-hr forecast, this will be used in directory and file name generation
-##' @param model_name_ds, directory name for the 1-hr forecast, this will be used in directory and file name generation
-##' @param output_directory, directory where the model output will be save
-##' @export
-##'
-##' @author Quinn Thomas
-##'
+#' @title Download and Downscale NOAA GEFS for a single site
+#' @return None
+#'
+#' @param site_index, index of site_list, lat_list, lon_list to be downloaded
+#' @param lat_list, vector of latitudes that correspond to site codes
+#' @param lon_list, vector of longitudes that correspond to site codes
+#' @param site_list, vector of site codes, used in directory and file name generation
+#' @param downscale, logical specifying whether to downscale from 6-hr to 1-hr
+#' @param overwrite, logical stating to overwrite any existing output_file
+#' @param model_name, directory name for the 6-hr forecast, this will be used in directory and file name generation
+#' @param model_name_ds, directory name for the 1-hr forecast, this will be used in directory and file name generation
+#' @param output_directory, directory where the model output will be save
+#' @export
+#'
+#' @author Quinn Thomas
+#'
 
 process_downscale_GEFS <- function(folder,
                                    noaa_location,
@@ -81,7 +81,7 @@ process_downscale_GEFS <- function(folder,
 
   if(FIT_PARAMETERS){
     print("Fit Parameters")
-    flare::fit_downscaling_parameters(observations,
+    fit_downscaling_parameters(observations,
                                for.file.path = noaa_location,
                                working_directory,
                                VarNames,
@@ -98,7 +98,7 @@ process_downscale_GEFS <- function(folder,
   # -----------------------------------
   # 2. Process GEFS
   # -----------------------------------
-  met_forecast_output <- flare::process_GEFS(file_name,
+  met_forecast_output <- process_GEFS(file_name,
                        n_ds_members,
                        n_met_members,
                        in_directory = noaa_location,

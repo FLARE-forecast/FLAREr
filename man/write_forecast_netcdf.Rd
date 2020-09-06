@@ -4,7 +4,7 @@
 \alias{write_forecast_netcdf}
 \title{Download and Downscale NOAA GEFS for a single site}
 \usage{
-write_forecast_netcdf(enkf_output, wq_start, wq_end, forecast_location)
+write_forecast_netcdf(enkf_output, forecast_location)
 }
 \arguments{
 \item{site_index, }{index of site_list, lat_list, lon_list to be downloaded}

@@ -1,39 +1,41 @@
-##' @title Download and Downscale NOAA GEFS for a single site
-##' @return None
-##'
-##' @param site_index, index of site_list, lat_list, lon_list to be downloaded
-##' @param lat_list, vector of latitudes that correspond to site codes
-##' @param lon_list, vector of longitudes that correspond to site codes
-##' @param site_list, vector of site codes, used in directory and file name generation
-##' @param downscale, logical specifying whether to downscale from 6-hr to 1-hr
-##' @param overwrite, logical stating to overwrite any existing output_file
-##' @param model_name, directory name for the 6-hr forecast, this will be used in directory and file name generation
-##' @param model_name_ds, directory name for the 1-hr forecast, this will be used in directory and file name generation
-##' @param output_directory, directory where the model output will be save
-##' @export
-##'
-##' @author Quinn Thomas
-##'
-##'
+#' @title Download and Downscale NOAA GEFS for a single site
+#' @return None
+#'
+#' @param site_index, index of site_list, lat_list, lon_list to be downloaded
+#' @param lat_list, vector of latitudes that correspond to site codes
+#' @param lon_list, vector of longitudes that correspond to site codes
+#' @param site_list, vector of site codes, used in directory and file name generation
+#' @param downscale, logical specifying whether to downscale from 6-hr to 1-hr
+#' @param overwrite, logical stating to overwrite any existing output_file
+#' @param model_name, directory name for the 6-hr forecast, this will be used in directory and file name generation
+#' @param model_name_ds, directory name for the 1-hr forecast, this will be used in directory and file name generation
+#' @param output_directory, directory where the model output will be save
+#' @export
+#'
+#' @author Quinn Thomas
+#'
+#'
 
 run_EnKF <- function(x_init,
-                     obs,
-                     psi,
-                     process_sd,
-                     working_directory,
-                     met_file_names,
-                     inflow_file_names,
-                     outflow_file_names,
-                     sim_start_datetime,
-                     sim_end_datetime,
-                     forecast_start_datetime = NA,
-                     management_input,
-                     wq_start,
-                     wq_end,
-                     config,
-                     aux_states_init,
-                     code_folder
+                      obs,
+                      psi,
+                      process_sd,
+                      working_directory,
+                      met_file_names,
+                      inflow_file_names,
+                      outflow_file_names,
+                      sim_start_datetime,
+                      sim_end_datetime,
+                      forecast_start_datetime = NA,
+                      management = NULL,
+                      config,
+                      pars_config = NULL,
+                      states_config,
+                      obs_config,
+                      aux_states_init
 ){
+
+  check_enkf_inputs(x_init,obs,psi,process_sd, config, pars_config, states_config, obs_config)
 
   if(is.na(forecast_start_datetime)){
     forecast_start_datetime <- sim_end_datetime
@@ -44,7 +46,16 @@ run_EnKF <- function(x_init,
   full_time_local <- seq(sim_start_datetime, sim_end_datetime, by = "1 day")
 
 
-  npars <- nrow(config$pars_config)
+  if(!is.null(pars_config)){
+    npars <- nrow(pars_config)
+    par_names <- pars_config$par_names
+    par_nml <- pars_config$par_nml
+  }else{
+    npars <- 0
+    par_names <- NA
+    par_nml <- NA
+  }
+
   nstates <- dim(x_init)[2] -  npars
   nsteps <- length(full_time_local)
   nmembers <- dim(x_init)[1]
@@ -64,7 +75,7 @@ run_EnKF <- function(x_init,
 
 
   if(config$include_wq){
-    num_wq_vars <- length(wq_start)
+    num_wq_vars <- length(states_config$wq_start) - 1
   }
 
   if(length(config$diagnostics_names) > 0){
@@ -73,7 +84,7 @@ run_EnKF <- function(x_init,
     diagnostics <- NA
   }
 
-  num_phytos <- length(which(stringr::str_detect(config$states_config$state_names,"PHY_") & !stringr::str_detect(config$states_config$state_names,"_IP") & !stringr::str_detect(config$states_config$state_names,"_IN")))
+  num_phytos <- length(which(stringr::str_detect(states_config$state_names,"PHY_") & !stringr::str_detect(states_config$state_names,"_IP") & !stringr::str_detect(states_config$state_names,"_IN")))
 
   full_time_local_char <- strftime(full_time_local,
                                    format="%Y-%m-%d %H:%M",
@@ -81,9 +92,8 @@ run_EnKF <- function(x_init,
 
   x_prior <- array(NA, dim = c(nsteps, nmembers, nstates + npars))
 
-  glm_salt <- array(NA, dim = c(nmembers, 500))
 
-  flare::set_up_model(executable_location = paste0(find.package("flare"),"/exec/"),
+  set_up_model(executable_location = paste0(find.package("flare"),"/exec/"),
                       config,
                       working_directory,
                       num_wq_vars)
@@ -93,12 +103,14 @@ run_EnKF <- function(x_init,
   surface_height <- array(NA, dim = c(nsteps, nmembers))
   snow_ice_thickness <- array(NA, dim = c(nsteps, nmembers, 3))
   avg_surf_temp <- array(NA, dim = c(nsteps, nmembers))
+  salt <- array(NA, dim = c(nsteps, nmembers, ndepths_modeled))
 
   mixing_vars[1, ,] <- aux_states_init$mixing_vars
   glm_depths[1, ,] <- aux_states_init$glm_depths
   surface_height[1, ] <- aux_states_init$surface_height
   snow_ice_thickness[1, , ] <- aux_states_init$snow_ice_thickness
   avg_surf_temp[1, ] <- aux_states_init$avg_surf_temp
+  salt[1, , ] <- aux_states_init$salt
 
   ###START EnKF
   for(i in 2:nsteps){
@@ -142,28 +154,24 @@ run_EnKF <- function(x_init,
         curr_pars <- x[i - 1, m , (nstates+1):(nstates+ npars)]
       }
 
-      out <- flare::run_model(i,
+      out <- run_model(i,
                        m,
                        mixing_vars_start = mixing_vars[i-1, m, ],
                        curr_start,
                        curr_stop,
-                       par_names = config$pars_config$par_names,
+                       par_names,
                        curr_pars,
                        working_directory,
-                       par_nml = config$pars_config$par_nml,
+                       par_nml,
                        num_phytos,
                        glm_depths_start = glm_depths[i-1, m, ],
                        surface_height_start = surface_height[i-1, m],
-                       simulate_SSS = config$simulate_SSS,
                        x_start = x[i-1, m, ],
                        full_time_local,
-                       wq_start,
-                       wq_end,
-                       management_input,
+                       wq_start = states_config$wq_start,
+                       wq_end = states_config$wq_end,
+                       management = management,
                        hist_days,
-                       forecast_sss_on = config$run_config$forecast_sss_on,
-                       sss_depth =  config$sss_depth,
-                       use_specified_sss =  config$use_specified_sss,
                        modeled_depths = config$modeled_depths,
                        ndepths_modeled,
                        curr_met_file,
@@ -172,16 +180,14 @@ run_EnKF <- function(x_init,
                        outflow_file_names,
                        glm_output_vars = config$glm_output_vars,
                        diagnostics_names = config$diagnostics_names,
-                       machine =  config$machine,
                        npars,
                        num_wq_vars,
                        snow_ice_thickness_start = snow_ice_thickness[i-1, m, ],
                        avg_surf_temp_start = avg_surf_temp[i-1, m],
+                       salt_start = salt[i-1, m, ],
                        nstates,
-                       states_config = config$states_config,
+                       state_names = states_config$state_names,
                        include_wq = config$include_wq,
-                       specified_sss_inflow_file = config$specified_sss_inflow_file,
-                       specified_sss_outflow_file =  config$specified_sss_outflow_file,
                        data_location = config$data_location)
 
       x_star[m, ] <- out$x_star_end
@@ -191,7 +197,7 @@ run_EnKF <- function(x_init,
       mixing_vars[i, m, ] <- out$mixing_vars_end
       diagnostics[i, m, , ] <- out$diagnostics_end
       glm_depths[i, m,] <- out$glm_depths_end
-
+      salt[i, m, ]  <- out$salt_end
       ########################################
       #END GLM SPECIFIC PART
       ########################################
@@ -230,7 +236,7 @@ run_EnKF <- function(x_init,
     if(config$include_wq & config$no_negative_states){
       for(m in 1:nmembers){
         index <- which(x_corr[m,] < 0.0)
-        x_corr[m, index[which(index <= wq_end[num_wq_vars] & index >= wq_start[1])]] <- 0.0
+        x_corr[m, index[which(index <= wq_end[num_wq_vars] & index >= config$wq_start[2])]] <- 0.0
       }
     }
 
@@ -307,18 +313,18 @@ run_EnKF <- function(x_init,
       zt <- zt[which(!is.na(zt))]
 
       #Assign which states have obs in the time step
-      h <- matrix(0, nrow = length(config$obs_config$state_names_obs) * ndepths_modeled, ncol = nstates)
+      h <- matrix(0, nrow = length(obs_config$state_names_obs) * ndepths_modeled, ncol = nstates)
 
        index <- 0
        for(k in 1:((nstates/ndepths_modeled))){
          for(j in 1:ndepths_modeled){
            index <- index + 1
-           if(!is.na(dplyr::first(config$states_config$states_to_obs[[k]]))){
-             for(jj in 1:length(config$states_config$states_to_obs[[k]])){
-               if(!is.na((obs[i, j, config$states_config$states_to_obs[[k]][jj]]))){
-                 states_to_obs_index <- config$states_config$states_to_obs[[k]][jj]
+           if(!is.na(dplyr::first(states_config$states_to_obs[[k]]))){
+             for(jj in 1:length(states_config$states_to_obs[[k]])){
+               if(!is.na((obs[i, j, states_config$states_to_obs[[k]][jj]]))){
+                 states_to_obs_index <- states_config$states_to_obs[[k]][jj]
                  index2 <- (states_to_obs_index - 1) * ndepths_modeled + j
-                 h[index2,index] <- config$states_config$states_to_obs_mapping[[k]][jj]
+                 h[index2,index] <- states_config$states_to_obs_mapping[[k]][jj]
                }
              }
            }
@@ -364,7 +370,7 @@ run_EnKF <- function(x_init,
       if(npars > 0){
         par_mean <- apply(pars_corr, 2, mean)
         for(m in 1:nmembers){
-          pars_corr[m, ] <- config$pars_config$inflat_pars * (pars_corr[m,] - par_mean) + par_mean
+          pars_corr[m, ] <- pars_config$inflat_pars * (pars_corr[m,] - par_mean) + par_mean
         }
         par_mean <- apply(pars_corr, 2, mean)
       }
@@ -397,7 +403,10 @@ run_EnKF <- function(x_init,
       }
 
       if(!is.na(config$localization_distance)){
-        p_t <- localization(p_t, nstates, config$modeled_depths, num_wq_vars, wq_start, wq_end)
+        p_t <- localization(p_t,
+                            nstates,
+                            modeled_depths = config$modeled_depths,
+                            localization_distance = config$localization_distance)
       }
       #Kalman gain
       k_t <- p_t %*% t(h) %*% solve(h %*% p_t %*% t(h) + psi_t, tol = 1e-17)
@@ -443,17 +452,17 @@ run_EnKF <- function(x_init,
     if(config$include_wq & config$no_negative_states){
       for(m in 1:nmembers){
         index <- which(x[i,m,] < 0.0)
-        x[i, m, index[which(index <= wq_end[num_wq_vars] & index >= wq_start[1])]] <- 0.0
+        x[i, m, index[which(index <= states_config$wq_end[num_wq_vars] & index >= states_config$wq_start[2])]] <- 0.0
       }
     }
 
     #Correct any parameter values outside bounds
     if(npars > 0){
       for(par in 1:npars){
-        low_index <- which(x[i, ,nstates + par] < config$pars_config$par_lowerbound[par])
-        high_index <- which(x[i, ,nstates + par] > config$pars_config$par_upperbound[par])
-        x[i,low_index ,nstates + par] <- config$pars_config$par_lowerbound[par]
-        x[i,high_index ,nstates + par] <- config$pars_config$par_upperbound[par]
+        low_index <- which(x[i, ,nstates + par] < pars_config$par_lowerbound[par])
+        high_index <- which(x[i, ,nstates + par] > pars_config$par_upperbound[par])
+        x[i,low_index ,nstates + par] <- pars_config$par_lowerbound[par]
+        x[i,high_index ,nstates + par] <- pars_config$par_upperbound[par]
       }
     }
 
@@ -462,7 +471,7 @@ run_EnKF <- function(x_init,
     #Print parameters to screen
     if(npars > 0){
       for(par in 1:npars){
-        print(paste0(config$pars_config$par_names_save[par],": mean ",
+        print(paste0(pars_config$par_names_save[par],": mean ",
                      round(mean(pars_corr[,par]),4)," sd ",
                      round(sd(pars_corr[,par]),4)))
       }
@@ -478,6 +487,7 @@ run_EnKF <- function(x_init,
       avg_surf_temp_restart <- avg_surf_temp[i, ]
       mixing_restart <- mixing_vars[i, ,]
       glm_depths_restart <- glm_depths[i, , ]
+      salt_restart <- salt[1, , ]
 
     }else if(hist_days == 0 & i == 2){
       x_restart <- x[1, , ]
@@ -487,6 +497,7 @@ run_EnKF <- function(x_init,
       avg_surf_temp_restart <- avg_surf_temp[i, ]
       mixing_restart <- mixing_vars[i, ,]
       glm_depths_restart <- glm_depths[i, , ]
+      salt_restart <- salt[1, , ]
     }
   }
 
@@ -558,9 +569,14 @@ run_EnKF <- function(x_init,
               surface_height = surface_height,
               avg_surf_temp_restart = avg_surf_temp_restart,
               mixing_restart = mixing_restart,
+              salt_restart = salt_restart,
+              salt = salt,
               glm_depths_restart = glm_depths_restart,
               diagnostics = diagnostics,
               data_assimilation_flag = data_assimilation_flag,
               config = config,
+              states_config = states_config,
+              pars_config = pars_config,
+              obs_config = obs_config,
               met_file_names = met_file_names))
 }

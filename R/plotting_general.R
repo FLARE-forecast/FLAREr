@@ -51,10 +51,8 @@ plotting_general <- function(file_name,
     output_type[i] <- stringr::str_split(tmp, ":")[[1]][1]
     combined_states[i] <- c(stringr::str_split(stringr::str_split(tmp, ":")[[1]][3], "-")[1])
     combined_states_conversion[i] <- list(as.numeric(unlist(stringr::str_split(stringr::str_split(tmp, ":")[[1]][4], "-")[1])))
-    obs_methods[i] <- list(unlist(stringr::str_split(stringr::str_split(tmp, ":")[[1]][5], "-")[1]))
-    target_variable[i] <- list((unlist(stringr::str_split(stringr::str_split(tmp, ":")[[1]][6], "-")[1])))
-    time_threshold[i] <- list(as.numeric(unlist(stringr::str_split(stringr::str_split(tmp, ":")[[1]][7], "-")[1])))
-    distance_threshold[i] <- list(as.numeric(unlist(stringr::str_split(stringr::str_split(tmp, ":")[[1]][8], "-")[1])))
+    target_variable[i] <- list((unlist(stringr::str_split(stringr::str_split(tmp, ":")[[1]][5], "-")[1])))
+    distance_threshold[i] <- list(as.numeric(unlist(stringr::str_split(stringr::str_split(tmp, ":")[[1]][6], "-")[1])))
   }
 
   wq_names <- var_names[output_type  == "state"]

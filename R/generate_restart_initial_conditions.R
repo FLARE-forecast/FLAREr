@@ -23,6 +23,8 @@ generate_restart_initial_conditions <- function(restart_file, config){
   surface_height_restart <- ncdf4::ncvar_get(nc, "surface_height_restart")
   snow_ice_thickness_restart <- ncdf4::ncvar_get(nc, "snow_ice_restart")
   avg_surf_temp_restart <- ncdf4::ncvar_get(nc, "avg_surf_temp_restart")
+  salt_restart <- ncdf4::ncvar_get(nc, "salt_restart")
+
   mixing_restart <- ncdf4::ncvar_get(nc, "mixing_restart")
   glm_depths_restart  <- ncdf4::ncvar_get(nc, "depths_restart")
   restart_x_previous <- ncdf4::ncvar_get(nc, "x_restart")
@@ -44,6 +46,7 @@ generate_restart_initial_conditions <- function(restart_file, config){
     surface_height <- surface_height_restart[sampled_nmembers]
     avg_surf_temp <- avg_surf_temp_restart[sampled_nmembers]
     mixing_vars <- mixing_restart[sampled_nmembers, ]
+    salt <- salt_restart[sampled_nmembers, ]
 
     for(m in 1:nmembers){
       glm_depths[m ,1:dim(glm_depths_restart)[2]] <- glm_depths_restart[sampled_nmembers[m], ]
@@ -60,6 +63,7 @@ generate_restart_initial_conditions <- function(restart_file, config){
     surface_height <- surface_height_restart[sampled_nmembers]
     avg_surf_temp <- avg_surf_temp_restart[sampled_nmembers]
     mixing_vars <- mixing_restart[sampled_nmembers, ]
+    salt <- salt_restart[sampled_nmembers, ]
 
     for(m in 1:nmembers){
       glm_depths[m ,1:dim(glm_depths_restart)[2]] <- glm_depths_restart[sampled_nmembers[m], ]
@@ -73,6 +77,7 @@ generate_restart_initial_conditions <- function(restart_file, config){
     surface_height <- surface_height_restart
     avg_surf_temp <- avg_surf_temp_restart
     mixing_vars <- mixing_restart
+    salt <- salt_restart
 
     for(m in 1:nmembers){
       glm_depths[m ,1:dim(glm_depths_restart)[2]] <- glm_depths_restart[m, ]
@@ -84,6 +89,7 @@ generate_restart_initial_conditions <- function(restart_file, config){
               avg_surf_temp = avg_surf_temp,
               mixing_vars = mixing_vars,
               glm_depths = glm_depths,
-              snow_ice_thickness = snow_ice_thickness)
+              snow_ice_thickness = snow_ice_thickness,
+              salt = salt)
   )
 }

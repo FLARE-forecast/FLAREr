@@ -1,20 +1,20 @@
-##' @title Download and Downscale NOAA GEFS for a single site
-##' @return None
-##'
-##' @param site_index, index of site_list, lat_list, lon_list to be downloaded
-##' @param lat_list, vector of latitudes that correspond to site codes
-##' @param lon_list, vector of longitudes that correspond to site codes
-##' @param site_list, vector of site codes, used in directory and file name generation
-##' @param downscale, logical specifying whether to downscale from 6-hr to 1-hr
-##' @param overwrite, logical stating to overwrite any existing output_file
-##' @param model_name, directory name for the 6-hr forecast, this will be used in directory and file name generation
-##' @param model_name_ds, directory name for the 1-hr forecast, this will be used in directory and file name generation
-##' @param output_directory, directory where the model output will be save
-##' @export
-##'
-##' @author Quinn Thomas
-##'
-##'
+#' @title Download and Downscale NOAA GEFS for a single site
+#' @return None
+#'
+#' @param site_index, index of site_list, lat_list, lon_list to be downloaded
+#' @param lat_list, vector of latitudes that correspond to site codes
+#' @param lon_list, vector of longitudes that correspond to site codes
+#' @param site_list, vector of site codes, used in directory and file name generation
+#' @param downscale, logical specifying whether to downscale from 6-hr to 1-hr
+#' @param overwrite, logical stating to overwrite any existing output_file
+#' @param model_name, directory name for the 6-hr forecast, this will be used in directory and file name generation
+#' @param model_name_ds, directory name for the 1-hr forecast, this will be used in directory and file name generation
+#' @param output_directory, directory where the model output will be save
+#' @export
+#'
+#' @author Quinn Thomas
+#'
+#'
 
 create_flare_eml <- function(file_name,
                              enkf_output){
@@ -38,7 +38,7 @@ create_flare_eml <- function(file_name,
   forecast_iteration_id <- ncdf4::ncatt_get(nc, varid = 0)$forecast_iteration_id
   forecast_project_id <- ncdf4::ncatt_get(nc, varid = 0)$forecast_project_id
 
-  npars <- nrow(enkf_output$config$pars_config)
+  npars <- nrow(enkf_output$pars_config)
   nstates <- dim(enkf_output$x)[3] - npars
 
   nmembers <- length(ncdf4::ncvar_get(nc, "ensemble"))
@@ -240,6 +240,6 @@ create_flare_eml <- function(file_name,
 
   EFIstandards::forecast_validator(my_eml)
 
-  EML::write_eml(my_eml, paste0(run_config$forecast_location, "/", tools::file_path_sans_ext(basename(file_name)),"-eml.xml"))
+  EML::write_eml(my_eml, paste0(enkf_output$config$run_config$forecast_location, "/", tools::file_path_sans_ext(basename(file_name)),"-eml.xml"))
 
 }

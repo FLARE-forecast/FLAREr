@@ -8,7 +8,9 @@ create_obs_matrix(
   cleaned_observations_file_long,
   config,
   start_datetime_local,
-  end_datetime_local
+  end_datetime_local,
+  local_tzone,
+  modeled_depths
 )
 }
 \arguments{

@@ -11,22 +11,22 @@
 # The function returns: (1) a list of the names of the .csv files and (2) a datframe of the processed output for all ensembles
 # --------------------------------------
 
-##' @title Download and Downscale NOAA GEFS for a single site
-##' @return None
-##'
-##' @param site_index, index of site_list, lat_list, lon_list to be downloaded
-##' @param lat_list, vector of latitudes that correspond to site codes
-##' @param lon_list, vector of longitudes that correspond to site codes
-##' @param site_list, vector of site codes, used in directory and file name generation
-##' @param downscale, logical specifying whether to downscale from 6-hr to 1-hr
-##' @param overwrite, logical stating to overwrite any existing output_file
-##' @param model_name, directory name for the 6-hr forecast, this will be used in directory and file name generation
-##' @param model_name_ds, directory name for the 1-hr forecast, this will be used in directory and file name generation
-##' @param output_directory, directory where the model output will be save
-##' @export
-##'
-##' @author Quinn Thomas
-##'
+#' @title Download and Downscale NOAA GEFS for a single site
+#' @return None
+#'
+#' @param site_index, index of site_list, lat_list, lon_list to be downloaded
+#' @param lat_list, vector of latitudes that correspond to site codes
+#' @param lon_list, vector of longitudes that correspond to site codes
+#' @param site_list, vector of site codes, used in directory and file name generation
+#' @param downscale, logical specifying whether to downscale from 6-hr to 1-hr
+#' @param overwrite, logical stating to overwrite any existing output_file
+#' @param model_name, directory name for the 6-hr forecast, this will be used in directory and file name generation
+#' @param model_name_ds, directory name for the 1-hr forecast, this will be used in directory and file name generation
+#' @param output_directory, directory where the model output will be save
+#' @noRd
+#'
+#' @author Quinn Thomas
+#'
 
 process_GEFS <- function(file_name,
                          n_ds_members,
@@ -67,7 +67,7 @@ process_GEFS <- function(file_name,
 
   #full_time_local <- seq(begin_step, end_step, by = "1 hour", tz = local_tzone) # grid
 
-  forecasts <- flare::prep_for(NOAA.data = d,
+  forecasts <-  prep_for(NOAA.data = d,
                         input_tz = for.input_tz,
                         local_tzone,
                         weather_uncertainty)
@@ -89,7 +89,7 @@ process_GEFS <- function(file_name,
     }else{
       load(file <- downscaling_coeff)
     }
-    output <- flare::downscale_met(forecasts,
+    output <-  downscale_met(forecasts,
                             debiased.coefficients,
                             VarInfo,
                             PLOT = FALSE,
@@ -106,7 +106,7 @@ process_GEFS <- function(file_name,
   }else{
     ## "out of box" option
     print("out of box option")
-    out.of.box <- flare::out_of_box(forecasts, VarInfo$VarNames) %>%
+    out.of.box <-  out_of_box(forecasts, VarInfo$VarNames) %>%
       dplyr::mutate(AirTemp = AirTemp - 273.15,
                     RelHum = ifelse(RelHum <0, 0, RelHum),
                     RelHum = ifelse(RelHum > 100, 100, RelHum),

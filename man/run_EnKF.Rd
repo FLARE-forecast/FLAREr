@@ -16,12 +16,12 @@ run_EnKF(
   sim_start_datetime,
   sim_end_datetime,
   forecast_start_datetime = NA,
-  management_input,
-  wq_start,
-  wq_end,
+  management = NULL,
   config,
-  aux_states_init,
-  code_folder
+  pars_config = NULL,
+  states_config,
+  obs_config,
+  aux_states_init
 )
 }
 \arguments{

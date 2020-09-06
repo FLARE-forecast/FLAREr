@@ -44,36 +44,30 @@ hist_days <- as.numeric(forecast_start_datetime_local - start_datetime_local)
 full_time_local <- seq(start_datetime_local, end_datetime_local, by = "1 day")
 
 
-
-switch(Sys.info() [["sysname"]],
-       Linux = { config$machine <- "unix" },
-       Darwin = { config$machine <- "mac" },
-       Windows = { config$machine <- "windows"})
-
 if(!is.na(config$par_file)){
-  config$pars_config <- readr::read_csv(file.path(run_config$forecast_location, config$par_file), col_types = readr::cols())
-  npars <- nrow(config$pars_config)
+  pars_config <- readr::read_csv(file.path(run_config$forecast_location, config$par_file), col_types = readr::cols())
+  npars <- nrow(pars_config)
 }else{
   npars <- 0
 }
 
-config$obs_config <- readr::read_csv(file.path(run_config$forecast_location, config$obs_config_file), col_types = readr::cols())
+obs_config <- readr::read_csv(file.path(run_config$forecast_location, config$obs_config_file), col_types = readr::cols())
 
-config$states_config <- readr::read_csv(file.path(run_config$forecast_location, config$states_config_file), col_types = readr::cols())
+states_config <- readr::read_csv(file.path(run_config$forecast_location, config$states_config_file), col_types = readr::cols())
 
 nsteps <- length(full_time_local)
 
-if(nrow(config$states_config) > 0){
+if(nrow(states_config) > 0){
   config$include_wq <- TRUE
 }else{
   config$include_wq <- FALSE
 }
 
 ndepths_modeled <- length(config$modeled_depths)
-nstates <- ndepths_modeled * length(config$states_config$state_names)
-num_wq_vars <-  length(config$states_config$state_names) - 1
+nstates <- ndepths_modeled * length(states_config$state_names)
+num_wq_vars <-  length(states_config$state_names) - 1
 
-glm_output_vars <- config$states_config$state_names
+glm_output_vars <- states_config$state_names
 
 config$n_met_members <- 21
 # SET UP NUMBER OF ENSEMBLE MEMBERS
@@ -382,7 +376,7 @@ inflow_outflow_files <- flare::create_inflow_outflow_file(full_time_local,
                                                    future_inflow_flow_error = config$future_inflow_flow_error,
                                                    future_inflow_temp_coeff = config$future_inflow_temp_coeff,
                                                    future_inflow_temp_error = config$future_inflow_temp_error,
-                                                   states_config = config$states_config,
+                                                   states_config = states_config,
                                                    include_wq = config$include_wq,
                                                    use_future_inflow = config$use_future_inflow,
                                                    doc_scalar = config$doc_scalar)
@@ -405,22 +399,30 @@ if(is.na(config$specified_inflow1)){
 cleaned_observations_file_long <- paste0(config$qaqc_data_location,
                                          "/observations_postQAQC_long.csv")
 
-obs <- flare::create_obs_matrix(cleaned_observations_file_long, config, start_datetime_local, end_datetime_local)
+obs <- flare::create_obs_matrix(cleaned_observations_file_long,
+                                obs_config,
+                                start_datetime_local,
+                                end_datetime_local,
+                                local_tzone = config$local_tzone,
+                                modeled_depths = config$modeled_depths)
 
+if(!config$use_obs_constraint){
+  obs[, , ] <- NA
+}
 
 ####################################################
 #### STEP 8: SET UP INITIAL CONDITIONS
 ####################################################
 
 init_depth <- list()
-for(i in 1:nrow(config$states_config)){
-  if(!is.na(config$states_config$init_obs_name[i])){
-    obs_index <- which(config$obs_config$state_names_obs == config$states_config$init_obs_name[i])
+for(i in 1:nrow(states_config)){
+  if(!is.na(states_config$init_obs_name[i])){
+    obs_index <- which(obs_config$state_names_obs == states_config$init_obs_name[i])
     #init_obs <- z[1, ,obs_index] * (1/states_config$states_to_obs_mapping[[i]][1]) * states_config$init_obs_mapping[i]
-    init_obs <- obs[1, ,obs_index] * (1/config$states_config$states_to_obs_mapping_1[i]) * config$states_config$init_obs_mapping[i]
+    init_obs <- obs[1, ,obs_index] * (1/states_config$states_to_obs_mapping_1[i]) * states_config$init_obs_mapping[i]
     if(length(which(!is.na(init_obs))) == 0){
-      init_depth[[i]] <- rep(config$states_config$initial_conditions[i], ndepths_modeled)
-      if(config$states_config$init_obs_name[i] == "temp"){
+      init_depth[[i]] <- rep(states_config$initial_conditions[i], ndepths_modeled)
+      if(states_config$init_obs_name[i] == "temp"){
         init_obs <- approx(x = config$default_temp_init_depths, y = config$default_temp_init, xout = config$modeled_depths, rule=2)
       }
     }else if(length(which(!is.na(init_obs))) == 1){
@@ -429,11 +431,11 @@ for(i in 1:nrow(config$states_config)){
       init_depth[[i]] <- approx(x = config$modeled_depths[!is.na(init_obs)], y = init_obs[!is.na(init_obs)], xout = config$modeled_depths, rule=2)$y
     }
   }else{
-    init_depth[[i]] <- rep(config$states_config$initial_conditions[i], ndepths_modeled)
+    init_depth[[i]] <- rep(states_config$initial_conditions[i], ndepths_modeled)
   }
 }
 
-num_wq_vars <- length(config$states_config$state_names) - 1
+num_wq_vars <- length(states_config$state_names) - 1
 
 wq_start <- NA
 wq_end <- NA
@@ -458,27 +460,30 @@ if(config$include_wq){
   wq_end <- temp_end+1
 }
 
+states_config$wq_start <- c(temp_start, wq_start)
+states_config$wq_end <- c(temp_start, wq_end)
+
 
 #######################################################
 #### STEP 9: CREATE THE PSI VECTOR (DATA uncertainty)
 #######################################################
 
-psi_slope <- rep(NA, length(config$obs_config$state_names_obs) * ndepths_modeled)
-psi_intercept <- rep(NA, length(config$obs_config$state_names_obs) * ndepths_modeled)
+psi_slope <- rep(NA, length(obs_config$state_names_obs) * ndepths_modeled)
+psi_intercept <- rep(NA, length(obs_config$state_names_obs) * ndepths_modeled)
 
 index <- 0
-for(i in 1:length(config$obs_config$state_names_obs)){
+for(i in 1:length(obs_config$state_names_obs)){
   for(j in 1:ndepths_modeled){
     index <- index + 1
-    psi_intercept[index] <- config$obs_config$obs_error_intercept[[i]]
-    psi_slope[index] <- config$obs_config$obs_error_slope[[i]]
+    psi_intercept[index] <- obs_config$obs_error_intercept[[i]]
+    psi_slope[index] <- obs_config$obs_error_slope[[i]]
   }
 }
 
 psi <- cbind(psi_intercept, psi_slope)
 
-states_to_obs_temp <- cbind(config$states_config$states_to_obs_1,config$states_config$states_to_obs_2, config$states_config$states_to_obs_3)
-states_to_obs_mapping_temp <- cbind(config$states_config$states_to_obs_mapping_1,config$states_config$states_to_obs_mapping_2, config$states_config$states_to_obs_mapping_3)
+states_to_obs_temp <- cbind(states_config$states_to_obs_1,states_config$states_to_obs_2, states_config$states_to_obs_3)
+states_to_obs_mapping_temp <- cbind(states_config$states_to_obs_mapping_1,states_config$states_to_obs_mapping_2, states_config$states_to_obs_mapping_3)
 
 states_to_obs <- list()
 states_to_obs_mapping <- list()
@@ -492,7 +497,7 @@ for(i in 1:nrow(states_to_obs_temp)){
   }else{
     values1 <- rep(NA,length(names_temp))
     for(j in 1:length(names_temp)){
-      values1[j] <- which(config$obs_config$state_names_obs == names_temp[j])
+      values1[j] <- which(obs_config$state_names_obs == names_temp[j])
     }
     values2 <- c(mapping_temp)
   }
@@ -500,25 +505,25 @@ for(i in 1:nrow(states_to_obs_temp)){
   states_to_obs_mapping[[i]] <- values2
 }
 
-config$states_config$states_to_obs <- states_to_obs
-config$states_config$states_to_obs_mapping <- states_to_obs_mapping
+states_config$states_to_obs <- states_to_obs
+states_config$states_to_obs_mapping <- states_to_obs_mapping
 
 ####################################################
 #### STEP 10: CREATE THE PROCESS UNCERTAINTY
 ####################################################
 
-process_sd <- config$states_config$process_error
-init_sd <- config$states_config$initial_error
+process_sd <- states_config$process_error
+init_sd <- states_config$initial_error
 
 ################################################################
 #### STEP 11: CREATE THE X ARRAY (STATES X TIME);INCLUDES INITIALATION
 ################################################################
 nmembers <- config$ensemble_size
 
-nstates <- ndepths_modeled * length(config$states_config$state_names)
+nstates <- ndepths_modeled * length(states_config$state_names)
 
 init <- list()
-init$x <- array(NA, dim=c(nmembers, nstates + npars))
+
 
 restart_present <- FALSE
 if(!is.na(run_config$restart_file)){
@@ -530,12 +535,14 @@ if(!is.na(run_config$restart_file)){
 #Initial conditions
 if(!restart_present){
 
+  init$x <- array(NA, dim=c(nmembers, nstates + npars))
   #Matrix to store essemble specific surface height
   init$surface_height <- array(NA, dim=c(nmembers))
   init$snow_ice_thickness <- array(NA, dim=c(nmembers, 3))
   init$avg_surf_temp <- array(NA, dim=c(nmembers))
   init$mixing_vars <- array(NA, dim=c(nmembers, 17))
   init$glm_depths <- array(NA, dim = c(nmembers, 500))
+  init$salt <- array(NA, dim = c(nmembers, ndepths_modeled))
 
   alpha_v <- 1 - exp(-config$vert_decorr_length)
 
@@ -566,16 +573,16 @@ if(!restart_present){
   }
 
   for(par in 1:npars){
-    init$x[ ,(nstates+par)] <- runif(n=nmembers,config$pars_config$par_init_lowerbound[par], config$pars_config$par_init_upperbound[par])
+    init$x[ ,(nstates+par)] <- runif(n=nmembers,pars_config$par_init_lowerbound[par], pars_config$par_init_upperbound[par])
     if(config$single_run){
-      init$x[ ,(nstates+par)] <-  rep(config$pars_config$par_init[par], nmembers)
+      init$x[ ,(nstates+par)] <-  rep(pars_config$par_init[par], nmembers)
     }
   }
 
   if(config$include_wq){
     for(m in 1:nmembers){
-      index <- which(init$x[ m, 1:wq_end[num_wq_vars]] < 0.0)
-      index <- index[which(index > wq_start[1])]
+      index <- which(init$x[ m, 1:dplyr::last(states_config$wq_end)] < 0.0)
+      index <- index[which(index > states_config$wq_start[2])]
       init$x[ m, index] <- 0.0
     }
   }
@@ -587,6 +594,7 @@ if(!restart_present){
   init$snow_ice_thickness[ ,3] <- config$default_blue_ice_thickness_init
   init$avg_surf_temp[] <- init$x[ ,1]
   init$mixing_vars[, ] <- 0.0
+  init$salt[, ] <- config$the_sals_init
 
   for(m in 1:nmembers){
     init$glm_depths[m, 1:ndepths_modeled] <- config$modeled_depths
@@ -616,8 +624,43 @@ if(hist_days == 0){
   }
 }
 
-management_input <- flare::read_sss_files(full_time_local,
-                                   sss_file = file.path(config$data_location, config$sss_fname))
+
+#### Create management
+
+
+d <- readr::read_csv(file.path(config$data_location, config$sss_fname), col_type = readr::cols(
+  time = readr::col_date(format = ""),
+  FLOW = readr::col_double(),
+  OXY_oxy = readr::col_double())
+)
+
+full_time_day_local <- lubridate::as_date(full_time_local)
+
+sss_flow <- rep(0, length(full_time_day_local))
+sss_OXY_oxy <- rep(0, length(full_time_day_local))
+
+if(length(which(d$time == full_time_day_local[1])) > 0){
+
+  for(i in 1:(length(full_time_day_local))){
+    index <- which(d$time == full_time_day_local[i])
+    if(length(index) > 0){
+      sss_flow[i] <- unlist(d[index, "FLOW"])
+      sss_OXY_oxy[i] <- unlist(d[index, "OXY_oxy"])
+    }
+  }
+}
+management_input <- data.frame(sss_flow = sss_flow, sss_OXY_oxy = sss_OXY_oxy)
+
+management <- list()
+management$management_input <- management_input
+management$simulate_sss <- config$simulate_sss
+management$forecast_sss_on <- run_config$forecast_sss_on
+management$sss_depth <- config$sss_depth
+management$use_specified_sss <- config$use_specified_sss
+management$specified_sss_inflow_file <- config$specified_sss_inflow_file
+management$specified_sss_outflow_file <- config$specified_sss_outflow_file
+management$forecast_sss_flow <- config$forecast_sss_flow
+management$forecast_sss_oxy <- config$forecast_sss_oxy
 
 ####################################################
 #### STEP 12: Run Ensemble Kalman Filter
@@ -629,35 +672,34 @@ aux_states_init$the_sals_init <- config$the_sals_init
 aux_states_init$mixing_vars <- init$mixing_vars
 aux_states_init$glm_depths <- init$glm_depths
 aux_states_init$surface_height <- init$surface_height
-
-
-
+aux_states_init$salt <- init$salt
 
 x_init <- init$x
 
-enkf_output <- flare::run_EnKF(x_init,
-                               obs,
-                               psi,
-                               process_sd,
-                               working_directory,
-                               met_file_names,
-                               inflow_file_names,
-                               outflow_file_names,
+x_init <- init$x[1:10]
+
+
+enkf_output <- flare::run_EnKF(x_init = x_init,
+                               obs = obs,
+                               psi = psi,
+                               process_sd = process_sd,
+                               working_directory = working_directory,
+                               met_file_names = met_file_names,
+                               inflow_file_names = inflow_file_names,
+                               outflow_file_names = outflow_file_names,
                                sim_start_datetime = start_datetime_local,
                                sim_end_datetime = end_datetime_local,
                                forecast_start_datetime = forecast_start_datetime_local,
-                               management_input,
-                               wq_start,
-                               wq_end,
-                               config,
-                               aux_states_init,
-                               code_folder
+                               management = management,
+                               config = config,
+                               pars_config = pars_config,
+                               states_config = states_config,
+                               obs_config = obs_config,
+                               aux_states_init = aux_states_init
 )
 
 ###SAVE FORECAST
 saved_file <- flare::write_forecast_netcdf(enkf_output,
-                                           wq_start,
-                                           wq_end,
                                            forecast_location = run_config$forecast_location)
 
 #Create EML Metadata

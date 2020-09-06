@@ -1,30 +1,37 @@
-##' @title Download and Downscale NOAA GEFS for a single site
-##' @return None
-##'
-##' @param site_index, index of site_list, lat_list, lon_list to be downloaded
-##' @param lat_list, vector of latitudes that correspond to site codes
-##' @param lon_list, vector of longitudes that correspond to site codes
-##' @param site_list, vector of site codes, used in directory and file name generation
-##' @param downscale, logical specifying whether to downscale from 6-hr to 1-hr
-##' @param overwrite, logical stating to overwrite any existing output_file
-##' @param model_name, directory name for the 6-hr forecast, this will be used in directory and file name generation
-##' @param model_name_ds, directory name for the 1-hr forecast, this will be used in directory and file name generation
-##' @param output_directory, directory where the model output will be save
-##' @export
-##'
-##' @author Quinn Thomas
-##'
-##'
-##'
-create_sss_input_output <- function(x, i, m, full_time_local,
-                                    working_directory, wq_start,
-                                    management_input, hist_days,
+#' @title Download and Downscale NOAA GEFS for a single site
+#' @return None
+#'
+#' @param site_index, index of site_list, lat_list, lon_list to be downloaded
+#' @param lat_list, vector of latitudes that correspond to site codes
+#' @param lon_list, vector of longitudes that correspond to site codes
+#' @param site_list, vector of site codes, used in directory and file name generation
+#' @param downscale, logical specifying whether to downscale from 6-hr to 1-hr
+#' @param overwrite, logical stating to overwrite any existing output_file
+#' @param model_name, directory name for the 6-hr forecast, this will be used in directory and file name generation
+#' @param model_name_ds, directory name for the 1-hr forecast, this will be used in directory and file name generation
+#' @param output_directory, directory where the model output will be save
+#' @noRd
+#'
+#' @author Quinn Thomas
+#'
+#'
+#'
+create_sss_input_output <- function(x,
+                                    i,
+                                    m,
+                                    full_time_local,
+                                    working_directory,
+                                    wq_start,
+                                    management_input,
+                                    hist_days,
                                     forecast_sss_on,
                                     sss_depth,
                                     use_specified_sss,
                                     states_config,
                                     include_wq,
-                                    modeled_depths){
+                                    modeled_depths,
+                                    forecast_sss_flow,
+                                    forecast_sss_oxy){
 
   full_time_day_local <- lubridate::as_date(full_time_local)
 
@@ -109,22 +116,22 @@ create_sss_input_output <- function(x, i, m, full_time_local,
     sss_inflow <- data.frame(time = time_sss, FLOW = FLOW, TEMP = TEMP, SALT = SALT, OXY_oxy = OXY_oxy)
   }else{
 
-    NIT_amm <- round(rep(x[wq_start[which(states_config$state_names == "NIT_amm")-1] + depth_index - 1],2), 3)
-    NIT_nit <- round(rep(x[wq_start[which(states_config$state_names == "NIT_nit")-1] + depth_index - 1],2), 3)
-    PHS_frp <- round(rep(x[wq_start[which(states_config$state_names == "PHS_frp")-1] + depth_index - 1],2), 3)
-    OGM_doc <- round(rep(x[wq_start[which(states_config$state_names == "OGM_doc")-1] + depth_index - 1],2), 3)
-    OGM_docr <- round(rep(x[wq_start[which(states_config$state_names == "OGM_docr")-1] + depth_index - 1],2), 3)
-    OGM_poc <- round(rep(x[wq_start[which(states_config$state_names == "OGM_poc")-1] + depth_index - 1],2), 3)
-    OGM_don <- round(rep(x[wq_start[which(states_config$state_names == "OGM_don")-1] + depth_index - 1],2), 3)
-    OGM_donr <- round(rep(x[wq_start[which(states_config$state_names == "OGM_donr")-1] + depth_index - 1],2), 3)
-    OGM_dop <- round(rep(x[wq_start[which(states_config$state_names == "OGM_dop")-1] + depth_index - 1],2), 3)
-    OGM_dopr <- round(rep(x[wq_start[which(states_config$state_names == "OGM_dop")-1] + depth_index - 1],2), 3)
-    OGM_pop <- round(rep(x[wq_start[which(states_config$state_names == "OGM_pop")-1] + depth_index - 1],2), 3)
-    OGM_pon <- round(rep(x[wq_start[which(states_config$state_names == "OGM_pon")-1] + depth_index - 1],2), 3)
+    NIT_amm <- round(rep(x[wq_start[which(states_config$state_names == "NIT_amm")] + depth_index - 1],2), 3)
+    NIT_nit <- round(rep(x[wq_start[which(states_config$state_names == "NIT_nit")] + depth_index - 1],2), 3)
+    PHS_frp <- round(rep(x[wq_start[which(states_config$state_names == "PHS_frp")] + depth_index - 1],2), 3)
+    OGM_doc <- round(rep(x[wq_start[which(states_config$state_names == "OGM_doc")] + depth_index - 1],2), 3)
+    OGM_docr <- round(rep(x[wq_start[which(states_config$state_names == "OGM_docr")] + depth_index - 1],2), 3)
+    OGM_poc <- round(rep(x[wq_start[which(states_config$state_names == "OGM_poc")] + depth_index - 1],2), 3)
+    OGM_don <- round(rep(x[wq_start[which(states_config$state_names == "OGM_don")] + depth_index - 1],2), 3)
+    OGM_donr <- round(rep(x[wq_start[which(states_config$state_names == "OGM_donr")] + depth_index - 1],2), 3)
+    OGM_dop <- round(rep(x[wq_start[which(states_config$state_names == "OGM_dop")] + depth_index - 1],2), 3)
+    OGM_dopr <- round(rep(x[wq_start[which(states_config$state_names == "OGM_dop")] + depth_index - 1],2), 3)
+    OGM_pop <- round(rep(x[wq_start[which(states_config$state_names == "OGM_pop")] + depth_index - 1],2), 3)
+    OGM_pon <- round(rep(x[wq_start[which(states_config$state_names == "OGM_pon")] + depth_index - 1],2), 3)
     #PHS_frp_ads <- round(rep(x[i-1, m, wq_start[which(state_names == "PHS_frp_ads")-1] + depth_index - 1],2), 3)
     #CAR_dic <- round(rep(x[i-1, m, wq_start[which(state_names == "CAR_dic")-1] + depth_index - 1],2), 3)
     #CAR_ch4 <- round(rep(x[i-1, m, wq_start[which(state_names == "CAR_ch4")-1] + depth_index - 1],2), 3)
-    SIL_rsi <- round(rep(x[wq_start[which(states_config$state_names == "SIL_rsi")-1] + depth_index - 1],2), 3)
+    SIL_rsi <- round(rep(x[wq_start[which(states_config$state_names == "SIL_rsi")] + depth_index - 1],2), 3)
 
     sss_inflow <- data.frame(time = time_sss,
                              FLOW = FLOW,
