@@ -37,3 +37,9 @@ vignettes/*.pdf
 
 # R Environment Variables
 .Renviron
+
+.DS_Store
+R/.DS_Store
+exec/.DS_Store
+inst/.DS_Store
+notebook/.DS_Store

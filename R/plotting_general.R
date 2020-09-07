@@ -379,7 +379,7 @@ plotting_general <- function(file_name,
     upper_var <- array(NA, dim = c(length(full_time_local)))
     lower_var <- array(NA,dim = c(length(full_time_local)))
     for(j in 1:length(full_time_local)){
-      sechi <- 1.7 / curr_var[j, , ii]
+      sechi <- 1.7 / curr_var[j,ii , ]
       mean_var[j] <- mean(sechi, na.rm = TRUE)
       upper_var[j] <- quantile(sechi, 0.1, na.rm = TRUE)
       lower_var[j] <- quantile(sechi, 0.9, na.rm = TRUE)
