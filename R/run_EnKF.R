@@ -88,7 +88,7 @@ run_EnKF <- function(states_init,
   states_config$wq_start <- wq_start
   states_config$wq_end <- wq_end
 
-  flare:::check_enkf_inputs(states_init,
+  check_enkf_inputs(states_init,
                             pars_init,
                             obs,
                             psi,
@@ -140,7 +140,7 @@ run_EnKF <- function(states_init,
   }
 
   if(length(config$diagnostics_names) > 0){
-    diagnostics <- array(NA, dim=c(nsteps, nmembers, ndepths_modeled, length(config$diagnostics_names)))
+    diagnostics <- array(NA, dim=c(length(config$diagnostics_names), nsteps, ndepths_modeled, nmembers))
   }else{
     diagnostics <- NA
   }
@@ -154,22 +154,22 @@ run_EnKF <- function(states_init,
   x_prior <- array(NA, dim = c(nsteps, nmembers, nstates + npars))
 
 
-  flare:::set_up_model(executable_location = paste0(find.package("flare"),"/exec/"),
+  set_up_model(executable_location = paste0(find.package("flare"),"/exec/"),
                config,
                working_directory,
                num_wq_vars)
 
-  mixing_vars <- array(NA, dim = c(nsteps, nmembers, 17))
-  glm_depths <- array(NA, dim = c(nsteps, nmembers, 500))
-  surface_height <- array(NA, dim = c(nsteps, nmembers))
-  snow_ice_thickness <- array(NA, dim = c(nsteps, nmembers, 3))
+  mixing_vars <- array(NA, dim = c(17, nsteps, nmembers))
+  model_internal_depths <- array(NA, dim = c(nsteps, 500, nmembers))
+  lake_depth <- array(NA, dim = c(nsteps, nmembers))
+  snow_ice_thickness <- array(NA, dim = c(3, nsteps, nmembers))
   avg_surf_temp <- array(NA, dim = c(nsteps, nmembers))
-  salt <- array(NA, dim = c(nsteps, nmembers, ndepths_modeled))
+  salt <- array(NA, dim = c(nsteps, ndepths_modeled, nmembers))
 
-  mixing_vars[1, ,] <- aux_states_init$mixing_vars
-  glm_depths[1, ,] <- aux_states_init$glm_depths
-  surface_height[1, ] <- aux_states_init$surface_height
-  snow_ice_thickness[1, , ] <- aux_states_init$snow_ice_thickness
+  mixing_vars[,1 ,] <- aux_states_init$mixing_vars
+  model_internal_depths[1, ,] <- aux_states_init$model_internal_depths
+  lake_depth[1, ] <- aux_states_init$lake_depth
+  snow_ice_thickness[,1 , ] <- aux_states_init$snow_ice_thickness
   avg_surf_temp[1, ] <- aux_states_init$avg_surf_temp
   salt[1, , ] <- aux_states_init$salt
 
@@ -215,9 +215,9 @@ run_EnKF <- function(states_init,
         curr_pars <- x[i - 1, m , (nstates+1):(nstates+ npars)]
       }
 
-      out <- flare:::run_model(i,
+      out <- run_model(i,
                        m,
-                       mixing_vars_start = mixing_vars[i-1, m, ],
+                       mixing_vars_start = mixing_vars[,i-1 , m],
                        curr_start,
                        curr_stop,
                        par_names,
@@ -225,8 +225,8 @@ run_EnKF <- function(states_init,
                        working_directory,
                        par_nml,
                        num_phytos,
-                       glm_depths_start = glm_depths[i-1, m, ],
-                       surface_height_start = surface_height[i-1, m],
+                       glm_depths_start = model_internal_depths[i-1, ,m ],
+                       lake_depth_start = lake_depth[i-1, m],
                        x_start = x[i-1, m, ],
                        full_time_local,
                        wq_start = states_config$wq_start,
@@ -243,22 +243,22 @@ run_EnKF <- function(states_init,
                        diagnostics_names = config$diagnostics_names,
                        npars,
                        num_wq_vars,
-                       snow_ice_thickness_start = snow_ice_thickness[i-1, m, ],
+                       snow_ice_thickness_start = snow_ice_thickness[, i-1,m ],
                        avg_surf_temp_start = avg_surf_temp[i-1, m],
-                       salt_start = salt[i-1, m, ],
+                       salt_start = salt[i-1, ,m],
                        nstates,
                        state_names = states_config$state_names,
                        include_wq = config$include_wq,
                        data_location = config$data_location)
 
       x_star[m, ] <- out$x_star_end
-      surface_height[i ,m ] <- out$surface_height_end
-      snow_ice_thickness[i,m ,] <- out$snow_ice_thickness_end
+      lake_depth[i ,m ] <- out$lake_depth_end
+      snow_ice_thickness[,i ,m] <- out$snow_ice_thickness_end
       avg_surf_temp[i , m] <- out$avg_surf_temp_end
-      mixing_vars[i, m, ] <- out$mixing_vars_end
-      diagnostics[i, m, , ] <- out$diagnostics_end
-      glm_depths[i, m,] <- out$glm_depths_end
-      salt[i, m, ]  <- out$salt_end
+      mixing_vars[, i, m] <- out$mixing_vars_end
+      diagnostics[, i, , m] <- out$diagnostics_end
+      model_internal_depths[i, ,m] <- out$model_internal_depths
+      salt[i, , m]  <- out$salt_end
       ########################################
       #END GLM SPECIFIC PART
       ########################################
@@ -297,7 +297,7 @@ run_EnKF <- function(states_init,
     if(config$include_wq & config$no_negative_states){
       for(m in 1:nmembers){
         index <- which(x_corr[m,] < 0.0)
-        x_corr[m, index[which(index <= wq_end[num_wq_vars] & index >= config$wq_start[2])]] <- 0.0
+        x_corr[m, index[which(index <= states_config$wq_end[num_wq_vars] & index >= states_config$wq_start[2])]] <- 0.0
       }
     }
 
@@ -532,28 +532,6 @@ run_EnKF <- function(states_init,
       }
     }
 
-    # Save the states after the last historical (data assimilation)
-    # time step (before forecasting)
-    if(i == (hist_days + 1)){
-      x_restart <- x[i, , ]
-      qt_restart <- qt
-      surface_height_restart <- surface_height[i, ]
-      snow_ice_restart <- snow_ice_thickness[i, , ]
-      avg_surf_temp_restart <- avg_surf_temp[i, ]
-      mixing_restart <- mixing_vars[i, ,]
-      glm_depths_restart <- glm_depths[i, , ]
-      salt_restart <- salt[1, , ]
-
-    }else if(hist_days == 0 & i == 2){
-      x_restart <- x[1, , ]
-      qt_restart <- qt
-      surface_height_restart <- surface_height[i, ]
-      snow_ice_restart <- snow_ice_thickness[i, , ]
-      avg_surf_temp_restart <- avg_surf_temp[i, ]
-      mixing_restart <- mixing_vars[i, ,]
-      glm_depths_restart <- glm_depths[i, , ]
-      salt_restart <- salt[1, , ]
-    }
   }
 
   if(lubridate::day(full_time_local[1]) < 10){
@@ -615,18 +593,12 @@ run_EnKF <- function(states_init,
               save_file_name = save_file_name,
               forecast_iteration_id = forecast_iteration_id,
               time_of_forecast = time_of_forecast,
-              x_restart = x_restart,
-              qt_restart = qt_restart,
-              x_prior = x_prior,
-              surface_height_restart = surface_height_restart,
-              snow_ice_restart = snow_ice_restart,
+              mixing_vars =  mixing_vars,
               snow_ice_thickness = snow_ice_thickness,
-              surface_height = surface_height,
-              avg_surf_temp_restart = avg_surf_temp_restart,
-              mixing_restart = mixing_restart,
-              salt_restart = salt_restart,
+              avg_surf_temp = avg_surf_temp,
+              lake_depth = lake_depth,
               salt = salt,
-              glm_depths_restart = glm_depths_restart,
+              model_internal_depths = model_internal_depths,
               diagnostics = diagnostics,
               data_assimilation_flag = data_assimilation_flag,
               config = config,

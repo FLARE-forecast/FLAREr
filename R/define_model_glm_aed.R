@@ -27,7 +27,7 @@ run_model <- function(i,
                       par_nml,
                       num_phytos,
                       glm_depths_start,
-                      surface_height_start,
+                      lake_depth_start,
                       x_start,
                       full_time_local,
                       wq_start,
@@ -88,7 +88,7 @@ run_model <- function(i,
 
   glm_depths_end <- rep(NA,length(glm_depths_start))
 
-  diagnostics <- array(NA, dim = c(ndepths_modeled, length(diagnostics_names)))
+  diagnostics <- array(NA, dim = c(length(diagnostics_names),ndepths_modeled))
 
   x_star_end <- rep(NA, nstates)
 
@@ -117,7 +117,7 @@ run_model <- function(i,
   }
 
   glm_depths_tmp <- glm_depths_start[!is.na(glm_depths_start)]
-  glm_depths_tmp_tmp <- c(glm_depths_tmp, surface_height_start)
+  glm_depths_tmp_tmp <- c(glm_depths_tmp, lake_depth_start)
   glm_depths_mid <- glm_depths_tmp_tmp[1:(length(glm_depths_tmp_tmp)-1)] + diff(glm_depths_tmp_tmp)/2
 
   if(include_wq){
@@ -136,7 +136,7 @@ run_model <- function(i,
 
     if(simulate_sss){
       if(is.na(management$specified_sss_inflow_file)){
-        create_sss_input_output(x_start,
+        flare:::create_sss_input_output(x_start,
                                        i,
                                        m,
                                        full_time_local,
@@ -182,7 +182,7 @@ run_model <- function(i,
   update_glm_nml_names[list_index] <- "num_depths"
   list_index <- list_index + 1
 
-  update_glm_nml_list[[list_index]] <- round(surface_height_start, 4)
+  update_glm_nml_list[[list_index]] <- round(lake_depth_start, 4)
   update_glm_nml_names[list_index] <- "lake_depth"
   list_index <- list_index + 1
 
@@ -208,20 +208,20 @@ run_model <- function(i,
   update_glm_nml_names[list_index] <- "meteo_fl"
   list_index <- list_index + 1
 
-  update_nml(update_glm_nml_list,
+  flare:::update_nml(update_glm_nml_list,
              update_glm_nml_names,
              working_directory,
              "glm3.nml")
 
   if(list_index_aed > 1){
-    update_nml(update_aed_nml_list,
+    flare:::update_nml(update_aed_nml_list,
                update_aed_nml_names,
                working_directory,
                "aed2.nml")
   }
 
   if(list_index_phyto > 1){
-    update_nml(update_phyto_nml_list,
+    flare:::update_nml(update_phyto_nml_list,
                update_phyto_nml_names,
                working_directory,
                "aed2_phyto_pars.nml")
@@ -277,7 +277,7 @@ run_model <- function(i,
         output_vars_multi_depth <- state_names
         output_vars_no_depth <- NA
 
-        GLM_temp_wq_out <- get_glm_nc_var_all_wq(ncFile = "/output.nc",
+        GLM_temp_wq_out <-  flare:::get_glm_nc_var_all_wq(ncFile = "/output.nc",
                                                  working_dir = working_directory,
                                                  z_out = modeled_depths,
                                                  vars_depth = output_vars_multi_depth,
@@ -288,9 +288,10 @@ run_model <- function(i,
         glm_temps <- rev(GLM_temp_wq_out$output[ ,1])
         glm_depths_end[1:num_glm_depths] <- GLM_temp_wq_out$depths_enkf
 
-        glm_depths_tmp <- c(GLM_temp_wq_out$depths_enkf,GLM_temp_wq_out$surface_height)
+        glm_depths_tmp <- c(GLM_temp_wq_out$depths_enkf,GLM_temp_wq_out$lake_depth)
 
         glm_depths_mid <- glm_depths_tmp[1:(length(glm_depths_tmp)-1)] + diff(glm_depths_tmp)/2
+
 
         x_star_end[1:ndepths_modeled] <- approx(glm_depths_mid,glm_temps, modeled_depths, rule = 2)$y
 
@@ -306,7 +307,7 @@ run_model <- function(i,
         if(length(diagnostics_names) > 0){
           for(wq in 1:length(diagnostics_names)){
             glm_wq <-  rev(GLM_temp_wq_out$diagnostics_output[ , wq])
-            diagnostics[ , wq] <- approx(glm_depths_mid,glm_wq, modeled_depths, rule = 2)$y
+            diagnostics[wq , ] <- approx(glm_depths_mid,glm_wq, modeled_depths, rule = 2)$y
           }
         }
 
@@ -326,13 +327,13 @@ run_model <- function(i,
     }
 
     return(list(x_star_end  = x_star_end,
-                surface_height_end  = GLM_temp_wq_out$surface_height,
+                lake_depth_end  = GLM_temp_wq_out$lake_depth,
                 snow_ice_thickness_end  = GLM_temp_wq_out$snow_wice_bice,
                 avg_surf_temp_end  = GLM_temp_wq_out$avg_surf_temp,
                 mixing_vars_end = GLM_temp_wq_out$mixing_vars,
                 salt_end = salt_end,
                 diagnostics_end  = diagnostics,
-                glm_depths_end  = glm_depths_end))
+                model_internal_depths  = glm_depths_end))
   }
 }
 

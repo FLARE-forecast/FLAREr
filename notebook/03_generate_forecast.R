@@ -482,13 +482,12 @@ if(!restart_present){
 
   init$states <- array(NA, dim=c(nstates, ndepths_modeled, nmembers))
   init$pars <- array(NA, dim=c(npars, nmembers))
-  #Matrix to store essemble specific surface height
-  init$surface_height <- array(NA, dim=c(nmembers))
-  init$snow_ice_thickness <- array(NA, dim=c(nmembers, 3))
+  init$lake_depth <- array(NA, dim=c(nmembers))
+  init$snow_ice_thickness <- array(NA, dim=c(3, nmembers))
   init$avg_surf_temp <- array(NA, dim=c(nmembers))
-  init$mixing_vars <- array(NA, dim=c(nmembers, 17))
-  init$glm_depths <- array(NA, dim = c(nmembers, 500))
-  init$salt <- array(NA, dim = c(nmembers, ndepths_modeled))
+  init$mixing_vars <- array(NA, dim=c(17, nmembers))
+  init$model_internal_depths <- array(NA, dim = c(500, nmembers))
+  init$salt <- array(NA, dim = c(ndepths_modeled, nmembers))
 
   alpha_v <- 1 - exp(-config$vert_decorr_length)
 
@@ -531,43 +530,23 @@ if(!restart_present){
   #  }
   #}
 
-  init$surface_height[] <- round(config$lake_depth_init, 3)
+  init$lake_depth[] <- round(config$lake_depth_init, 3)
   #Matrix to store snow and ice heights
-  init$snow_ice_thickness[ ,1] <- config$default_snow_thickness_init
-  init$snow_ice_thickness[ ,2] <- config$default_white_ice_thickness_init
-  init$snow_ice_thickness[ ,3] <- config$default_blue_ice_thickness_init
+  init$snow_ice_thickness[1, ] <- config$default_snow_thickness_init
+  init$snow_ice_thickness[2, ] <- config$default_white_ice_thickness_init
+  init$snow_ice_thickness[3, ] <- config$default_blue_ice_thickness_init
   init$avg_surf_temp[] <- init$states[1 , 1, ]
   init$mixing_vars[, ] <- 0.0
   init$salt[, ] <- config$the_sals_init
 
   for(m in 1:nmembers){
-    init$glm_depths[m, 1:ndepths_modeled] <- config$modeled_depths
+    init$model_internal_depths[1:ndepths_modeled, m] <- config$modeled_depths
   }
 }else{
   #Restart from yesterday's run
-  init <- flare::generate_restart_initial_conditions(restart_file, config)
+  init <- flare::generate_restart_initial_conditions(restart_file, config, states_config, pars_config = pars_config)
 
 }
-
-#If hist_days = 0 then the first day of the simulation will be a forecast
-#therefre the the initial_condition_uncertainty and parameter_uncertainty
-#need to be dealt with in the x[1, ,] , normally it is dealt with in the
-#run_EnKF script
-if(hist_days == 0){
-  if(config$initial_condition_uncertainty == FALSE){
-    states_mean <- colMeans(x[1, ,1:nstates])
-    for(m in 1:nmembers){
-      x[1, m, 1:nstates]  <- states_mean
-    }
-  }
-  if(parameter_uncertainty == FALSE){
-    mean_pars <- colMeans(x[1, ,(nstates + 1):(nstates + npars)])
-    for(m in 1:nmembers){
-      x[1, m, (nstates + 1):(nstates +  npars)] <- mean_pars
-    }
-  }
-}
-
 
 #### Create management
 
@@ -614,8 +593,8 @@ aux_states_init$snow_ice_thickness <- init$snow_ice_thickness
 aux_states_init$avg_surf_temp <- init$avg_surf_temp
 aux_states_init$the_sals_init <- config$the_sals_init
 aux_states_init$mixing_vars <- init$mixing_vars
-aux_states_init$glm_depths <- init$glm_depths
-aux_states_init$surface_height <- init$surface_height
+aux_states_init$model_internal_depths <- init$model_internal_depths
+aux_states_init$lake_depth <- init$lake_depth
 aux_states_init$salt <- init$salt
 
 

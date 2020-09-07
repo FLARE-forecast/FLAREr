@@ -16,80 +16,46 @@
 ##'
 ##'
 
-generate_restart_initial_conditions <- function(restart_file, config){
+generate_restart_initial_conditions <- function(restart_file, config, states_config, pars_config = NULL){
   print("Using restart file")
-  nc <- nc_open(restart_file)
+
+
+  nc <- ncdf4::nc_open(restart_file)
   restart_nmembers <- length(ncdf4::ncvar_get(nc, "ensemble"))
-  surface_height_restart <- ncdf4::ncvar_get(nc, "surface_height_restart")
-  snow_ice_thickness_restart <- ncdf4::ncvar_get(nc, "snow_ice_restart")
-  avg_surf_temp_restart <- ncdf4::ncvar_get(nc, "avg_surf_temp_restart")
-  salt_restart <- ncdf4::ncvar_get(nc, "salt_restart")
+  data_assimilation <- ncdf4::ncvar_get(nc, "data_assimilation")
+  restart_index <- max(which(data_assimilation == 0)[1] -1, 2)
+  modeled_depths <- ncdf4::ncvar_get(nc, "depth")
+  lake_depth_restart <- ncdf4::ncvar_get(nc, "lake_depth")[restart_index, ]
+  snow_ice_thickness_restart <- ncdf4::ncvar_get(nc, "snow_ice_thickness")[ ,restart_index, ]
+  avg_surf_temp_restart <- ncdf4::ncvar_get(nc, "avg_surf_temp")[restart_index, ]
+  salt_restart <- ncdf4::ncvar_get(nc, "salt")[restart_index, , ]
 
-  mixing_restart <- ncdf4::ncvar_get(nc, "mixing_restart")
-  glm_depths_restart  <- ncdf4::ncvar_get(nc, "depths_restart")
-  restart_x_previous <- ncdf4::ncvar_get(nc, "x_restart")
-  ncdf4::nc_close(nc)
+  mixing_restart <- ncdf4::ncvar_get(nc, "mixing_vars")[ ,restart_index, ]
+  model_internal_depths  <- ncdf4::ncvar_get(nc, "model_internal_depths")[restart_index, , ]
 
-  glm_depths <- array(NA, dim = c(config$nmembers, dim(glm_depths_restart)[2]))
-  snow_ice_thickness <-  array(NA, dim = c(config$nmembers, 3))
-
-  if(restart_nmembers > config$nmembers){
-    #sample restart_nmembers
-    sampled_nmembers <- sample(seq(1, restart_nmembers, 1),
-                               nmembers,
-                               replace=FALSE)
-
-    x_previous <- restart_x_previous[sampled_nmembers, ]
-    snow_ice_thickness[ , 1] <- snow_ice_thickness_restart[sampled_nmembers, 1]
-    snow_ice_thickness[, 2] <- snow_ice_thickness_restart[sampled_nmembers, 2]
-    snow_ice_thickness[, 3] <- snow_ice_thickness_restart[sampled_nmembers, 3]
-    surface_height <- surface_height_restart[sampled_nmembers]
-    avg_surf_temp <- avg_surf_temp_restart[sampled_nmembers]
-    mixing_vars <- mixing_restart[sampled_nmembers, ]
-    salt <- salt_restart[sampled_nmembers, ]
-
-    for(m in 1:nmembers){
-      glm_depths[m ,1:dim(glm_depths_restart)[2]] <- glm_depths_restart[sampled_nmembers[m], ]
-    }
-
-  }else if(restart_nmembers < nmembers){
-    sampled_nmembers <- sample(seq(1, restart_nmembers, 1),
-                               nmembers,
-                               replace = TRUE)
-    x_previous <- restart_x_previous[sampled_nmembers, ]
-    snow_ice_thickness[ ,1] <- snow_ice_thickness_restart[sampled_nmembers, 1]
-    snow_ice_thickness[ ,2] <- snow_ice_thickness_restart[sampled_nmembers, 2]
-    snow_ice_thickness[ ,3] <- snow_ice_thickness_restart[sampled_nmembers, 3]
-    surface_height <- surface_height_restart[sampled_nmembers]
-    avg_surf_temp <- avg_surf_temp_restart[sampled_nmembers]
-    mixing_vars <- mixing_restart[sampled_nmembers, ]
-    salt <- salt_restart[sampled_nmembers, ]
-
-    for(m in 1:nmembers){
-      glm_depths[m ,1:dim(glm_depths_restart)[2]] <- glm_depths_restart[sampled_nmembers[m], ]
-    }
-
-  }else{
-    x_previous <- restart_x_previous
-    snow_ice_thickness_init[ ,1] <- snow_ice_thickness_restart[, 1]
-    snow_ice_thickness[ ,2] <- snow_ice_thickness_restart[, 2]
-    snow_ice_thickness[ ,3] <- snow_ice_thickness_restart[, 3]
-    surface_height <- surface_height_restart
-    avg_surf_temp <- avg_surf_temp_restart
-    mixing_vars <- mixing_restart
-    salt <- salt_restart
-
-    for(m in 1:nmembers){
-      glm_depths[m ,1:dim(glm_depths_restart)[2]] <- glm_depths_restart[m, ]
-    }
+  states_restart <- array(NA, dim = c(nrow(states_config), length(modeled_depths), restart_nmembers))
+  for(i in 1:nrow(states_config)){
+    states_restart[i, , ] <- ncdf4::ncvar_get(nc, states_config$state_names[i])[restart_index, , ]
   }
 
-  return(list(x = x_previous,
-              surface_height = surface_height,
-              avg_surf_temp = avg_surf_temp,
-              mixing_vars = mixing_vars,
-              glm_depths = glm_depths,
-              snow_ice_thickness = snow_ice_thickness,
-              salt = salt)
+  if(!is.null(pars_config)){
+    pars_restart <- array(NA, dim = c(nrow(pars_config), restart_nmembers))
+    for(i in 1:nrow(pars_config)){
+      pars_restart[i, ] <- ncdf4::ncvar_get(nc, pars_config$par_names_save[i])[restart_index, ]
+    }
+  }else{
+    pars_restart = NULL
+  }
+
+  ncdf4::nc_close(nc)
+
+  return(list(statest = states_restart,
+              pars = pars_restart,
+              lake_depth = lake_depth_restart,
+              snow_ice_thickness = snow_ice_thickness_restart,
+              avg_surf_temp = avg_surf_temp_restart,
+              salt = salt_restart,
+              mixing_vars = mixing_restart,
+              model_internal_depths = model_internal_depths)
   )
 }

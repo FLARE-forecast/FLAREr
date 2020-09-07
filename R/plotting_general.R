@@ -19,8 +19,6 @@
 plotting_general <- function(file_name,
                              qaqc_location){
 
-  secchi_fname <- NA
-
   pdf_file_name <- paste0(tools::file_path_sans_ext(file_name),".pdf")
 
   nc <- ncdf4::nc_open(file_name)
@@ -350,23 +348,8 @@ plotting_general <- function(file_name,
 
     print("secchi")
 
-    if(!is.na(secchi_fname)){
-      obs_curr <- readr::read_csv(secchi_fname, col_types = readr::cols()) %>%
-        dplyr::filter(Reservoir == "FCR" & Site == 50) %>%
-        dplyr::select(DateTime, Secchi_m) %>%
-        dplyr::mutate(DateTime = mdy_hm(DateTime)) %>%
-        dplyr::group_by(DateTime) %>%
-        dplyr::summarise(Secchi_m = mean(Secchi_m, na.rm = TRUE)) %>%
-        dplyr::mutate(date = as_date(DateTime))
+    obs_curr <- rep(NA, length(full_time_local))
 
-
-      full_time_local_obs <- tibble::tibble(date = as_date(full_time_local))
-      obs_curr <- obs_curr %>%
-        dplyr::right_join(full_time_local_obs, by = "date") %>%
-        dplyr::select(Secchi_m)
-    }else{
-      obs_curr <- rep(NA, length(full_time_local))
-    }
 
 
 

@@ -251,7 +251,7 @@ get_glm_nc_var_all_wq <- function(ncFile,working_dir, z_out,vars_depth, vars_no_
   ncdf4::nc_close(glm_nc)
   return(list(output = output,
               output_no_depth = output_no_depth,
-              surface_height = heights_surf,
+              lake_depth = heights_surf,
               depths_enkf = rev(heights_surf - heights),
               snow_wice_bice = c(snow, ice_white, ice_blue),
               avg_surf_temp = avg_surf_temp,
