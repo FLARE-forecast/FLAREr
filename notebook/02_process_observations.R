@@ -50,6 +50,7 @@ if(is.na(config$combined_obs_file)){
                maintenance_file = file.path(config$data_location,config$maintenance_file),
                ctd_fname = file.path(config$data_location,config$ctd_fname),
                nutrients_fname =  file.path(config$data_location, config$nutrients_fname),
+               secchi_fname = file.path(config$data_location, config$secchi_fname),
                cleaned_observations_file_long = cleaned_observations_file_long,
                lake_name_code = config$lake_name_code,
                code_folder = config$code_folder,

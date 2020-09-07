@@ -13,10 +13,9 @@ extract_secchi <- function(fname,
     summarise(secchi = mean(Secchi_m, na.rm = TRUE), .groups = 'drop') %>%
     rename("timestamp" = DateTime) %>%
     pivot_longer(cols = -c(timestamp), names_to = "variable", values_to = "value") %>%
-    mutate(method = "secchi_disk",
-           depth = NA) %>%
+    mutate(depth = NA) %>%
     filter(!is.na(value)) %>%
-    select(timestamp , depth, value, variable, method)
+    select(timestamp , depth, value, variable)
 
   return(d)
 }

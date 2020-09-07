@@ -3,6 +3,7 @@ in_situ_qaqc <- function(insitu_obs_fname,
                          maintenance_file,
                          ctd_fname,
                          nutrients_fname,
+                         secchi_fname,
                          cleaned_observations_file_long,
                          lake_name_code,
                          code_folder,
@@ -44,14 +45,6 @@ in_situ_qaqc <- function(insitu_obs_fname,
                            focal_depths = config$focal_depths)
       d <- rbind(d,d_ch4)
     }
-  }
-
-  if(!is.na(config$secchi_fname) & exists("secchi_fname")){
-    d_secchi <- extract_secchi(fname = file.path(config$data_location, config$secchi_fname),
-                               input_file_tz = "EST",
-                               local_tzone  = config$local_tzone,
-                               focal_depths = config$focal_depths)
-    d <- rbind(d,d_secchi)
   }
 
   obs_methods_temp <- cbind(config$obs_config$method_1,config$obs_config$method_2,config$obs_config$method_3,config$obs_config$method_4)
@@ -97,6 +90,16 @@ in_situ_qaqc <- function(insitu_obs_fname,
   }
 
   d_clean <- d_clean %>% tidyr::drop_na(value)
+
+  if(!is.na(config$secchi_fname)){
+
+    d_secchi <- extract_secchi(fname = file.path(config$data_location, config$secchi_fname),
+                               input_file_tz = "EST",
+                               local_tzone  = config$local_tzone,
+                               focal_depths = config$focal_depths)
+
+    d_clean <- rbind(d_clean,d_secchi)
+  }
 
   readr::write_csv(d_clean, cleaned_observations_file_long)
 }
