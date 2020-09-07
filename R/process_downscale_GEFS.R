@@ -23,8 +23,7 @@
 #' @author Quinn Thomas
 #'
 
-process_downscale_GEFS <- function(folder,
-                                   noaa_location,
+process_downscale_GEFS <- function( noaa_location,
                                    input_met_file,
                                    working_directory,
                                    n_ds_members,
