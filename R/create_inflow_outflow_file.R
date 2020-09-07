@@ -1,15 +1,26 @@
-#' @title Download and Downscale NOAA GEFS for a single site
+#' @param full_time_local
+#' @param working_directory
+#' @param input_file_tz
+#' @param start_forecast_step
+#' @param inflow_file1
+#' @param inflow_file2
+#' @param chemistry_file
+#' @param local_tzone
+#' @param met_file_names
+#' @param forecast_days
+#' @param inflow_process_uncertainty
+#' @param future_inflow_flow_coeff
+#' @param future_inflow_flow_error
+#' @param future_inflow_temp_coeff
+#' @param future_inflow_temp_error
+#' @param states_config
+#' @param include_wq
+#' @param use_future_inflow
+#' @param doc_scalar
+#'
+#' @title Create inflow and outflow files in GLM format
 #' @return None
 #'
-#' @param site_index, index of site_list, lat_list, lon_list to be downloaded
-#' @param lat_list, vector of latitudes that correspond to site codes
-#' @param lon_list, vector of longitudes that correspond to site codes
-#' @param site_list, vector of site codes, used in directory and file name generation
-#' @param downscale, logical specifying whether to downscale from 6-hr to 1-hr
-#' @param overwrite, logical stating to overwrite any existing output_file
-#' @param model_name, directory name for the 6-hr forecast, this will be used in directory and file name generation
-#' @param model_name_ds, directory name for the 1-hr forecast, this will be used in directory and file name generation
-#' @param output_directory, directory where the model output will be save
 #' @export
 #'
 #' @author Quinn Thomas

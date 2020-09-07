@@ -1,15 +1,13 @@
-##' @title Download and Downscale NOAA GEFS for a single site
-##' @return None
+##' @param cleaned_observations_file_long
 ##'
-##' @param site_index, index of site_list, lat_list, lon_list to be downloaded
-##' @param lat_list, vector of latitudes that correspond to site codes
-##' @param lon_list, vector of longitudes that correspond to site codes
-##' @param site_list, vector of site codes, used in directory and file name generation
-##' @param downscale, logical specifying whether to downscale from 6-hr to 1-hr
-##' @param overwrite, logical stating to overwrite any existing output_file
-##' @param model_name, directory name for the 6-hr forecast, this will be used in directory and file name generation
-##' @param model_name_ds, directory name for the 1-hr forecast, this will be used in directory and file name generation
-##' @param output_directory, directory where the model output will be save
+##' @param config
+##' @param start_datetime_local
+##' @param end_datetime_local
+##' @param local_tzone
+##' @param modeled_depths
+##'
+##' @title Create matrix of observations in the format required by run_ENKF
+##'
 ##' @export
 ##'
 ##' @author Quinn Thomas

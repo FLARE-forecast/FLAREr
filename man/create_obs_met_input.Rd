@@ -2,7 +2,7 @@
 % Please edit documentation in R/create_obs_met_input.R
 \name{create_obs_met_input}
 \alias{create_obs_met_input}
-\title{Download and Downscale NOAA GEFS for a single site}
+\title{Create met file using observed meteorology}
 \usage{
 create_obs_met_input(
   fname,
@@ -15,29 +15,12 @@ create_obs_met_input(
 )
 }
 \arguments{
-\item{site_index, }{index of site_list, lat_list, lon_list to be downloaded}
+\item{fname}{}
 
-\item{lat_list, }{vector of latitudes that correspond to site codes}
-
-\item{lon_list, }{vector of longitudes that correspond to site codes}
-
-\item{site_list, }{vector of site codes, used in directory and file name generation}
-
-\item{downscale, }{logical specifying whether to downscale from 6-hr to 1-hr}
-
-\item{overwrite, }{logical stating to overwrite any existing output_file}
-
-\item{model_name, }{directory name for the 6-hr forecast, this will be used in directory and file name generation}
-
-\item{model_name_ds, }{directory name for the 1-hr forecast, this will be used in directory and file name generation}
-
-\item{output_directory, }{directory where the model output will be save}
-}
-\value{
-None
+\item{missing_met_data_threshold}{}
 }
 \description{
-Download and Downscale NOAA GEFS for a single site
+Create met file using observed meteorology
 }
 \author{
 Quinn Thomas

@@ -2,7 +2,7 @@
 % Please edit documentation in R/create_obs_matrix.R
 \name{create_obs_matrix}
 \alias{create_obs_matrix}
-\title{Download and Downscale NOAA GEFS for a single site}
+\title{Create matrix of observations in the format required by run_ENKF}
 \usage{
 create_obs_matrix(
   cleaned_observations_file_long,
@@ -14,29 +14,12 @@ create_obs_matrix(
 )
 }
 \arguments{
-\item{site_index, }{index of site_list, lat_list, lon_list to be downloaded}
+\item{cleaned_observations_file_long}{}
 
-\item{lat_list, }{vector of latitudes that correspond to site codes}
-
-\item{lon_list, }{vector of longitudes that correspond to site codes}
-
-\item{site_list, }{vector of site codes, used in directory and file name generation}
-
-\item{downscale, }{logical specifying whether to downscale from 6-hr to 1-hr}
-
-\item{overwrite, }{logical stating to overwrite any existing output_file}
-
-\item{model_name, }{directory name for the 6-hr forecast, this will be used in directory and file name generation}
-
-\item{model_name_ds, }{directory name for the 1-hr forecast, this will be used in directory and file name generation}
-
-\item{output_directory, }{directory where the model output will be save}
-}
-\value{
-None
+\item{modeled_depths}{}
 }
 \description{
-Download and Downscale NOAA GEFS for a single site
+Create matrix of observations in the format required by run_ENKF
 }
 \author{
 Quinn Thomas

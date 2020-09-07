@@ -5,7 +5,6 @@
 \title{Download and Downscale NOAA GEFS for a single site}
 \usage{
 process_downscale_GEFS(
-  folder,
   noaa_location,
   input_met_file,
   working_directory,
@@ -31,23 +30,9 @@ process_downscale_GEFS(
 )
 }
 \arguments{
-\item{site_index, }{index of site_list, lat_list, lon_list to be downloaded}
+\item{noaa_location}{}
 
-\item{lat_list, }{vector of latitudes that correspond to site codes}
-
-\item{lon_list, }{vector of longitudes that correspond to site codes}
-
-\item{site_list, }{vector of site codes, used in directory and file name generation}
-
-\item{downscale, }{logical specifying whether to downscale from 6-hr to 1-hr}
-
-\item{overwrite, }{logical stating to overwrite any existing output_file}
-
-\item{model_name, }{directory name for the 6-hr forecast, this will be used in directory and file name generation}
-
-\item{model_name_ds, }{directory name for the 1-hr forecast, this will be used in directory and file name generation}
-
-\item{output_directory, }{directory where the model output will be save}
+\item{lake_longitude}{}
 }
 \value{
 None
@@ -57,4 +42,6 @@ Download and Downscale NOAA GEFS for a single site
 }
 \author{
 Quinn Thomas
+
+Laura Puckett
 }

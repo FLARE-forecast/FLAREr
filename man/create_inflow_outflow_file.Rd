@@ -2,7 +2,7 @@
 % Please edit documentation in R/create_inflow_outflow_file.R
 \name{create_inflow_outflow_file}
 \alias{create_inflow_outflow_file}
-\title{Download and Downscale NOAA GEFS for a single site}
+\title{Create inflow and outflow files in GLM format}
 \usage{
 create_inflow_outflow_file(
   full_time_local,
@@ -11,7 +11,6 @@ create_inflow_outflow_file(
   start_forecast_step,
   inflow_file1,
   inflow_file2,
-  outflow_file1,
   chemistry_file,
   local_tzone,
   met_file_names,
@@ -28,29 +27,13 @@ create_inflow_outflow_file(
 )
 }
 \arguments{
-\item{site_index, }{index of site_list, lat_list, lon_list to be downloaded}
-
-\item{lat_list, }{vector of latitudes that correspond to site codes}
-
-\item{lon_list, }{vector of longitudes that correspond to site codes}
-
-\item{site_list, }{vector of site codes, used in directory and file name generation}
-
-\item{downscale, }{logical specifying whether to downscale from 6-hr to 1-hr}
-
-\item{overwrite, }{logical stating to overwrite any existing output_file}
-
-\item{model_name, }{directory name for the 6-hr forecast, this will be used in directory and file name generation}
-
-\item{model_name_ds, }{directory name for the 1-hr forecast, this will be used in directory and file name generation}
-
-\item{output_directory, }{directory where the model output will be save}
+\item{doc_scalar}{}
 }
 \value{
 None
 }
 \description{
-Download and Downscale NOAA GEFS for a single site
+Create inflow and outflow files in GLM format
 }
 \author{
 Quinn Thomas
