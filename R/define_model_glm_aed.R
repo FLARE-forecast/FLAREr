@@ -153,9 +153,9 @@ run_model <- function(i,
                                        forecast_sss_flow = management$forecast_sss_flow,
                                        forecast_sss_oxy = management$forecast_sss_oxy)
       }else{
-        file.copy(file.path(data_location, management$specified_sss_inflow_file), paste0(working_directory,"/sss_inflow.csv"))
+        file.copy(file.path(config$qaqc_data_location, management$specified_sss_inflow_file), paste0(working_directory,"/sss_inflow.csv"))
         if(!is.na(management$specified_sss_outflow_file)){
-          file.copy(file.path(data_location, management$specified_sss_outflow_file), paste0(working_directory,"/sss_outflow.csv"))
+          file.copy(file.path(config$qaqc_data_location, management$specified_sss_outflow_file), paste0(working_directory,"/sss_outflow.csv"))
         }
       }
     }

@@ -16,7 +16,7 @@
 ##'
 ##'
 
-generate_restart_initial_conditions <- function(restart_file, config, states_config, pars_config = NULL){
+generate_restart_initial_conditions <- function(restart_file, state_names, par_names = NULL){
   print("Using restart file")
 
 
@@ -33,15 +33,15 @@ generate_restart_initial_conditions <- function(restart_file, config, states_con
   mixing_restart <- ncdf4::ncvar_get(nc, "mixing_vars")[ ,restart_index, ]
   model_internal_depths  <- ncdf4::ncvar_get(nc, "model_internal_depths")[restart_index, , ]
 
-  states_restart <- array(NA, dim = c(nrow(states_config), length(modeled_depths), restart_nmembers))
+  states_restart <- array(NA, dim = c(length(state_names), length(modeled_depths), restart_nmembers))
   for(i in 1:nrow(states_config)){
-    states_restart[i, , ] <- ncdf4::ncvar_get(nc, states_config$state_names[i])[restart_index, , ]
+    states_restart[i, , ] <- ncdf4::ncvar_get(nc,state_names[i])[restart_index, , ]
   }
 
-  if(!is.null(pars_config)){
-    pars_restart <- array(NA, dim = c(nrow(pars_config), restart_nmembers))
-    for(i in 1:nrow(pars_config)){
-      pars_restart[i, ] <- ncdf4::ncvar_get(nc, pars_config$par_names_save[i])[restart_index, ]
+  if(!is.null(par_names)){
+    pars_restart <- array(NA, dim = c(length(par_names), restart_nmembers))
+    for(i in 1:nrow(par_names)){
+      pars_restart[i, ] <- ncdf4::ncvar_get(nc, par_names[i])[restart_index, ]
     }
   }else{
     pars_restart = NULL
