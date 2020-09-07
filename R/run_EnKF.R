@@ -1,41 +1,102 @@
-#' @title Download and Downscale NOAA GEFS for a single site
+#' @title Run Ensemble Kalman Filter
 #' @return None
 #'
-#' @param site_index, index of site_list, lat_list, lon_list to be downloaded
-#' @param lat_list, vector of latitudes that correspond to site codes
-#' @param lon_list, vector of longitudes that correspond to site codes
-#' @param site_list, vector of site codes, used in directory and file name generation
-#' @param downscale, logical specifying whether to downscale from 6-hr to 1-hr
-#' @param overwrite, logical stating to overwrite any existing output_file
-#' @param model_name, directory name for the 6-hr forecast, this will be used in directory and file name generation
-#' @param model_name_ds, directory name for the 1-hr forecast, this will be used in directory and file name generation
-#' @param output_directory, directory where the model output will be save
+#' @param states_init, array of the initial states.  Required dimensions are [states, depths, ensemble]
+#' @param pars_init, array of the initial states.  Required dimensions are [pars, depths, ensemble]
+#' @param obs, array of the observaitons. Required dimensions are [nobs, time, depth]
+#' @param model_sd, vector of standard deviations describing the model error for each state
+#' @param working_directory, directory model executes
+#' @param met_file_names, vector of meterology file names
+#' @param inflow_file_names, vector of inflow file names
+#' @param outflow_file_names, vector of outflow file names
+#' @param sim_start_datetime, datetime of beginning of the simulation
+#' @param sim_end_datetime, datetime of the end of the simulation
+#' @param forecast_start_datetime, datetime when simulate is a forecast
+#' @param config, list of configurations
+#' @param pars_config, list of parameter configurations
+#' @param states_config, list of state configurations
+#' @param obs_config, list of observation configurations
+#' @param aux_states_init, list of initial conditions for auxillary states
+#' @param management. list of management inputs and configuration
 #' @export
 #'
 #' @author Quinn Thomas
 #'
 #'
 
-run_EnKF <- function(x_init,
-                      obs,
-                      psi,
-                      process_sd,
-                      working_directory,
-                      met_file_names,
-                      inflow_file_names,
-                      outflow_file_names,
-                      sim_start_datetime,
-                      sim_end_datetime,
-                      forecast_start_datetime = NA,
-                      management = NULL,
-                      config,
-                      pars_config = NULL,
-                      states_config,
-                      obs_config,
-                      aux_states_init
+run_EnKF <- function(states_init,
+                     pars_init,
+                     obs,
+                     obs_sd,
+                     model_sd,
+                     working_directory,
+                     met_file_names,
+                     inflow_file_names,
+                     outflow_file_names,
+                     sim_start_datetime,
+                     sim_end_datetime,
+                     forecast_start_datetime = NA,
+                     config,
+                     pars_config = NULL,
+                     states_config,
+                     obs_config,
+                     aux_states_init,
+                     management = NULL
 ){
 
-  check_enkf_inputs(x_init,obs,psi,process_sd, config, pars_config, states_config, obs_config)
+  nstates <- dim(states_init)[1]
+  ndepths_modeled <- dim(states_init)[2]
+  nmembers <- dim(states_init)[3]
+  n_met_members <- length(met_file_names)
+  if(!is.null(pars_config)){
+    npars <- nrow(pars_config)
+    par_names <- pars_config$par_names
+    par_nml <- pars_config$par_nml
+  }else{
+    npars <- 0
+    par_names <- NA
+    par_nml <- NA
+  }
+
+  x_init <- array(NA, dim = c(nmembers, nstates * ndepths_modeled + npars))
+  for(m in 1:nmembers){
+    x_init[m,1:(nstates * ndepths_modeled)] <- c(aperm(states_init[, ,m ], perm = c(2,1)))
+    x_init[m,(nstates * ndepths_modeled + 1):(nstates * ndepths_modeled + npars)] <- pars_init[, m]
+  }
+
+  psi <- rep(NA, length(obs_config$state_names_obs) * ndepths_modeled)
+  index <- 0
+  for(i in 1:length(obs_config$state_names_obs)){
+    for(j in 1:ndepths_modeled){
+      index <- index + 1
+      psi[index] <- obs_sd[i]
+    }
+  }
+
+  wq_start <- rep(NA, nstates)
+  wq_end <- rep(NA, nstates)
+  for(wq in 1:nstates){
+    if(wq == 1){
+      wq_start[wq] <- 1
+      wq_end[wq] <- ndepths_modeled
+    }else{
+      wq_start[wq] <- wq_end[wq-1]+1
+      wq_end[wq] <- wq_end[wq-1] + (ndepths_modeled)
+    }
+  }
+
+  states_config$wq_start <- wq_start
+  states_config$wq_end <- wq_end
+
+  flare:::check_enkf_inputs(states_init,
+                            pars_init,
+                            obs,
+                            psi,
+                            model_sd,
+                            config,
+                            pars_config,
+                            states_config,
+                            obs_config)
 
   if(is.na(forecast_start_datetime)){
     forecast_start_datetime <- sim_end_datetime
@@ -93,10 +154,10 @@ run_EnKF <- function(x_init,
   x_prior <- array(NA, dim = c(nsteps, nmembers, nstates + npars))
 
 
-  set_up_model(executable_location = paste0(find.package("flare"),"/exec/"),
-                      config,
-                      working_directory,
-                      num_wq_vars)
+  flare:::set_up_model(executable_location = paste0(find.package("flare"),"/exec/"),
+               config,
+               working_directory,
+               num_wq_vars)
 
   mixing_vars <- array(NA, dim = c(nsteps, nmembers, 17))
   glm_depths <- array(NA, dim = c(nsteps, nmembers, 500))
@@ -154,7 +215,7 @@ run_EnKF <- function(x_init,
         curr_pars <- x[i - 1, m , (nstates+1):(nstates+ npars)]
       }
 
-      out <- run_model(i,
+      out <- flare:::run_model(i,
                        m,
                        mixing_vars_start = mixing_vars[i-1, m, ],
                        curr_start,
@@ -218,11 +279,11 @@ run_EnKF <- function(x_init,
 
       q_v[] <- NA
       w[] <- NA
-      for(jj in 1:length(process_sd)){
+      for(jj in 1:length(model_sd)){
         w[] <- rnorm(ndepths_modeled, 0, 1)
-        q_v[1] <- process_sd[jj] * w[1]
+        q_v[1] <- model_sd[jj] * w[1]
         for(kk in 2:ndepths_modeled){
-          q_v[kk] <- alpha_v * q_v[kk-1] + sqrt(1 - alpha_v^2) * process_sd[jj] * w[kk]
+          q_v[kk] <- alpha_v * q_v[kk-1] + sqrt(1 - alpha_v^2) * model_sd[jj] * w[kk]
         }
 
         x_corr[m, (((jj-1)*ndepths_modeled)+1):(jj*ndepths_modeled)] <-
@@ -249,12 +310,12 @@ run_EnKF <- function(x_init,
     }
 
     if(npars > 0){
-        x_prior[i, , ] <- cbind(x_corr, pars_corr)
+      x_prior[i, , ] <- cbind(x_corr, pars_corr)
     }else{
-        x_prior[i, , ] <- x_corr
+      x_prior[i, , ] <- x_corr
     }
 
-    z_index <- which(!is.na(c(obs[i, , ])))
+    z_index <- which(!is.na(c(aperm(obs[,i , ], perm = c(2,1)))))
 
     #if no observations at a time step then just propogate model uncertainity
 
@@ -263,7 +324,7 @@ run_EnKF <- function(x_init,
        hist_days == 0){
 
       if(i > (hist_days + 1)){
-      data_assimilation_flag[i] <- 0
+        data_assimilation_flag[i] <- 0
       }else if(i <= (hist_days + 1) & config$use_obs_constraint){
         data_assimilation_flag[i] <- 3
       }else{
@@ -309,27 +370,27 @@ run_EnKF <- function(x_init,
       data_assimilation_flag[i] <- 7
 
       #if observation then calucate Kalman adjustment
-      zt <- c(obs[i, ,])
+      zt <- c(aperm(obs[,i , ], perm = c(2,1)))
       zt <- zt[which(!is.na(zt))]
 
       #Assign which states have obs in the time step
       h <- matrix(0, nrow = length(obs_config$state_names_obs) * ndepths_modeled, ncol = nstates)
 
-       index <- 0
-       for(k in 1:((nstates/ndepths_modeled))){
-         for(j in 1:ndepths_modeled){
-           index <- index + 1
-           if(!is.na(dplyr::first(states_config$states_to_obs[[k]]))){
-             for(jj in 1:length(states_config$states_to_obs[[k]])){
-               if(!is.na((obs[i, j, states_config$states_to_obs[[k]][jj]]))){
-                 states_to_obs_index <- states_config$states_to_obs[[k]][jj]
-                 index2 <- (states_to_obs_index - 1) * ndepths_modeled + j
-                 h[index2,index] <- states_config$states_to_obs_mapping[[k]][jj]
-               }
-             }
-           }
-         }
-       }
+      index <- 0
+      for(k in 1:((nstates/ndepths_modeled))){
+        for(j in 1:ndepths_modeled){
+          index <- index + 1
+          if(!is.na(dplyr::first(states_config$states_to_obs[[k]]))){
+            for(jj in 1:length(states_config$states_to_obs[[k]])){
+              if(!is.na((obs[states_config$states_to_obs[[k]][jj], i, j]))){
+                states_to_obs_index <- states_config$states_to_obs[[k]][jj]
+                index2 <- (states_to_obs_index - 1) * ndepths_modeled + j
+                h[index2,index] <- states_config$states_to_obs_mapping[[k]][jj]
+              }
+            }
+          }
+        }
+      }
 
       z_index <- c()
       for(j in 1:nrow(h)){
@@ -343,13 +404,7 @@ run_EnKF <- function(x_init,
       #Extract the data uncertainity for the data
       #types present during the time-step
 
-      if(ncol(as.matrix(psi)) > 1){
-        curr_psi <- psi[z_index, 1] + psi[z_index, 2] * zt
-      }else{
-        curr_psi <- psi[z_index]
-      }
-
-      curr_psi <- curr_psi ^ 2
+      curr_psi <- psi[z_index]  ^ 2
 
       if(length(z_index) > 1){
         psi_t <- diag(curr_psi)

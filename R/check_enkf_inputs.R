@@ -15,10 +15,11 @@
 #' @author Quinn Thomas
 #'
 
-check_enkf_inputs <- function(x_init,
+check_enkf_inputs <- function(states_init,
+                              pars_init,
                               obs,
                               psi,
-                              process_sd,
+                              model_sd,
                               config,
                               pars_config,
                               states_config,
@@ -31,25 +32,25 @@ check_enkf_inputs <- function(x_init,
     npars <- 0
   }
 
-  if(class(x_init) == "numeric"){
-    stop("x_init needs to be an array [number of ensemble members, nstates]")
-  }else if(length(dim(x_init)) > 2){
-    stop("x_init has too many dimensions (should be 2)")
+  if(class(states_init) == "numeric"){
+    stop("states_initneeds to be an array [number of ensemble members, nstates, ndepths]")
+  }else if(length(dim(states_init)) > 3){
+    stop("states_init has too many dimensions (should be 2)")
   }
 
-  if(dim(x_init)[2] != (max(states_config$wq_end) + npars)){
-    stop("Second dim of x_init does != (max(states_config$wq_end) + npars)")
+  if(dim(pars_init)[2] != dim(states_init)[3]){
+    stop("pars_init and states_init don't have same number of ensemble members")
   }
 
-  if(length(process_sd) != nrow(states_config)){
-    stop("length of process_sd != nrow(states_config)")
+  if(length(model_sd) != nrow(states_config)){
+    stop("length of model_sd != nrow(states_config)")
   }
 
-  if((dim(obs)[2] * dim(obs)[3]) != nrow(psi)){
+  if((dim(obs)[1] * dim(obs)[3]) != length(psi)){
     stop("(dim(obs)[2] * dim(obs)[2]) != nrow(psi)")
   }
 
-  if(dim(obs)[3] != nrow(obs_config)){
+  if(dim(obs)[1] != nrow(obs_config)){
     stop("dim(obs)[3] != nrow(obs_config)")
   }
 

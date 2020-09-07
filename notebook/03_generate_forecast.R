@@ -65,7 +65,7 @@ if(nrow(states_config) > 0){
 
 ndepths_modeled <- length(config$modeled_depths)
 nstates <- ndepths_modeled * length(states_config$state_names)
-num_wq_vars <-  length(states_config$state_names) - 1
+
 
 glm_output_vars <- states_config$state_names
 
@@ -414,73 +414,25 @@ if(!config$use_obs_constraint){
 #### STEP 8: SET UP INITIAL CONDITIONS
 ####################################################
 
-init_depth <- list()
+init_depth <- array(NA, dim = c(nrow(states_config),ndepths_modeled))
 for(i in 1:nrow(states_config)){
   if(!is.na(states_config$init_obs_name[i])){
     obs_index <- which(obs_config$state_names_obs == states_config$init_obs_name[i])
-    #init_obs <- z[1, ,obs_index] * (1/states_config$states_to_obs_mapping[[i]][1]) * states_config$init_obs_mapping[i]
-    init_obs <- obs[1, ,obs_index] * (1/states_config$states_to_obs_mapping_1[i]) * states_config$init_obs_mapping[i]
+    init_obs <- obs[obs_index, 1, ] * (1/states_config$states_to_obs_mapping_1[i]) * states_config$init_obs_mapping[i]
     if(length(which(!is.na(init_obs))) == 0){
-      init_depth[[i]] <- rep(states_config$initial_conditions[i], ndepths_modeled)
+      init_depth[i, ] <- rep(states_config$initial_conditions[i], ndepths_modeled)
       if(states_config$init_obs_name[i] == "temp"){
         init_obs <- approx(x = config$default_temp_init_depths, y = config$default_temp_init, xout = config$modeled_depths, rule=2)
       }
     }else if(length(which(!is.na(init_obs))) == 1){
-      init_depth[[i]] <- rep(init_obs[!is.na(init_obs)], ndepths_modeled)
+      init_depth[i, ]  <- rep(init_obs[!is.na(init_obs)], ndepths_modeled)
     }else{
-      init_depth[[i]] <- approx(x = config$modeled_depths[!is.na(init_obs)], y = init_obs[!is.na(init_obs)], xout = config$modeled_depths, rule=2)$y
+      init_depth[i, ]  <- approx(x = config$modeled_depths[!is.na(init_obs)], y = init_obs[!is.na(init_obs)], xout = config$modeled_depths, rule=2)$y
     }
   }else{
-    init_depth[[i]] <- rep(states_config$initial_conditions[i], ndepths_modeled)
+    init_depth[i, ]  <- rep(states_config$initial_conditions[i], ndepths_modeled)
   }
 }
-
-num_wq_vars <- length(states_config$state_names) - 1
-
-wq_start <- NA
-wq_end <- NA
-if(config$include_wq){
-  temp_start <- 1
-  temp_end <- ndepths_modeled
-  wq_start <- rep(NA, num_wq_vars)
-  wq_end <- rep(NA, num_wq_vars)
-  for(wq in 1:num_wq_vars){
-    if(wq == 1){
-      wq_start[wq] <- temp_end+1
-      wq_end[wq] <- temp_end + (ndepths_modeled)
-    }else{
-      wq_start[wq] <- wq_end[wq-1]+1
-      wq_end[wq] <- wq_end[wq-1] + (ndepths_modeled)
-    }
-  }
-}else{
-  temp_start <- 1
-  temp_end <- ndepths_modeled
-  wq_start <- temp_end+1
-  wq_end <- temp_end+1
-}
-
-states_config$wq_start <- c(temp_start, wq_start)
-states_config$wq_end <- c(temp_start, wq_end)
-
-
-#######################################################
-#### STEP 9: CREATE THE PSI VECTOR (DATA uncertainty)
-#######################################################
-
-psi_slope <- rep(NA, length(obs_config$state_names_obs) * ndepths_modeled)
-psi_intercept <- rep(NA, length(obs_config$state_names_obs) * ndepths_modeled)
-
-index <- 0
-for(i in 1:length(obs_config$state_names_obs)){
-  for(j in 1:ndepths_modeled){
-    index <- index + 1
-    psi_intercept[index] <- obs_config$obs_error_intercept[[i]]
-    psi_slope[index] <- obs_config$obs_error_slope[[i]]
-  }
-}
-
-psi <- cbind(psi_intercept, psi_slope)
 
 states_to_obs_temp <- cbind(states_config$states_to_obs_1,states_config$states_to_obs_2, states_config$states_to_obs_3)
 states_to_obs_mapping_temp <- cbind(states_config$states_to_obs_mapping_1,states_config$states_to_obs_mapping_2, states_config$states_to_obs_mapping_3)
@@ -508,19 +460,12 @@ for(i in 1:nrow(states_to_obs_temp)){
 states_config$states_to_obs <- states_to_obs
 states_config$states_to_obs_mapping <- states_to_obs_mapping
 
-####################################################
-#### STEP 10: CREATE THE PROCESS UNCERTAINTY
-####################################################
-
-process_sd <- states_config$process_error
-init_sd <- states_config$initial_error
-
 ################################################################
 #### STEP 11: CREATE THE X ARRAY (STATES X TIME);INCLUDES INITIALATION
 ################################################################
 nmembers <- config$ensemble_size
 
-nstates <- ndepths_modeled * length(states_config$state_names)
+nstates <- length(states_config$state_names)
 
 init <- list()
 
@@ -535,7 +480,8 @@ if(!is.na(run_config$restart_file)){
 #Initial conditions
 if(!restart_present){
 
-  init$x <- array(NA, dim=c(nmembers, nstates + npars))
+  init$states <- array(NA, dim=c(nstates, ndepths_modeled, nmembers))
+  init$pars <- array(NA, dim=c(npars, nmembers))
   #Matrix to store essemble specific surface height
   init$surface_height <- array(NA, dim=c(nmembers))
   init$snow_ice_thickness <- array(NA, dim=c(nmembers, 3))
@@ -549,50 +495,48 @@ if(!restart_present){
   q_v <- rep(NA ,ndepths_modeled)
   w <- rep(NA, ndepths_modeled)
 
-  combined_initial_conditions <- unlist(init_depth)
+  combined_initial_conditions <- init_depth
 
 
   for(m in 1:nmembers){
     q_v[] <- NA
     w[] <- NA
-    for(jj in 1:length(process_sd)){
+    for(jj in 1:nstates){
       w[] <- rnorm(ndepths_modeled, 0, 1)
-      q_v[1] <- process_sd[jj] * w[1]
+      q_v[1] <- states_config$initial_model_sd[jj] * w[1]
       for(kk in 2:ndepths_modeled){
-        q_v[kk] <- alpha_v * q_v[kk-1] + sqrt(1 - alpha_v^2) * init_sd[jj] * w[kk]
+        q_v[kk] <- alpha_v * q_v[kk-1] + sqrt(1 - alpha_v^2) * states_config$initial_model_sd[jj] * w[kk]
       }
 
       if(config$single_run | (config$initial_condition_uncertainty == FALSE & hist_days == 0)){
-        init$x[m,(((jj-1)*ndepths_modeled)+1):(jj*ndepths_modeled)] <-
-          combined_initial_conditions[(((jj-1)*ndepths_modeled)+1):(jj*ndepths_modeled)]
+        init$states[jj, , m] <- combined_initial_conditions[jj, ]
       }else{
-        init$x[m,(((jj-1)*ndepths_modeled)+1):(jj*ndepths_modeled)] <-
-          combined_initial_conditions[(((jj-1)*ndepths_modeled)+1):(jj*ndepths_modeled)] + q_v
+        init$states[jj, , m] <- combined_initial_conditions[jj, ] + q_v
       }
     }
   }
 
   for(par in 1:npars){
-    init$x[ ,(nstates+par)] <- runif(n=nmembers,pars_config$par_init_lowerbound[par], pars_config$par_init_upperbound[par])
+    init$pars[par, ] <- runif(n=nmembers,pars_config$par_init_lowerbound[par], pars_config$par_init_upperbound[par])
     if(config$single_run){
-      init$x[ ,(nstates+par)] <-  rep(pars_config$par_init[par], nmembers)
+      init$pars[par, ] <-  rep(pars_config$par_init[par], nmembers)
     }
   }
 
-  if(config$include_wq){
-    for(m in 1:nmembers){
-      index <- which(init$x[ m, 1:dplyr::last(states_config$wq_end)] < 0.0)
-      index <- index[which(index > states_config$wq_start[2])]
-      init$x[ m, index] <- 0.0
-    }
-  }
+  #if(config$include_wq){
+  #  for(m in 1:nmembers){
+  #    index <- which(init$states[ m, 1:dplyr::last(states_config$wq_end)] < 0.0)
+  #    index <- index[which(index > states_config$wq_start[2])]
+  #    init$states[ m, index] <- 0.0
+  #  }
+  #}
 
   init$surface_height[] <- round(config$lake_depth_init, 3)
   #Matrix to store snow and ice heights
   init$snow_ice_thickness[ ,1] <- config$default_snow_thickness_init
   init$snow_ice_thickness[ ,2] <- config$default_white_ice_thickness_init
   init$snow_ice_thickness[ ,3] <- config$default_blue_ice_thickness_init
-  init$avg_surf_temp[] <- init$x[ ,1]
+  init$avg_surf_temp[] <- init$states[1 , 1, ]
   init$mixing_vars[, ] <- 0.0
   init$salt[, ] <- config$the_sals_init
 
@@ -674,15 +618,12 @@ aux_states_init$glm_depths <- init$glm_depths
 aux_states_init$surface_height <- init$surface_height
 aux_states_init$salt <- init$salt
 
-x_init <- init$x
 
-x_init <- init$x[1:10]
-
-
-enkf_output <- flare::run_EnKF(x_init = x_init,
+enkf_output <- flare::run_EnKF(states_init = init$states,
+                               pars_init = init$pars,
                                obs = obs,
-                               psi = psi,
-                               process_sd = process_sd,
+                               obs_sd = obs_config$obs_sd,
+                               model_sd = states_config$model_sd,
                                working_directory = working_directory,
                                met_file_names = met_file_names,
                                inflow_file_names = inflow_file_names,
@@ -690,12 +631,12 @@ enkf_output <- flare::run_EnKF(x_init = x_init,
                                sim_start_datetime = start_datetime_local,
                                sim_end_datetime = end_datetime_local,
                                forecast_start_datetime = forecast_start_datetime_local,
-                               management = management,
                                config = config,
                                pars_config = pars_config,
                                states_config = states_config,
                                obs_config = obs_config,
-                               aux_states_init = aux_states_init
+                               aux_states_init = aux_states_init,
+                               management = management
 )
 
 ###SAVE FORECAST

@@ -51,9 +51,9 @@ create_obs_matrix <- function(cleaned_observations_file_long, config, start_date
   #### STEP 7: CREATE THE Z ARRAY (OBSERVATIONS x TIME)
   ####################################################
 
-  obs <- array(NA, dim = c(nsteps, ndepths_modeled, length(obs_config$state_names_obs)))
+  obs <- array(NA, dim = c(length(obs_config$state_names_obs), nsteps, ndepths_modeled))
   for(i in 1:nrow(obs_config)){
-    obs[ , , i] <-  obs_list[[i]]
+    obs[i , , ] <-  obs_list[[i]]
   }
 
 

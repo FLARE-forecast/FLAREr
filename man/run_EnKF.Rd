@@ -2,13 +2,14 @@
 % Please edit documentation in R/run_EnKF.R
 \name{run_EnKF}
 \alias{run_EnKF}
-\title{Download and Downscale NOAA GEFS for a single site}
+\title{Run Ensemble Kalman Filter}
 \usage{
 run_EnKF(
-  x_init,
+  states_init,
+  pars_init,
   obs,
-  psi,
-  process_sd,
+  obs_sd,
+  model_sd,
   working_directory,
   met_file_names,
   inflow_file_names,
@@ -16,38 +17,54 @@ run_EnKF(
   sim_start_datetime,
   sim_end_datetime,
   forecast_start_datetime = NA,
-  management = NULL,
   config,
   pars_config = NULL,
   states_config,
   obs_config,
-  aux_states_init
+  aux_states_init,
+  management = NULL
 )
 }
 \arguments{
-\item{site_index, }{index of site_list, lat_list, lon_list to be downloaded}
+\item{states_init, }{array of the initial states.  Required dimensions are \link{states, depths, ensemble}}
 
-\item{lat_list, }{vector of latitudes that correspond to site codes}
+\item{pars_init, }{array of the initial states.  Required dimensions are \link{pars, depths, ensemble}}
 
-\item{lon_list, }{vector of longitudes that correspond to site codes}
+\item{obs, }{array of the observaitons. Required dimensions are \link{nobs, time, depth}}
 
-\item{site_list, }{vector of site codes, used in directory and file name generation}
+\item{model_sd, }{vector of standard deviations describing the model error for each state}
 
-\item{downscale, }{logical specifying whether to downscale from 6-hr to 1-hr}
+\item{working_directory, }{directory model executes}
 
-\item{overwrite, }{logical stating to overwrite any existing output_file}
+\item{met_file_names, }{vector of meterology file names}
 
-\item{model_name, }{directory name for the 6-hr forecast, this will be used in directory and file name generation}
+\item{inflow_file_names, }{vector of inflow file names}
 
-\item{model_name_ds, }{directory name for the 1-hr forecast, this will be used in directory and file name generation}
+\item{outflow_file_names, }{vector of outflow file names}
 
-\item{output_directory, }{directory where the model output will be save}
+\item{sim_start_datetime, }{datetime of beginning of the simulation}
+
+\item{sim_end_datetime, }{datetime of the end of the simulation}
+
+\item{forecast_start_datetime, }{datetime when simulate is a forecast}
+
+\item{config, }{list of configurations}
+
+\item{pars_config, }{list of parameter configurations}
+
+\item{states_config, }{list of state configurations}
+
+\item{obs_config, }{list of observation configurations}
+
+\item{aux_states_init, }{list of initial conditions for auxillary states}
+
+\item{management.}{list of management inputs and configuration}
 }
 \value{
 None
 }
 \description{
-Download and Downscale NOAA GEFS for a single site
+Run Ensemble Kalman Filter
 }
 \author{
 Quinn Thomas

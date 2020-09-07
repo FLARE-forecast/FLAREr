@@ -50,8 +50,6 @@ write_forecast_netcdf <- function(enkf_output,
   npars <- nrow(pars_config)
   nstates <- dim(enkf_output$x)[3] - npars
 
-  num_wq_vars <- length(wq_end)
-
   x_efi <- aperm(x, c(1,3,2))
   diagnostics_efi <- aperm(diagnostics, c(1,3,2, 4))
 
@@ -179,7 +177,7 @@ write_forecast_netcdf <- function(enkf_output,
   index <- 13
 
   for(i in 1:length(obs_config$state_names_obs)){
-    ncdf4::ncvar_put(ncout,def_list[[index + i]] ,obs[,,i])
+    ncdf4::ncvar_put(ncout,def_list[[index + i]] ,obs[i,,])
   }
 
   index <- index + length(obs_config$state_names_obs)
