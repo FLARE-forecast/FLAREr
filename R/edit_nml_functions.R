@@ -52,8 +52,8 @@ update_temps <- function(curr_temps,curr_depths,working_directory){
 #' add(1, 1)
 #' add(10, 1)
 update_var <- function(var_value,var_name,working_directory, nml){
-  orig_nml = read_nml(paste0(working_directory,'/',nml))
-  index1 = NA; index2 = NA
+  orig_nml <- read_nml(paste0(working_directory,'/',nml))
+  index1 <- NA; index2 = NA
   for (g in 1:length(orig_nml)) {
     for (q in 1:length(orig_nml[[g]])) {
       if (names(orig_nml[[g]][q]) == var_name) {
@@ -61,15 +61,15 @@ update_var <- function(var_value,var_name,working_directory, nml){
       }
     }
   }
-  holder2 = unlist(orig_nml[[index1]][index2])
+  holder2 <- unlist(orig_nml[[index1]][index2])
   holder2[1:length(var_value)] = var_value
-  holder2 = list(holder2[1:length(var_value)])
+  holder2 <- list(holder2[1:length(var_value)])
   orig_nml[[index1]][index2] = holder2
   write_nml(orig_nml, paste0(working_directory,'/',nml))
 }
 
 update_nml <- function(var_list,var_name_list,working_directory, nml){
-  orig_nml = read_nml(paste0(working_directory,'/',nml))
+  orig_nml <- read_nml(paste0(working_directory,'/',nml))
 
   for(k in 1:length(var_list)){
     index1 = NA; index2 = NA
@@ -80,124 +80,15 @@ update_nml <- function(var_list,var_name_list,working_directory, nml){
         }
       }
     }
-    holder2 = unlist(orig_nml[[index1]][index2])
-    holder2[1:length(var_list[[k]])] = var_list[[k]]
-    holder2 = list(holder2[1:length(var_list[[k]])])
+    holder2 <- unlist(orig_nml[[index1]][index2])
+    holder2[1:length(var_list[[k]])] <- var_list[[k]]
+    holder2 <- list(holder2[1:length(var_list[[k]])])
     orig_nml[[index1]][index2] = holder2
   }
 
   write_nml(orig_nml, paste0(working_directory,'/',nml))
 }
 
-#' Add together two numbers.
-#'
-#' @param x A number.
-#' @param y A number.
-#' @return The sum of \code{x} and \code{y}.
-#' @noRd
-#' @examples
-#' add(1, 1)
-#' add(10, 1)
-update_time <- function(start_value,stop_value,working_directory){
-  orig_nml = read_nml(paste0(working_directory,'/','glm3.nml'))
-  index1 = NA; index2 = NA; index3 = NA; index4 = NA
-  for (g in 1:length(orig_nml)) {
-    for (q in 1:length(orig_nml[[g]])) {
-      if (names(orig_nml[[g]][q]) == 'start') {
-        index1 = g; index2 = q;
-      }
-      if (names(orig_nml[[g]][q]) == 'stop') {
-        index3 = g; index4 = q;
-      }
-    }
-  }
-  orig_nml[[index1]][index2] = as.character(start_value)
-  orig_nml[[index1]][index2] = as.character(start_value)
-  orig_nml[[index3]][index4] = stop_value
-  write_nml(orig_nml, paste0(working_directory,'/','glm3.nml'))
-}
-
-#' Add together two numbers.
-#'
-#' @param x A number.
-#' @param y A number.
-#' @return The sum of \code{x} and \code{y}.
-#' @noRd
-#' @examples
-#' add(1, 1)
-#' add(10, 1)
-get_glm_nc_var <- function(ncFile,working_dir, z_out,var = 'temp'){
-  glm_nc <- nc_open(paste0(working_dir,ncFile))
-  tallest_layer <- ncvar_get(glm_nc, "NS")
-  elev <- ncvar_get(glm_nc, "z")
-  temp <- ncvar_get(glm_nc, var)
-  nc_close(glm_nc)
-
-  elev_surf = get_surface_height(ncFile)
-
-  max_i <- tallest_layer[length(tallest_layer)]
-
-  elev <- elev[1:max_i, length(tallest_layer)]
-  temp <- temp[1:max_i, length(tallest_layer)]
-
-  num_step <- length(tallest_layer)
-  num_dep <- length(z_out)
-  temp_out <- rep(NA,num_dep)
-  tme = num_step
-  elevs_out <- elev_surf[tme, 2] - z_out
-
-  elevs = elev
-  temps = temp
-
-  num_z <- max_i
-  layer_mids <- c(elevs[1]/2, elevs[1:num_z-1] + diff(elevs)/2)
-  temps_re <- c(temps[1], temps, tail(temps,1))
-  elevs_re <- c(0, layer_mids, tail(elevs, 1))
-  temps <- approx(x = elevs_re, y = temps_re, xout = elevs_out)$y
-  return(temps)
-}
-
-#' Add together two numbers.
-#'
-#' @param x A number.
-#' @param y A number.
-#' @return The sum of \code{x} and \code{y}.
-#' @noRd
-#' @examples
-#' add(1, 1)
-#' add(10, 1)
-update_phyto <- function(p_initial,nml_name = 'aed2_phyto_pars.nml'){
-
-  if(length(p_initial)<6){
-    print('number of phyto group does not equal 6')
-  }
-  nml_file <- paste0(working_directory,'/',nml_name)
-  c <- file(nml_file, "r")
-  fileLines <- readLines(c)
-  close(c)
-  lineStart <- substr(fileLines, 1, 1)
-  ignoreLn <- lineStart == "!" | fileLines == ""
-  lineStart <- lineStart[!ignoreLn]
-  fileLines <- fileLines[!ignoreLn]
-  l <- strsplit(fileLines, ",")
-
-  l[[2]][2] = p_initial[1]
-  l[[3]][2] = p_initial[2]
-  l[[4]][2] = p_initial[3]
-  l[[5]][2] = p_initial[4]
-  l[[5]][2] = p_initial[5]
-
-  zz <- file(nml_file, open = "wt")
-  sink(zz)
-  cat(noquote(paste(paste(l[[1]],collapse = ''),'\n')))
-  cat(noquote(paste(paste(l[[2]],collapse = ','),'\n')))
-  cat(noquote(paste(paste(l[[3]],collapse = ','),'\n')))
-  cat(noquote(paste(paste(l[[4]],collapse = ','),'\n')))
-  cat(noquote(paste(paste(l[[5]],collapse = ','),'\n')))
-  cat(noquote(paste(paste(l[[6]],collapse = ','),'\n')))
-  cat(noquote(paste(paste(l[[7]],collapse = ','),'\n')))
-  sink()
-}
 
 #' Add together two numbers.
 #'
