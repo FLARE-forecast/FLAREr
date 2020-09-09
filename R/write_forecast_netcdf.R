@@ -42,7 +42,7 @@ write_forecast_netcdf <- function(enkf_output,
   x_efi <- aperm(x, c(1,3,2))
   diagnostics_efi <- diagnostics
 
-  ncfname <- paste0(forecast_location,"/",enkf_output$save_file_name,"_",enkf_output$forecast_iteration_id,".nc")
+  ncfname <- paste0(forecast_location,"/",enkf_output$save_file_name,"_",enkf_output$run_config$forecast_iteration_id,".nc")
   #Set dimensions
   ens <- seq(1,dim(x)[2],1)
   depths <- config$modeled_depths

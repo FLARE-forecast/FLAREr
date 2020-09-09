@@ -21,8 +21,6 @@ create_obs_matrix <- function(cleaned_observations_file_long, config, start_date
   d <- readr::read_csv(cleaned_observations_file_long,
                        col_types = readr::cols())
 
-  d$timestamp <- lubridate::with_tz(d$timestamp, tzone = local_tzone)
-
   obs_list <- list()
   for(i in 1:length(obs_config$state_names_obs)){
     print(paste0("Extracting ",obs_config$target_variable[i]))
@@ -33,7 +31,8 @@ create_obs_matrix <- function(cleaned_observations_file_long, config, start_date
       for(j in 1:length(modeled_depths)){
         d1 <- d %>%
           dplyr::filter(variable == obs_config$target_variable[i],
-                        timestamp == full_time_local[k],
+                        date == lubridate::as_date(full_time_local[k]),
+                        (is.na(hour) | hour == lubridate::hour(full_time_local[k])),
                         abs(depth-modeled_depths[j]) < obs_config$distance_threshold[i])
 
         if(nrow(d1) == 1){
@@ -49,7 +48,7 @@ create_obs_matrix <- function(cleaned_observations_file_long, config, start_date
   #### STEP 7: CREATE THE Z ARRAY (OBSERVATIONS x TIME)
   ####################################################
 
-  obs <- array(NA, dim = c(length(obs_config$state_names_obs), nsteps, ndepths_modeled))
+  obs <- array(NA, dim = c(length(obs_config$state_names_obs), length(full_time_local), length(modeled_depths)))
   for(i in 1:nrow(obs_config)){
     obs[i , , ] <-  obs_list[[i]]
   }

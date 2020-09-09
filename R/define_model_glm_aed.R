@@ -49,8 +49,7 @@ run_model <- function(i,
                       salt_start,
                       nstates,
                       state_names,
-                      include_wq,
-                      data_location){
+                      include_wq){
 
   switch(Sys.info() [["sysname"]],
          Linux = { machine <- "unix" },
@@ -153,9 +152,9 @@ run_model <- function(i,
                                        forecast_sss_flow = management$forecast_sss_flow,
                                        forecast_sss_oxy = management$forecast_sss_oxy)
       }else{
-        file.copy(file.path(config$qaqc_data_location, management$specified_sss_inflow_file), paste0(working_directory,"/sss_inflow.csv"))
+        file.copy(file.path(working_directory, management$specified_sss_inflow_file), paste0(working_directory,"/sss_inflow.csv"))
         if(!is.na(management$specified_sss_outflow_file)){
-          file.copy(file.path(config$qaqc_data_location, management$specified_sss_outflow_file), paste0(working_directory,"/sss_outflow.csv"))
+          file.copy(file.path(working_directory, management$specified_sss_outflow_file), paste0(working_directory,"/sss_outflow.csv"))
         }
       }
     }
@@ -228,10 +227,16 @@ run_model <- function(i,
   }
 
 
-  tmp <- file.copy(from = inflow_file_names[inflow_outflow_index, 1],
-                   to = "inflow_file1.csv", overwrite = TRUE)
-  tmp <- file.copy(from = inflow_file_names[inflow_outflow_index, 2],
+
+  if(ncol(as.matrix(inflow_file_names)) == 2){
+    tmp <- file.copy(from = inflow_file_names[inflow_outflow_index, 1],
+                     to = "inflow_file1.csv", overwrite = TRUE)
+    tmp <- file.copy(from = inflow_file_names[inflow_outflow_index, 2],
                    to = "inflow_file2.csv", overwrite = TRUE)
+  }else{
+    tmp <- file.copy(from = inflow_file_names[inflow_outflow_index],
+                     to = "inflow_file1.csv", overwrite = TRUE)
+  }
   tmp <- file.copy(from = outflow_file_names[inflow_outflow_index],
                    to = "outflow_file1.csv", overwrite = TRUE)
 
@@ -374,19 +379,24 @@ set_up_model <- function(executable_location,
 
   update_var(num_wq_vars, "num_wq_vars", working_directory, "glm3.nml") #GLM SPECIFIC
 
+
   if(config$include_wq){
 
     file.copy(from =  file.path(config$run_config$forecast_location,config$base_AED_nml),
               to = paste0(working_directory, "/", "aed2.nml"), overwrite = TRUE)
+
     file.copy(from =  file.path(config$run_config$forecast_location,config$base_AED_phyto_pars_nml),
               to = paste0(working_directory, "/", "aed2_phyto_pars.nml"), overwrite = TRUE)
+
     file.copy(from =  file.path(config$run_config$forecast_location,config$base_AED_zoop_pars_nml),
               to = paste0(working_directory, "/", "aed2_zoop_pars.nml"), overwrite = TRUE)
+
   }
 
+
   update_var(length(config$modeled_depths), "num_depths", working_directory, "glm3.nml") #GLM SPECIFIC
+
   update_var(config$modeled_depths, "the_depths", working_directory, "glm3.nml") #GLM SPECIFIC
-  update_var(rep(config$the_sals_init, length(config$modeled_depths)), "the_sals", working_directory, "glm3.nml") #GLM SPECIFIC
 
   #Create a copy of the NML to record starting initial conditions
   file.copy(from = paste0(working_directory, "/", "glm3.nml"), #GLM SPECIFIC

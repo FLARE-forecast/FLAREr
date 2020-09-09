@@ -44,6 +44,12 @@ run_EnKF <- function(states_init,
                      management = NULL
 ){
 
+  if(length(states_config$state_names) > 1){
+    config$include_wq <- TRUE
+  }else{
+    config$include_wq <- FALSE
+  }
+
   nstates <- dim(states_init)[1]
   ndepths_modeled <- dim(states_init)[2]
   nmembers <- dim(states_init)[3]
@@ -64,9 +70,9 @@ run_EnKF <- function(states_init,
     x_init[m,(nstates * ndepths_modeled + 1):(nstates * ndepths_modeled + npars)] <- pars_init[, m]
   }
 
-  psi <- rep(NA, length(obs_config$state_names_obs) * ndepths_modeled)
+  psi <- rep(NA, length(obs_sd) * ndepths_modeled)
   index <- 0
-  for(i in 1:length(obs_config$state_names_obs)){
+  for(i in 1:length(obs_sd)){
     for(j in 1:ndepths_modeled){
       index <- index + 1
       psi[index] <- obs_sd[i]
@@ -89,14 +95,14 @@ run_EnKF <- function(states_init,
   states_config$wq_end <- wq_end
 
   check_enkf_inputs(states_init,
-                            pars_init,
-                            obs,
-                            psi,
-                            model_sd,
-                            config,
-                            pars_config,
-                            states_config,
-                            obs_config)
+                    pars_init,
+                    obs,
+                    psi,
+                    model_sd,
+                    config,
+                    pars_config,
+                    states_config,
+                    obs_config)
 
   if(is.na(forecast_start_datetime)){
     forecast_start_datetime <- sim_end_datetime
@@ -105,6 +111,7 @@ run_EnKF <- function(states_init,
   hist_days <- as.numeric(forecast_start_datetime - sim_start_datetime)
   start_forecast_step <- 1 + hist_days
   full_time_local <- seq(sim_start_datetime, sim_end_datetime, by = "1 day")
+  forecast_days <- as.numeric(sim_end_datetime - forecast_start_datetime)
 
 
   if(!is.null(pars_config)){
@@ -133,6 +140,8 @@ run_EnKF <- function(states_init,
   w <- rep(NA, ndepths_modeled)
 
   alpha_v <- 1 - exp(-config$vert_decorr_length)
+
+  glm_output_vars <- states_config$state_names
 
 
   if(config$include_wq){
@@ -239,7 +248,7 @@ run_EnKF <- function(states_init,
                        inflow_file_names,
                        inflow_outflow_index,
                        outflow_file_names,
-                       glm_output_vars = config$glm_output_vars,
+                       glm_output_vars = glm_output_vars,
                        diagnostics_names = config$diagnostics_names,
                        npars,
                        num_wq_vars,
@@ -248,8 +257,7 @@ run_EnKF <- function(states_init,
                        salt_start = salt[i-1, ,m],
                        nstates,
                        state_names = states_config$state_names,
-                       include_wq = config$include_wq,
-                       data_location = config$data_location)
+                       include_wq = config$include_wq)
 
       x_star[m, ] <- out$x_star_end
       lake_depth[i ,m ] <- out$lake_depth_end
@@ -270,7 +278,7 @@ run_EnKF <- function(states_init,
       }
 
       inflow_outflow_index <- inflow_outflow_index + 1
-      if(inflow_outflow_index > nrow(inflow_file_names)){
+      if(inflow_outflow_index > nrow(as.matrix(inflow_file_names))){
         inflow_outflow_index <- 1
       }
 
@@ -374,7 +382,7 @@ run_EnKF <- function(states_init,
       zt <- zt[which(!is.na(zt))]
 
       #Assign which states have obs in the time step
-      h <- matrix(0, nrow = length(obs_config$state_names_obs) * ndepths_modeled, ncol = nstates)
+      h <- matrix(0, nrow = length(obs_sd) * ndepths_modeled, ncol = nstates)
 
       index <- 0
       for(k in 1:((nstates/ndepths_modeled))){
@@ -555,7 +563,7 @@ run_EnKF <- function(states_init,
     file_name_F_month <- lubridate::month(full_time_local[hist_days+1])
   }
 
-  save_file_name <- paste0(run_config$sim_name, "_H_",
+  save_file_name <- paste0(config$run_config$sim_name, "_H_",
                            (lubridate::year(full_time_local[1])),"_",
                            file_name_H_month,"_",
                            file_name_H_day,"_",
