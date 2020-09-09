@@ -66,7 +66,11 @@ run_EnKF <- function(states_init,
 
   x_init <- array(NA, dim = c(nmembers, nstates * ndepths_modeled + npars))
   for(m in 1:nmembers){
-    x_init[m,1:(nstates * ndepths_modeled)] <- c(aperm(states_init[, ,m ], perm = c(2,1)))
+    if(nstates > 1){
+      x_init[m,1:(nstates * ndepths_modeled)] <- c(aperm(states_init[, ,m ], perm = c(2,1)))
+    }else{
+      x_init[m,1:(nstates * ndepths_modeled)] <- states_init[1, ,m]
+    }
     x_init[m,(nstates * ndepths_modeled + 1):(nstates * ndepths_modeled + npars)] <- pars_init[, m]
   }
 
@@ -146,6 +150,8 @@ run_EnKF <- function(states_init,
 
   if(config$include_wq){
     num_wq_vars <- length(states_config$wq_start) - 1
+  }else{
+    num_wq_vars <- 0
   }
 
   if(length(config$diagnostics_names) > 0){
@@ -218,7 +224,6 @@ run_EnKF <- function(states_init,
     for(m in 1:nmembers){
 
       curr_met_file <- met_file_names[met_index]
-
 
       if(npars > 0){
         curr_pars <- x[i - 1, m , (nstates+1):(nstates+ npars)]
@@ -323,13 +328,15 @@ run_EnKF <- function(states_init,
       x_prior[i, , ] <- x_corr
     }
 
-    z_index <- which(!is.na(c(aperm(obs[,i , ], perm = c(2,1)))))
+    if(dim(obs)[1] > 1){
+      z_index <- which(!is.na(c(aperm(obs[,i , ], perm = c(2,1)))))
+    }else{
+      z_index <- which(!is.na(c(obs[1,i , ])))
+    }
 
     #if no observations at a time step then just propogate model uncertainity
 
-    if(length(z_index) == 0 |
-       i > (hist_days + 1) |
-       hist_days == 0){
+    if(length(z_index) == 0){
 
       if(i > (hist_days + 1)){
         data_assimilation_flag[i] <- 0
@@ -341,13 +348,7 @@ run_EnKF <- function(states_init,
 
       if(npars > 0){
 
-        if(i > (hist_days + 1)){
-          #don't add the noise to parameters in future forecast mode (pars_star doesn't have noise)
-          x[i, , ] <- cbind(x_corr, pars_star)
-        }else{
-          #add the noise to parameters if in data assimilation mode
-          x[i, , ] <- cbind(x_corr, pars_corr)
-        }
+        x[i, , ] <- cbind(x_corr, pars_star)
 
         if(config$process_uncertainty == FALSE & i > (hist_days + 1)){
           #don't add process noise if process uncertainty is false (x_star doesn't have noise)
@@ -362,11 +363,7 @@ run_EnKF <- function(states_init,
         }
 
       }else{
-        if(i > (hist_days + 1)){
-          x[i, , ] <- cbind(x_corr)
-        }else{
-          x[i, , ] <- x_prior[i, , ]
-        }
+        x[i, , ] <- cbind(x_corr)
 
         if(config$process_uncertainty == FALSE & i > (hist_days + 1)){
           x[i, , ] <- x_star
@@ -378,7 +375,11 @@ run_EnKF <- function(states_init,
       data_assimilation_flag[i] <- 7
 
       #if observation then calucate Kalman adjustment
+      if(dim(obs)[1] > 1){
       zt <- c(aperm(obs[,i , ], perm = c(2,1)))
+      }else{
+        zt <- c(obs[1,i , ])
+      }
       zt <- zt[which(!is.na(zt))]
 
       #Assign which states have obs in the time step
@@ -563,14 +564,7 @@ run_EnKF <- function(states_init,
     file_name_F_month <- lubridate::month(full_time_local[hist_days+1])
   }
 
-  save_file_name <- paste0(config$run_config$sim_name, "_H_",
-                           (lubridate::year(full_time_local[1])),"_",
-                           file_name_H_month,"_",
-                           file_name_H_day,"_",
-                           (lubridate::year(full_time_local[hist_days+1])),"_",
-                           file_name_F_month,"_",
-                           file_name_F_day,"_F_",
-                           forecast_days)
+
 
   time_of_forecast <- Sys.time()
   curr_day <- lubridate::day(time_of_forecast)
@@ -592,6 +586,16 @@ run_EnKF <- function(states_init,
                                   curr_hour,
                                   curr_minute,
                                   curr_second)
+
+  save_file_name <- paste0(config$run_config$sim_name, "_H_",
+                           (lubridate::year(full_time_local[1])),"_",
+                           file_name_H_month,"_",
+                           file_name_H_day,"_",
+                           (lubridate::year(full_time_local[hist_days+1])),"_",
+                           file_name_F_month,"_",
+                           file_name_F_day,"_F_",
+                           forecast_days,"_",
+                           forecast_iteration_id)
 
 
   return(list(full_time_local = full_time_local,

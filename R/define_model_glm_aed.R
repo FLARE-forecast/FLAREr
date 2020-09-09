@@ -136,21 +136,21 @@ run_model <- function(i,
     if(simulate_sss){
       if(is.na(management$specified_sss_inflow_file)){
         flare:::create_sss_input_output(x_start,
-                                       i,
-                                       m,
-                                       full_time_local,
-                                       working_directory,
-                                       wq_start,
-                                       management$management_input,
-                                       hist_days,
-                                       management$forecast_sss_on,
-                                       management$sss_depth,
-                                       management$use_specified_sss,
-                                       states_config,
-                                       include_wq,
-                                       modeled_depths = config$modeled_depths,
-                                       forecast_sss_flow = management$forecast_sss_flow,
-                                       forecast_sss_oxy = management$forecast_sss_oxy)
+                                        i,
+                                        m,
+                                        full_time_local,
+                                        working_directory,
+                                        wq_start,
+                                        management$management_input,
+                                        hist_days,
+                                        management$forecast_sss_on,
+                                        management$sss_depth,
+                                        management$use_specified_sss,
+                                        states_config,
+                                        include_wq,
+                                        modeled_depths = config$modeled_depths,
+                                        forecast_sss_flow = management$forecast_sss_flow,
+                                        forecast_sss_oxy = management$forecast_sss_oxy)
       }else{
         file.copy(file.path(working_directory, management$specified_sss_inflow_file), paste0(working_directory,"/sss_inflow.csv"))
         if(!is.na(management$specified_sss_outflow_file)){
@@ -208,22 +208,22 @@ run_model <- function(i,
   list_index <- list_index + 1
 
   flare:::update_nml(update_glm_nml_list,
-             update_glm_nml_names,
-             working_directory,
-             "glm3.nml")
+                     update_glm_nml_names,
+                     working_directory,
+                     "glm3.nml")
 
   if(list_index_aed > 1){
     flare:::update_nml(update_aed_nml_list,
-               update_aed_nml_names,
-               working_directory,
-               "aed2.nml")
+                       update_aed_nml_names,
+                       working_directory,
+                       "aed2.nml")
   }
 
   if(list_index_phyto > 1){
     flare:::update_nml(update_phyto_nml_list,
-               update_phyto_nml_names,
-               working_directory,
-               "aed2_phyto_pars.nml")
+                       update_phyto_nml_names,
+                       working_directory,
+                       "aed2_phyto_pars.nml")
   }
 
 
@@ -232,7 +232,7 @@ run_model <- function(i,
     tmp <- file.copy(from = inflow_file_names[inflow_outflow_index, 1],
                      to = "inflow_file1.csv", overwrite = TRUE)
     tmp <- file.copy(from = inflow_file_names[inflow_outflow_index, 2],
-                   to = "inflow_file2.csv", overwrite = TRUE)
+                     to = "inflow_file2.csv", overwrite = TRUE)
   }else{
     tmp <- file.copy(from = inflow_file_names[inflow_outflow_index],
                      to = "inflow_file1.csv", overwrite = TRUE)
@@ -283,11 +283,11 @@ run_model <- function(i,
         output_vars_no_depth <- NA
 
         GLM_temp_wq_out <-  flare:::get_glm_nc_var_all_wq(ncFile = "/output.nc",
-                                                 working_dir = working_directory,
-                                                 z_out = modeled_depths,
-                                                 vars_depth = output_vars_multi_depth,
-                                                 vars_no_depth = output_vars_no_depth,
-                                                 diagnostic_vars = diagnostics_names)
+                                                          working_dir = working_directory,
+                                                          z_out = modeled_depths,
+                                                          vars_depth = output_vars_multi_depth,
+                                                          vars_no_depth = output_vars_no_depth,
+                                                          diagnostic_vars = diagnostics_names)
 
         num_glm_depths <- length(GLM_temp_wq_out$depths_enkf)
         glm_temps <- rev(GLM_temp_wq_out$output[ ,1])

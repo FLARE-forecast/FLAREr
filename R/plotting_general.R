@@ -50,7 +50,7 @@ plotting_general <- function(file_name,
 
   wq_names <- var_names[output_type  == "state"]
   combined_states_conversion_index <- which(stringr::str_detect(var_names, "total") | stringr::str_detect(var_names, "PHY_TCHLA_observed"))
-
+if(length(combined_states_conversion_index) > 0){
   combined_states <- combined_states[combined_states_conversion_index]
   combined_states_conversion <- combined_states_conversion[combined_states_conversion_index]
 
@@ -63,6 +63,11 @@ plotting_general <- function(file_name,
   names(combined_states_conversion) <- combined_states_names
 
   state_names <- c(wq_names, names(combined_states))
+}else{
+  combined_states <- NULL
+  combined_states_conversion <- NULL
+  state_names <- wq_names
+}
 
   diagnostics_names <- var_names[output_type  == "diagnostic"]
 
@@ -395,8 +400,5 @@ plotting_general <- function(file_name,
 
   dev.off()
 
-  #if(file.exists(cleaned_observations_file_long)){
-  #  unlink(cleaned_observations_file_long)
-  #}
 }
 

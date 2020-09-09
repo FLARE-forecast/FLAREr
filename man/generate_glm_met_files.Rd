@@ -9,13 +9,13 @@ generate_glm_met_files(
   out_dir,
   forecast_dir = NULL,
   local_tzone,
-  start_datetime_UTC,
-  end_datetime_UTC,
-  forecast_start_datetime_UTC
+  start_datetime_local,
+  end_datetime_local,
+  forecast_start_datetime_local
 )
 }
 \arguments{
-\item{forecast_start_datetime_UTC}{}
+\item{local_tzone}{}
 }
 \value{
 

@@ -31,3 +31,7 @@ Imports:
     plyr,
     ggplot2,
     rMR
+Suggests: 
+    knitr,
+    rmarkdown
+VignetteBuilder: knitr

@@ -3,10 +3,10 @@
 #' @param obs_met_file
 #' @param out_dir
 #' @param forecast_dir
+#' @param start_datetime
+#' @param end_datetime
+#' @param forecast_start_datetime
 #' @param local_tzone
-#' @param start_datetime_UTC
-#' @param end_datetime_UTC
-#' @param forecast_start_datetime_UTC
 #'
 #' @return
 #' @export
@@ -16,15 +16,17 @@ generate_glm_met_files <- function(obs_met_file = NULL,
                                    out_dir,
                                    forecast_dir = NULL,
                                    local_tzone,
-                                   start_datetime_UTC,
-                                   end_datetime_UTC,
-                                   forecast_start_datetime_UTC){
+                                   start_datetime_local,
+                                   end_datetime_local,
+                                   forecast_start_datetime_local){
 
   if(is.null(obs_met_file) & is.null(forecast_dir)){
     stop("missing files to convert")
   }
 
-
+  start_datetime_UTC <- lubridate::with_tz(start_datetime_local, tzone = "UTC")
+  end_datetime_UTC <- lubridate::with_tz(end_datetime_local, tzone = "UTC")
+  forecast_start_datetime_UTC <- lubridate::with_tz(forecast_start_datetime_local, tzone = "UTC")
 
   full_time_UTC <- seq(start_datetime_UTC, end_datetime_UTC, by = "1 hour")
   full_time_UTC_hist <- seq(start_datetime_UTC, forecast_start_datetime_UTC, by = "1 hour")
@@ -38,7 +40,7 @@ generate_glm_met_files <- function(obs_met_file = NULL,
                     "ShortWave",
                     "LongWave",
                     "RelHum",
-                    "Wind",
+                    "WindSpeed",
                     "Rain")
 
   if(!is.null(obs_met_file)){

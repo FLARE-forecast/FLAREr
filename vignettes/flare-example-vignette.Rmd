@@ -1,0 +1,24 @@
+---
+title: "flare-example-vignette"
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{flare-example-vignette}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+```{r, include = FALSE}
+knitr::opts_chunk$set(
+  collapse = TRUE,
+  comment = "#>"
+)
+```
+
+```{r setup}
+library(flare)
+```
+
+## Step 1: Acquire data
+
+
+
