@@ -20,8 +20,8 @@ plotting_general <- function(file_name,
   t <- ncdf4::ncvar_get(nc,'time')
   local_tzone <- ncdf4::ncatt_get(nc, 0)$local_time_zone_of_simulation
   full_time <- as.POSIXct(t,
-                                origin = '1970-01-01 00:00.00 UTC',
-                                tz = "UTC")
+                          origin = '1970-01-01 00:00.00 UTC',
+                          tz = "UTC")
   full_time_local <- lubridate::with_tz(full_time, local_tzone)
   full_time_day_local <- lubridate::as_date(full_time_local)
   nsteps <- length(full_time_day_local)
@@ -50,24 +50,24 @@ plotting_general <- function(file_name,
 
   wq_names <- var_names[output_type  == "state"]
   combined_states_conversion_index <- which(stringr::str_detect(var_names, "total") | stringr::str_detect(var_names, "PHY_TCHLA_observed"))
-if(length(combined_states_conversion_index) > 0){
-  combined_states <- combined_states[combined_states_conversion_index]
-  combined_states_conversion <- combined_states_conversion[combined_states_conversion_index]
+  if(length(combined_states_conversion_index) > 0){
+    combined_states <- combined_states[combined_states_conversion_index]
+    combined_states_conversion <- combined_states_conversion[combined_states_conversion_index]
 
-  combined_states_names <- stringr::str_split(var_names[combined_states_conversion_index],"_")
-  for(i in 1:length(combined_states_names)){
-    combined_states_names[i] <- paste0(combined_states_names[[i]][1],"_",combined_states_names[[i]][2])
+    combined_states_names <- stringr::str_split(var_names[combined_states_conversion_index],"_")
+    for(i in 1:length(combined_states_names)){
+      combined_states_names[i] <- paste0(combined_states_names[[i]][1],"_",combined_states_names[[i]][2])
+    }
+
+    names(combined_states) <- combined_states_names
+    names(combined_states_conversion) <- combined_states_names
+
+    state_names <- c(wq_names, names(combined_states))
+  }else{
+    combined_states <- NULL
+    combined_states_conversion <- NULL
+    state_names <- wq_names
   }
-
-  names(combined_states) <- combined_states_names
-  names(combined_states_conversion) <- combined_states_names
-
-  state_names <- c(wq_names, names(combined_states))
-}else{
-  combined_states <- NULL
-  combined_states_conversion <- NULL
-  state_names <- wq_names
-}
 
   diagnostics_names <- var_names[output_type  == "diagnostic"]
 
@@ -75,9 +75,12 @@ if(length(combined_states_conversion_index) > 0){
 
 
   for(i in 1:length(obs_names)){
-    obs_names[i] <- paste0(obs_names[[i]][1],"_",obs_names[[i]][2])
-    if(obs_names[[i]] == "temp_observed"){
-      obs_names[[i]] <- "temp"
+    tmp <- obs_names[[i]][which(obs_names[[i]] != 'observed')]
+    obs_names[i] <- tmp[1]
+    if(length(tmp) > 1){
+    for(j in 2:length(tmp)){
+      obs_names[i] <- paste0(obs_names[i], "_",tmp[j])
+    }
     }
   }
 
@@ -111,16 +114,16 @@ if(length(combined_states_conversion_index) > 0){
   }
 
   if(length(combined_states) > 0){
-  for(i in 1:length(combined_states)){
-    for(s in 1:length(combined_states[[i]])){
-      if(s > 1){
-        tmp_list <- tmp_list + ncdf4::ncvar_get(nc, combined_states[[i]][s]) * combined_states_conversion[[i]][s]
-      }else{
-        tmp_list <- ncdf4::ncvar_get(nc, combined_states[[i]][s]) * combined_states_conversion[[i]][s]
+    for(i in 1:length(combined_states)){
+      for(s in 1:length(combined_states[[i]])){
+        if(s > 1){
+          tmp_list <- tmp_list + ncdf4::ncvar_get(nc, combined_states[[i]][s]) * combined_states_conversion[[i]][s]
+        }else{
+          tmp_list <- ncdf4::ncvar_get(nc, combined_states[[i]][s]) * combined_states_conversion[[i]][s]
+        }
       }
+      state_list[[length(wq_names)+i]] <- tmp_list
     }
-    state_list[[length(wq_names)+i]] <- tmp_list
-  }
   }
 
   names(state_list) <- state_names
@@ -212,11 +215,11 @@ if(length(combined_states_conversion_index) > 0){
     }
 
     curr_tibble <- tibble::tibble(date = lubridate::as_datetime(date),
-                          curr_var = c(mean_var),
-                          upper_var = c(upper_var),
-                          lower_var = c(lower_var),
-                          observed = obs_curr,
-                          depth = rep(depths, length(full_time_local))) %>%
+                                  curr_var = c(mean_var),
+                                  upper_var = c(upper_var),
+                                  lower_var = c(lower_var),
+                                  observed = obs_curr,
+                                  depth = rep(depths, length(full_time_local))) %>%
       dplyr::filter(depth %in% focal_depths_plotting)
 
     if(forecast_index > 0){
@@ -230,11 +233,11 @@ if(length(combined_states_conversion_index) > 0){
     p <- ggplot2::ggplot(curr_tibble, ggplot2::aes(x = date)) +
       ggplot2::facet_wrap(~depth, scales = "free") +
       ggplot2::geom_ribbon(ggplot2::aes(ymin = lower_var, ymax = upper_var),
-                  alpha = 0.70,
-                  fill = "gray") +
+                           alpha = 0.70,
+                           fill = "gray") +
       ggplot2::geom_line(ggplot2::aes(y = curr_var), size = 0.5) +
       ggplot2::geom_vline(xintercept = forecast_start_day,
-                 alpha = forecast_start_day_alpha) +
+                          alpha = forecast_start_day_alpha) +
       ggplot2::geom_point(ggplot2::aes(y = observed), size = 0.5, color = "red") +
       ggplot2::theme_light() +
       ggplot2::labs(x = "Date", y = state_names[i], title = state_names[i]) +
@@ -272,17 +275,17 @@ if(length(combined_states_conversion_index) > 0){
       }
 
       curr_tibble <- tibble::tibble(date = lubridate::as_datetime(date),
-                            curr_var = c(mean_var),
-                            upper_var = c(upper_var),
-                            lower_var = c(lower_var))
+                                    curr_var = c(mean_var),
+                                    upper_var = c(upper_var),
+                                    lower_var = c(lower_var))
 
       plist[[i]] <- ggplot2::ggplot(curr_tibble, ggplot2::aes(x = date)) +
         ggplot2::geom_ribbon(ggplot2::aes(ymin = lower_var, ymax = upper_var),
-                    alpha = 0.70,
-                    fill = "gray") +
+                             alpha = 0.70,
+                             fill = "gray") +
         ggplot2::geom_line(ggplot2::aes(y = curr_var), size = 0.5) +
         ggplot2::geom_vline(xintercept = forecast_start_day,
-                   alpha = forecast_start_day_alpha) +
+                            alpha = forecast_start_day_alpha) +
         ggplot2::theme_bw() +
         ggplot2::labs(x = "Date", y = par_names[i]) +
         ggplot2::theme(axis.text.x = ggplot2::element_text(angle = 90, size = 10))
@@ -316,11 +319,11 @@ if(length(combined_states_conversion_index) > 0){
       }
 
       curr_tibble <- tibble::tibble(date = lubridate::as_datetime(date),
-                            curr_var = c(mean_var),
-                            upper_var = c(upper_var),
-                            lower_var = c(lower_var),
-                            depth = rep(depths, length(full_time_local))) %>%
-      dplyr::filter(depth %in% focal_depths_plotting)
+                                    curr_var = c(mean_var),
+                                    upper_var = c(upper_var),
+                                    lower_var = c(lower_var),
+                                    depth = rep(depths, length(full_time_local))) %>%
+        dplyr::filter(depth %in% focal_depths_plotting)
 
       if(forecast_index > 0){
         forecast_start_day <- full_time_local[forecast_index-1]
@@ -333,11 +336,11 @@ if(length(combined_states_conversion_index) > 0){
       p <- ggplot2::ggplot(curr_tibble, ggplot2::aes(x = date)) +
         ggplot2::facet_wrap(~depth) +
         ggplot2::geom_ribbon(ggplot2::aes(ymin = lower_var, ymax = upper_var),
-                    alpha = 0.70,
-                    fill = "gray") +
+                             alpha = 0.70,
+                             fill = "gray") +
         ggplot2::geom_line(ggplot2::aes(y = curr_var), size = 0.5) +
         ggplot2::geom_vline(xintercept = forecast_start_day,
-                   alpha = forecast_start_day_alpha) +
+                            alpha = forecast_start_day_alpha) +
         ggplot2::theme_light() +
         ggplot2::labs(x = "Date", y = diagnostics_names[i], title = diagnostics_names[i]) +
         ggplot2::theme(axis.text.x = ggplot2::element_text(angle = 90, size = 10))
@@ -370,10 +373,10 @@ if(length(combined_states_conversion_index) > 0){
 
 
     curr_tibble <- tibble::tibble(date = lubridate::as_datetime(full_time_local),
-                          curr_var = c(mean_var),
-                          upper_var = c(upper_var),
-                          lower_var = c(lower_var),
-                          observed = unlist(obs_curr))
+                                  curr_var = c(mean_var),
+                                  upper_var = c(upper_var),
+                                  lower_var = c(lower_var),
+                                  observed = unlist(obs_curr))
 
     if(forecast_index > 0){
       forecast_start_day <- full_time_local[forecast_index-1]
@@ -385,12 +388,12 @@ if(length(combined_states_conversion_index) > 0){
 
     p <- ggplot2::ggplot(curr_tibble, ggplot2::aes(x = date)) +
       ggplot2::geom_ribbon(ggplot2::aes(ymin = lower_var, ymax = upper_var),
-                  alpha = 0.70,
-                  fill = "gray") +
+                           alpha = 0.70,
+                           fill = "gray") +
       ggplot2::geom_line(ggplot2::aes(y = curr_var), size = 0.5) +
       ggplot2::scale_y_reverse() +
       ggplot2::geom_vline(xintercept = forecast_start_day,
-                 alpha = forecast_start_day_alpha) +
+                          alpha = forecast_start_day_alpha) +
       ggplot2::geom_point(ggplot2::aes(y = observed), size = 1, color = "red") +
       ggplot2::theme_light() +
       ggplot2::labs(x = "Date", y = "Sechi depth (m)", title = "Sechi depth") +
