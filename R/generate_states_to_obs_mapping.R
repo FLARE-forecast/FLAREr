@@ -17,7 +17,7 @@ states_to_obs_mapping <- list()
 for(i in 1:nrow(states_to_obs_temp)){
 
   names_temp <- states_to_obs_temp[i,which(!is.na(states_to_obs_temp[i,]))]
-  mapping_temp <- states_to_obs_mapping_temp[i,which(!is.na(states_to_obs_mapping_temp[i,]))]
+  mapping_temp <- unlist(states_to_obs_mapping_temp[i,which(!is.na(states_to_obs_mapping_temp[i,]))])
   if(length(names_temp) == 0){
     values1 <- NA
     values2 <- NA
