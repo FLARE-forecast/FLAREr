@@ -103,24 +103,26 @@ get_glm_nc_var_all_wq <- function(ncFile,working_dir, z_out,vars_depth, vars_no_
   glm_nc <- ncdf4::nc_open(paste0(working_dir,ncFile))
   tallest_layer <- ncdf4::ncvar_get(glm_nc, "NS")
   final_time_step <- length(tallest_layer)
-  tallest_layer <- tallest_layer[final_time_step]
+  tallest_layer <- tallest_layer
   heights <- ncdf4::ncvar_get(glm_nc, "z")
-  heights_surf <- heights[tallest_layer,final_time_step]
-  heights <- heights[1:tallest_layer,final_time_step]
+  heights_surf <- heights[tallest_layer]
+  heights <- heights[1:tallest_layer]
   heights_out <- heights_surf - z_out
 
-  snow <- ncdf4::ncvar_get(glm_nc, "hsnow")[final_time_step]
-  ice_white <- ncdf4::ncvar_get(glm_nc, "hwice")[final_time_step]
-  ice_blue <- ncdf4::ncvar_get(glm_nc, "hice")[final_time_step]
-  avg_surf_temp <- ncdf4::ncvar_get(glm_nc, "avg_surf_temp")[final_time_step]
+  snow <- ncdf4::ncvar_get(glm_nc, "hsnow")
+  ice_white <- ncdf4::ncvar_get(glm_nc, "hwice")
+  ice_blue <- ncdf4::ncvar_get(glm_nc, "hice")
+  avg_surf_temp <- ncdf4::ncvar_get(glm_nc, "avg_surf_temp")
 
 
-  glm_temps <- ncdf4::ncvar_get(glm_nc, "temp")[1:tallest_layer, final_time_step]
+  glm_temps <- ncdf4::ncvar_get(glm_nc, "temp")[1:tallest_layer]
+
+
 
   output <- array(NA,dim=c(tallest_layer,length(vars_depth)))
   for(v in 1:length(vars_depth)){
     var_modeled <- ncvar_get(glm_nc, vars_depth[v])
-    output[,v] <- var_modeled[1:tallest_layer, final_time_step]
+    output[,v] <- var_modeled[1:tallest_layer]
   }
 
   output_no_depth <- NA
@@ -129,7 +131,7 @@ get_glm_nc_var_all_wq <- function(ncFile,working_dir, z_out,vars_depth, vars_no_
     diagnostics_output <- array(NA,dim=c(tallest_layer,length(diagnostic_vars)))
     for(v in 1:length(diagnostic_vars)){
       var_modeled <- ncvar_get(glm_nc, diagnostic_vars[v])
-      diagnostics_output[,v] <- var_modeled[1:tallest_layer, final_time_step]
+      diagnostics_output[,v] <- var_modeled[1:tallest_layer]
     }
   }else{
     diagnostics_output <- NA
@@ -137,9 +139,11 @@ get_glm_nc_var_all_wq <- function(ncFile,working_dir, z_out,vars_depth, vars_no_
 
   mixing_vars <- ncdf4::ncvar_get(glm_nc, "restart_variables")
 
-  salt <- ncdf4::ncvar_get(glm_nc, "salt")[1:tallest_layer, final_time_step]
+  salt <- ncdf4::ncvar_get(glm_nc, "salt")[1:tallest_layer]
 
   ncdf4::nc_close(glm_nc)
+
+
   return(list(output = output,
               output_no_depth = output_no_depth,
               lake_depth = heights_surf,
