@@ -6,7 +6,7 @@
 \usage{
 create_obs_matrix(
   cleaned_observations_file_long,
-  config,
+  obs_config,
   start_datetime_local,
   end_datetime_local,
   local_tzone,
