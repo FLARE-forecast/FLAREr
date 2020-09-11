@@ -2,7 +2,7 @@
 % Please edit documentation in R/run_EnKF.R
 \name{run_EnKF}
 \alias{run_EnKF}
-\title{Run Ensemble Kalman Filter}
+\title{Run ensemble Kalman filter and forecastse}
 \usage{
 run_EnKF(
   states_init,
@@ -26,11 +26,11 @@ run_EnKF(
 )
 }
 \arguments{
-\item{states_init, }{array of the initial states.  Required dimensions are \link{states, depths, ensemble}}
+\item{states_init, }{array of the initial states.  Required dimensions are \verb{[states, depths, ensemble]}}
 
-\item{pars_init, }{array of the initial states.  Required dimensions are \link{pars, depths, ensemble}}
+\item{pars_init, }{array of the initial states.  Required dimensions are \verb{[pars, depths, ensemble]}}
 
-\item{obs, }{array of the observaitons. Required dimensions are \link{nobs, time, depth}}
+\item{obs, }{array of the observaitons. Required dimensions are `\link{nobs, time, depth}``}
 
 \item{model_sd, }{vector of standard deviations describing the model error for each state}
 
@@ -60,12 +60,32 @@ run_EnKF(
 
 \item{management.}{list of management inputs and configuration}
 }
-\value{
-None
-}
 \description{
-Run Ensemble Kalman Filter
+Run ensemble Kalman filter and forecastse
 }
-\author{
-Quinn Thomas
+\details{
+Uses the ensemble Kalman filter to predict water quality for a lake
+or reservior.  The function requires the initial conditions (\code{states_init}) for each
+state and ensemble member using an array with the following dimension order:
+states, depth, ensembles member.  If you are fitting parameters, it also requires
+initial conditions for each parameter and ensemble member using an array (\code{par_init}) with the
+following dimension order: parameters, ensemble member.  The arrays for states_init
+and pars_init can be created using the \code{generate_initial_conditions()} function, if
+starting from initial conditions in the  \code{states_config} data frame or from observations
+in first time column of the \code{obs} array.  The arrays for \code{states_init} and \verb{par_init`` can be created from the output from a previous run using the }generate_restart_initial_conditions()`
+array.
+
+The required columns the states_config data frame with the following columns:
+\itemize{
+\item \code{state_names}: the name in the GLM model for the state
+\item \code{initial_conditions}: the default initial condition for the state if an observation is lacking. Used in \code{generate_initial_conditions()}.  Note:
+the \code{config} list should have a variables called \code{default_temp_init} and \code{default_temp_init_depths} that allow for depth variation in the initial
+conditions for temperature.
+\item \code{model_sd}: the standard deviation of the model error for the state
+\item \code{initial_model_sd}: the standard deviation of the initial conditions for the state. Used in \code{generate_initial_conditions()}
+\item \code{states_to_obs1}: the name of the observation that matches the model state
+\item \code{states_to_obs_mapping_1}: the multipler that converts the state to the observation (1 will be the most common)
+\item \code{init_obs_name}: the name of the observations that is used to generate \code{states_init}.  Used in \code{generate_initial_conditions()}
+\item \code{init_obs_mapping}: the multipler that converts the state to the observation (1 will be the most common). Used in \code{generate_initial_conditions()}
+}
 }

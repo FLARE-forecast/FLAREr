@@ -1,31 +1,54 @@
-#' @title Run Ensemble Kalman Filter
-#' @return None
+#' @title Run ensemble Kalman filter to assimilate observations and/or produce
+#' forecasts
 #'
-#' @param states_init, array of the initial states.  Required dimensions are [states, depths, ensemble]
-#' @param pars_init, array of the initial states.  Required dimensions are [pars, depths, ensemble]
-#' @param obs, array of the observaitons. Required dimensions are [nobs, time, depth]
-#' @param model_sd, vector of standard deviations describing the model error for each state
-#' @param working_directory, directory model executes
-#' @param met_file_names, vector of meterology file names
-#' @param inflow_file_names, vector of inflow file names
-#' @param outflow_file_names, vector of outflow file names
-#' @param sim_start_datetime, datetime of beginning of the simulation
-#' @param sim_end_datetime, datetime of the end of the simulation
-#' @param forecast_start_datetime, datetime when simulate is a forecast
-#' @param config, list of configurations
-#' @param pars_config, list of parameter configurations
-#' @param states_config, list of state configurations
-#' @param obs_config, list of observation configurations
-#' @param aux_states_init, list of initial conditions for auxillary states
-#' @param management. list of management inputs and configuration
+#' @details Uses the ensemble Kalman filter to predict water quality for a lake
+#' or reservior.  The function requires the initial conditions (`states_init`) for each
+#' state and ensemble member using an array with the following dimension order:
+#' states, depth, ensembles member.  If you are fitting parameters, it also requires
+#' initial conditions for each parameter and ensemble member using an array (`par_init`) with the
+#' following dimension order: parameters, ensemble member.  The arrays for states_init
+#' and pars_init can be created using the `generate_initial_conditions()` function, if
+#' starting from initial conditions in the  `states_config` data frame or from observations
+#' in first time column of the `obs` array.  The arrays for `states_init` and `par_init`
+#' can be created from the output from a previous run using the `generate_restart_initial_conditions()`
+#' array.
+#'
+#' The required columns the `states_config` data frame with the following columns:
+#' - `state_names`: the name in the GLM model for the state
+#' - `initial_conditions`: the default initial condition for the state if an observation is lacking. Used in `generate_initial_conditions()`.  Note:
+#' the `config` list should have a variables called `default_temp_init` and `default_temp_init_depths` that allow for depth variation in the initial
+#' conditions for temperature.
+#' - `model_sd`: the standard deviation of the model error for the state
+#' - `initial_model_sd`: the standard deviation of the initial conditions for the state. Used in `generate_initial_conditions()`
+#' - `states_to_obs1`: the name of the observation that matches the model state
+#' - `states_to_obs_mapping_1`: the multipler that converts the state to the observation (1 will be the most common)
+#' - `init_obs_name`: the name of the observations that is used to generate `states_init`.  Used in `generate_initial_conditions()`
+#' - `init_obs_mapping`: the multipler that converts the state to the observation (1 will be the most common). Used in `generate_initial_conditions()`
+#'
+#' @param states_init array of the initial states.  Required dimensions are `[states, depths, ensemble]`
+#' @param pars_init array of the initial states.  Required dimensions are `[pars, depths, ensemble]`.  (Default = NULL)
+#' @param obs array of the observaitons. Required dimensions are `[nobs, time, depth]``
+#' @param model_sd vector of standard deviations describing the model error for each state
+#' @param working_directory directory model executes
+#' @param met_file_names vector of meterology file names
+#' @param inflow_file_names vector of inflow file names
+#' @param outflow_file_names vector of outflow file names
+#' @param start_datetime datetime of beginning of the simulation
+#' @param end_datetime datetime of the end of the simulation
+#' @param forecast_start_datetime datetime when simulate is a forecast
+#' @param config list of configurations
+#' @param pars_config list of parameter configurations  (Default = NULL)
+#' @param states_config list of state configurations
+#' @param obs_config list of observation configurations
+#' @param aux_states_init list of initial conditions for auxillary states
+#' @param management list of management inputs and configuration  (Default = NULL)
 #' @export
 #'
-#' @author Quinn Thomas
 #'
 #'
 
-run_EnKF <- function(states_init,
-                     pars_init,
+run_enkf_forecast <- function(states_init,
+                     pars_init = NULL,
                      obs,
                      obs_sd,
                      model_sd,
@@ -33,8 +56,8 @@ run_EnKF <- function(states_init,
                      met_file_names,
                      inflow_file_names,
                      outflow_file_names,
-                     sim_start_datetime,
-                     sim_end_datetime,
+                     start_datetime,
+                     end_datetime,
                      forecast_start_datetime = NA,
                      config,
                      pars_config = NULL,
@@ -71,7 +94,9 @@ run_EnKF <- function(states_init,
     }else{
       x_init[m,1:(nstates * ndepths_modeled)] <- states_init[1, ,m]
     }
-    x_init[m,(nstates * ndepths_modeled + 1):(nstates * ndepths_modeled + npars)] <- pars_init[, m]
+    if(!is.null(pars_init) | npars == 0){
+      x_init[m,(nstates * ndepths_modeled + 1):(nstates * ndepths_modeled + npars)] <- pars_init[, m]
+    }
   }
 
   psi <- rep(NA, length(obs_sd) * ndepths_modeled)
@@ -109,13 +134,13 @@ run_EnKF <- function(states_init,
                     obs_config)
 
   if(is.na(forecast_start_datetime)){
-    forecast_start_datetime <- sim_end_datetime
+    forecast_start_datetime <- end_datetime
   }
 
-  hist_days <- as.numeric(forecast_start_datetime - sim_start_datetime)
+  hist_days <- as.numeric(forecast_start_datetime - start_datetime)
   start_forecast_step <- 1 + hist_days
-  full_time_local <- seq(sim_start_datetime, sim_end_datetime, by = "1 day")
-  forecast_days <- as.numeric(sim_end_datetime - forecast_start_datetime)
+  full_time_local <- seq(start_datetime, end_datetime, by = "1 day")
+  forecast_days <- as.numeric(end_datetime - forecast_start_datetime)
 
 
   if(!is.null(pars_config)){
@@ -376,7 +401,7 @@ run_EnKF <- function(states_init,
 
       #if observation then calucate Kalman adjustment
       if(dim(obs)[1] > 1){
-      zt <- c(aperm(obs[,i , ], perm = c(2,1)))
+        zt <- c(aperm(obs[,i , ], perm = c(2,1)))
       }else{
         zt <- c(obs[1,i , ])
       }
