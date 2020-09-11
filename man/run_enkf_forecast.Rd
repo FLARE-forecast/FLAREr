@@ -64,6 +64,10 @@ automatically be set to \code{end_datetime}.}
 
 \item{management}{list of management inputs and configuration  (Default = NULL)}
 }
+\value{
+enkf_output a list is passed to \code{write_forecast_netcdf()} to write the
+netcdf output and \code{create_flare_eml()} to generate the EML metadata
+}
 \description{
 Run ensemble Kalman filter to assimilate observations and/or produce
 forecasts
@@ -155,6 +159,24 @@ The required variables in the \code{config} list are:
 \item \code{forecast_project_id}
 }
 \item \code{model_name}:
+\item \code{base_GLM_nml}:
+\item \code{base_AED_nml}:
+\item \code{base_AED_phyto_pars_nml}:
+\item \code{base_AED_zoop_pars_nml}:
+\item \code{use_obs_constraint}:
+\item \code{observation_uncertainty}:
+\item \code{process_uncertainty}:
+\item \code{weather_uncertainty}:
+\item \code{initial_condition_uncertainty}:
+\item \code{parameter_uncertainty}:
+\item \code{met_downscale_uncertainty}:
+\item \code{inflow_process_uncertainty}:
+\item \verb{modeled_depths:}
+\item \code{ensemble_size}:
+\item \code{localization_distance}:
+\item \code{vert_decorr_length}:
+\item \code{no_negative_states}:
+\item \code{diagnostics_names}:
 }
 
 The \code{management} list is used to define the Side Stream Saturation oxygen system.  It is

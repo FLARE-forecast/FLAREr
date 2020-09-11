@@ -74,6 +74,24 @@
 #'          - `id`:
 #'    - `forecast_project_id`
 #'  - `model_name`:
+#'  - `base_GLM_nml`:
+#'  - `base_AED_nml`:
+#'  - `base_AED_phyto_pars_nml`:
+#'  - `base_AED_zoop_pars_nml`:
+#'  - `use_obs_constraint`:
+#'  - `observation_uncertainty`:
+#'  - `process_uncertainty`:
+#'  - `weather_uncertainty`:
+#'  - `initial_condition_uncertainty`:
+#'  - `parameter_uncertainty`:
+#'  - `met_downscale_uncertainty`:
+#'  - `inflow_process_uncertainty`:
+#'  - `modeled_depths:`
+#'  - `ensemble_size`:
+#'  - `localization_distance`:
+#'  - `vert_decorr_length`:
+#'  - `no_negative_states`:
+#'  - `diagnostics_names`:
 #'
 #' The `management` list is used to define the Side Stream Saturation oxygen system.  It is
 #' not required (defaults to `NULL`).  If included it requires:
@@ -110,9 +128,33 @@
 #' @param states_config list of state configurations
 #' @param obs_config list of observation configurations
 #' @param management list of management inputs and configuration  (Default = NULL)
+#' @return enkf_output a list is passed to `write_forecast_netcdf()` to write the
+#' netcdf output and `create_flare_eml()` to generate the EML metadata
 #' @export
+#' @example
 #'
 #'
+#'  start_datetime_local <- lubridate(as_datetime("2018-07-12 07:00:00, tz = "EST"))
+#'  end_datetime_local <- lubridate(as_datetime("2018-07-15 07:00:00, tz = "EST"))
+#'  forecast_start_datetime <- lubridate(as_datetime("2018-07-13 07:00:00, tz = "EST"))
+#'
+#'enkf_output <- flare::run_enkf_forecast(states_init = init$states,
+#'               pars_init = init$pars,
+#'               aux_states_init = aux_states_init,
+#'               obs = obs,
+#'               obs_sd = obs_config$obs_sd,
+#'               model_sd = states_config$model_sd,
+#'               working_directory = config$run_config$execute_location,
+#'               met_file_names = met_file_names,
+#'               inflow_file_names = inflow_file_names,
+#'               outflow_file_names = outflow_file_names,
+#'               start_datetime = start_datetime_local,
+#'               end_datetime = end_datetime_local,
+#'               forecast_start_datetime = forecast_start_datetime_local,
+#'               config = config,
+#'               pars_config = pars_config,
+#'               states_config = states_config,
+#'               obs_config = obs_config)
 #'
 
 run_enkf_forecast <- function(states_init,
