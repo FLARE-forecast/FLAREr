@@ -19,6 +19,9 @@ generate_restart_initial_conditions <- function(restart_file, state_names, par_n
   restart_nmembers <- length(ncdf4::ncvar_get(nc, "ensemble"))
   data_assimilation <- ncdf4::ncvar_get(nc, "data_assimilation")
   restart_index <- max(which(data_assimilation == 0)[1] -1, 2)
+  if(is.na(restart_index)){
+    restart_index <- length(data_assimilation)
+  }
   modeled_depths <- ncdf4::ncvar_get(nc, "depth")
   lake_depth_restart <- ncdf4::ncvar_get(nc, "lake_depth")[restart_index, ]
   snow_ice_thickness_restart <- ncdf4::ncvar_get(nc, "snow_ice_thickness")[ ,restart_index, ]
@@ -35,7 +38,7 @@ generate_restart_initial_conditions <- function(restart_file, state_names, par_n
 
   if(!is.null(par_names)){
     pars_restart <- array(NA, dim = c(length(par_names), restart_nmembers))
-    for(i in 1:nrow(par_names)){
+    for(i in 1:length(par_names)){
       pars_restart[i, ] <- ncdf4::ncvar_get(nc, par_names[i])[restart_index, ]
     }
   }else{
