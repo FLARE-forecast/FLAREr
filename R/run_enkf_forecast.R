@@ -25,22 +25,87 @@
 #' - `init_obs_name`: the name of the observations that is used to generate `states_init`.  Used in `generate_initial_conditions()`
 #' - `init_obs_mapping`: the multipler that converts the state to the observation (1 will be the most common). Used in `generate_initial_conditions()`
 #'
+#' The required columns in the `pars_config` are:
+#' - `par_names`:
+#' - `par_names_save`:
+#' - `par_nml`:
+#' - `par_init`:
+#' - `par_init_lowerbound`:
+#' - `par_init_upperbound`:
+#' - `par_lowerbound`:
+#' - `par_upperbound`:
+#' - `inflat_pars`:
+#' - `par_units`:
+#'
+#'  The required columns in the `obs_config` are:
+#'  - `states_names_obs`: the name of the model state that the obervation represents
+#'  - `obs_units`: unit of the observations
+#'  - `obs_sd`:  the standard deviation of the normal distribution describing the
+#'  uncertainty in the observation.
+#'  - `target_variable`: the name of the observation in the in long format observation
+#'  file.  Used by `create_obs_matrix()`
+#'  - `distance_threshold`: the distance in meters that an observation is associated
+#'  with a particular depth
+#'
+#'
+#'
+#'  The required variables in the `config` list are:
+#'  - `lake_name_code`:
+#'  - `lake_name`:
+#'  - `lake_latitude`:
+#'  - `lake_longitude`:
+#'  - `local_tzone`:
+#'  - `metadata`:
+#'     - `generate_eml`:
+#'     - `abstract`:
+#'     - `forecast_title`:
+#'     - `intellectualRights`:
+#'     - `model_description`:
+#'          - `name`:
+#'          - `type`:
+#'          - `repository`:
+#'     - `me`:
+#'          - `individualName`:
+#'               - `givenName`:
+#'               - `surName`:
+#'          - `electronicMailAddress`:
+#'          - `id`:
+#'    - `forecast_project_id`
+#'  - `model_name`:
+#'
+#' The `management` list is used to define the Side Stream Saturation oxygen system.  It is
+#' note requires (defaults to `NULL`).  If included it requires:
+#' - management_input:
+#' - simulate_sss:
+#' - forecast_sss_on:
+#' - sss_depth:
+#' - use_specified_sss:
+#' - specified_sss_inflow_file:
+#' - specified_sss_outflow_file:
+#' - forecast_sss_flow:
+#' - forecast_sss_oxy:
+#'
+#'
 #' @param states_init array of the initial states.  Required dimensions are `[states, depths, ensemble]`
 #' @param pars_init array of the initial states.  Required dimensions are `[pars, depths, ensemble]`.  (Default = NULL)
-#' @param obs array of the observaitons. Required dimensions are `[nobs, time, depth]``
+#' @param aux_states_init list of initial conditions for auxillary states.  These are states in the GLM that
+#' are require for restarting the model but are not included in data assimilation.  These are states that are not associated
+#' with a value in `model_sd`.
+#' @param obs array of the observaitons. Required dimensions are `[nobs, time, depth]`
+#' @param obs_sd
 #' @param model_sd vector of standard deviations describing the model error for each state
 #' @param working_directory directory model executes
 #' @param met_file_names vector of meterology file names
 #' @param inflow_file_names vector of inflow file names
 #' @param outflow_file_names vector of outflow file names
-#' @param start_datetime datetime of beginning of the simulation
-#' @param end_datetime datetime of the end of the simulation
-#' @param forecast_start_datetime datetime when simulate is a forecast
+#' @param start_datetime datetime of beginning of the simulation.  A datetime class ("YYYY-MM-DD HH:MM:SS"). Use the local time zone for the lake
+#' @param end_datetime datetime of the end of the simulation. A datetime class ("YYYY-MM-DD HH:MM:SS"). Use the local time zone for the lake
+#' @param forecast_start_datetime datetime when simulation is a forecast.  Must be equal to or earlier than `end_datetime`. If after `end_datetime`, it will
+#' automatically be set to `end_datetime`.
 #' @param config list of configurations
 #' @param pars_config list of parameter configurations  (Default = NULL)
 #' @param states_config list of state configurations
 #' @param obs_config list of observation configurations
-#' @param aux_states_init list of initial conditions for auxillary states
 #' @param management list of management inputs and configuration  (Default = NULL)
 #' @export
 #'
@@ -49,6 +114,7 @@
 
 run_enkf_forecast <- function(states_init,
                      pars_init = NULL,
+                     aux_states_init,
                      obs,
                      obs_sd,
                      model_sd,
@@ -63,7 +129,6 @@ run_enkf_forecast <- function(states_init,
                      pars_config = NULL,
                      states_config,
                      obs_config,
-                     aux_states_init,
                      management = NULL
 ){
 
