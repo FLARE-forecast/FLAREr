@@ -70,7 +70,7 @@ create_glm_inflow_outflow_files <- function(inflow_file,
            TEMP = ifelse(forecast == 1, NA, TEMP),
            FLOW = ifelse(forecast == 1, NA, FLOW))
 
-  if(config$inflow_process_uncertainty == TRUE){
+  if(inflow_process_uncertainty == TRUE){
     inflow_error <- rnorm(nrow(tmp), 0, future_inflow_flow_error)
     temp_error <- rnorm(nrow(tmp), 0, future_inflow_temp_error)
   }else{

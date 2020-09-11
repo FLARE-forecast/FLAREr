@@ -44,7 +44,7 @@ generate_glm_met_files <- function(obs_met_file = NULL,
                     "Rain")
 
   if(!is.null(obs_met_file)){
-    obs_met_nc <- ncdf4::nc_open(observed_met_file)
+    obs_met_nc <- ncdf4::nc_open(obs_met_file)
     obs_met_time <- ncdf4::ncvar_get(obs_met_nc, "time")
     origin <- stringr::str_sub(ncdf4::ncatt_get(obs_met_nc, "time")$units, 13, 28)
     origin <- lubridate::ymd_hm(origin)

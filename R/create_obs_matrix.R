@@ -1,6 +1,6 @@
 ##' @param cleaned_observations_file_long
 ##'
-##' @param config
+##' @param obs_config
 ##' @param start_datetime_local
 ##' @param end_datetime_local
 ##' @param local_tzone
@@ -14,7 +14,7 @@
 ##'
 ##'
 
-create_obs_matrix <- function(cleaned_observations_file_long, config, start_datetime_local, end_datetime_local, local_tzone, modeled_depths){
+create_obs_matrix <- function(cleaned_observations_file_long, obs_config, start_datetime_local, end_datetime_local, local_tzone, modeled_depths){
 
   full_time_local <- seq(start_datetime_local, end_datetime_local, by = "1 day")
 
