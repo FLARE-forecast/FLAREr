@@ -97,16 +97,18 @@ conditions for temperature.
 
 The required columns in the \code{pars_config} are:
 \itemize{
-\item \code{par_names}:
-\item \code{par_names_save}:
-\item \code{par_nml}:
-\item \code{par_init}:
-\item \code{par_init_lowerbound}:
-\item \code{par_init_upperbound}:
-\item \code{par_lowerbound}:
-\item \code{par_upperbound}:
-\item \code{inflat_pars}:
-\item \code{par_units}:
+\item \code{par_names}:  the name of the parameter in the GLM nml file
+\item \code{par_names_save}: the name of the parameter that will  be written in the output file.  This is different that
+\code{par_names} because a single parameter can have multiple zones.  Therefore, \code{par_names} will be the same but
+\code{par_names_save} will be different so that you know which zone they are associated with
+\item \code{par_nml}: GLM namelist that the \code{par_name} can be found: \code{glm.nml}, \code{aed2.nml},\code{aed2_phyto_pars.nml},\code{aed2_zoop_pars.nml}
+\item \code{par_init}:  Initial value for the parameter
+\item \code{par_init_lowerbound}: Lower bound when initilizing with a uniform distribution
+\item \code{par_init_upperbound}: Upper bound when initilizing with a uniform distribution
+\item \code{par_lowerbound}: Lower bound that the parameter can physically have
+\item \code{par_upperbound}: Upper bound that the parameter can physically have
+\item \code{inflat_pars}: Variance inflation factor for parameters (values are >= 1)
+\item \code{par_units}: Units of parameter
 }
 
 The required columns in the \code{obs_config} are:
@@ -156,16 +158,17 @@ The required variables in the \code{config} list are:
 }
 
 The \code{management} list is used to define the Side Stream Saturation oxygen system.  It is
-note requires (defaults to \code{NULL}).  If included it requires:
+not required (defaults to \code{NULL}).  If included it requires:
 \itemize{
-\item management_input:
-\item simulate_sss:
-\item forecast_sss_on:
-\item sss_depth:
-\item use_specified_sss:
-\item specified_sss_inflow_file:
-\item specified_sss_outflow_file:
-\item forecast_sss_flow:
-\item forecast_sss_oxy:
+\item \code{management_input}: A two column data frame: FLOW, OXY_oxy
+\item \code{simulate_sss}: logical whether to simulate the sss
+\item \code{forecast_sss_on}: logical whether to have sss on in forecast
+\item \code{sss_depth}: Depth (m) of the SSS inflow and outflow
+\item \code{use_specified_sss}: logical whether to use the data from \code{management_input}
+or from \code{forecast_sss_flow} and \code{forecast_sss_oxy} when forecasting with sss on
+\item \code{specified_sss_inflow_file}: file path of the inflow sss file is supplied rather than interally generated
+\item \code{specified_sss_outflow_file}: file path of the outflow sss file is supplied rather than interally generated
+\item \code{forecast_sss_flow}: m3/day of water entering via sss
+\item \code{forecast_sss_oxy}: oxygen concentration (mmmol/m3) entered in the sss
 }
 }

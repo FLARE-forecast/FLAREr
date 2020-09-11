@@ -145,18 +145,18 @@ plotting_general <- function(file_name,
   #####
 
   obs_list <- list()
-  for(i in 1:length(obs_config$state_names_obs)){
-    print(paste0("Extracting ",obs_config$target_variable[i]))
+  for(i in 1:length(obs_names)){
+    print(paste0("Extracting ",target_variable[i]))
 
     obs_tmp <- array(NA,dim = c(length(full_time_local),length(depths)))
 
     for(k in 1:length(full_time_local)){
       for(j in 1:length(depths)){
         d1 <- d %>%
-          dplyr::filter(variable == obs_config$target_variable[i],
+          dplyr::filter(variable == target_variable[i],
                         date == lubridate::as_date(full_time_local[k]),
                         (is.na(hour) | hour == lubridate::hour(full_time_local[k])),
-                        abs(depth-depths[j]) < obs_config$distance_threshold[i])
+                        abs(depth-depths[j]) < distance_threshold[i])
 
         if(nrow(d1) == 1){
           obs_tmp[k,j] <- d1$value

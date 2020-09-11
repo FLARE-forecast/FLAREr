@@ -26,16 +26,18 @@
 #' - `init_obs_mapping`: the multipler that converts the state to the observation (1 will be the most common). Used in `generate_initial_conditions()`
 #'
 #' The required columns in the `pars_config` are:
-#' - `par_names`:
-#' - `par_names_save`:
-#' - `par_nml`:
-#' - `par_init`:
-#' - `par_init_lowerbound`:
-#' - `par_init_upperbound`:
-#' - `par_lowerbound`:
-#' - `par_upperbound`:
-#' - `inflat_pars`:
-#' - `par_units`:
+#' - `par_names`:  the name of the parameter in the GLM nml file
+#' - `par_names_save`: the name of the parameter that will  be written in the output file.  This is different that
+#' `par_names` because a single parameter can have multiple zones.  Therefore, `par_names` will be the same but
+#' `par_names_save` will be different so that you know which zone they are associated with
+#' - `par_nml`: GLM namelist that the `par_name` can be found: `glm.nml`, `aed2.nml`,`aed2_phyto_pars.nml`,`aed2_zoop_pars.nml`
+#' - `par_init`:  Initial value for the parameter
+#' - `par_init_lowerbound`: Lower bound when initilizing with a uniform distribution
+#' - `par_init_upperbound`: Upper bound when initilizing with a uniform distribution
+#' - `par_lowerbound`: Lower bound that the parameter can physically have
+#' - `par_upperbound`: Upper bound that the parameter can physically have
+#' - `inflat_pars`: Variance inflation factor for parameters (values are >= 1)
+#' - `par_units`: Units of parameter
 #'
 #'  The required columns in the `obs_config` are:
 #'  - `states_names_obs`: the name of the model state that the obervation represents
@@ -74,16 +76,17 @@
 #'  - `model_name`:
 #'
 #' The `management` list is used to define the Side Stream Saturation oxygen system.  It is
-#' note requires (defaults to `NULL`).  If included it requires:
-#' - management_input:
-#' - simulate_sss:
-#' - forecast_sss_on:
-#' - sss_depth:
-#' - use_specified_sss:
-#' - specified_sss_inflow_file:
-#' - specified_sss_outflow_file:
-#' - forecast_sss_flow:
-#' - forecast_sss_oxy:
+#' not required (defaults to `NULL`).  If included it requires:
+#' - `management_input`: A two column data frame: FLOW, OXY_oxy
+#' - `simulate_sss`: logical whether to simulate the sss
+#' - `forecast_sss_on`: logical whether to have sss on in forecast
+#' - `sss_depth`: Depth (m) of the SSS inflow and outflow
+#' - `use_specified_sss`: logical whether to use the data from `management_input`
+#' or from `forecast_sss_flow` and `forecast_sss_oxy` when forecasting with sss on
+#' - `specified_sss_inflow_file`: file path of the inflow sss file is supplied rather than interally generated
+#' - `specified_sss_outflow_file`: file path of the outflow sss file is supplied rather than interally generated
+#' - `forecast_sss_flow`: m3/day of water entering via sss
+#' - `forecast_sss_oxy`: oxygen concentration (mmmol/m3) entered in the sss
 #'
 #'
 #' @param states_init array of the initial states.  Required dimensions are `[states, depths, ensemble]`
