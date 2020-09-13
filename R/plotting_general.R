@@ -54,9 +54,18 @@ plotting_general <- function(file_name,
     combined_states <- combined_states[combined_states_conversion_index]
     combined_states_conversion <- combined_states_conversion[combined_states_conversion_index]
 
-    combined_states_names <- stringr::str_split(var_names[combined_states_conversion_index],"_")
-    for(i in 1:length(combined_states_names)){
-      combined_states_names[i] <- paste0(combined_states_names[[i]][1],"_",combined_states_names[[i]][2])
+
+    #tmo <- stringr::str_split(var_names[combined_states_conversion_index],"_")
+    combined_states_names <- stringr::str_split(var_names[combined_states_conversion_index], "_")
+    for(i in 1:length(combined_states)){
+
+    tmp <- combined_states_names[[i]][which(combined_states_names[[i]] != 'observed')]
+    combined_states_names[i] <- tmp[1]
+    if(length(tmp) > 1){
+      for(j in 2:length(tmp)){
+        combined_states_names[i] <- paste0(combined_states_names[i], "_",tmp[j])
+      }
+    }
     }
 
     names(combined_states) <- combined_states_names

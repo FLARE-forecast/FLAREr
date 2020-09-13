@@ -534,8 +534,8 @@ create_sss_input_output <- function(x,
     OGM_pop <- round(rep(x[wq_start[which(state_names == "OGM_pop")] + depth_index - 1],2), 3)
     OGM_pon <- round(rep(x[wq_start[which(state_names == "OGM_pon")] + depth_index - 1],2), 3)
     #PHS_frp_ads <- round(rep(x[i-1, m, wq_start[which(state_names == "PHS_frp_ads")-1] + depth_index - 1],2), 3)
-    #CAR_dic <- round(rep(x[i-1, m, wq_start[which(state_names == "CAR_dic")-1] + depth_index - 1],2), 3)
-    #CAR_ch4 <- round(rep(x[i-1, m, wq_start[which(state_names == "CAR_ch4")-1] + depth_index - 1],2), 3)
+    CAR_dic <- round(rep(x[i-1, m, wq_start[which(state_names == "CAR_dic")-1] + depth_index - 1],2), 3)
+    CAR_ch4 <- round(rep(x[i-1, m, wq_start[which(state_names == "CAR_ch4")-1] + depth_index - 1],2), 3)
     SIL_rsi <- round(rep(x[wq_start[which(state_names == "SIL_rsi")] + depth_index - 1],2), 3)
 
     sss_inflow <- data.frame(time = time_sss,
@@ -543,7 +543,7 @@ create_sss_input_output <- function(x,
                              TEMP = TEMP,
                              SALT = SALT,
                              OXY_oxy = OXY_oxy,
-                             SIL_rsi = SIL_rsi,
+
                              NIT_amm = NIT_amm,
                              NIT_nit = NIT_nit,
                              PHS_frp = PHS_frp,
@@ -555,10 +555,12 @@ create_sss_input_output <- function(x,
                              OGM_pon = OGM_pon,
                              OGM_dop = OGM_dop,
                              OGM_dopr = OGM_dopr,
-                             OGM_pop = OGM_pop
+                             OGM_pop = OGM_pop,
+                             SIL_rsi = SIL_rsi,
                              #PHS_frp_ads = PHS_frp_ads,
-                             #CAR_dic = CAR_dic,
-                             #CAR_ch4 = CAR_ch4,
+                             CAR_dic = CAR_dic,
+                             CAR_ch4 = CAR_ch4,
+                             SIL_rsi = SIL_rsi,
     )
 
     #sss_inflow <- sss_inflow %>%
