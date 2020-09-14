@@ -37,9 +37,8 @@ run_model <- function(i,
                       modeled_depths,
                       ndepths_modeled,
                       curr_met_file,
-                      inflow_file_names,
-                      inflow_outflow_index,
-                      outflow_file_names,
+                      inflow_file_name,
+                      outflow_file_name,
                       glm_output_vars,
                       diagnostics_names,
                       npars,
@@ -207,11 +206,11 @@ run_model <- function(i,
   update_glm_nml_names[list_index] <- "meteo_fl"
   list_index <- list_index + 1
 
-  update_glm_nml_list[[list_index]] <- unlist(inflow_file_names[inflow_outflow_index, ])
+  update_glm_nml_list[[list_index]] <- unlist(inflow_file_name)
   update_glm_nml_names[list_index] <- "inflow_fl"
   list_index <- list_index + 1
 
-  update_glm_nml_list[[list_index]] <- unlist(outflow_file_names[inflow_outflow_index, ])
+  update_glm_nml_list[[list_index]] <- unlist(outflow_file_name)
   update_glm_nml_names[list_index] <- "outflow_fl"
   list_index <- list_index + 1
 
