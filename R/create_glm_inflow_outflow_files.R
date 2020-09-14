@@ -19,18 +19,21 @@
 #'
 #' @examples
 create_glm_inflow_outflow_files <- function(inflow_file,
-                                       met_file_names,
-                                       working_directory,
-                                       start_datetime_local,
-                                       end_datetime_local,
-                                       forecast_start_datetime_local,
-                                       local_tzone,
-                                       inflow_process_uncertainty,
-                                       future_inflow_flow_coeff,
-                                       future_inflow_flow_error,
-                                       future_inflow_temp_coeff,
-                                       future_inflow_temp_error,
-                                       use_future_inflow)
+                                            met_file_names,
+                                            working_directory,
+                                            start_datetime_local,
+                                            end_datetime_local,
+                                            forecast_start_datetime_local,
+                                            local_tzone,
+                                            inflow_process_uncertainty,
+                                            future_inflow_flow_coeff,
+                                            future_inflow_flow_error,
+                                            future_inflow_temp_coeff,
+                                            future_inflow_temp_error,
+                                            use_future_inflow,
+                                            state_names = NULL,
+                                            specified_files = NULL)
+
 {
 
   hist_days <- as.numeric(forecast_start_datetime_local - start_datetime_local)
@@ -44,15 +47,15 @@ create_glm_inflow_outflow_files <- function(inflow_file,
 
   for(m in 1:length(met_file_names)){
     curr_met_daily <- readr::read_csv(met_file_names[m],
-                               col_types = readr::cols()) %>%
+                                      col_types = readr::cols()) %>%
       dplyr::mutate(time = lubridate::with_tz(time, tzone = local_tzone)) %>%
       dplyr::mutate(time = lubridate::as_date(time)) %>%
       dplyr::group_by(time) %>%
       dplyr::summarize(Rain = mean(Rain),
-                AirTemp = mean(AirTemp),.groups = 'drop') %>%
+                       AirTemp = mean(AirTemp),.groups = 'drop') %>%
       dplyr::mutate(ensemble = m) %>%
       dplyr::mutate(AirTemp_lag1 = dplyr::lag(AirTemp, 1),
-             Rain_lag1 = dplyr::lag(Rain, 1))
+                    Rain_lag1 = dplyr::lag(Rain, 1))
 
     curr_all_days <- rbind(curr_all_days,curr_met_daily)
   }
@@ -67,8 +70,8 @@ create_glm_inflow_outflow_files <- function(inflow_file,
 
   tmp <- tmp %>%
     dplyr::mutate(forecast = ifelse(time %in% forecasts_days, 1, 0),
-           TEMP = ifelse(forecast == 1, NA, TEMP),
-           FLOW = ifelse(forecast == 1, NA, FLOW))
+                  TEMP = ifelse(forecast == 1, NA, TEMP),
+                  FLOW = ifelse(forecast == 1, NA, FLOW))
 
   if(inflow_process_uncertainty == TRUE){
     inflow_error <- rnorm(nrow(tmp), 0, future_inflow_flow_error)
@@ -93,7 +96,7 @@ create_glm_inflow_outflow_files <- function(inflow_file,
         future_inflow_flow_coeff[2] * tmp$FLOW[i - 1] +
         future_inflow_flow_coeff[3] * tmp$Rain_lag1[i] + inflow_error[i]
       tmp$TEMP[i] = future_inflow_temp_coeff[1] +
-      future_inflow_temp_coeff[2] * tmp$TEMP[i-1] +
+        future_inflow_temp_coeff[2] * tmp$TEMP[i-1] +
         future_inflow_temp_coeff[3] * tmp$AirTemp_lag1[i] + temp_error[i]
     }
   }
@@ -114,15 +117,45 @@ create_glm_inflow_outflow_files <- function(inflow_file,
       dplyr::mutate_at(dplyr::vars(c("FLOW", "TEMP", "SALT")), list(~round(., 4)))
 
     readr::write_csv(x = tmp2,
-              path = inflow_file_names[i],
-              quote_escape = "none")
+                     path = inflow_file_names[i],
+                     quote_escape = "none")
 
     tmp2 <- tmp2 %>%
       dplyr::select(time, FLOW)
 
     readr::write_csv(x = tmp2,
-              path = outflow_file_names[i],
-              quote_escape = "none")
+                     path = outflow_file_names[i],
+                     quote_escape = "none")
+  }
+
+  if(!is.null(specified_files)){
+    #Reorder state names in the inflow to be the same order as in the states config file
+    #sets missing states in the inflow file to zero.
+
+    for(i in 1:length(specified_files)){
+
+      d <- readr::read_csv(specified_files[i], col_types = readr::cols())
+
+      if(length(names(d)) > 2){
+
+        state_names[which(state_names == "temp")] <- "TEMP"
+
+        missing_states <- state_names[which(!(state_names %in% names(d)))]
+
+        for(k in 1:length(missing_states)){
+          new_names <- c(names(d), missing_states[k])
+          d <- cbind(d, rep(0, nrow(d)))
+          names(d) <- new_names
+        }
+
+        wq_names <- names(d)[which(!(names(d) %in% c("time", "FLOW", "TEMP", "SALT")))]
+
+        d <- d %>%
+          dplyr::select("time", "FLOW", "TEMP", "SALT", all_of(state_names))
+
+        readr::write_csv(d, specified_files[i])
+      }
+    }
   }
 
 

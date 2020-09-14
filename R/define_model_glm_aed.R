@@ -135,7 +135,7 @@ run_model <- function(i,
 
     if(simulate_sss){
       if(is.na(management$specified_sss_inflow_file)){
-        flare:::create_sss_input_output(x_start,
+        flare:::create_sss_input_output(x = x_start,
                                         i,
                                         m,
                                         full_time_local,
@@ -147,10 +147,10 @@ run_model <- function(i,
                                         management$sss_depth,
                                         management$use_specified_sss,
                                         state_names,
-                                        include_wq,
                                         modeled_depths = modeled_depths,
                                         forecast_sss_flow = management$forecast_sss_flow,
-                                        forecast_sss_oxy = management$forecast_sss_oxy)
+                                        forecast_sss_oxy = management$forecast_sss_oxy,
+                                        salt = salt_start)
       }else{
         file.copy(file.path(working_directory, management$specified_sss_inflow_file), paste0(working_directory,"/sss_inflow.csv"))
         if(!is.na(management$specified_sss_outflow_file)){
@@ -207,6 +207,15 @@ run_model <- function(i,
   update_glm_nml_names[list_index] <- "meteo_fl"
   list_index <- list_index + 1
 
+  update_glm_nml_list[[list_index]] <- unlist(inflow_file_names[inflow_outflow_index, ])
+  update_glm_nml_names[list_index] <- "inflow_fl"
+  list_index <- list_index + 1
+
+  update_glm_nml_list[[list_index]] <- unlist(outflow_file_names[inflow_outflow_index, ])
+  update_glm_nml_names[list_index] <- "outflow_fl"
+  list_index <- list_index + 1
+
+
   flare:::update_nml(update_glm_nml_list,
                      update_glm_nml_names,
                      working_directory,
@@ -226,19 +235,17 @@ run_model <- function(i,
                        "aed2_phyto_pars.nml")
   }
 
-
-
-  if(ncol(as.matrix(inflow_file_names)) == 2){
-    tmp <- file.copy(from = inflow_file_names[inflow_outflow_index, 1],
-                     to = "inflow_file1.csv", overwrite = TRUE)
-    tmp <- file.copy(from = inflow_file_names[inflow_outflow_index, 2],
-                     to = "inflow_file2.csv", overwrite = TRUE)
-  }else{
-    tmp <- file.copy(from = inflow_file_names[inflow_outflow_index],
-                     to = "inflow_file1.csv", overwrite = TRUE)
-  }
-  tmp <- file.copy(from = outflow_file_names[inflow_outflow_index],
-                   to = "outflow_file1.csv", overwrite = TRUE)
+  #if(ncol(as.matrix(inflow_file_names)) == 2){
+  #  tmp <- file.copy(from = inflow_file_names[inflow_outflow_index, 1],
+  #                   to = "inflow_file1.csv", overwrite = TRUE)
+  #  tmp <- file.copy(from = inflow_file_names[inflow_outflow_index, 2],
+  #                   to = "inflow_file2.csv", overwrite = TRUE)
+  #}else{
+  #  tmp <- file.copy(from = inflow_file_names[inflow_outflow_index],
+  #                   to = "inflow_file1.csv", overwrite = TRUE)
+  #}
+  #tmp <- file.copy(from = outflow_file_names[inflow_outflow_index],
+  #                 to = "outflow_file1.csv", overwrite = TRUE)
 
   #Use GLM NML files to run GLM for a day
   # Only allow simulations without NaN values in the output to proceed.
@@ -362,7 +369,9 @@ run_model <- function(i,
 set_up_model <- function(executable_location,
                          config,
                          working_directory,
-                         num_wq_vars){
+                         state_names,
+                         inflow_file_names,
+                         outflow_file_names){
 
   switch(Sys.info() [["sysname"]],
          Linux = { machine <- "unix" },
@@ -377,8 +386,14 @@ set_up_model <- function(executable_location,
   file.copy(from = file.path(config$run_config$forecast_location, config$base_GLM_nml),
             to = paste0(working_directory, "/", "glm3.nml"), overwrite = TRUE)
 
-  update_var(num_wq_vars, "num_wq_vars", working_directory, "glm3.nml") #GLM SPECIFIC
+  non_temp_names <- state_names[which(!(state_names %in% "temp"))]
 
+  update_var(length(non_temp_names), "num_wq_vars", working_directory, "glm3.nml") #GLM SPECIFIC
+
+  update_var(non_temp_names, "wq_names", working_directory, "glm3.nml")
+
+  update_var(ncol(inflow_file_names), "num_inflows", working_directory, "glm3.nml")
+  update_var(ncol(outflow_file_names), "num_outlet", working_directory, "glm3.nml")
 
   if(config$include_wq){
 
@@ -397,6 +412,10 @@ set_up_model <- function(executable_location,
   update_var(length(config$modeled_depths), "num_depths", working_directory, "glm3.nml") #GLM SPECIFIC
 
   update_var(config$modeled_depths, "the_depths", working_directory, "glm3.nml") #GLM SPECIFIC
+
+  inflow_var_names <- c("FLOW","TEMP","SALT", non_temp_names)
+  update_var(inflow_var_names, "inflow_vars", working_directory, "glm3.nml")
+  update_var(length(inflow_var_names), "inflow_varnum", working_directory, "glm3.nml")
 
   #Create a copy of the NML to record starting initial conditions
   file.copy(from = paste0(working_directory, "/", "glm3.nml"), #GLM SPECIFIC
@@ -433,45 +452,28 @@ create_sss_input_output <- function(x,
                                     sss_depth,
                                     use_specified_sss,
                                     state_names,
-                                    include_wq,
                                     modeled_depths,
                                     forecast_sss_flow,
-                                    forecast_sss_oxy){
+                                    forecast_sss_oxy,
+                                    salt){
 
   full_time_day_local <- lubridate::as_date(full_time_local)
-
-  potential_names <- c("OXY_oxy",
-                       "SIL_rsi",
-                       "NIT_amm",
-                       "NIT_nit",
-                       "PHS_frp",
-                       "OGM_doc",
-                       "OGM_docr",
-                       "OGM_poc",
-                       "OGM_don",
-                       "OGM_donr",
-                       "OGM_pon",
-                       "OGM_dop",
-                       "OGM_dopr",
-                       "OGM_pop")
-
 
   sss_oxy_factor <- 1.0
 
   depth_index <- which.min(abs(modeled_depths - sss_depth))
 
-  if(include_wq){
-    wq_names_tmp <- state_names[which(state_names %in% potential_names)]
-  }else{
-    wq_names_tmp <- NULL
-  }
-
   time_sss <- c(full_time_day_local[i - 1],full_time_day_local[i])
+
+  oxy <- x[wq_start[which(state_names == "OXY_oxy")] + depth_index - 1]
+  temp<- x[wq_start[which(state_names == "temp")] + depth_index - 1]
+  salt <- salt[depth_index]
+
   if(i > (hist_days + 1)){
     if(forecast_sss_on){
       if(use_specified_sss){
         FLOW1 <- management_input[i-1, 1]
-        OXY1 <- management_input[i-1, 2]  * sss_oxy_factor
+        OXY1 <- oxy + management_input[i-1, 2]  * sss_oxy_factor
       }else{
         FLOW1 <- forecast_SSS_flow * (1/(60*60*24))
         OXY1 <- forecast_SSS_Oxy * sss_oxy_factor
@@ -482,17 +484,17 @@ create_sss_input_output <- function(x,
     }
   }else{
     FLOW1 <- management_input[i-1, 1]
-    OXY1 <-  management_input[i-1, 2]  * sss_oxy_factor
+    OXY1 <-  oxy + management_input[i-1, 2]  * sss_oxy_factor
   }
 
   if(i > (hist_days + 1)){
     if(forecast_sss_on){
       if(use_specified_sss){
         FLOW2 <- management_input[i, 1]
-        OXY2 <- management_input[i, 2]  * sss_oxy_factor
+        OXY2 <- oxy + management_input[i, 2]  * sss_oxy_factor
       }else{
         FLOW2 <- forecast_SSS_flow * (1/(60*60*24))
-        OXY2 <- forecast_SSS_Oxy * sss_oxy_factor
+        OXY2 <- oxy+ forecast_SSS_Oxy * sss_oxy_factor
       }
     }else{
       FLOW2 <- 0.0
@@ -500,76 +502,30 @@ create_sss_input_output <- function(x,
     }
   }else{
     FLOW2 <- management_input[i, 1]
-    OXY2 <- management_input[i, 2]  * sss_oxy_factor
+    OXY2 <- oxy + management_input[i, 2]  * sss_oxy_factor
   }
 
   FLOW <- round(c(FLOW1, FLOW2), 5)
-  TEMP <- round(rep(x[depth_index],2), 3)
-  SALT <- rep(0,2)
-
-  #OXY_EQ <- Eq.Ox.conc(TEMP[1], elevation.m = 506,
-  #           bar.press = NULL, bar.units = NULL,
-  #           out.DO.meas = "mg/L",
-  #           salinity = 0, salinity.units = "pp.thou")*1000*(1/32)
-
-  #if(OXY1 > OXY_EQ){OXY1 = OXY_EQ}
-  #if(OXY2 > OXY_EQ){OXY2 = OXY_EQ}
-
+  TEMP <- round(rep(temp,2), 3)
   OXY_oxy <- round(c(OXY1, OXY2), 3)
+  SALT <- round(rep(salt,2), 3)
 
-  if(length(which(state_names != "OXY_oxy")) == 1){
-    sss_inflow <- data.frame(time = time_sss, FLOW = FLOW, TEMP = TEMP, SALT = SALT, OXY_oxy = OXY_oxy)
-  }else{
 
-    NIT_amm <- round(rep(x[wq_start[which(state_names == "NIT_amm")] + depth_index - 1],2), 3)
-    NIT_nit <- round(rep(x[wq_start[which(state_names == "NIT_nit")] + depth_index - 1],2), 3)
-    PHS_frp <- round(rep(x[wq_start[which(state_names == "PHS_frp")] + depth_index - 1],2), 3)
-    OGM_doc <- round(rep(x[wq_start[which(state_names == "OGM_doc")] + depth_index - 1],2), 3)
-    OGM_docr <- round(rep(x[wq_start[which(state_names == "OGM_docr")] + depth_index - 1],2), 3)
-    OGM_poc <- round(rep(x[wq_start[which(state_names == "OGM_poc")] + depth_index - 1],2), 3)
-    OGM_don <- round(rep(x[wq_start[which(state_names == "OGM_don")] + depth_index - 1],2), 3)
-    OGM_donr <- round(rep(x[wq_start[which(state_names == "OGM_donr")] + depth_index - 1],2), 3)
-    OGM_dop <- round(rep(x[wq_start[which(state_names == "OGM_dop")] + depth_index - 1],2), 3)
-    OGM_dopr <- round(rep(x[wq_start[which(state_names == "OGM_dop")] + depth_index - 1],2), 3)
-    OGM_pop <- round(rep(x[wq_start[which(state_names == "OGM_pop")] + depth_index - 1],2), 3)
-    OGM_pon <- round(rep(x[wq_start[which(state_names == "OGM_pon")] + depth_index - 1],2), 3)
-    #PHS_frp_ads <- round(rep(x[i-1, m, wq_start[which(state_names == "PHS_frp_ads")-1] + depth_index - 1],2), 3)
-    CAR_dic <- round(rep(x[i-1, m, wq_start[which(state_names == "CAR_dic")-1] + depth_index - 1],2), 3)
-    CAR_ch4 <- round(rep(x[i-1, m, wq_start[which(state_names == "CAR_ch4")-1] + depth_index - 1],2), 3)
-    SIL_rsi <- round(rep(x[wq_start[which(state_names == "SIL_rsi")] + depth_index - 1],2), 3)
+  sss_inflow <- data.frame(time = time_sss, FLOW = FLOW, TEMP = TEMP, SALT = SALT)
 
-    sss_inflow <- data.frame(time = time_sss,
-                             FLOW = FLOW,
-                             TEMP = TEMP,
-                             SALT = SALT,
-                             OXY_oxy = OXY_oxy,
+  non_temp_states <- state_names[which(!(state_names %in% c("temp", "salt")))]
 
-                             NIT_amm = NIT_amm,
-                             NIT_nit = NIT_nit,
-                             PHS_frp = PHS_frp,
-                             OGM_doc = OGM_doc,
-                             OGM_docr = OGM_docr,
-                             OGM_poc = OGM_poc,
-                             OGM_don = OGM_don,
-                             OGM_donr = OGM_donr,
-                             OGM_pon = OGM_pon,
-                             OGM_dop = OGM_dop,
-                             OGM_dopr = OGM_dopr,
-                             OGM_pop = OGM_pop,
-                             SIL_rsi = SIL_rsi,
-                             #PHS_frp_ads = PHS_frp_ads,
-                             CAR_dic = CAR_dic,
-                             CAR_ch4 = CAR_ch4,
-                             SIL_rsi = SIL_rsi,
-    )
-
-    #sss_inflow <- sss_inflow %>%
-    #  select(vars(c("FLOW", "TEMP", "SALT", all_of(wq_names_tmp))))
+  for(i in 1:length(non_temp_states)){
+    if(non_temp_states[i] == "OXY_oxy"){
+      sss_inflow  <- cbind(sss_inflow, OXY_oxy)
+    }else{
+      sss_inflow <- cbind(sss_inflow, round(rep(x[wq_start[which(state_names == non_temp_states[i])] + depth_index - 1],2), 3))
+    }
   }
 
+  names(sss_inflow) <- c("time", "FLOW", "TEMP", "SALT", non_temp_states)
 
-
-  sss_outflow <- data.frame(time = time_sss, FLOW = FLOW, TEMP = TEMP, SALT = SALT)
+  sss_outflow <- data.frame(time = time_sss, FLOW = FLOW)
 
   write.csv(sss_inflow, paste0(working_directory, "/sss_inflow.csv"), row.names = FALSE, quote = FALSE)
   write.csv(sss_outflow, paste0(working_directory, "/sss_outflow.csv"), row.names = FALSE, quote = FALSE)

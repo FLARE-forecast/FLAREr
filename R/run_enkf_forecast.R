@@ -307,7 +307,9 @@ run_enkf_forecast <- function(states_init,
   set_up_model(executable_location = paste0(find.package("flare"),"/exec/"),
                config,
                working_directory,
-               num_wq_vars)
+               state_names = states_config$state_names,
+               inflow_file_names = inflow_file_names,
+               outflow_file_names = outflow_file_names)
 
   mixing_vars <- array(NA, dim = c(17, nsteps, nmembers))
   model_internal_depths <- array(NA, dim = c(nsteps, 500, nmembers))
@@ -341,7 +343,6 @@ run_enkf_forecast <- function(states_init,
 
     met_index <- 1
     inflow_outflow_index <- 1
-
 
     #Create array to hold GLM predictions for each ensemble
     x_star <- array(NA, dim = c(nmembers, nstates))

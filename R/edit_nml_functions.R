@@ -52,6 +52,7 @@ update_temps <- function(curr_temps,curr_depths,working_directory){
 #' add(1, 1)
 #' add(10, 1)
 update_var <- function(var_value,var_name,working_directory, nml){
+
   orig_nml <- read_nml(paste0(working_directory,'/',nml))
   index1 <- NA; index2 = NA
   for (g in 1:length(orig_nml)) {
@@ -62,9 +63,18 @@ update_var <- function(var_value,var_name,working_directory, nml){
     }
   }
   holder2 <- unlist(orig_nml[[index1]][index2])
-  holder2[1:length(var_value)] = var_value
+  if(is.character(var_value)){
+    split <- strsplit(var_value, ",")
+    var_value <- paste0(split[1])
+    if(length(split) > 1){
+      for(i in 2:length(split)){
+        var_value <- paste0(var_value,",",split[i])
+      }
+    }
+  }
+  holder2[1:length(var_value)] <- var_value
   holder2 <- list(holder2[1:length(var_value)])
-  orig_nml[[index1]][index2] = holder2
+  orig_nml[[index1]][index2] <- holder2
   write_nml(orig_nml, paste0(working_directory,'/',nml))
 }
 
@@ -81,9 +91,19 @@ update_nml <- function(var_list,var_name_list,working_directory, nml){
       }
     }
     holder2 <- unlist(orig_nml[[index1]][index2])
+    if(is.character(var_list[[k]])){
+      split <- strsplit(var_list[[k]], ",")
+      var_list[[k]] <- paste0(split[1])
+      if(length(split) > 1){
+        for(i in 2:length(split)){
+          var_list[[k]] <- paste0(var_list[[k]],",",split[i])
+        }
+      }
+    }
+    holder2 <- unlist(orig_nml[[index1]][index2])
     holder2[1:length(var_list[[k]])] <- var_list[[k]]
     holder2 <- list(holder2[1:length(var_list[[k]])])
-    orig_nml[[index1]][index2] = holder2
+    orig_nml[[index1]][index2] <- holder2
   }
 
   write_nml(orig_nml, paste0(working_directory,'/',nml))
