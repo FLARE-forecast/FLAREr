@@ -360,7 +360,17 @@ plotting_general <- function(file_name,
 
     print("secchi")
 
-    obs_curr <- rep(NA, length(full_time_local))
+    obs_date <- tibble(date = lubridate::as_date(full_time_local))
+
+    obs_secchi <- d %>% dplyr::filter(variable == "secchi")
+
+    if(nrow(obs_secchi) > 0){
+      obs_curr <- dplyr::left_join(obs_date, obs_secchi)
+      obs_curr <- obs_curr$value
+    }else{
+      obs_curr <- rep(NA, length(obs_date))
+    }
+
 
 
 
