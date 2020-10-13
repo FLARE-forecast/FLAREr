@@ -18,7 +18,7 @@
 #' - `initial_conditions`: the default initial condition for the state if an observation is lacking. Used in `generate_initial_conditions()`.  Note:
 #' the `config` list should have a variables called `default_temp_init` and `default_temp_init_depths` that allow for depth variation in the initial
 #' conditions for temperature.
-#' - `model_sd`: the standard deviation of the model error for the state
+#' - `model_sd`: the standard deviation of the model error for the state.  Matrix with dimensions rows = length(states_names), columns = length(config$modeled_depths)
 #' - `initial_model_sd`: the standard deviation of the initial conditions for the state. Used in `generate_initial_conditions()`
 #' - `states_to_obs1`: the name of the observation that matches the model state
 #' - `states_to_obs_mapping_1`: the multipler that converts the state to the observation (1 will be the most common)
@@ -303,6 +303,8 @@ run_enkf_forecast <- function(states_init,
 
   x_prior <- array(NA, dim = c(nsteps, nmembers, nstates + npars))
 
+  inflow_file_names <- as.matrix(inflow_file_names)
+  outflow_file_names <- as.matrix(outflow_file_names)
 
   set_up_model(executable_location = paste0(find.package("flare"),"/exec/"),
                config,
@@ -427,11 +429,11 @@ run_enkf_forecast <- function(states_init,
 
       q_v[] <- NA
       w[] <- NA
-      for(jj in 1:length(model_sd)){
+      for(jj in 1:nrow(model_sd)){
         w[] <- rnorm(ndepths_modeled, 0, 1)
-        q_v[1] <- model_sd[jj] * w[1]
+        q_v[1] <- model_sd[jj, 1] * w[1]
         for(kk in 2:ndepths_modeled){
-          q_v[kk] <- alpha_v * q_v[kk-1] + sqrt(1 - alpha_v^2) * model_sd[jj] * w[kk]
+          q_v[kk] <- alpha_v * q_v[kk-1] + sqrt(1 - alpha_v^2) * model_sd[jj, kk] * w[kk]
         }
 
         x_corr[m, (((jj-1)*ndepths_modeled)+1):(jj*ndepths_modeled)] <-

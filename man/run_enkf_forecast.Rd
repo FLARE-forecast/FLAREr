@@ -91,7 +91,7 @@ The required columns the \code{states_config} data frame with the following colu
 \item \code{initial_conditions}: the default initial condition for the state if an observation is lacking. Used in \code{generate_initial_conditions()}.  Note:
 the \code{config} list should have a variables called \code{default_temp_init} and \code{default_temp_init_depths} that allow for depth variation in the initial
 conditions for temperature.
-\item \code{model_sd}: the standard deviation of the model error for the state
+\item \code{model_sd}: the standard deviation of the model error for the state.  Matrix with dimensions rows = length(states_names), columns = length(config$modeled_depths)
 \item \code{initial_model_sd}: the standard deviation of the initial conditions for the state. Used in \code{generate_initial_conditions()}
 \item \code{states_to_obs1}: the name of the observation that matches the model state
 \item \code{states_to_obs_mapping_1}: the multipler that converts the state to the observation (1 will be the most common)

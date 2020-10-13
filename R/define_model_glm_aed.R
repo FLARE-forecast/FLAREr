@@ -282,8 +282,8 @@ run_model <- function(i,
     if(file.exists(paste0(working_directory, "/output.nc")) &
        !testit::has_error(nc <- ncdf4::nc_open(paste0(working_directory, "/output.nc")))){
 
-      if(length(ncvar_get(nc, "time")) >= 1){
-        nc_close(nc)
+      if(length(ncdf4::ncvar_get(nc, "time")) >= 1){
+        ncdf4::nc_close(nc)
 
         output_vars_multi_depth <- state_names
         output_vars_no_depth <- NA
@@ -385,11 +385,14 @@ set_up_model <- function(executable_location,
   file.copy(from = file.path(config$run_config$forecast_location, config$base_GLM_nml),
             to = paste0(working_directory, "/", "glm3.nml"), overwrite = TRUE)
 
-  non_temp_names <- state_names[which(!(state_names %in% "temp"))]
+  non_temp_names <- state_names[which(!(state_names %in% c("temp","salt")))]
 
   update_var(length(non_temp_names), "num_wq_vars", working_directory, "glm3.nml") #GLM SPECIFIC
 
-  update_var(non_temp_names, "wq_names", working_directory, "glm3.nml")
+  if(length(non_temp_names) > 0){
+    update_var(non_temp_names, "wq_names", working_directory, "glm3.nml")
+  }
+
 
   update_var(ncol(inflow_file_names), "num_inflows", working_directory, "glm3.nml")
   update_var(ncol(outflow_file_names), "num_outlet", working_directory, "glm3.nml")

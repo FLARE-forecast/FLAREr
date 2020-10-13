@@ -141,7 +141,7 @@ get_glm_nc_var_all_wq <- function(ncFile,working_dir, z_out,vars_depth, vars_no_
 
   output <- array(NA,dim=c(tallest_layer,length(vars_depth)))
   for(v in 1:length(vars_depth)){
-    var_modeled <- ncvar_get(glm_nc, vars_depth[v])
+    var_modeled <- ncdf4::ncvar_get(glm_nc, vars_depth[v])
     output[,v] <- var_modeled[1:tallest_layer]
   }
 
@@ -150,7 +150,7 @@ get_glm_nc_var_all_wq <- function(ncFile,working_dir, z_out,vars_depth, vars_no_
   if(length(diagnostic_vars) > 0){
     diagnostics_output <- array(NA,dim=c(tallest_layer,length(diagnostic_vars)))
     for(v in 1:length(diagnostic_vars)){
-      var_modeled <- ncvar_get(glm_nc, diagnostic_vars[v])
+      var_modeled <- ncdf4::ncvar_get(glm_nc, diagnostic_vars[v])
       diagnostics_output[,v] <- var_modeled[1:tallest_layer]
     }
   }else{
