@@ -25,7 +25,7 @@ plotting_general <- function(file_name,
   full_time_local <- lubridate::with_tz(full_time, local_tzone)
   full_time_day_local <- lubridate::as_date(full_time_local)
   nsteps <- length(full_time_day_local)
-  data_assimilation <- ncdf4::ncvar_get(nc, 'data_assimilation')
+  forecast <- ncdf4::ncvar_get(nc, 'forecast')
   depths <- round(ncdf4::ncvar_get(nc, 'depth'),2)
 
 
@@ -103,8 +103,8 @@ plotting_general <- function(file_name,
 
 
 
-  if(length(which(data_assimilation == 0)) > 0){
-    forecast_index <- which(data_assimilation == 0)[1]
+  if(length(which(forecast == 1)) > 0){
+    forecast_index <- which(forecast == 1)[1]
   }else{
     forecast_index <- 0
   }
@@ -143,6 +143,8 @@ plotting_general <- function(file_name,
   }
 
   names(diagnostic_list) <- diagnostics_names
+
+  ncdf4::nc_close(nc)
 
   #PROCESS TEMPERATURE OBSERVATIONS
 

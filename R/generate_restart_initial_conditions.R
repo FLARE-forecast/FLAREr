@@ -12,7 +12,7 @@
 ##'
 
 generate_restart_initial_conditions <- function(restart_file, state_names, par_names = NULL){
-  print("Using restart file")
+
 
 
   nc <- ncdf4::nc_open(restart_file)
@@ -22,6 +22,10 @@ generate_restart_initial_conditions <- function(restart_file, state_names, par_n
   if(is.na(restart_index)){
     restart_index <- length(data_assimilation)
   }
+
+  print(paste0("Using restart file with restart index of ", restart_index))
+
+
   modeled_depths <- ncdf4::ncvar_get(nc, "depth")
   lake_depth_restart <- ncdf4::ncvar_get(nc, "lake_depth")[restart_index, ]
   snow_ice_thickness_restart <- ncdf4::ncvar_get(nc, "snow_ice_thickness")[, restart_index, ]

@@ -53,6 +53,7 @@ generate_glm_met_files <- function(obs_met_file = NULL,
     for(i in 1:length(cf_met_vars)){
       met <- cbind(met, ncdf4::ncvar_get(obs_met_nc, cf_met_vars[i]))
     }
+    ncdf4::nc_close(obs_met_nc)
     names(met) <- c("time", glm_met_vars)
     met <- met %>%
       dplyr::filter(time %in% full_time_UTC_hist[1:(length(full_time_UTC_hist)-1)])
@@ -84,6 +85,8 @@ generate_glm_met_files <- function(obs_met_file = NULL,
       for(i in 1:length(cf_met_vars)){
         noaa_met <- cbind(noaa_met, ncdf4::ncvar_get(noaa_met_nc, cf_met_vars[i]))
       }
+
+      ncdf4::nc_close(noaa_met_nc)
 
       names(noaa_met) <- c("time", glm_met_vars)
       noaa_met <- noaa_met %>%

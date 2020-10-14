@@ -362,6 +362,7 @@ get_surface_height  <-	function(file = 'output.nc', ice.rm = TRUE, snow.rm = TRU
   return(glm_surface)
 }
 
+#' @importFrom ncdf4 nc_open
 get_glm_nc  <-  function(file){
   if(length(file) < 1 || is.na(file)){
     stop('glm_nc file must be supplied string or proper file handle')

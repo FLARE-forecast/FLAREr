@@ -279,73 +279,82 @@ run_model <- function(i,
       stop()
     }
 
-    if(file.exists(paste0(working_directory, "/output.nc")) &
-       !testit::has_error(nc <- ncdf4::nc_open(paste0(working_directory, "/output.nc")))){
+    nc <- tryCatch(ncdf4::nc_open(paste0(working_directory, "/output.nc")),
+                   error = function(e){
+                     warning(paste(e$message, "error in output.nc regenration"),
+                             call. = FALSE)
+                     return(NULL)
+                   },
+                   finally = NULL)
 
-      if(length(ncdf4::ncvar_get(nc, "time")) >= 1){
-        ncdf4::nc_close(nc)
+    if(!is.null(nc)){
+      success <- TRUE
+    }else{
+      success <- FALSE
+    }
 
-        output_vars_multi_depth <- state_names
-        output_vars_no_depth <- NA
+    ncdf4::nc_close(nc)
 
-        GLM_temp_wq_out <-  flare:::get_glm_nc_var_all_wq(ncFile = "/output.nc",
-                                                          working_dir = working_directory,
-                                                          z_out = modeled_depths,
-                                                          vars_depth = output_vars_multi_depth,
-                                                          vars_no_depth = output_vars_no_depth,
-                                                          diagnostic_vars = diagnostics_names)
+    if(success){
 
-        num_glm_depths <- length(GLM_temp_wq_out$depths_enkf)
-        glm_temps <- rev(GLM_temp_wq_out$output[ ,1])
-        glm_depths_end[1:num_glm_depths] <- GLM_temp_wq_out$depths_enkf
+      output_vars_multi_depth <- state_names
+      output_vars_no_depth <- NA
 
-        glm_depths_tmp <- c(GLM_temp_wq_out$depths_enkf,GLM_temp_wq_out$lake_depth)
+      GLM_temp_wq_out <-  flare:::get_glm_nc_var_all_wq(ncFile = "/output.nc",
+                                                        working_dir = working_directory,
+                                                        z_out = modeled_depths,
+                                                        vars_depth = output_vars_multi_depth,
+                                                        vars_no_depth = output_vars_no_depth,
+                                                        diagnostic_vars = diagnostics_names)
 
-        glm_depths_mid <- glm_depths_tmp[1:(length(glm_depths_tmp)-1)] + diff(glm_depths_tmp)/2
+      num_glm_depths <- length(GLM_temp_wq_out$depths_enkf)
+      glm_temps <- rev(GLM_temp_wq_out$output[ ,1])
+      glm_depths_end[1:num_glm_depths] <- GLM_temp_wq_out$depths_enkf
+
+      glm_depths_tmp <- c(GLM_temp_wq_out$depths_enkf,GLM_temp_wq_out$lake_depth)
+
+      glm_depths_mid <- glm_depths_tmp[1:(length(glm_depths_tmp)-1)] + diff(glm_depths_tmp)/2
 
 
-        x_star_end[1:ndepths_modeled] <- approx(glm_depths_mid,glm_temps, modeled_depths, rule = 2)$y
+      x_star_end[1:ndepths_modeled] <- approx(glm_depths_mid,glm_temps, modeled_depths, rule = 2)$y
 
-        salt_end <- approx(glm_depths_mid, GLM_temp_wq_out$salt_end, modeled_depths, rule = 2)$y
+      salt_end <- approx(glm_depths_mid, GLM_temp_wq_out$salt_end, modeled_depths, rule = 2)$y
 
-        if(include_wq){
-          for(wq in 1:num_wq_vars){
-            glm_wq <-  rev(GLM_temp_wq_out$output[ ,1+wq])
-            x_star_end[wq_start[1 + wq]:wq_end[1 + wq]] <- approx(glm_depths_mid,glm_wq, modeled_depths, rule = 2)$y
-          }
+      if(include_wq){
+        for(wq in 1:num_wq_vars){
+          glm_wq <-  rev(GLM_temp_wq_out$output[ ,1+wq])
+          x_star_end[wq_start[1 + wq]:wq_end[1 + wq]] <- approx(glm_depths_mid,glm_wq, modeled_depths, rule = 2)$y
         }
+      }
 
-        if(length(diagnostics_names) > 0){
-          for(wq in 1:length(diagnostics_names)){
-            glm_wq <-  rev(GLM_temp_wq_out$diagnostics_output[ , wq])
-            diagnostics[wq , ] <- approx(glm_depths_mid,glm_wq, modeled_depths, rule = 2)$y
-          }
+      if(length(diagnostics_names) > 0){
+        for(wq in 1:length(diagnostics_names)){
+          glm_wq <-  rev(GLM_temp_wq_out$diagnostics_output[ , wq])
+          diagnostics[wq , ] <- approx(glm_depths_mid,glm_wq, modeled_depths, rule = 2)$y
         }
+      }
 
-        if(length(which(is.na(x_star_end))) == 0){
-          pass = TRUE
-        }else{
-          num_reruns <- num_reruns + 1
-        }
+      if(length(which(is.na(x_star_end))) == 0){
+        pass = TRUE
       }else{
         num_reruns <- num_reruns + 1
       }
-    }else{
-      num_reruns <- num_reruns + 1
     }
+    num_reruns <- num_reruns + 1
     if(num_reruns > 1000){
       stop(paste0("Too many re-runs (> 1000) due to NaN values in output"))
     }
 
-    return(list(x_star_end  = x_star_end,
-                lake_depth_end  = GLM_temp_wq_out$lake_depth,
-                snow_ice_thickness_end  = GLM_temp_wq_out$snow_wice_bice,
-                avg_surf_temp_end  = GLM_temp_wq_out$avg_surf_temp,
-                mixing_vars_end = GLM_temp_wq_out$mixing_vars,
-                salt_end = salt_end,
-                diagnostics_end  = diagnostics,
-                model_internal_depths  = glm_depths_end))
   }
+
+  return(list(x_star_end  = x_star_end,
+              lake_depth_end  = GLM_temp_wq_out$lake_depth,
+              snow_ice_thickness_end  = GLM_temp_wq_out$snow_wice_bice,
+              avg_surf_temp_end  = GLM_temp_wq_out$avg_surf_temp,
+              mixing_vars_end = GLM_temp_wq_out$mixing_vars,
+              salt_end = salt_end,
+              diagnostics_end  = diagnostics,
+              model_internal_depths  = glm_depths_end))
 }
 
 #' @title Download and Downscale NOAA GEFS for a single site

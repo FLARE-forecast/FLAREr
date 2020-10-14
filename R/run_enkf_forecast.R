@@ -270,6 +270,8 @@ run_enkf_forecast <- function(states_init,
   ndepths_modeled <- length(config$modeled_depths)
 
   data_assimilation_flag <- rep(NA, nsteps)
+  forecast_flag <- rep(NA, nsteps)
+  da_qc_flag <- rep(NA, nsteps)
 
   x <- array(NA, dim=c(nsteps, nmembers, nstates + npars))
 
@@ -477,10 +479,18 @@ run_enkf_forecast <- function(states_init,
 
       if(i > (hist_days + 1)){
         data_assimilation_flag[i] <- 0
-      }else if(i <= (hist_days + 1) & config$use_obs_constraint){
-        data_assimilation_flag[i] <- 3
-      }else{
+        forecast_flag[i] <- 1
+        da_qc_flag[i] <- 0
+      }
+
+      if(i <= (hist_days + 1) & config$use_obs_constraint){
         data_assimilation_flag[i] <- 1
+        forecast_flag[i] <- 0
+        da_qc_flag[i] <- 1
+      }else{
+        data_assimilation_flag[i] <- 0
+        forecast_flag[i] <- 0
+        da_qc_flag[i] <- 0
       }
 
       if(npars > 0){
@@ -509,7 +519,9 @@ run_enkf_forecast <- function(states_init,
       }
     }else{
 
-      data_assimilation_flag[i] <- 7
+      data_assimilation_flag[i] <- 1
+      forecast_flag[i] <- 0
+      da_qc_flag[i] <- 0
 
       #if observation then calucate Kalman adjustment
       if(dim(obs)[1] > 1){
@@ -750,6 +762,8 @@ run_enkf_forecast <- function(states_init,
               model_internal_depths = model_internal_depths,
               diagnostics = diagnostics,
               data_assimilation_flag = data_assimilation_flag,
+              forecast_flag = forecast_flag,
+              da_qc_flag = da_qc_flag,
               config = config,
               states_config = states_config,
               pars_config = pars_config,
