@@ -240,7 +240,7 @@ plotting_general <- function(file_name,
     }
 
     p <- ggplot2::ggplot(curr_tibble, ggplot2::aes(x = date)) +
-      ggplot2::facet_wrap(~depth, scales = "free") +
+      ggplot2::facet_wrap(~depth) +
       ggplot2::geom_ribbon(ggplot2::aes(ymin = lower_var, ymax = upper_var),
                            alpha = 0.70,
                            fill = "gray") +
