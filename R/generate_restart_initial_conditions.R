@@ -17,8 +17,8 @@ generate_restart_initial_conditions <- function(restart_file, state_names, par_n
 
   nc <- ncdf4::nc_open(restart_file)
   restart_nmembers <- length(ncdf4::ncvar_get(nc, "ensemble"))
-  data_assimilation <- ncdf4::ncvar_get(nc, "data_assimilation")
-  restart_index <- max(which(data_assimilation == 0)[1] -1, 2)
+  forecast <- ncdf4::ncvar_get(nc, "forecast")
+  restart_index <- max(which(forecast == 0))
   if(is.na(restart_index)){
     restart_index <- length(data_assimilation)
   }
