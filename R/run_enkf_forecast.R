@@ -481,9 +481,7 @@ run_enkf_forecast <- function(states_init,
         data_assimilation_flag[i] <- 0
         forecast_flag[i] <- 1
         da_qc_flag[i] <- 0
-      }
-
-      if(i <= (hist_days + 1) & config$use_obs_constraint){
+      }else if(i <= (hist_days + 1) & config$use_obs_constraint){
         data_assimilation_flag[i] <- 1
         forecast_flag[i] <- 0
         da_qc_flag[i] <- 1

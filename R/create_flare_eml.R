@@ -233,7 +233,7 @@ create_flare_eml <- function(file_name,
 
   EML::eml_validate(my_eml)
 
-  EFIstandards::forecast_validator(my_eml)
+  #EFIstandards::forecast_validator(my_eml)
 
   EML::write_eml(my_eml, paste0(enkf_output$config$run_config$forecast_location, "/", tools::file_path_sans_ext(basename(file_name)),"-eml.xml"))
 
