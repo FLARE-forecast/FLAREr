@@ -24,7 +24,7 @@ generate_restart_initial_conditions <- function(restart_file, state_names, par_n
   }
   modeled_depths <- ncdf4::ncvar_get(nc, "depth")
   lake_depth_restart <- ncdf4::ncvar_get(nc, "lake_depth")[restart_index, ]
-  snow_ice_thickness_restart <- ncdf4::ncvar_get(nc, "snow_ice_thickness")[ ,restart_index, ]
+  snow_ice_thickness_restart <- ncdf4::ncvar_get(nc, "snow_ice_thickness")[, restart_index, ]
   avg_surf_temp_restart <- ncdf4::ncvar_get(nc, "avg_surf_temp")[restart_index, ]
   salt_restart <- ncdf4::ncvar_get(nc, "salt")[restart_index, , ]
 
@@ -32,7 +32,7 @@ generate_restart_initial_conditions <- function(restart_file, state_names, par_n
   model_internal_depths  <- ncdf4::ncvar_get(nc, "model_internal_depths")[restart_index, , ]
 
   states_restart <- array(NA, dim = c(length(state_names), length(modeled_depths), restart_nmembers))
-  for(i in 1:nrow(states_config)){
+  for(i in 1:length(state_names)){
     states_restart[i, , ] <- ncdf4::ncvar_get(nc,state_names[i])[restart_index, , ]
   }
 

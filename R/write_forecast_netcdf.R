@@ -69,7 +69,7 @@ write_forecast_netcdf <- function(enkf_output,
   def_list <- list()
   def_list[[1]] <- ncdf4::ncvar_def("temp","degC",list(timedim,depthdim, ensdim),fillvalue,'state: temperature',prec="single")
   def_list[[2]] <- ncdf4::ncvar_def("data_assimilation","dimensionless",list(timedim),missval = -99,longname = '0 = historical; 1 = forecasted',prec="integer")
-  def_list[[3]] <- ncdf4::ncvar_def("snow_ice_thickness","meter", list(timedim,ensdim, snow_ice_dim),missval = -99,longname = 'Ice Thickness',prec="single")
+  def_list[[3]] <- ncdf4::ncvar_def("snow_ice_thickness","meter", list(snow_ice_dim, timedim,ensdim),missval = -99,longname = 'Ice Thickness',prec="single")
   def_list[[4]] <- ncdf4::ncvar_def("lake_depth","meter",list(timedim,ensdim),missval = -99,longname = 'Depth of lake',prec="single")
   def_list[[5]] <- ncdf4::ncvar_def("avg_surf_temp","degC",list(timedim, ensdim),missval = -99,longname ='Running Average of Surface Temperature',prec="single")
   def_list[[6]] <- ncdf4::ncvar_def("mixing_vars","dimensionless",list(mixing_vars_dim, timedim, ensdim),fillvalue,longname = "variables required to restart mixing",prec="single")
