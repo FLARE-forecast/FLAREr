@@ -120,7 +120,7 @@ update_nml <- function(var_list,var_name_list,working_directory, nml){
 #' add(1, 1)
 #' add(10, 1)
 get_glm_nc_var_all_wq <- function(ncFile,working_dir, z_out,vars_depth, vars_no_depth, diagnostic_vars){
-  glm_nc <- ncdf4::nc_open(paste0(working_dir,ncFile))
+  glm_nc <- ncdf4::nc_open(paste0(working_dir, ncFile))
   tallest_layer <- ncdf4::ncvar_get(glm_nc, "NS")
   final_time_step <- length(tallest_layer)
   tallest_layer <- tallest_layer
