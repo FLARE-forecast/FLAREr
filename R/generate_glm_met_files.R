@@ -129,8 +129,10 @@ generate_glm_met_files <- function(obs_met_file = NULL,
           mutate(AirTemp_debias = spatial_downscale_coeff$AirTemp[1] + AirTemp * spatial_downscale_coeff$AirTemp[2],
                  AirTemp_orig = AirTemp,
                  ShortWave_debias = spatial_downscale_coeff$ShortWave[1] + ShortWave * spatial_downscale_coeff$ShortWave[2],
+                 ShortWave_debias = ifelse(ShortWave_debias < 0, 0, ShortWave_debias),
                  ShortWave_orig = ShortWave,
                  LongWave_debias = spatial_downscale_coeff$LongWave[1] + LongWave * spatial_downscale_coeff$LongWave[2],
+                 LongWave_debias = ifelse(LongWave_debias < 0, 0, LongWave_debias),
                  LongWave_orig = LongWave) %>%
           select(date, AirTemp_debias, AirTemp_orig, ShortWave_debias, ShortWave_orig, LongWave_debias, LongWave_orig)
 
@@ -140,6 +142,8 @@ generate_glm_met_files <- function(obs_met_file = NULL,
           mutate(AirTemp = (AirTemp/AirTemp_orig) * AirTemp_debias,
                  ShortWave = (ShortWave/ShortWave_orig) * ShortWave_debias,
                  LongWave = (LongWave/LongWave_orig) * LongWave_debias) %>%
+          mutate(ShortWave = ifelse(ShortWave < 0, 0, ShortWave),
+                  LongWave = ifelse(LongWave < 0, 0, LongWave)) %>%
           select(time, AirTemp, ShortWave, LongWave, RelHum, WindSpeed, Rain)
       }
 
