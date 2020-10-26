@@ -308,7 +308,7 @@ run_enkf_forecast <- function(states_init,
   inflow_file_names <- as.matrix(inflow_file_names)
   outflow_file_names <- as.matrix(outflow_file_names)
 
-  flare:::set_up_model(executable_location = paste0(find.package("flare"),"/exec/"),
+  set_up_model(executable_location = paste0(find.package("flare"),"/exec/"),
                config,
                working_directory,
                state_names = states_config$state_names,
@@ -369,7 +369,7 @@ run_enkf_forecast <- function(states_init,
         curr_pars <- x[i - 1, m , (nstates+1):(nstates+ npars)]
       }
 
-      out <- flare:::run_model(i,
+      out <-run_model(i,
                        m,
                        mixing_vars_start = mixing_vars[,i-1 , m],
                        curr_start,
