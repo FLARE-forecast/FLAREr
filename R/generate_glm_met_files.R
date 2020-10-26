@@ -31,12 +31,12 @@ generate_glm_met_files <- function(obs_met_file = NULL,
   }
 
   start_datetime_UTC <- lubridate::with_tz(start_datetime_local, tzone = "UTC")
-  end_datetime_UTC <- lubridate::with_tz(end_datetime_local, tzone = "UTC")
+  end_datetime_UTC <- lubridate::with_tz(end_datetime_local, tzone = "UTC") - lubridate::hours(1)
   forecast_start_datetime_UTC <- lubridate::with_tz(forecast_start_datetime_local, tzone = "UTC")
 
   full_time_UTC <- seq(start_datetime_UTC, end_datetime_UTC, by = "1 hour")
   if(use_forecasted_met){
-    full_time_UTC_hist <- seq(start_datetime_UTC, forecast_start_datetime_UTC, by = "1 hour")
+    full_time_UTC_hist <- seq(start_datetime_UTC, forecast_start_datetime_UTC - lubridate::hours(1), by = "1 hour")
   }else{
     full_time_UTC_hist <- seq(start_datetime_UTC, end_datetime_UTC, by = "1 hour")
   }
@@ -77,7 +77,7 @@ generate_glm_met_files <- function(obs_met_file = NULL,
     names(met) <- c("time", glm_met_vars)
 
     met <- met %>%
-      dplyr::filter(time %in% full_time_UTC_hist[1:(length(full_time_UTC_hist)-1)])
+      dplyr::filter(time %in% full_time_UTC_hist)
 
   }else{
     met <- NULL
