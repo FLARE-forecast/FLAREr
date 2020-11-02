@@ -17,7 +17,9 @@ create_glm_inflow_outflow_files(
   future_inflow_flow_error,
   future_inflow_temp_coeff,
   future_inflow_temp_error,
-  use_future_inflow
+  use_future_inflow,
+  state_names = NULL,
+  specified_files = NULL
 )
 }
 \arguments{
