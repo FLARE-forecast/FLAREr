@@ -12,7 +12,7 @@
 #' @export
 #'
 #' @examples
-generate_LER_met_files <- function(obs_met_file = NULL,
+generate_ler_met_files <- function(obs_met_file = NULL,
                                      out_dir,
                                      forecast_dir = NULL,
                                      local_tzone,

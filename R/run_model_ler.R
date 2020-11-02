@@ -161,7 +161,7 @@ run_model_ler <- function(model,
 
 
 
-    input_yaml_multiple(ler_yaml, key1 = "model_parameters", key2 = "GLM", key3 = "the_sals", value = round(the_sals_glm, 4))
+    # input_yaml_multiple(ler_yaml, key1 = "model_parameters", key2 = "GLM", key3 = "the_sals", value = round(the_sals_glm, 4))
     input_yaml_multiple(ler_yaml, key1 = "model_parameters", key2 = "GLM", key3 = "num_depths", value = length(glm_depths_tmp))
     input_yaml_multiple(ler_yaml, key1 = "model_parameters", key2 = "GLM", key3 = "lake_depth", value = round(lake_depth_start, 4))
     input_yaml_multiple(ler_yaml, key1 = "model_parameters", key2 = "GLM", key3 = "snow_thickness", value = 0)
