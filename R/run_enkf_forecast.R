@@ -233,7 +233,7 @@ run_enkf_forecast <- function(states_init,
   states_config$wq_start <- wq_start
   states_config$wq_end <- wq_end
 
-  check_enkf_inputs(states_init,
+  flare:::check_enkf_inputs(states_init,
                     pars_init,
                     obs,
                     psi,
