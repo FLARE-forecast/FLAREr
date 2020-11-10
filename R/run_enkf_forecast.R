@@ -279,6 +279,7 @@ run_enkf_forecast <- function(states_init,
 
   q_v <- rep(NA, ndepths_modeled)
   w <- rep(NA, ndepths_modeled)
+  w_new <- rep(NA, ndepths_modeled)
 
   alpha_v <- 1 - exp(-config$vert_decorr_length)
 
@@ -428,14 +429,18 @@ run_enkf_forecast <- function(states_init,
 
 
       #Add process noise
-
       q_v[] <- NA
       w[] <- NA
+      w_new[] <- NA
       for(jj in 1:nrow(model_sd)){
         w[] <- rnorm(ndepths_modeled, 0, 1)
-        q_v[1] <- model_sd[jj, 1] * w[1]
+        w_new[1] <- w[1]
+        q_v[1] <- model_sd[jj, 1] * w_new[1]
         for(kk in 2:ndepths_modeled){
-          q_v[kk] <- alpha_v * q_v[kk-1] + sqrt(1 - alpha_v^2) * model_sd[jj, kk] * w[kk]
+          #q_v[kk] <- alpha_v * q_v[kk-1] + sqrt(1 - alpha_v^2) * model_sd[jj, kk] * w[kk]
+
+          w_new[kk] <- (alpha_v * w_new[kk-1] + sqrt(1 - alpha_v^2) * w[kk])
+          q_v[kk] <- w_new[kk] * model_sd[jj, kk]
         }
 
         x_corr[m, (((jj-1)*ndepths_modeled)+1):(jj*ndepths_modeled)] <-
