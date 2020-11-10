@@ -11,11 +11,14 @@ generate_glm_met_files(
   local_tzone,
   start_datetime_local,
   end_datetime_local,
-  forecast_start_datetime_local
+  forecast_start_datetime_local,
+  use_forecasted_met,
+  spatial_downscale = FALSE,
+  spatial_downscale_coeff = NULL
 )
 }
 \arguments{
-\item{local_tzone}{}
+\item{spatial_downscale_coeff}{}
 }
 \value{
 

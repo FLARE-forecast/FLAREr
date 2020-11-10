@@ -75,7 +75,7 @@ generate_initial_conditions <- function(states_config,
       q_v[1] <- states_config$initial_model_sd[jj] * w[1]
       for(kk in 2:ndepths_modeled){
         w_new[kk] <- (alpha_v * w_new[kk-1] + sqrt(1 - alpha_v^2) * w[kk])
-        q_v[kk] <- w_new[kk] * model_sd[jj, kk]
+        q_v[kk] <- w_new[kk] * states_config$initial_model_sd[jj]
         #q_v[kk] <- alpha_v * q_v[kk-1] + sqrt(1 - alpha_v^2) * states_config$initial_model_sd[jj] * w[kk]
       }
 

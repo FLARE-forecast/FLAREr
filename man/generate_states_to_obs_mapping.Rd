@@ -7,7 +7,7 @@
 generate_states_to_obs_mapping(states_config, obs_config)
 }
 \arguments{
-\item{states_config}{}
+\item{obs_config}{}
 }
 \value{
 
