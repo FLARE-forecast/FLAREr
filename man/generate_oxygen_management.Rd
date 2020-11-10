@@ -4,7 +4,12 @@
 \alias{generate_oxygen_management}
 \title{Generate management list required to simulate oxygen inputs}
 \usage{
-generate_oxygen_management(config, start_datetime_local, end_datetime_local)
+generate_oxygen_management(
+  config,
+  run_config,
+  start_datetime_local,
+  end_datetime_local
+)
 }
 \arguments{
 \item{end_datetime_local}{}

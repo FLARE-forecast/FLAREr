@@ -1,26 +1,27 @@
-##' @param restart_file
-##'
-##' @param state_names
-##' @param par_names
-##'
-##' @title Generate initial conditiosn from saved output file
-##'
-##' @export
-##'
-##' @author Quinn Thomas
-##'
-##'
 
-generate_restart_initial_conditions <- function(restart_file, state_names, par_names = NULL){
+#' Generate initial conditions from existing output file
+#'
+#' @param restart_file file name of FLARE output csv
+#' @param state_names names of states that are initialized
+#' @param par_names (optional) names of parameters that are initialized
+#' @param restart_index (optional) time index in restart file used for initalization
+#'
+#' @return
+#' @export
+#'
+#' @examples
+generate_restart_initial_conditions <- function(restart_file, state_names, par_names = NULL, restart_index = NULL){
 
 
 
   nc <- ncdf4::nc_open(restart_file)
   restart_nmembers <- length(ncdf4::ncvar_get(nc, "ensemble"))
   forecast <- ncdf4::ncvar_get(nc, "forecast")
-  restart_index <- max(which(forecast == 0))
-  if(is.na(restart_index)){
-    restart_index <- length(data_assimilation)
+  if(is.null(restart_index)){
+    restart_index <- max(which(forecast == 0))
+    if(is.na(restart_index)){
+      restart_index <- length(data_assimilation)
+    }
   }
 
   print(paste0("Using restart file with restart index of ", restart_index))
