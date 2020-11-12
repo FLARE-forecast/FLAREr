@@ -323,6 +323,7 @@ run_model <- function(i,
       if(include_wq){
         for(wq in 1:num_wq_vars){
           glm_wq <-  rev(GLM_temp_wq_out$output[ ,1+wq])
+          #if(length(is.na(glm_wq)) > 0){next}
           x_star_end[wq_start[1 + wq]:wq_end[1 + wq]] <- approx(glm_depths_mid,glm_wq, modeled_depths, rule = 2)$y
         }
       }

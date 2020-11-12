@@ -346,7 +346,7 @@ run_enkf_forecast <- function(states_init,
                           format="%Y-%m-%d %H:%M",
                           tz = config$local_tzone)
 
-    print(paste0("Running time step ", i-1, " : ",
+    message(paste0("Running time step ", i-1, " : ",
                  curr_start, " - ",
                  curr_stop))
 
@@ -478,7 +478,7 @@ run_enkf_forecast <- function(states_init,
       }
 
     }else{
-      x_star <- x[i, , ]
+      x_star <- x[i, ,1:nstates]
       x_corr <- x_star
       if(npars > 0){
         pars_corr <- x[i, , (nstates + 1):(nstates+ npars)]
@@ -710,7 +710,7 @@ run_enkf_forecast <- function(states_init,
     #Print parameters to screen
     if(npars > 0){
       for(par in 1:npars){
-        print(paste0(pars_config$par_names_save[par],": mean ",
+        message(paste0(pars_config$par_names_save[par],": mean ",
                      round(mean(pars_corr[,par]),4)," sd ",
                      round(sd(pars_corr[,par]),4)))
       }

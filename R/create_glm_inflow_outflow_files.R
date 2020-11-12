@@ -37,7 +37,7 @@ create_glm_inflow_outflow_files <- function(inflow_file,
 {
 
   hist_days <- as.numeric(forecast_start_datetime_local - start_datetime_local)
-  start_forecast_step <- 1 + hist_days
+  start_forecast_step <- max(1 + hist_days, 2)
   full_time_local <- seq(start_datetime_local, end_datetime_local, by = "1 day")
   full_time_day_local <- lubridate::as_date(full_time_local)
 

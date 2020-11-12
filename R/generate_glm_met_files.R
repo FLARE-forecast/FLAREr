@@ -36,7 +36,11 @@ generate_glm_met_files <- function(obs_met_file = NULL,
 
   full_time_UTC <- seq(start_datetime_UTC, end_datetime_UTC, by = "1 hour")
   if(use_forecasted_met){
+    if(forecast_start_datetime_UTC > start_datetime_UTC){
     full_time_UTC_hist <- seq(start_datetime_UTC, forecast_start_datetime_UTC - lubridate::hours(1), by = "1 hour")
+    }else{
+      full_time_UTC_hist <- NULL
+    }
   }else{
     full_time_UTC_hist <- seq(start_datetime_UTC, end_datetime_UTC, by = "1 hour")
   }
@@ -53,7 +57,7 @@ generate_glm_met_files <- function(obs_met_file = NULL,
                     "WindSpeed",
                     "Rain")
 
-  if(!is.null(obs_met_file)){
+  if(!is.null(obs_met_file) & !is.null(full_time_UTC_hist)){
 
     obs_met_nc <- ncdf4::nc_open(obs_met_file)
 
