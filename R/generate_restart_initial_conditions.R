@@ -52,7 +52,7 @@ generate_restart_initial_conditions <- function(restart_file, state_names, par_n
 
   ncdf4::nc_close(nc)
 
-  return(list(statest = states_restart,
+  return(list(states = states_restart,
               pars = pars_restart,
               lake_depth = lake_depth_restart,
               snow_ice_thickness = snow_ice_thickness_restart,

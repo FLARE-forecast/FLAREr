@@ -30,7 +30,8 @@ Imports:
     tools,
     plyr,
     ggplot2,
-    rMR
+    rMR,
+    patchwork
 Suggests: 
     knitr,
     rmarkdown

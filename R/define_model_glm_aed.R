@@ -318,7 +318,7 @@ run_model <- function(i,
 
       x_star_end[1:ndepths_modeled] <- approx(glm_depths_mid,glm_temps, modeled_depths, rule = 2)$y
 
-      salt_end <- approx(glm_depths_mid, GLM_temp_wq_out$salt_end, modeled_depths, rule = 2)$y
+      salt_end <- approx(glm_depths_mid, GLM_temp_wq_out$salt, modeled_depths, rule = 2)$y
 
       if(include_wq){
         for(wq in 1:num_wq_vars){

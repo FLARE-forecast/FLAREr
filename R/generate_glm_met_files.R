@@ -37,7 +37,7 @@ generate_glm_met_files <- function(obs_met_file = NULL,
   full_time_UTC <- seq(start_datetime_UTC, end_datetime_UTC, by = "1 hour")
   if(use_forecasted_met){
     if(forecast_start_datetime_UTC > start_datetime_UTC){
-    full_time_UTC_hist <- seq(start_datetime_UTC, forecast_start_datetime_UTC - lubridate::hours(1), by = "1 hour")
+      full_time_UTC_hist <- seq(start_datetime_UTC, forecast_start_datetime_UTC - lubridate::hours(1), by = "1 hour")
     }else{
       full_time_UTC_hist <- NULL
     }
@@ -125,6 +125,27 @@ generate_glm_met_files <- function(obs_met_file = NULL,
 
       if(spatial_downscale){
 
+        if(is.null(spatial_downscale_coeff)){
+          stop("Missing spatial downlscaling coefficients")
+        }
+
+        if(is.null(spatial_downscale_coeff$WindSpeed[1])){
+          spatial_downscale_coeff$WindSpeed[1] = 0
+          spatial_downscale_coeff$WindSpeed[2] = 1
+        }
+        if(is.null(spatial_downscale_coeff$AirTemp[1])){
+          spatial_downscale_coeff$AirTemp[1] = 0
+          spatial_downscale_coeff$AirTemp[2] = 1
+        }
+        if(is.null(spatial_downscale_coeff$ShortWave[1])){
+          spatial_downscale_coeff$ShortWave[1] = 0
+          spatial_downscale_coeff$ShortWave[2] = 1
+        }
+        if(is.null(spatial_downscale_coeff$LongWave[1])){
+          spatial_downscale_coeff$LongWave[1] = 0
+          spatial_downscale_coeff$LongWave[2] = 1
+        }
+
         noaa_met_daily <- noaa_met %>%
           mutate(date = lubridate::as_date(time)) %>%
           select(-time) %>%
@@ -137,17 +158,22 @@ generate_glm_met_files <- function(obs_met_file = NULL,
                  ShortWave_orig = ShortWave,
                  LongWave_debias = spatial_downscale_coeff$LongWave[1] + LongWave * spatial_downscale_coeff$LongWave[2],
                  LongWave_debias = ifelse(LongWave_debias < 0, 0, LongWave_debias),
-                 LongWave_orig = LongWave) %>%
-          select(date, AirTemp_debias, AirTemp_orig, ShortWave_debias, ShortWave_orig, LongWave_debias, LongWave_orig)
+                 LongWave_orig = LongWave,
+                 WindSpeed_debias = spatial_downscale_coeff$WindSpeed[1] + WindSpeed * spatial_downscale_coeff$WindSpeed[2],
+                 WindSpeed_debias = ifelse(WindSpeed_debias < 0, 0, WindSpeed_debias),
+                 WindSpeed_orig = WindSpeed) %>%
+          select(date, AirTemp_debias, AirTemp_orig, ShortWave_debias, ShortWave_orig, LongWave_debias, LongWave_orig, WindSpeed_debias, WindSpeed_orig)
 
         noaa_met <- noaa_met %>%
           mutate(date = lubridate::as_date(time)) %>%
           left_join(noaa_met_daily, by = "date") %>%
           mutate(AirTemp = (AirTemp/AirTemp_orig) * AirTemp_debias,
                  ShortWave = (ShortWave/ShortWave_orig) * ShortWave_debias,
-                 LongWave = (LongWave/LongWave_orig) * LongWave_debias) %>%
+                 LongWave = (LongWave/LongWave_orig) * LongWave_debias,
+                 WindSpeed = (WindSpeed/WindSpeed_orig) * WindSpeed_debias) %>%
           mutate(ShortWave = ifelse(ShortWave < 0, 0, ShortWave),
-                  LongWave = ifelse(LongWave < 0, 0, LongWave)) %>%
+                 LongWave = ifelse(LongWave < 0, 0, LongWave),
+                 WindSpeed = ifelse(WindSpeed < 0, 0, WindSpeed)) %>%
           select(time, AirTemp, ShortWave, LongWave, RelHum, WindSpeed, Rain)
       }
 
