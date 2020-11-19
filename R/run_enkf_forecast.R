@@ -466,7 +466,7 @@ run_enkf_forecast <- function(states_init,
       if(config$include_wq & config$no_negative_states){
         for(m in 1:nmembers){
           index <- which(x_corr[m,] < 0.0)
-          x_corr[m, index[which(index <= states_config$wq_end[num_wq_vars] & index >= states_config$wq_start[2])]] <- 0.0
+          x_corr[m, index[which(index <= states_config$wq_end[num_wq_vars + 1] & index >= states_config$wq_start[2])]] <- 0.0
         }
       }
 
@@ -692,7 +692,7 @@ run_enkf_forecast <- function(states_init,
     if(config$include_wq & config$no_negative_states){
       for(m in 1:nmembers){
         index <- which(x[i,m,] < 0.0)
-        x[i, m, index[which(index <= states_config$wq_end[num_wq_vars] & index >= states_config$wq_start[2])]] <- 0.0
+        x[i, m, index[which(index <= states_config$wq_end[num_wq_vars + 1] & index >= states_config$wq_start[2])]] <- 0.0
       }
     }
 
