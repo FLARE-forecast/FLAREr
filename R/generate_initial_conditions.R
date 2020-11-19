@@ -39,7 +39,7 @@ generate_initial_conditions <- function(states_config,
   init$model_internal_depths <- array(NA, dim = c(500, nmembers))
   init$salt <- array(NA, dim = c(ndepths_modeled, nmembers))
 
-  alpha_v <- 1 - exp(-config$vert_decorr_length)
+  alpha_v <- 1 - exp(-states_config$vert_decorr_length)
 
   q_v <- rep(NA ,ndepths_modeled)
   w <- rep(NA, ndepths_modeled)
@@ -74,7 +74,7 @@ generate_initial_conditions <- function(states_config,
       w_new[1] <- w[1]
       q_v[1] <- states_config$initial_model_sd[jj] * w[1]
       for(kk in 2:ndepths_modeled){
-        w_new[kk] <- (alpha_v * w_new[kk-1] + sqrt(1 - alpha_v^2) * w[kk])
+        w_new[kk] <- (alpha_v[jj] * w_new[kk-1] + sqrt(1 - alpha_v[jj]^2) * w[kk])
         q_v[kk] <- w_new[kk] * states_config$initial_model_sd[jj]
         #q_v[kk] <- alpha_v * q_v[kk-1] + sqrt(1 - alpha_v^2) * states_config$initial_model_sd[jj] * w[kk]
       }

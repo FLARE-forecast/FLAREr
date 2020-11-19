@@ -281,7 +281,8 @@ run_enkf_forecast <- function(states_init,
   w <- rep(NA, ndepths_modeled)
   w_new <- rep(NA, ndepths_modeled)
 
-  alpha_v <- 1 - exp(-config$vert_decorr_length)
+  alpha_v <- 1 - exp(-states_config$vert_decorr_length)
+
 
   glm_output_vars <- states_config$state_names
 
@@ -450,7 +451,7 @@ run_enkf_forecast <- function(states_init,
           for(kk in 2:ndepths_modeled){
             #q_v[kk] <- alpha_v * q_v[kk-1] + sqrt(1 - alpha_v^2) * model_sd[jj, kk] * w[kk]
 
-            w_new[kk] <- (alpha_v * w_new[kk-1] + sqrt(1 - alpha_v^2) * w[kk])
+            w_new[kk] <- (alpha_v[jj] * w_new[kk-1] + sqrt(1 - alpha_v[jj]^2) * w[kk])
             q_v[kk] <- w_new[kk] * model_sd[jj, kk]
           }
 
