@@ -22,9 +22,7 @@ generate_glm_met_files <- function(obs_met_file = NULL,
                                    start_datetime_local,
                                    end_datetime_local,
                                    forecast_start_datetime_local,
-                                   use_forecasted_met,
-                                   spatial_downscale = FALSE,
-                                   spatial_downscale_coeff = NULL){
+                                   use_forecasted_met){
 
   if(is.null(obs_met_file) & is.null(forecast_dir)){
     stop("missing files to convert")
@@ -123,70 +121,8 @@ generate_glm_met_files <- function(obs_met_file = NULL,
       ncdf4::nc_close(noaa_met_nc)
       names(noaa_met) <- c("time", glm_met_vars)
 
-      if(spatial_downscale){
-
-        if(is.null(spatial_downscale_coeff)){
-          stop("Missing spatial downlscaling coefficients")
-        }
-
-        if(is.null(spatial_downscale_coeff$WindSpeed[1])){
-          spatial_downscale_coeff$WindSpeed[1] = 0
-          spatial_downscale_coeff$WindSpeed[2] = 1
-        }
-        if(is.null(spatial_downscale_coeff$AirTemp[1])){
-          spatial_downscale_coeff$AirTemp[1] = 0
-          spatial_downscale_coeff$AirTemp[2] = 1
-        }
-        if(is.null(spatial_downscale_coeff$ShortWave[1])){
-          spatial_downscale_coeff$ShortWave[1] = 0
-          spatial_downscale_coeff$ShortWave[2] = 1
-        }
-        if(is.null(spatial_downscale_coeff$LongWave[1])){
-          spatial_downscale_coeff$LongWave[1] = 0
-          spatial_downscale_coeff$LongWave[2] = 1
-        }
-
-        noaa_met_daily <- noaa_met %>%
-          mutate(date = lubridate::as_date(time)) %>%
-          select(-time) %>%
-          group_by(date) %>%
-          summarise_all(mean, na.rm = TRUE) %>%
-          mutate(AirTemp_debias = spatial_downscale_coeff$AirTemp[1] + AirTemp * spatial_downscale_coeff$AirTemp[2],
-                 AirTemp_orig = AirTemp,
-                 ShortWave_debias = spatial_downscale_coeff$ShortWave[1] + ShortWave * spatial_downscale_coeff$ShortWave[2],
-                 ShortWave_debias = ifelse(ShortWave_debias < 0, 0, ShortWave_debias),
-                 ShortWave_orig = ShortWave,
-                 LongWave_debias = spatial_downscale_coeff$LongWave[1] + LongWave * spatial_downscale_coeff$LongWave[2],
-                 LongWave_debias = ifelse(LongWave_debias < 0, 0, LongWave_debias),
-                 LongWave_orig = LongWave,
-                 WindSpeed_debias = spatial_downscale_coeff$WindSpeed[1] + WindSpeed * spatial_downscale_coeff$WindSpeed[2],
-                 WindSpeed_debias = ifelse(WindSpeed_debias < 0, 0, WindSpeed_debias),
-                 WindSpeed_orig = WindSpeed) %>%
-          select(date, AirTemp_debias, AirTemp_orig, ShortWave_debias, ShortWave_orig, LongWave_debias, LongWave_orig, WindSpeed_debias, WindSpeed_orig)
-
-        noaa_met <- noaa_met %>%
-          mutate(date = lubridate::as_date(time)) %>%
-          left_join(noaa_met_daily, by = "date") %>%
-          mutate(AirTemp = (AirTemp/AirTemp_orig) * AirTemp_debias,
-                 ShortWave = (ShortWave/ShortWave_orig) * ShortWave_debias,
-                 LongWave = (LongWave/LongWave_orig) * LongWave_debias,
-                 WindSpeed = (WindSpeed/WindSpeed_orig) * WindSpeed_debias) %>%
-          mutate(ShortWave = ifelse(ShortWave < 0, 0, ShortWave),
-                 LongWave = ifelse(LongWave < 0, 0, LongWave),
-                 WindSpeed = ifelse(WindSpeed < 0, 0, WindSpeed)) %>%
-          select(time, AirTemp, ShortWave, LongWave, RelHum, WindSpeed, Rain)
-      }
-
-      noaa_met <- noaa_met %>%
-        dplyr::filter(time %in% full_time_UTC)
-
-      combined_met <- rbind(met, noaa_met)
-      current_filename <- paste0('met_',ens,'.csv')
-    }else{
-
       combined_met <- met
       current_filename <- paste0('met.csv')
-    }
 
     #convert units to GLM
 
@@ -206,7 +142,7 @@ generate_glm_met_files <- function(obs_met_file = NULL,
     readr::write_csv(combined_met,file = paste0(out_dir, "/", current_filename), quote_escape = "none")
 
     filenames[j] <- paste0(out_dir, "/", current_filename)
-
+    }
   }
 
   return(filenames)

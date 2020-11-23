@@ -158,8 +158,6 @@ create_glm_inflow_outflow_files <- function(inflow_file,
     }
   }
 
-
-
   return(list(inflow_file_name = as.character(inflow_file_names),
               outflow_file_name = as.character(outflow_file_names)))
 }
