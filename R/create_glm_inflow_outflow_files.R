@@ -117,14 +117,14 @@ create_glm_inflow_outflow_files <- function(inflow_file,
       dplyr::mutate_at(dplyr::vars(c("FLOW", "TEMP", "SALT")), list(~round(., 4)))
 
     readr::write_csv(x = tmp2,
-                     path = inflow_file_names[i],
+                     file = inflow_file_names[i],
                      quote_escape = "none")
 
     tmp2 <- tmp2 %>%
       dplyr::select(time, FLOW)
 
     readr::write_csv(x = tmp2,
-                     path = outflow_file_names[i],
+                     file = outflow_file_names[i],
                      quote_escape = "none")
   }
 

@@ -121,8 +121,15 @@ generate_glm_met_files <- function(obs_met_file = NULL,
       ncdf4::nc_close(noaa_met_nc)
       names(noaa_met) <- c("time", glm_met_vars)
 
+      noaa_met <- noaa_met %>%
+        dplyr::filter(time %in% full_time_UTC)
+
+      combined_met <- rbind(met, noaa_met)
+      current_filename <- paste0('met_',ens,'.csv')
+    }else{
       combined_met <- met
       current_filename <- paste0('met.csv')
+    }
 
     #convert units to GLM
 
@@ -142,7 +149,6 @@ generate_glm_met_files <- function(obs_met_file = NULL,
     readr::write_csv(combined_met,file = paste0(out_dir, "/", current_filename), quote_escape = "none")
 
     filenames[j] <- paste0(out_dir, "/", current_filename)
-    }
   }
 
   return(filenames)
