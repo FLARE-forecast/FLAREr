@@ -12,9 +12,7 @@ generate_glm_met_files(
   start_datetime_local,
   end_datetime_local,
   forecast_start_datetime_local,
-  use_forecasted_met,
-  spatial_downscale = FALSE,
-  spatial_downscale_coeff = NULL
+  use_forecasted_met
 )
 }
 \arguments{
