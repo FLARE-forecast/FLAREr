@@ -192,6 +192,8 @@ return(list(obs = obs,
             par_names = par_names,
             diagnostics_names = diagnostics_names,
             full_time_local = full_time_local,
-            obs_long = d))
+            obs_long = d,
+            depths = depths,
+            obs_names = obs_names))
 }
 

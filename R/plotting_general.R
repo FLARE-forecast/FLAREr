@@ -31,6 +31,9 @@ plotting_general <- function(file_name,
   diagnostics_names <- output$diagnostics_names
   full_time_local <- output$full_time_local
   obs_long <- output$obs_long
+  depths <- output$depths
+  obs_names <- output$obs_names
+
 
   if(length(which(forecast == 1)) > 0){
     forecast_index <- which(forecast == 1)[1]
