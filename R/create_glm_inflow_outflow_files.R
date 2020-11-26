@@ -1,163 +1,168 @@
 #' Title
 #'
-#' @param inflow_file
-#' @param met_file_names
+#' @param inflow_file_dir
+#' @param inflow_obs
 #' @param working_directory
 #' @param start_datetime_local
 #' @param end_datetime_local
 #' @param forecast_start_datetime_local
-#' @param local_tzone
-#' @param inflow_process_uncertainty
-#' @param future_inflow_flow_coeff
-#' @param future_inflow_flow_error
-#' @param future_inflow_temp_coeff
-#' @param future_inflow_temp_error
 #' @param use_future_inflow
+#' @param state_names
 #'
 #' @return
 #' @export
 #'
 #' @examples
-create_glm_inflow_outflow_files <- function(inflow_file,
-                                            met_file_names,
+create_glm_inflow_outflow_files <- function(inflow_file_dir,
+                                            inflow_obs,
                                             working_directory,
                                             start_datetime_local,
                                             end_datetime_local,
                                             forecast_start_datetime_local,
-                                            local_tzone,
-                                            inflow_process_uncertainty,
-                                            future_inflow_flow_coeff,
-                                            future_inflow_flow_error,
-                                            future_inflow_temp_coeff,
-                                            future_inflow_temp_error,
                                             use_future_inflow,
-                                            state_names = NULL,
-                                            specified_files = NULL)
+                                            state_names)
 
 {
 
-  hist_days <- as.numeric(forecast_start_datetime_local - start_datetime_local)
-  start_forecast_step <- max(1 + hist_days, 2)
-  full_time_local <- seq(start_datetime_local, end_datetime_local, by = "1 day")
-  full_time_day_local <- lubridate::as_date(full_time_local)
+  obs_inflow <- readr::read_csv(inflow_obs)
 
-  inflow <- readr::read_csv(inflow_file, col_types = readr::cols())
-
-  curr_all_days <- NULL
-
-  for(m in 1:length(met_file_names)){
-    curr_met_daily <- readr::read_csv(met_file_names[m],
-                                      col_types = readr::cols()) %>%
-      dplyr::mutate(time = lubridate::with_tz(time, tzone = local_tzone)) %>%
-      dplyr::mutate(time = lubridate::as_date(time)) %>%
-      dplyr::group_by(time) %>%
-      dplyr::summarize(Rain = mean(Rain),
-                       AirTemp = mean(AirTemp),.groups = 'drop') %>%
-      dplyr::mutate(ensemble = m) %>%
-      dplyr::mutate(AirTemp_lag1 = dplyr::lag(AirTemp, 1),
-                    Rain_lag1 = dplyr::lag(Rain, 1))
-
-    curr_all_days <- rbind(curr_all_days,curr_met_daily)
-  }
-
-
-  tmp <- dplyr::left_join(curr_all_days, inflow, by = "time")
-
-  forecasts_days <- full_time_day_local[start_forecast_step:length(full_time_day_local)]
-  if(use_future_inflow == FALSE || start_forecast_step == length(full_time_day_local)){
-    forecasts_days <- NULL
-  }
-
-  tmp <- tmp %>%
-    dplyr::mutate(forecast = ifelse(time %in% forecasts_days, 1, 0),
-                  TEMP = ifelse(forecast == 1, NA, TEMP),
-                  FLOW = ifelse(forecast == 1, NA, FLOW))
-
-  if(inflow_process_uncertainty == TRUE){
-    inflow_error <- rnorm(nrow(tmp), 0, future_inflow_flow_error)
-    temp_error <- rnorm(nrow(tmp), 0, future_inflow_temp_error)
+  if(use_future_inflow){
+    obs_inflow <- obs_inflow %>%
+      dplyr::filter(time >= lubridate::as_date(start_datetime_local) & time <= lubridate::as_date(forecast_start_datetime_local)) %>%
+      dplyr::mutate(inflow_num = 1)
   }else{
-    inflow_error <- rep(0.0, nrow(tmp))
-    temp_error <- rep(0.0, nrow(tmp))
+    obs_inflow <- obs_inflow %>%
+      dplyr::filter(time >= lubridate::as_date(start_datetime_local) & time <= lubridate::as_date(end_datetime_local)) %>%
+      dplyr::mutate(inflow_num = 1)
+
+
   }
 
-  for(i in 1:nrow(tmp)){
-    if(tmp$forecast[i] == 0 & is.na(tmp$FLOW[i])){
-      tmp[i, c("FLOW", "TEMP",wq_names_tmp)]  <- inflow %>%
-        dplyr::filter(time < full_time_day_local[start_forecast_step]) %>%
-        dplyr::mutate(doy = lubridate::yday(time)) %>%
-        dplyr::filter(doy == lubridate::yday(tmp$time[i])) %>%
-        dplyr::summarize_at(.vars = c("FLOW", "TEMP"), mean, na.rm = TRUE) %>%
-        dplyr::unlist()
-    }
+  obs_outflow <- obs_inflow %>%
+    dplyr::select(time, FLOW) %>%
+    dplyr::mutate(outflow_num = 1)
 
-    if(tmp$forecast[i] == 1){
-      tmp$FLOW[i] = future_inflow_flow_coeff[1] +
-        future_inflow_flow_coeff[2] * tmp$FLOW[i - 1] +
-        future_inflow_flow_coeff[3] * tmp$Rain_lag1[i] + inflow_error[i]
-      tmp$TEMP[i] = future_inflow_temp_coeff[1] +
-        future_inflow_temp_coeff[2] * tmp$TEMP[i-1] +
-        future_inflow_temp_coeff[3] * tmp$AirTemp_lag1[i] + temp_error[i]
-    }
+
+  all_files <- list.files(inflow_file_dir, full.names = TRUE)
+
+  inflow_files <- all_files[stringr::str_detect(all_files,"INFLOW")]
+  outflow_files <- all_files[stringr::str_detect(all_files,"OUTFLOW")]
+
+  if(length(inflow_files) > 0){
+    d <- readr::read_csv(inflow_files[1])
+    num_inflows <- max(c(d$inflow_num,obs_inflow$inflow_num))
+  }else{
+    num_inflows <- max(obs_inflow$inflow_num)
   }
 
-  tmp <- tmp %>%
-    dplyr::mutate(FLOW = ifelse(FLOW < 0.0, 0.0, FLOW))
+  inflow_file_names <- array(NA, dim = c(length(inflow_files), num_inflows))
 
-  file_name_base <- basename(met_file_names) %>%
-    stringr::str_sub(4)
-  inflow_file_names <- file.path(working_directory, paste0("inflow", file_name_base))
-  outflow_file_names <- file.path(working_directory, paste0("outflow", file_name_base))
+  for(j in 1:num_inflows){
 
-  for(i in 1:dplyr::n_distinct(tmp$ensemble)){
-    tmp2 <- tmp %>%
-      dplyr::filter(ensemble == i) %>%
-      dplyr::mutate(SALT = 0.0) %>%
-      dplyr::select(time, FLOW, TEMP, SALT) %>%
-      dplyr::mutate_at(dplyr::vars(c("FLOW", "TEMP", "SALT")), list(~round(., 4)))
+    if(length(inflow_files) == 0 | end_datetime_local == forecast_start_datetime_local){
 
-    readr::write_csv(x = tmp2,
-                     file = inflow_file_names[i],
-                     quote_escape = "none")
+      obs_inflow_tmp <- obs_inflow %>%
+        dplyr::filter(inflow_num == j) %>%
+        dplyr::select(c("time", "FLOW", "TEMP", "SALT"))
 
-    tmp2 <- tmp2 %>%
-      dplyr::select(time, FLOW)
+      inflow_file_name <- file.path(working_directory, paste0("inflow",j,".csv"))
 
-    readr::write_csv(x = tmp2,
-                     file = outflow_file_names[i],
-                     quote_escape = "none")
-  }
+      readr::write_csv(x = obs_inflow_tmp,
+                       file = inflow_file_name,
+                       quote_escape = "none")
+      inflow_file_names[, j] <- inflow_file_name
+    }else{
 
-  if(!is.null(specified_files)){
-    #Reorder state names in the inflow to be the same order as in the states config file
-    #sets missing states in the inflow file to zero.
+      for(i in 1:length(inflow_files)){
+        d <- readr::read_csv(inflow_files[i]) %>%
+          dplyr::filter(inflow_num == j) %>%
+          dplyr::select(time, FLOW, TEMP, SALT) %>%
+          dplyr::mutate_at(dplyr::vars(c("FLOW", "TEMP", "SALT")), list(~round(., 4)))
 
-    for(i in 1:length(specified_files)){
+        obs_inflow_tmp <- obs_inflow %>%
+          dplyr::filter(inflow_num == j,
+                        time < lubridate::as_date(forecast_start_datetime_local)) %>%
+          dplyr::select(c("time", "FLOW", "TEMP", "SALT"))
 
-      d <- readr::read_csv(specified_files[i], col_types = readr::cols())
 
-      if(length(names(d)) > 2){
+        inflow <- rbind(obs_inflow_tmp, d)
 
-        state_names[which(state_names == "temp")] <- "TEMP"
+        inflow_file_name <- file.path(working_directory, paste0("inflow",j,"_ens",i,".csv"))
 
-        missing_states <- state_names[which(!(state_names %in% names(d)))]
+        inflow_file_names[i, j] <- inflow_file_name
 
-        for(k in 1:length(missing_states)){
-          new_names <- c(names(d), missing_states[k])
-          d <- cbind(d, rep(0, nrow(d)))
-          names(d) <- new_names
+        if(use_future_inflow){
+          readr::write_csv(x = inflow,
+                           file = inflow_file_name,
+                           quote_escape = "none")
+        }else{
+          readr::write_csv(x = obs_inflow_tmp,
+                           file = inflow_file_name,
+                           quote_escape = "none")
+
         }
-
-        wq_names <- names(d)[which(!(names(d) %in% c("time", "FLOW", "TEMP", "SALT")))]
-
-        d <- d %>%
-          dplyr::select("time", "FLOW", "TEMP", "SALT", all_of(state_names))
-
-        readr::write_csv(d, specified_files[i])
       }
     }
   }
 
-  return(list(inflow_file_name = as.character(inflow_file_names),
-              outflow_file_name = as.character(outflow_file_names)))
+
+  if(length(outflow_files) > 0){
+    d <- readr::read_csv(outflow_files[1])
+    num_outflows <- max(c(d$outflow_num,obs_outflow$outflow_num))
+  }else{
+    num_outflows <- max(obs_inflow$outflow_num)
+  }
+
+
+  outflow_file_names <- array(NA, dim = c(length(outflow_files),num_outflows))
+
+
+  for(j in 1:num_outflows){
+
+    if(length(inflow_files) == 0 | end_datetime_local == forecast_start_datetime_local){
+
+      obs_outflow_tmp <- obs_outflow %>%
+        dplyr::filter(outflow_num == j) %>%
+        dplyr::select(c("time", "FLOW"))
+
+      outflow_file_name <- file.path(working_directory, paste0("outflow",j,".csv"))
+
+      readr::write_csv(x = obs_outflow_tmp,
+                       file = outflow_file_name,
+                       quote_escape = "none")
+      outflow_file_names[, j] <- outflow_file_name
+    }else{
+
+      for(i in 1:length(outflow_files)){
+        d <- readr::read_csv(outflow_files[i])%>%
+          filter(outflow_num == j) %>%
+          dplyr::select(time, FLOW) %>%
+          dplyr::mutate_at(dplyr::vars(c("FLOW")), list(~round(., 4)))
+
+        obs_outflow_tmp <- obs_outflow %>%
+          dplyr::filter(outflow_num == j,
+                        time < lubridate::as_date(forecast_start_datetime_local)) %>%
+          dplyr::select(-outflow_num)
+
+        outflow <- rbind(obs_outflow_tmp, d)
+
+        outflow_file_name <- file.path(working_directory, paste0("outflow",j,"_ens",i,".csv"))
+
+        outflow_file_names[i, j]  <- outflow_file_name
+
+        if(use_future_inflow){
+          readr::write_csv(x = outflow,
+                           file = outflow_file_name,
+                           quote_escape = "none")
+        }else{
+          readr::write_csv(x = obs_outflow_tmp,
+                           file = outflow_file_name,
+                           quote_escape = "none")
+        }
+      }
+    }
+  }
+
+  return(list(inflow_file_names = as.character(inflow_file_names),
+              outflow_file_names = as.character(outflow_file_names)))
 }
