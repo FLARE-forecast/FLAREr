@@ -75,7 +75,7 @@ plotting_general <- function(file_name,
 
     if(state_names[i] %in% unlist(obs_names)){
       obs_index <- which(obs_names == state_names[i])
-      obs_curr <- c(t(obs[, ,obs_index]))
+      obs_curr <- as.numeric(c(t(obs[, ,obs_index])))
     }else{
       obs_curr <- as.numeric(rep(NA, length(date)))
     }
