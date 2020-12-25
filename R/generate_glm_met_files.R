@@ -81,7 +81,7 @@ generate_glm_met_files <- function(obs_met_file = NULL,
     met <- met %>%
       dplyr::filter(time %in% full_time_UTC_hist)
 
-    if(!(dpylr::end(full_time_UTC_hist) %in% met$time)){
+    if(!(dplyr::end(full_time_UTC_hist) %in% met$time)){
       historical_met_error <- TRUE
     }else{
       historical_met_error <- FALSE
