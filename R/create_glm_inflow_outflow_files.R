@@ -135,7 +135,7 @@ create_glm_inflow_outflow_files <- function(inflow_file_dir,
 
       for(i in 1:length(outflow_files)){
         d <- readr::read_csv(outflow_files[i])%>%
-          filter(outflow_num == j) %>%
+          dplyr::filter(outflow_num == j) %>%
           dplyr::select(time, FLOW) %>%
           dplyr::mutate_at(dplyr::vars(c("FLOW")), list(~round(., 4)))
 
