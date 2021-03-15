@@ -304,7 +304,7 @@ run_enkf_forecast_ler <- function(states_init,
 
   x_prior <- array(NA, dim = c(nsteps, nmembers, nstates + npars))
 
-  set_up_model_ler(model,
+  flare:::set_up_model_ler(model,
                executable_location = paste0(find.package("flare"),"/exec/"),
                config,
                working_directory,
@@ -366,7 +366,7 @@ run_enkf_forecast_ler <- function(states_init,
         curr_pars <- x[i - 1, m , (nstates+1):(nstates+ npars)]
       }
 
-      out <- run_model_ler(model,
+      out <- flare:::run_model_ler(model,
                            i,
                        m,
                        mixing_vars_start = mixing_vars[,i-1 , m],
