@@ -61,8 +61,8 @@ check_enkf_inputs <- function(states_init,
     if(is.null(pars_config$par_names_save)){
       stop("is.null(pars_config$par_names_save)")
     }
-    if(is.null(pars_config$par_nml)){
-      stop("is.null(pars_config$par_nml)")
+    if(is.null(pars_config$par_file)){
+      stop("is.null(pars_config$par_file)")
     }
     if(is.null(pars_config$par_lowerbound)){
       stop("is.null(pars_config$par_lowerbound)")
