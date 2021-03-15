@@ -31,13 +31,13 @@ set_up_model_ler <- function(model,
 
     non_temp_names <- state_names[which(!(state_names %in% "temp"))]
     if(length(non_temp_names) == 0) {
-      non_temp_names <- "''"
+      non_temp_names <- NULL
     }
 
     inflow_var_names <- c("FLOW","TEMP","SALT", non_temp_names)
 
-    input_yaml_multiple(file = ler_yaml, value = length(non_temp_names), key1 = "model_parameters", key2 = "GLM", key3 = "num_wq_vars")
-    input_yaml_multiple(file = ler_yaml, value = non_temp_names, key1 = "model_parameters", key2 = "GLM", key3 = "wq_names")
+    input_yaml_multiple(file = ler_yaml, value = 0, key1 = "model_parameters", key2 = "GLM", key3 = "num_wq_vars")
+    input_yaml_multiple(file = ler_yaml, value = "''", key1 = "model_parameters", key2 = "GLM", key3 = "wq_names")
     input_yaml_multiple(file = ler_yaml, value = ncol(inflow_file_names), key1 = "model_parameters", key2 = "GLM", key3 = "num_inflows")
     input_yaml_multiple(file = ler_yaml, value = ncol(outflow_file_names), key1 = "model_parameters", key2 = "GLM", key3 = "num_outlet")
     input_yaml_multiple(file = ler_yaml, value = config$modeled_depths, key1 = "model_parameters", key2 = "GLM", key3 = "the_depths")
