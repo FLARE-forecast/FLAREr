@@ -105,6 +105,12 @@ generate_ler_met_files <- function(obs_met_file = NULL,
     #convert units to GLM
     combined_met$Air_Temperature_celsius <- combined_met$Air_Temperature_celsius - 273.15
     combined_met$Relative_Humidity_percent <- combined_met$Relative_Humidity_percent * 100
+    if( any(combined_met$Relative_Humidity_percent == 0)) {
+      idx <- which(combined_met$Relative_Humidity_percent == 0)
+      combined_met$Relative_Humidity_percent[idx] <- NA
+      combined_met$Relative_Humidity_percent <- zoo::na.approx(combined_met$Relative_Humidity_percent)
+    }
+
     combined_met$Precipitation_millimeterPerHour <- combined_met$Precipitation_millimeterPerHour * (60 * 60)
 
     combined_met <- combined_met %>%
