@@ -30,6 +30,10 @@ set_up_model_ler <- function(model,
               to = file.path(working_directory, "GLM", "glm3.nml"), overwrite = TRUE)
 
     non_temp_names <- state_names[which(!(state_names %in% "temp"))]
+    if(length(non_temp_names) == 0) {
+      non_temp_names <- "''"
+    }
+
     inflow_var_names <- c("FLOW","TEMP","SALT", non_temp_names)
 
     input_yaml_multiple(file = ler_yaml, value = length(non_temp_names), key1 = "model_parameters", key2 = "GLM", key3 = "num_wq_vars")
