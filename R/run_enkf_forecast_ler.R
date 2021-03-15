@@ -30,7 +30,7 @@
 #' - `par_names_save`: the name of the parameter that will  be written in the output file.  This is different that
 #' `par_names` because a single parameter can have multiple zones.  Therefore, `par_names` will be the same but
 #' `par_names_save` will be different so that you know which zone they are associated with
-#' - `par_nml`: GLM namelist that the `par_name` can be found: `glm.nml`, `aed2.nml`,`aed2_phyto_pars.nml`,`aed2_zoop_pars.nml`
+#' - `par_file`: GLM namelist that the `par_name` can be found: `glm.nml`, `aed2.nml`,`aed2_phyto_pars.nml`,`aed2_zoop_pars.nml`
 #' - `par_init`:  Initial value for the parameter
 #' - `par_init_lowerbound`: Lower bound when initilizing with a uniform distribution
 #' - `par_init_upperbound`: Upper bound when initilizing with a uniform distribution
@@ -188,14 +188,15 @@ run_enkf_forecast_ler <- function(states_init,
   ndepths_modeled <- dim(states_init)[2]
   nmembers <- dim(states_init)[3]
   n_met_members <- length(met_file_names)
-  if(!is.null(pars_config)){
+  if(!is.null(pars_config) & any(pars_config$model == model)){
+    pars_config <- pars_config[pars_config$model == model, ]
     npars <- nrow(pars_config)
     par_names <- pars_config$par_names
-    par_nml <- pars_config$par_nml
+    par_file <- pars_config$par_file
   }else{
     npars <- 0
     par_names <- NA
-    par_nml <- NA
+    par_file <- NA
   }
 
   x_init <- array(NA, dim = c(nmembers, nstates * ndepths_modeled + npars))
@@ -253,17 +254,6 @@ run_enkf_forecast_ler <- function(states_init,
   full_time_local <- seq(start_datetime, end_datetime, by = "1 day")
   forecast_days <- as.numeric(end_datetime - forecast_start_datetime)
 
-
-  if(!is.null(pars_config)){
-    npars <- nrow(pars_config)
-    par_names <- pars_config$par_names
-    par_nml <- pars_config$par_nml
-  }else{
-    npars <- 0
-    par_names <- NA
-    par_nml <- NA
-  }
-
   nstates <- dim(x_init)[2] -  npars
   nsteps <- length(full_time_local)
   nmembers <- dim(x_init)[1]
@@ -281,7 +271,7 @@ run_enkf_forecast_ler <- function(states_init,
 
   alpha_v <- 1 - exp(-config$vert_decorr_length)
 
-  glm_output_vars <- states_config$state_names
+  output_vars <- states_config$state_names
 
 
   if(config$include_wq){
@@ -293,7 +283,7 @@ run_enkf_forecast_ler <- function(states_init,
   if(length(config$diagnostics_names) > 0){
     diagnostics <- array(NA, dim=c(length(config$diagnostics_names), nsteps, ndepths_modeled, nmembers))
   }else{
-    diagnostics <- NA
+    diagnostics <- array(NA, dim=c(1, nsteps, ndepths_modeled, nmembers))
   }
 
   num_phytos <- length(which(stringr::str_detect(states_config$state_names,"PHY_") & !stringr::str_detect(states_config$state_names,"_IP") & !stringr::str_detect(states_config$state_names,"_IN")))
@@ -375,9 +365,9 @@ run_enkf_forecast_ler <- function(states_init,
                        par_names,
                        curr_pars,
                        working_directory,
-                       par_nml,
+                       par_file,
                        num_phytos,
-                       glm_depths_start = model_internal_depths[i-1, ,m ],
+                       model_depths_start = model_internal_depths[i-1, ,m ],
                        lake_depth_start = lake_depth[i-1, m],
                        x_start = x[i-1, m, ],
                        full_time_local,
@@ -390,7 +380,7 @@ run_enkf_forecast_ler <- function(states_init,
                        curr_met_file,
                        inflow_file_name = inflow_file_names[inflow_outflow_index, ],
                        outflow_file_name = outflow_file_names[inflow_outflow_index, ],
-                       glm_output_vars = glm_output_vars,
+                       output_vars = output_vars,
                        diagnostics_names = config$diagnostics_names,
                        npars,
                        num_wq_vars,
