@@ -25,9 +25,9 @@ run_model_ler <- function(model,
                       par_names,
                       curr_pars,
                       working_directory,
-                      par_nml,
+                      par_file,
                       num_phytos,
-                      glm_depths_start,
+                      model_depths_start,
                       lake_depth_start,
                       x_start,
                       full_time_local,
@@ -40,7 +40,7 @@ run_model_ler <- function(model,
                       curr_met_file,
                       inflow_file_name,
                       outflow_file_name,
-                      glm_output_vars,
+                      output_vars,
                       diagnostics_names,
                       npars,
                       num_wq_vars,
@@ -69,6 +69,14 @@ run_model_ler <- function(model,
   # yml <- configr::read.config(file.path(working_directory, ler_yaml))
   # configr::write.config(yml, file.path(working_directory, ler_yaml))
 
+  model_depths_end <- rep(NA,length(model_depths_start))
+
+  model_depths_tmp <- model_depths_start[!is.na(model_depths_start)]
+  model_depths_tmp_tmp <- c(model_depths_tmp, lake_depth_start)
+  model_depths_mid <- model_depths_tmp_tmp[1:(length(model_depths_tmp_tmp)-1)] + diff(model_depths_tmp_tmp)/2
+
+
+  # GLM ----
   if( model == "GLM") {
 
     input_yaml_multiple(ler_yaml, key1 = "model_parameters", key2 = "GLM", key3 = "restart_variables", value = mixing_vars_start)
@@ -85,8 +93,6 @@ run_model_ler <- function(model,
     list_index_phyto <- 1
 
 
-    glm_depths_end <- rep(NA,length(glm_depths_start))
-
     diagnostics <- array(NA, dim = c(length(diagnostics_names),ndepths_modeled))
 
     x_star_end <- rep(NA, nstates)
@@ -98,7 +104,7 @@ run_model_ler <- function(model,
       for(par in 1:length(unique_pars)){
 
         curr_par_set <- which(par_names == unique_pars[par])
-        curr_nml <- par_nml[curr_par_set[1]]
+        curr_nml <- par_file[curr_par_set[1]]
         if(curr_nml == "glm3.nml"){
           input_yaml_multiple(ler_yaml, key1 = "model_parameters", key2 = "GLM", key3 = unique_pars[par], value = round(curr_pars[curr_par_set], 4))
           # yml[["model_parameters"]][[model]][[unique_pars[par]]] <- round(curr_pars[curr_par_set], 4)
@@ -114,10 +120,6 @@ run_model_ler <- function(model,
       }
     }
 
-    glm_depths_tmp <- glm_depths_start[!is.na(glm_depths_start)]
-    glm_depths_tmp_tmp <- c(glm_depths_tmp, lake_depth_start)
-    glm_depths_mid <- glm_depths_tmp_tmp[1:(length(glm_depths_tmp_tmp)-1)] + diff(glm_depths_tmp_tmp)/2
-
     if(include_wq){
 
       wq_init_vals <- c()
@@ -126,7 +128,7 @@ run_model_ler <- function(model,
         wq_enkf_tmp <- x_start[wq_start[wq + 1]:wq_end[wq + 1]]
         wq_enkf_tmp[wq_enkf_tmp < 0] <- 0
         wq_init_vals <- c(wq_init_vals,
-                          approx(modeled_depths,wq_enkf_tmp, glm_depths_mid, rule = 2)$y)
+                          approx(modeled_depths,wq_enkf_tmp, model_depths_mid, rule = 2)$y)
       }
       update_glm_nml_list[[list_index]] <- round(wq_init_vals, 4)
       update_glm_nml_names[list_index] <- "wq_init_vals"
@@ -162,7 +164,7 @@ run_model_ler <- function(model,
 
 
     # input_yaml_multiple(ler_yaml, key1 = "model_parameters", key2 = "GLM", key3 = "the_sals", value = round(the_sals_glm, 4))
-    input_yaml_multiple(ler_yaml, key1 = "model_parameters", key2 = "GLM", key3 = "num_depths", value = length(glm_depths_tmp))
+    input_yaml_multiple(ler_yaml, key1 = "model_parameters", key2 = "GLM", key3 = "num_depths", value = length(model_depths_tmp))
     input_yaml_multiple(ler_yaml, key1 = "model_parameters", key2 = "GLM", key3 = "lake_depth", value = round(lake_depth_start, 4))
     input_yaml_multiple(ler_yaml, key1 = "model_parameters", key2 = "GLM", key3 = "snow_thickness", value = 0)
     input_yaml_multiple(ler_yaml, key1 = "model_parameters", key2 = "GLM", key3 = "white_ice_thickness", value = round(snow_ice_thickness_start[2], 4))
@@ -172,8 +174,8 @@ run_model_ler <- function(model,
 
     # # yml[["model_parameters"]][[model]][["the_temps"]] <- round(the_temps_glm, 4)
     # yml[["model_parameters"]][[model]][["the_sals"]] <- round(the_sals_glm, 4)
-    # # yml[["model_parameters"]][[model]][["the_depths"]] <- round(glm_depths_tmp, 4)
-    # yml[["model_parameters"]][[model]][["num_depths"]] <- length(glm_depths_tmp)
+    # # yml[["model_parameters"]][[model]][["the_depths"]] <- round(model_depths_tmp, 4)
+    # yml[["model_parameters"]][[model]][["num_depths"]] <- length(model_depths_tmp)
     # yml[["model_parameters"]][[model]][["lake_depth"]] <- round(lake_depth_start, 4)
     # yml[["model_parameters"]][[model]][["snow_thickness"]] <- 0
     # yml[["model_parameters"]][[model]][["white_ice_thickness"]] <- round(snow_ice_thickness_start[2], 4)
@@ -184,15 +186,100 @@ run_model_ler <- function(model,
 
   }
 
+  # GOTM ----
+  if( model == "GOTM") {
+
+    # input_yaml_multiple(ler_yaml, key1 = "model_parameters", key2 = "GLM", key3 = "restart_variables", value = mixing_vars_start)
+    # yml[["model_parameters"]][[model]][["restart_variables"]] <- mixing_vars_start
+    #
+    # # update_glm_nml_list <- list()
+    # update_aed_nml_list <- list()
+    # update_phyto_nml_list <- list()
+    # # update_glm_nml_names <- c()
+    # update_aed_nml_names <- c()
+    # update_phyto_nml_names <- c()
+    # # list_index <- 1
+    # list_index_aed <- 1
+    # list_index_phyto <- 1
+
+
+
+    diagnostics <- array(NA, dim = c(length(diagnostics_names), ndepths_modeled))
+
+    x_star_end <- rep(NA, nstates)
+
+    if(npars > 0){
+
+      unique_pars <- unique(par_names)
+
+      for(par in 1:length(unique_pars)){
+
+        curr_par_set <- which(par_names == unique_pars[par])
+        curr_nml <- par_file[curr_par_set[1]]
+        input_yaml_multiple(ler_yaml, key1 = "model_parameters", key2 = model, key3 = unique_pars[par], value = signif(curr_pars[curr_par_set], 4))
+
+      }
+    }
+
+
+
+    # if(include_wq){
+    #
+    #   wq_init_vals <- c()
+    #
+    #   for(wq in 1:num_wq_vars){
+    #     wq_enkf_tmp <- x_start[wq_start[wq + 1]:wq_end[wq + 1]]
+    #     wq_enkf_tmp[wq_enkf_tmp < 0] <- 0
+    #     wq_init_vals <- c(wq_init_vals,
+    #                       approx(modeled_depths,wq_enkf_tmp, model_depths_mid, rule = 2)$y)
+    #   }
+    #   update_glm_nml_list[[list_index]] <- round(wq_init_vals, 4)
+    #   update_glm_nml_names[list_index] <- "wq_init_vals"
+    #   list_index <- list_index + 1
+    #
+    #   if(simulate_sss){
+    #     if(is.na(management$specified_sss_inflow_file)){
+    #       flare:::create_sss_input_output(x = x_start,
+    #                                       i,
+    #                                       m,
+    #                                       full_time_local,
+    #                                       working_directory,
+    #                                       wq_start,
+    #                                       management$management_input,
+    #                                       hist_days,
+    #                                       management$forecast_sss_on,
+    #                                       management$sss_depth,
+    #                                       management$use_specified_sss,
+    #                                       state_names,
+    #                                       modeled_depths = modeled_depths,
+    #                                       forecast_sss_flow = management$forecast_sss_flow,
+    #                                       forecast_sss_oxy = management$forecast_sss_oxy,
+    #                                       salt = salt_start)
+    #     }else{
+    #       file.copy(file.path(working_directory, management$specified_sss_inflow_file), paste0(working_directory,"/sss_inflow.csv"))
+    #       if(!is.na(management$specified_sss_outflow_file)){
+    #         file.copy(file.path(working_directory, management$specified_sss_outflow_file), paste0(working_directory,"/sss_outflow.csv"))
+    #       }
+    #     }
+    #   }
+    # }
+
+
+
+
+
+
+  }
+
 
   # Initial temperature
   the_temps_enkf_tmp <- x_start[1:ndepths_modeled]
 
-  the_temps_glm <- approx(modeled_depths,the_temps_enkf_tmp, glm_depths_mid, rule = 2)$y
-  the_sals_glm <- approx(modeled_depths,salt_start, glm_depths_mid, rule = 2)$y
+  the_temps <- approx(modeled_depths,the_temps_enkf_tmp, model_depths_mid, rule = 2)$y
+  the_sals <- approx(modeled_depths,salt_start, model_depths_mid, rule = 2)$y
 
-  init_prof <- data.frame(Depth_meter = round(glm_depths_tmp, 4),
-                          Water_Temperature_celsius = round(the_temps_glm, 4))
+  init_prof <- data.frame(Depth_meter = round(model_depths_tmp, 4),
+                          Water_Temperature_celsius = round(the_temps, 4))
   write.csv(init_prof, file.path(working_directory, "initial_profile.csv"),
             row.names = FALSE, quote = FALSE)
 
@@ -227,6 +314,7 @@ run_model_ler <- function(model,
   # gotmtools::get_yaml_value(ler_yaml, label = "inflows", key = "use")
   # get_yaml_multiple(ler_yaml, key1 = "inflows", key2 = "use")
   # get_yaml_multiple(ler_yaml, key1 = "inflows", key2 = "file")
+
   LakeEnsemblR::export_config(config_file = ler_yaml, model = model, dirs = FALSE,
                               time = TRUE, location = TRUE, output_settings = TRUE,
                               meteo = T, init_cond = TRUE, extinction = FALSE,
@@ -235,14 +323,14 @@ run_model_ler <- function(model,
                               folder = working_directory)
 
 
-  if(list_index_aed > 1){
+  if(model == "GLM" & exists("list_index_aed")){
     flare:::update_nml(update_aed_nml_list,
                        update_aed_nml_names,
                        working_directory,
                        "aed2.nml")
   }
 
-  if(list_index_phyto > 1){
+  if(model == "GLM" & exists("list_index_phyto")){
     flare:::update_nml(update_phyto_nml_list,
                        update_phyto_nml_names,
                        working_directory,
@@ -297,11 +385,16 @@ run_model_ler <- function(model,
   #                        out_time = out_time,
   #                        out_vars = out_vars)
 
+  # Create output folder
+  dir.create(file.path(working_directory, model, "output"), showWarnings = FALSE)
 
   while(!pass){
-    unlink(paste0(working_directory, "/output/output.nc"))
 
-    model_states <- run_models_LER(model = model,
+    #Delete previous output
+    old_output <- list.files(file.path(working_directory, model, "output"))
+    unlink(file.path(working_directory, model, "output", old_output), recursive = TRUE)
+
+    model_states <- flare:::run_models_LER(model = model,
                           config_file = ler_yaml,
                           folder = working_directory,
                           return_list = TRUE,
@@ -347,44 +440,54 @@ run_model_ler <- function(model,
         output_vars_multi_depth <- state_names
         output_vars_no_depth <- NA
 
-        GLM_temp_wq_out <-  get_glm_nc_var_all_wq(ncFile = "/GLM/output/output.nc",
+        # if( model == "GLM") {
+        #   GLM_temp_wq_out <-  get_glm_nc_var_all_wq(ncFile = "/GLM/output/output.nc",
+        #                                             working_dir = working_directory,
+        #                                             z_out = modeled_depths,
+        #                                             vars_depth = output_vars_multi_depth,
+        #                                             vars_no_depth = output_vars_no_depth,
+        #                                             diagnostic_vars = diagnostics_names)
+        # }
+
+
+        ler_temp_out <-  flare:::get_ler_nc_var_all(model = model,
                                                   working_dir = working_directory,
                                                   z_out = modeled_depths,
                                                   vars_depth = output_vars_multi_depth,
                                                   vars_no_depth = output_vars_no_depth,
                                                   diagnostic_vars = diagnostics_names)
-        # LER_temp_out <- get_LER_nc_var_all(ncFile = "output/output.nc", model = model,
-        #                                    working_dir = working_directory)
 
 
-        num_glm_depths <- length(GLM_temp_wq_out$depths_enkf)
-        glm_temps <- rev(GLM_temp_wq_out$output[ ,1])
-        glm_depths_end[1:num_glm_depths] <- GLM_temp_wq_out$depths_enkf
+        num_model_depths <- length(ler_temp_out$depths_enkf)
+        temps <- rev(ler_temp_out$output[ ,1])
+        model_depths_end[1:num_model_depths] <- ler_temp_out$depths_enkf
 
-        glm_depths_tmp <- c(GLM_temp_wq_out$depths_enkf, GLM_temp_wq_out$lake_depth)
+        model_depths_tmp <- c(ler_temp_out$depths_enkf, ler_temp_out$lake_depth)
 
-        glm_depths_mid <- glm_depths_tmp[1:(length(glm_depths_tmp)-1)] + diff(glm_depths_tmp)/2
+        model_depths_mid <- model_depths_tmp[1:(length(model_depths_tmp)-1)] + diff(model_depths_tmp)/2
 
 
-        x_star_end[1:ndepths_modeled] <- approx(glm_depths_mid, glm_temps,
+        x_star_end[1:ndepths_modeled] <- approx(model_depths_mid, temps,
                                                 modeled_depths, rule = 2)$y
         # x_star_end[1:ndepths_modeled] <- approx(LER_temp_out$depths, LER_temp_out$temp,
         #                                         modeled_depths, rule = 2)$y
 
-        salt_end <- approx(glm_depths_mid, GLM_temp_wq_out$salt_end, modeled_depths, rule = 2)$y
+        salt_end <- approx(model_depths_mid, ler_temp_out$salt, modeled_depths, rule = 2)$y
 
         if(include_wq){
           for(wq in 1:num_wq_vars){
-            glm_wq <-  rev(GLM_temp_wq_out$output[ ,1+wq])
-            x_star_end[wq_start[1 + wq]:wq_end[1 + wq]] <- approx(glm_depths_mid,glm_wq, modeled_depths, rule = 2)$y
+            glm_wq <-  rev(ler_temp_out$output[ ,1+wq])
+            x_star_end[wq_start[1 + wq]:wq_end[1 + wq]] <- approx(model_depths_mid,glm_wq, modeled_depths, rule = 2)$y
           }
         }
 
         if(length(diagnostics_names) > 0){
           for(wq in 1:length(diagnostics_names)){
-            glm_wq <-  rev(GLM_temp_wq_out$diagnostics_output[ , wq])
-            diagnostics[wq , ] <- approx(glm_depths_mid,glm_wq, modeled_depths, rule = 2)$y
+            glm_wq <-  rev(ler_temp_out$diagnostics_output[ , wq])
+            diagnostics[wq , ] <- approx(model_depths_mid,glm_wq, modeled_depths, rule = 2)$y
           }
+        } else {
+          diagnostics <- rep(NA, length(modeled_depths))
         }
 
         if(length(which(is.na(x_star_end))) == 0){
@@ -403,12 +506,12 @@ run_model_ler <- function(model,
     }
 
     return(list(x_star_end  = x_star_end,
-                lake_depth_end  = GLM_temp_wq_out$lake_depth,
-                snow_ice_thickness_end  = GLM_temp_wq_out$snow_wice_bice,
-                avg_surf_temp_end  = GLM_temp_wq_out$avg_surf_temp,
-                mixing_vars_end = GLM_temp_wq_out$mixing_vars,
+                lake_depth_end  = ler_temp_out$lake_depth,
+                snow_ice_thickness_end  = ler_temp_out$snow_wice_bice,
+                avg_surf_temp_end  = ler_temp_out$avg_surf_temp,
+                mixing_vars_end = ler_temp_out$mixing_vars,
                 salt_end = salt_end,
                 diagnostics_end  = diagnostics,
-                model_internal_depths  = glm_depths_end))
+                model_internal_depths  = model_depths_end))
   }
 }
