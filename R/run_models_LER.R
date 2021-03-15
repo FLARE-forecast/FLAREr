@@ -18,9 +18,6 @@ run_models_LER <- function(model, config_file, folder, return_list, create_outpu
                            stop, verbose, obs_deps, out_time, out_hour, out_vars, local_tzone) {
 
   if(model == "GLM") {
-    #Delete previous output
-    old_output <- list.files(file.path(folder, "GLM", "output"))
-    unlink(file.path(folder, "GLM", "output", old_output), recursive = TRUE)
 
     GLM3r::run_glm(sim_folder = file.path(folder, "GLM"), verbose = verbose)
     # glmtools::plot_temp(file.path(folder, "GLM", "output.nc"))
