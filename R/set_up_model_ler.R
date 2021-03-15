@@ -41,7 +41,7 @@ set_up_model_ler <- function(model,
     input_yaml_multiple(file = ler_yaml, value = length(inflow_var_names), key1 = "model_parameters", key2 = "GLM", key3 = "inflow_varnum")
     input_yaml_multiple(file = ler_yaml, value = inflow_var_names, key1 = "model_parameters", key2 = "GLM", key3 = "inflow_vars")
     input_yaml_multiple(file = ler_yaml, value = FALSE, key1 = "model_parameters", key2 = "GLM", key3 = "include_wq")
-    input_yaml_multiple(file = ler_yaml, value = "'.'", key1 = "model_parameters", key2 = "GLM", key3 = "out_dir")
+    input_yaml_multiple(file = ler_yaml, value = "'output'", key1 = "model_parameters", key2 = "GLM", key3 = "out_dir")
     #
     # yml[["model_parameters"]][["GLM"]][["num_wq_vars"]] <- length(non_temp_names)
     # yml[["model_parameters"]][["GLM"]][["wq_names"]] <- non_temp_names
