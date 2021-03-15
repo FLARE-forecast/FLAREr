@@ -323,14 +323,14 @@ run_model_ler <- function(model,
                               folder = working_directory)
 
 
-  if(model == "GLM" & exists("list_index_aed")){
+  if(model == "GLM" & include_wq){
     flare:::update_nml(update_aed_nml_list,
                        update_aed_nml_names,
                        working_directory,
                        "aed2.nml")
   }
 
-  if(model == "GLM" & exists("list_index_phyto")){
+  if(model == "GLM" & include_wq){
     flare:::update_nml(update_phyto_nml_list,
                        update_phyto_nml_names,
                        working_directory,
