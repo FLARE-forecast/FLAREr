@@ -440,16 +440,7 @@ run_model_ler <- function(model,
         output_vars_multi_depth <- state_names
         output_vars_no_depth <- NA
 
-        # if( model == "GLM") {
-        #   GLM_temp_wq_out <-  get_glm_nc_var_all_wq(ncFile = "/GLM/output/output.nc",
-        #                                             working_dir = working_directory,
-        #                                             z_out = modeled_depths,
-        #                                             vars_depth = output_vars_multi_depth,
-        #                                             vars_no_depth = output_vars_no_depth,
-        #                                             diagnostic_vars = diagnostics_names)
-        # }
-
-
+        # LakeEnsemblR Output
         ler_temp_out <-  flare:::get_ler_nc_var_all(model = model,
                                                   working_dir = working_directory,
                                                   z_out = modeled_depths,
