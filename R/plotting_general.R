@@ -363,7 +363,7 @@ plotting_general <- function(file_name,
 
     print("secchi")
 
-    obs_date <- tibble(date = lubridate::as_date(full_time_local))
+    obs_date <- tibble::tibble(date = lubridate::as_date(full_time_local))
 
     obs_secchi <- d %>% dplyr::filter(variable == "secchi")
 
