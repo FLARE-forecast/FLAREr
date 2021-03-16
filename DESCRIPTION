@@ -35,8 +35,11 @@ Imports:
     tools,
     plyr,
     ggplot2,
-    rMR
+    rMR,
+    LakeEnsemblR
 Suggests: 
     knitr,
-    rmarkdown
+    rmarkdown,
+    GLM3r,
+    GOTMr
 VignetteBuilder: knitr
