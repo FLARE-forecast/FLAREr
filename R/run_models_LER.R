@@ -14,8 +14,7 @@
 #'@importFrom glmtools read_nml set_nml write_nml
 #'
 #'@export
-run_models_LER <- function(model, config_file, folder, return_list, create_output, start,
-                           stop, verbose, obs_deps, out_time, out_hour, out_vars, local_tzone) {
+run_models_LER <- function(model, folder, verbose) {
 
   if(model == "GLM") {
 
@@ -33,27 +32,12 @@ run_models_LER <- function(model, config_file, folder, return_list, create_outpu
     message("GOTM run is complete! ", paste0("[", Sys.time(), "]"))
   }
 
-  # if(return_list | create_output) {
-  #
-  #   # Extract output
-  #   ler_out <- LakeEnsemblR::get_output(config_file = config_file, model = model,
-  #                                       vars = out_vars, obs_depths = obs_deps,
-  #                                       folder = folder)
-  #
-  #   out_time <- format(out_time, format = "%Y-%m-%d %H:%M:%S")
-  #   if(!is.list(ler_out)) {
-  #     ler_out <- merge(ler_out, out_time, by = "datetime", all.y = TRUE)
-  #   } else {
-  #     ler_out <- lapply(seq_len(length(ler_out)), function(x){
-  #       ler_out[[x]][, 1] <- format(ler_out[[x]][, 1], format = "%Y-%m-%d %H:%M:%S")
-  #       df <- merge(ler_out[[x]], out_time, by = 1, all.y = TRUE)
-  #       df[, 1] <- as.POSIXct(df[, 1], tz = local_tzone)
-  #       return(df)
-  #     })
-  #     names(ler_out) <- out_vars # Re-assign names to list
-  #   }
-  #
-  # }
-  # return(ler_out)
+  # Simstrat ----
+  if(model == "Simstrat") {
+
+    SimstratR::run_simstrat(sim_folder = file.path(folder, "Simstrat"), par_file = "simstrat.par", verbose = verbose)
+
+    message("Simstrat run is complete! ", paste0("[", Sys.time(), "]"))
+  }
 
 }

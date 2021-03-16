@@ -1,4 +1,4 @@
-get_ler_nc_var_all <- function(model, working_dir, z_out, vars_depth, vars_no_depth, diagnostic_vars){
+get_ler_nc_var_all <- function(model, working_dir, z_out, vars_depth, vars_no_depth, diagnostic_vars, ler_yaml){
 
   if( model == "GLM") {
 
@@ -92,6 +92,55 @@ get_ler_nc_var_all <- function(model, working_dir, z_out, vars_depth, vars_no_de
     depths_enkf = heights[1] - heights
 
     ncdf4::nc_close(nc)
+  }
+
+  # Simstrat ----
+  if( model == "Simstrat") {
+
+    temp <- LakeEnsemblR::get_output(config_file = ler_yaml, model = model, vars = "temp", obs_depths = z_out)$temp
+    salt <- LakeEnsemblR::get_output(config_file = ler_yaml, model = model, vars = "salt", obs_depths = z_out)$salt
+    ice <- LakeEnsemblR::get_output(config_file = ler_yaml, model = model, vars = "ice_height")$ice_height
+    deps <- rLakeAnalyzer::get.offsets(temp)
+    final_time_step <- nrow(temp)
+
+    # No varying water level in Simstrat
+    heights_surf <- max(deps)
+    heights <- deps
+    # heights_out <- rep()
+
+    temps <- unlist(temp[final_time_step, -1])
+
+
+    snow <- read.delim(file.path(model, "output", "SnowH_out.dat"), sep = ",")[final_time_step, 2]
+    ice_white <- read.delim(file.path(model, "output", "WhiteIceH_out.dat"), sep = ",")[final_time_step, 2]
+    # ice_black <- read.delim(file.path(model, "output", "BlackIceH_out.dat"), sep = ",")[final_time_step, 2]
+    ice_blue <- 0
+    avg_surf_temp <- NA
+
+
+
+    output <- array(NA, dim=c(length(temps), length(vars_depth)))
+    for(v in 1:length(vars_depth)){
+      output[,v] <- temps
+    }
+
+    output_no_depth <- NA
+
+    if(length(diagnostic_vars) > 0){
+      diagnostics_output <- array(NA,dim=c(tallest_layer, length(diagnostic_vars)))
+      for(v in 1:length(diagnostic_vars)){
+        var_modeled <- ncdf4::ncvar_get(nc, diagnostic_vars[v])[, final_time_step]
+        diagnostics_output[,v] <- var_modeled[1:tallest_layer]
+      }
+    }else{
+      diagnostics_output <- NULL
+    }
+
+    mixing_vars <- NA # ncdf4::ncvar_get(nc, "restart_variables")
+
+    salt <- unlist(salt[final_time_step, -1])
+
+    depths_enkf = heights
   }
 
 

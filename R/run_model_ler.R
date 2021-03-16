@@ -189,20 +189,26 @@ run_model_ler <- function(model,
   # GOTM ----
   if( model == "GOTM") {
 
-    # input_yaml_multiple(ler_yaml, key1 = "model_parameters", key2 = "GLM", key3 = "restart_variables", value = mixing_vars_start)
-    # yml[["model_parameters"]][[model]][["restart_variables"]] <- mixing_vars_start
-    #
-    # # update_glm_nml_list <- list()
-    # update_aed_nml_list <- list()
-    # update_phyto_nml_list <- list()
-    # # update_glm_nml_names <- c()
-    # update_aed_nml_names <- c()
-    # update_phyto_nml_names <- c()
-    # # list_index <- 1
-    # list_index_aed <- 1
-    # list_index_phyto <- 1
+    diagnostics <- array(NA, dim = c(length(diagnostics_names), ndepths_modeled))
 
+    x_star_end <- rep(NA, nstates)
 
+    if(npars > 0){
+
+      unique_pars <- unique(par_names)
+
+      for(par in 1:length(unique_pars)){
+
+        curr_par_set <- which(par_names == unique_pars[par])
+        curr_nml <- par_file[curr_par_set[1]]
+        input_yaml_multiple(ler_yaml, key1 = "model_parameters", key2 = model, key3 = unique_pars[par], value = signif(curr_pars[curr_par_set], 4))
+
+      }
+    }
+  }
+
+  # Simstrat ----
+  if( model == "Simstrat") {
 
     diagnostics <- array(NA, dim = c(length(diagnostics_names), ndepths_modeled))
 
@@ -220,55 +226,6 @@ run_model_ler <- function(model,
 
       }
     }
-
-
-
-    # if(include_wq){
-    #
-    #   wq_init_vals <- c()
-    #
-    #   for(wq in 1:num_wq_vars){
-    #     wq_enkf_tmp <- x_start[wq_start[wq + 1]:wq_end[wq + 1]]
-    #     wq_enkf_tmp[wq_enkf_tmp < 0] <- 0
-    #     wq_init_vals <- c(wq_init_vals,
-    #                       approx(modeled_depths,wq_enkf_tmp, model_depths_mid, rule = 2)$y)
-    #   }
-    #   update_glm_nml_list[[list_index]] <- round(wq_init_vals, 4)
-    #   update_glm_nml_names[list_index] <- "wq_init_vals"
-    #   list_index <- list_index + 1
-    #
-    #   if(simulate_sss){
-    #     if(is.na(management$specified_sss_inflow_file)){
-    #       flare:::create_sss_input_output(x = x_start,
-    #                                       i,
-    #                                       m,
-    #                                       full_time_local,
-    #                                       working_directory,
-    #                                       wq_start,
-    #                                       management$management_input,
-    #                                       hist_days,
-    #                                       management$forecast_sss_on,
-    #                                       management$sss_depth,
-    #                                       management$use_specified_sss,
-    #                                       state_names,
-    #                                       modeled_depths = modeled_depths,
-    #                                       forecast_sss_flow = management$forecast_sss_flow,
-    #                                       forecast_sss_oxy = management$forecast_sss_oxy,
-    #                                       salt = salt_start)
-    #     }else{
-    #       file.copy(file.path(working_directory, management$specified_sss_inflow_file), paste0(working_directory,"/sss_inflow.csv"))
-    #       if(!is.na(management$specified_sss_outflow_file)){
-    #         file.copy(file.path(working_directory, management$specified_sss_outflow_file), paste0(working_directory,"/sss_outflow.csv"))
-    #       }
-    #     }
-    #   }
-    # }
-
-
-
-
-
-
   }
 
 
@@ -276,7 +233,7 @@ run_model_ler <- function(model,
   the_temps_enkf_tmp <- x_start[1:ndepths_modeled]
 
   the_temps <- approx(modeled_depths,the_temps_enkf_tmp, model_depths_mid, rule = 2)$y
-  the_sals <- approx(modeled_depths,salt_start, model_depths_mid, rule = 2)$y
+  the_sals <- approx(modeled_depths, salt_start, model_depths_mid, rule = 2)$y
 
   init_prof <- data.frame(Depth_meter = round(model_depths_tmp, 4),
                           Water_Temperature_celsius = round(the_temps, 4))
@@ -291,29 +248,6 @@ run_model_ler <- function(model,
   input_yaml_multiple(ler_yaml, key1 = "time", key2 = "start", value = curr_start)
   input_yaml_multiple(ler_yaml, key1 = "time", key2 = "stop", value = curr_stop)
 
-
-
-  # yml$input$init_temp_profile$file <- "initial_profile.csv"
-  # yml$input$meteo$file <- basename(curr_met_file)
-  # yml$inflows$file <- basename(unlist(inflow_file_name))
-  # yml$time$start <- curr_start
-  # yml$time$stop <- curr_stop
-  #
-  # yaml::write_yaml(yml, file.path(working_directory, ler_yaml)) #
-
-
-  # No outflows in LER yet!!!
-  # update_glm_nml_list[[list_index]] <- unlist(outflow_file_name)
-  # update_glm_nml_names[list_index] <- "outflow_fl"
-  # list_index <- list_index + 1
-
-  # load("../flare_lake_examples/fcre/.RData")
-  # library(LakeEnsemblR)
-
-
-  # gotmtools::get_yaml_value(ler_yaml, label = "inflows", key = "use")
-  # get_yaml_multiple(ler_yaml, key1 = "inflows", key2 = "use")
-  # get_yaml_multiple(ler_yaml, key1 = "inflows", key2 = "file")
 
   LakeEnsemblR::export_config(config_file = ler_yaml, model = model, dirs = FALSE,
                               time = TRUE, location = TRUE, output_settings = TRUE,
@@ -395,39 +329,9 @@ run_model_ler <- function(model,
     unlink(file.path(working_directory, model, "output", old_output), recursive = TRUE)
 
     model_states <- flare:::run_models_LER(model = model,
-                          config_file = ler_yaml,
                           folder = working_directory,
-                          return_list = TRUE,
-                          create_output = FALSE,
-                          start = start,
-                          stop = stop,
-                          verbose = FALSE,
-                          obs_deps = modeled_depths,
-                          out_time = out_time,
-                          out_vars = out_vars,
-                          local_tzone = config$local_tzone)
-    # glmtools::plot_var(file = "GLM/output/output.nc", var_name = "temp")
+                          verbose = FALSE)
 
-
-    # if(machine == "unix"){
-    #   system2(paste0(working_directory, "/", "glm_linux"),
-    #           stdout = FALSE,
-    #           stderr = FALSE,
-    #           env = paste0("DYLD_LIBRARY_PATH=",working_directory))
-    # }else if(machine == "mac"){
-    #   system2(paste0(working_directory, "/", "glm"),
-    #           stdout = FALSE,
-    #           stderr = FALSE,
-    #           env = paste0("DYLD_LIBRARY_PATH=",working_directory))
-    # }else if(machine == "windows"){
-    #   GLM3r::run_glm()
-    #   # glmtools::plot_temp()
-    #   # system2(paste0(working_directory, "/", "glm.exe"),
-    #   #         invisible = FALSE)
-    # }else{
-    #   print("Machine not identified")
-    #   stop()
-    # }
     fils <- list.files(file.path(working_directory, model, "output"))
 
     if(length(fils) != 0){ #&
@@ -446,7 +350,8 @@ run_model_ler <- function(model,
                                                   z_out = modeled_depths,
                                                   vars_depth = output_vars_multi_depth,
                                                   vars_no_depth = output_vars_no_depth,
-                                                  diagnostic_vars = diagnostics_names)
+                                                  diagnostic_vars = diagnostics_names,
+                                                  ler_yaml = ler_yaml)
 
 
         num_model_depths <- length(ler_temp_out$depths_enkf)
