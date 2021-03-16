@@ -138,9 +138,12 @@ plotting_general <- function(file_name,
   names(state_list) <- state_names
 
   diagnostic_list <- list()
-  for(s in 1:length(diagnostics_names)){
-    diagnostic_list[[s]] <- ncdf4::ncvar_get(nc, diagnostics_names[s])
+  if(length(diagnostics_names) != 0) {
+    for(s in 1:length(diagnostics_names)){
+      diagnostic_list[[s]] <- ncdf4::ncvar_get(nc, diagnostics_names[s])
+    }
   }
+
 
   names(diagnostic_list) <- diagnostics_names
 
