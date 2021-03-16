@@ -32,7 +32,7 @@ get_ler_nc_var_all <- function(model, working_dir, z_out, vars_depth, vars_no_de
     if(length(diagnostic_vars) > 0){
       diagnostics_output <- array(NA,dim=c(tallest_layer, length(diagnostic_vars)))
       for(v in 1:length(diagnostic_vars)){
-        var_modeled <- ncvar_get(glm_nc, diagnostic_vars[v])[, final_time_step]
+        var_modeled <- ncdf4::ncvar_get(glm_nc, diagnostic_vars[v])[, final_time_step]
         diagnostics_output[,v] <- var_modeled[1:tallest_layer]
       }
     }else{
@@ -42,6 +42,8 @@ get_ler_nc_var_all <- function(model, working_dir, z_out, vars_depth, vars_no_de
     mixing_vars <- ncdf4::ncvar_get(glm_nc, "restart_variables")
 
     salt <- ncdf4::ncvar_get(glm_nc, "salt")[1:tallest_layer]
+
+    depths_enkf = rev(heights_surf - heights)
 
     ncdf4::nc_close(glm_nc)
   }
@@ -87,6 +89,8 @@ get_ler_nc_var_all <- function(model, working_dir, z_out, vars_depth, vars_no_de
 
     salt <- ncdf4::ncvar_get(nc, "salt")[, final_time_step]
 
+    depths_enkf = heights[1] - heights
+
     ncdf4::nc_close(nc)
   }
 
@@ -95,7 +99,7 @@ get_ler_nc_var_all <- function(model, working_dir, z_out, vars_depth, vars_no_de
   return(list(output = output,
               output_no_depth = output_no_depth,
               lake_depth = heights_surf,
-              depths_enkf = heights[1] - heights,
+              depths_enkf = depths_enkf,
               snow_wice_bice = c(snow, ice_white, ice_blue),
               avg_surf_temp = avg_surf_temp,
               mixing_vars = mixing_vars,
