@@ -89,6 +89,7 @@ generate_glm_met_files <- function(obs_met_file = NULL,
 
   }else{
     met <- NULL
+    historical_met_error <- FALSE
 
   }
 
