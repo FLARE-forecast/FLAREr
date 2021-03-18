@@ -328,7 +328,7 @@ run_model_ler <- function(model,
     old_output <- list.files(file.path(working_directory, model, "output"))
     unlink(file.path(working_directory, model, "output", old_output), recursive = TRUE)
 
-    model_states <- flare:::run_models_LER(model = model,
+    model_states <- flare:::run_models_ler(model = model,
                           folder = working_directory,
                           verbose = FALSE)
 
@@ -356,6 +356,7 @@ run_model_ler <- function(model,
 
         num_model_depths <- length(ler_temp_out$depths_enkf)
         temps <- rev(ler_temp_out$output[ ,1])
+        # temps <- (ler_temp_out$output[ ,1])
         model_depths_end[1:num_model_depths] <- ler_temp_out$depths_enkf
 
         model_depths_tmp <- c(ler_temp_out$depths_enkf, ler_temp_out$lake_depth)

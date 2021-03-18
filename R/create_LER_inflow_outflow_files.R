@@ -18,7 +18,7 @@
 #' @export
 #'
 #' @examples
-create_LER_inflow_outflow_files <- function(inflow_file,
+create_ler_inflow_outflow_files <- function(inflow_file,
                                             met_file_names,
                                             working_directory,
                                             start_datetime_local,
@@ -125,14 +125,14 @@ create_LER_inflow_outflow_files <- function(inflow_file,
     tmp2$datetime <- strftime(tmp2$datetime, format="%Y-%m-%d %H:%M:%S", tz = local_tzone)
 
     readr::write_csv(x = tmp2,
-                     path = inflow_file_names[i],
+                     file = inflow_file_names[i],
                      quote_escape = "none")
 
     tmp2 <- tmp2 %>%
       dplyr::select(datetime, Flow_metersCubedPerSecond)
 
     readr::write_csv(x = tmp2,
-                     path = outflow_file_names[i],
+                     file = outflow_file_names[i],
                      quote_escape = "none")
   }
 

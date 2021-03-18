@@ -14,7 +14,7 @@
 #'@importFrom glmtools read_nml set_nml write_nml
 #'
 #'@export
-run_models_LER <- function(model, folder, verbose) {
+run_models_ler <- function(model, folder, verbose) {
 
   if(model == "GLM") {
 

@@ -9,7 +9,8 @@ generate_initial_conditions(
   obs_config,
   pars_config = NULL,
   obs,
-  config
+  config,
+  model
 )
 }
 \arguments{
