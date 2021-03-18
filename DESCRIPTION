@@ -41,5 +41,7 @@ Suggests:
     knitr,
     rmarkdown,
     GLM3r,
-    GOTMr
+    GOTMr,
+    testthat (>= 3.0.0)
 VignetteBuilder: knitr
+Config/testthat/edition: 3
