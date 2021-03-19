@@ -381,6 +381,14 @@ run_enkf_forecast <- function(states_init,
         if(npars > 0){
           curr_pars <- x[i - 1, m , (nstates+1):(nstates+ npars)]
         }
+        
+        if(!is.null(ncol(inflow_file_names)){
+          inflow_file_name <- inflow_file_names[inflow_outflow_index, ]
+          outflow_file_name <- outflow_file_names[inflow_outflow_index, ]
+        }else{
+          inflow_file_name <- NA
+          outflow_file_name <- NA
+        }
 
         out <-run_model(i,
                         m,
@@ -403,8 +411,8 @@ run_enkf_forecast <- function(states_init,
                         modeled_depths = config$modeled_depths,
                         ndepths_modeled,
                         curr_met_file,
-                        inflow_file_name = inflow_file_names[inflow_outflow_index, ],
-                        outflow_file_name = outflow_file_names[inflow_outflow_index, ],
+                        inflow_file_name = inflow_file_name,
+                        outflow_file_name = outflow_file_name,
                         glm_output_vars = glm_output_vars,
                         diagnostics_names = config$diagnostics_names,
                         npars,
