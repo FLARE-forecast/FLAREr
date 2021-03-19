@@ -401,9 +401,13 @@ set_up_model <- function(executable_location,
     update_var(length(non_temp_names), "num_wq_vars", working_directory, "glm3.nml") #GLM SPECIFIC
     update_var(non_temp_names, "wq_names", working_directory, "glm3.nml")
   }
-
-  update_var(ncol(inflow_file_names), "num_inflows", working_directory, "glm3.nml")
-  update_var(ncol(outflow_file_names), "num_outlet", working_directory, "glm3.nml")
+   
+  if(!is.null(ncol(inflow_file_names)){
+    update_var(ncol(inflow_file_names), "num_inflows", working_directory, "glm3.nml")
+    update_var(ncol(outflow_file_names), "num_outlet", working_directory, "glm3.nml")
+    update_var(inflow_var_names, "inflow_vars", working_directory, "glm3.nml")
+    update_var(length(inflow_var_names), "inflow_varnum", working_directory, "glm3.nml")
+  }
 
   if(config$include_wq){
 
@@ -417,15 +421,12 @@ set_up_model <- function(executable_location,
               to = paste0(working_directory, "/", "aed2_zoop_pars.nml"), overwrite = TRUE)
 
   }
-
-
+     
   update_var(length(config$modeled_depths), "num_depths", working_directory, "glm3.nml") #GLM SPECIFIC
 
   update_var(config$modeled_depths, "the_depths", working_directory, "glm3.nml") #GLM SPECIFIC
 
   inflow_var_names <- c("FLOW","TEMP","SALT", non_temp_names)
-  update_var(inflow_var_names, "inflow_vars", working_directory, "glm3.nml")
-  update_var(length(inflow_var_names), "inflow_varnum", working_directory, "glm3.nml")
 
   #Create a copy of the NML to record starting initial conditions
   file.copy(from = paste0(working_directory, "/", "glm3.nml"), #GLM SPECIFIC
