@@ -404,7 +404,7 @@ set_up_model <- function(executable_location,
     update_var(non_temp_names, "wq_names", working_directory, "glm3.nml")
   }
    
-  if(!is.null(ncol(inflow_file_names)){
+  if(!is.null(ncol(inflow_file_names))){
     update_var(ncol(inflow_file_names), "num_inflows", working_directory, "glm3.nml")
     update_var(ncol(outflow_file_names), "num_outlet", working_directory, "glm3.nml")
     update_var(inflow_var_names, "inflow_vars", working_directory, "glm3.nml")
