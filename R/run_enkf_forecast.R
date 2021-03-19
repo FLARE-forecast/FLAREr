@@ -382,7 +382,7 @@ run_enkf_forecast <- function(states_init,
           curr_pars <- x[i - 1, m , (nstates+1):(nstates+ npars)]
         }
         
-        if(!is.null(ncol(inflow_file_names)){
+        if(!is.null(ncol(inflow_file_names))){
           inflow_file_name <- inflow_file_names[inflow_outflow_index, ]
           outflow_file_name <- outflow_file_names[inflow_outflow_index, ]
         }else{
