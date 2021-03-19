@@ -386,8 +386,8 @@ run_enkf_forecast <- function(states_init,
           inflow_file_name <- inflow_file_names[inflow_outflow_index, ]
           outflow_file_name <- outflow_file_names[inflow_outflow_index, ]
         }else{
-          inflow_file_name <- NA
-          outflow_file_name <- NA
+          inflow_file_name <- NULL
+          outflow_file_name <- NULL
         }
 
         out <-run_model(i,
