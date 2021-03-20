@@ -304,7 +304,7 @@ run_enkf_forecast <- function(states_init,
   x_prior <- array(NA, dim = c(nsteps, nmembers, nstates + npars))
 
 
-  set_up_model(executable_location = paste0(find.package("flare"),"/exec/"),
+  flare:::set_up_model(executable_location = paste0(find.package("flare"),"/exec/"),
                config,
                working_directory,
                state_names = states_config$state_names,
@@ -365,6 +365,14 @@ run_enkf_forecast <- function(states_init,
         curr_pars <- x[i - 1, m , (nstates+1):(nstates+ npars)]
       }
 
+      if(!is.null(ncol(inflow_file_names))) {
+        inflow_file_name <- inflow_file_names[inflow_outflow_index, ]
+        outflow_file_name <- outflow_file_names[inflow_outflow_index, ]
+      } else {
+        inflow_file_name <- NULL
+        outflow_file_name <- NULL
+      }
+
       out <- run_model(i,
                        m,
                        mixing_vars_start = mixing_vars[,i-1 , m],
@@ -386,8 +394,8 @@ run_enkf_forecast <- function(states_init,
                        modeled_depths = config$modeled_depths,
                        ndepths_modeled,
                        curr_met_file,
-                       inflow_file_name = inflow_file_names[inflow_outflow_index, ],
-                       outflow_file_name = outflow_file_names[inflow_outflow_index, ],
+                       inflow_file_name = inflow_file_name,
+                       outflow_file_name = outflow_file_name,
                        glm_output_vars = glm_output_vars,
                        diagnostics_names = config$diagnostics_names,
                        npars,

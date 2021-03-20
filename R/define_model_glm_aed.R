@@ -206,19 +206,21 @@ run_model <- function(i,
   update_glm_nml_names[list_index] <- "meteo_fl"
   list_index <- list_index + 1
 
-  update_glm_nml_list[[list_index]] <- unlist(inflow_file_name)
-  update_glm_nml_names[list_index] <- "inflow_fl"
-  list_index <- list_index + 1
+  if(!is.null((inflow_file_name))) {
+    update_glm_nml_list[[list_index]] <- unlist(inflow_file_name)
+    update_glm_nml_names[list_index] <- "inflow_fl"
+    list_index <- list_index + 1
 
-  update_glm_nml_list[[list_index]] <- unlist(outflow_file_name)
-  update_glm_nml_names[list_index] <- "outflow_fl"
-  list_index <- list_index + 1
+    update_glm_nml_list[[list_index]] <- unlist(outflow_file_name)
+    update_glm_nml_names[list_index] <- "outflow_fl"
+    list_index <- list_index + 1
+  }
 
 
-  flare:::update_nml(update_glm_nml_list,
-                     update_glm_nml_names,
+  flare:::update_nml(var_list = update_glm_nml_list,
+                     var_name_list = update_glm_nml_names,
                      working_directory,
-                     "glm3.nml")
+                     nml = "glm3.nml")
 
   if(list_index_aed > 1){
     flare:::update_nml(update_aed_nml_list,
@@ -391,10 +393,18 @@ set_up_model <- function(executable_location,
 
   flare:::update_var(length(non_temp_names), "num_wq_vars", working_directory, "glm3.nml") #GLM SPECIFIC
 
-  flare:::update_var(non_temp_names, "wq_names", working_directory, "glm3.nml")
+  if(length(non_temp_names) != 0) {
+    flare:::update_var(non_temp_names, "wq_names", working_directory, "glm3.nml")
+  }
 
-  flare:::update_var(ncol(inflow_file_names), "num_inflows", working_directory, "glm3.nml")
-  flare:::update_var(ncol(outflow_file_names), "num_outlet", working_directory, "glm3.nml")
+  if(!is.null(ncol(inflow_file_names))) {
+    flare:::update_var(ncol(inflow_file_names), "num_inflows", working_directory, "glm3.nml")
+    flare:::update_var(ncol(outflow_file_names), "num_outlet", working_directory, "glm3.nml")
+    inflow_var_names <- c("FLOW","TEMP","SALT", non_temp_names)
+    flare:::update_var(inflow_var_names, "inflow_vars", working_directory, "glm3.nml")
+    flare:::update_var(length(inflow_var_names), "inflow_varnum", working_directory, "glm3.nml")
+  }
+
 
   if(config$include_wq){
 
@@ -414,9 +424,7 @@ set_up_model <- function(executable_location,
 
   flare:::update_var(config$modeled_depths, "the_depths", working_directory, "glm3.nml") #GLM SPECIFIC
 
-  inflow_var_names <- c("FLOW","TEMP","SALT", non_temp_names)
-  flare:::update_var(inflow_var_names, "inflow_vars", working_directory, "glm3.nml")
-  flare:::update_var(length(inflow_var_names), "inflow_varnum", working_directory, "glm3.nml")
+
 
   #Create a copy of the NML to record starting initial conditions
   file.copy(from = paste0(working_directory, "/", "glm3.nml"), #GLM SPECIFIC
