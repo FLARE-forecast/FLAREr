@@ -140,10 +140,13 @@ get_glm_nc_var_all_wq <- function(ncFile, working_dir, z_out, vars_depth, vars_n
 
 
 
+  glm_temps <- matrix(ncdf4::ncvar_get(glm_nc, "temp"), ncol = final_time_step)[1:tallest_layer,final_time_step]
+
   output <- array(NA, dim=c(tallest_layer,length(vars_depth)))
   for(v in 1:length(vars_depth)){
     var_modeled <- ncvar_get(glm_nc, vars_depth[v])[, final_time_step]
     output[,v] <- var_modeled[1:tallest_layer]
+
   }
 
   output_no_depth <- NA
@@ -153,6 +156,7 @@ get_glm_nc_var_all_wq <- function(ncFile, working_dir, z_out, vars_depth, vars_n
     for(v in 1:length(diagnostic_vars)){
       var_modeled <- ncvar_get(glm_nc, diagnostic_vars[v])[, final_time_step]
       diagnostics_output[,v] <- var_modeled[1:tallest_layer]
+
     }
   }else{
     diagnostics_output <- NA
@@ -160,7 +164,7 @@ get_glm_nc_var_all_wq <- function(ncFile, working_dir, z_out, vars_depth, vars_n
 
   mixing_vars <- ncdf4::ncvar_get(glm_nc, "restart_variables")
 
-  salt <- ncdf4::ncvar_get(glm_nc, "salt")[1:tallest_layer]
+  salt <- matrix(ncdf4::ncvar_get(glm_nc, "salt"), ncol = final_time_step)[1:tallest_layer, final_time_step]
 
   ncdf4::nc_close(glm_nc)
 

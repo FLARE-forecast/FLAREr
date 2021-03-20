@@ -2,22 +2,27 @@
 % Please edit documentation in R/generate_restart_initial_conditions.R
 \name{generate_restart_initial_conditions}
 \alias{generate_restart_initial_conditions}
-\title{Generate initial conditiosn from saved output file}
+\title{Generate initial conditions from existing output file}
 \usage{
 generate_restart_initial_conditions(
   restart_file,
   state_names,
-  par_names = NULL
+  par_names = NULL,
+  restart_index = NULL
 )
 }
 \arguments{
-\item{restart_file}{}
+\item{restart_file}{file name of FLARE output csv}
 
-\item{par_names}{}
+\item{state_names}{names of states that are initialized}
+
+\item{par_names}{(optional) names of parameters that are initialized}
+
+\item{restart_index}{(optional) time index in restart file used for initalization}
+}
+\value{
+
 }
 \description{
-Generate initial conditiosn from saved output file
-}
-\author{
-Quinn Thomas
+Generate initial conditions from existing output file
 }

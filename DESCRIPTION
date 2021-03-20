@@ -36,10 +36,11 @@ Imports:
     plyr,
     ggplot2,
     rMR,
-    LakeEnsemblR
+    patchwork
 Suggests: 
     knitr,
     rmarkdown,
+    LakeEnsemblR,
     GLM3r,
     GOTMr,
     testthat (>= 3.0.0)

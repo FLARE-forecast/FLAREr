@@ -42,8 +42,8 @@ check_enkf_inputs <- function(states_init,
     stop("pars_init and states_init don't have same number of ensemble members")
   }
 
-  if(length(model_sd) != nrow(states_config)){
-    stop("length of model_sd != nrow(states_config)")
+  if(nrow(model_sd) != nrow(states_config)){
+    stop("rnow(model_sd) != nrow(states_config)")
   }
 
   if((dim(obs)[1] * dim(obs)[3]) != length(psi)){

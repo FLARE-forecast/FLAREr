@@ -18,7 +18,9 @@ write_forecast_netcdf <- function(enkf_output,
   x <- enkf_output$x
   lake_depth <- enkf_output$lake_depth
   snow_ice_thickness <- enkf_output$snow_ice_thickness
-  data_assimilation_flag <- enkf_output$data_assimilation_flag
+  data_assimilation_flag = enkf_output$data_assimilation_flag
+  forecast_flag = enkf_output$forecast_flag
+  da_qc_flag = enkf_output$da_qc_flag
   full_time_local <- enkf_output$full_time_local
   forecast_start_datetime <- enkf_output$forecast_start_datetime
   avg_surf_temp <- enkf_output$avg_surf_temp
@@ -68,16 +70,18 @@ write_forecast_netcdf <- function(enkf_output,
 
   def_list <- list()
   def_list[[1]] <- ncdf4::ncvar_def("temp","degC",list(timedim,depthdim, ensdim),fillvalue,'state: temperature',prec="single")
-  def_list[[2]] <- ncdf4::ncvar_def("data_assimilation","dimensionless",list(timedim),missval = -99,longname = '0 = historical; 1 = forecasted',prec="integer")
-  def_list[[3]] <- ncdf4::ncvar_def("snow_ice_thickness","meter", list(timedim,ensdim, snow_ice_dim),missval = -99,longname = 'Ice Thickness',prec="single")
-  def_list[[4]] <- ncdf4::ncvar_def("lake_depth","meter",list(timedim,ensdim),missval = -99,longname = 'Depth of lake',prec="single")
-  def_list[[5]] <- ncdf4::ncvar_def("avg_surf_temp","degC",list(timedim, ensdim),missval = -99,longname ='Running Average of Surface Temperature',prec="single")
-  def_list[[6]] <- ncdf4::ncvar_def("mixing_vars","dimensionless",list(mixing_vars_dim, timedim, ensdim),fillvalue,longname = "variables required to restart mixing",prec="single")
-  def_list[[7]] <- ncdf4::ncvar_def("model_internal_depths","meter",list(timedim, internal_model_depths_dim, ensdim),fillvalue,longname = "depths simulated by glm that are required to restart ",prec="single")
-  def_list[[8]] <- ncdf4::ncvar_def("salt","g_kg",list(timedim, depthdim, ensdim),fillvalue,longname = "salt",prec="single")
+  def_list[[2]] <- ncdf4::ncvar_def("data_assimilation","dimensionless",list(timedim),missval = -99,longname = '0 = no data assimilation; 1 = data assimilated',prec="integer")
+  def_list[[3]] <- ncdf4::ncvar_def("forecast","dimensionless",list(timedim),missval = -99,longname = '0 = historical; 1 = forecasted',prec="integer")
+  def_list[[4]] <- ncdf4::ncvar_def("da_qc","dimensionless",list(timedim),missval = -99,longname = '0 = successful DA; 1 = no data assimilated',prec="integer")
+  def_list[[5]] <- ncdf4::ncvar_def("snow_ice_thickness","meter", list(snow_ice_dim, timedim, ensdim),missval = -99,longname = 'Ice Thickness',prec="single")
+  def_list[[6]] <- ncdf4::ncvar_def("lake_depth","meter",list(timedim,ensdim),missval = -99,longname = 'Depth of lake',prec="single")
+  def_list[[7]] <- ncdf4::ncvar_def("avg_surf_temp","degC",list(timedim, ensdim),missval = -99,longname ='Running Average of Surface Temperature',prec="single")
+  def_list[[8]] <- ncdf4::ncvar_def("mixing_vars","dimensionless",list(mixing_vars_dim, timedim, ensdim),fillvalue,longname = "variables required to restart mixing",prec="single")
+  def_list[[9]] <- ncdf4::ncvar_def("model_internal_depths","meter",list(timedim, internal_moodel_depths_dim, ensdim),fillvalue,longname = "depths simulated by glm that are required to restart ",prec="single")
+  def_list[[10]] <- ncdf4::ncvar_def("salt","g_kg",list(timedim, depthdim, ensdim),fillvalue,longname = "salt",prec="single")
 
 
-  index <- 8
+  index <- 10
 
   for(i in 1:length(obs_config$state_names_obs)){
     long_name1 <- "observed"
@@ -137,14 +141,16 @@ write_forecast_netcdf <- function(enkf_output,
   # create netCDF file and put arrays
   ncdf4::ncvar_put(ncout,def_list[[1]] ,x_efi[,1:length(depths),])
   ncdf4::ncvar_put(ncout,def_list[[2]] ,as.array(data_assimilation_flag))
-  ncdf4::ncvar_put(ncout,def_list[[3]] ,snow_ice_thickness)
-  ncdf4::ncvar_put(ncout,def_list[[4]] ,lake_depth)
-  ncdf4::ncvar_put(ncout,def_list[[5]] ,avg_surf_temp)
-  ncdf4::ncvar_put(ncout,def_list[[6]] ,mixing_vars)
-  ncdf4::ncvar_put(ncout,def_list[[7]] ,model_internal_depths)
-  ncdf4::ncvar_put(ncout,def_list[[8]] ,salt)
+  ncdf4::ncvar_put(ncout,def_list[[3]] ,as.array(forecast_flag))
+  ncdf4::ncvar_put(ncout,def_list[[4]] ,as.array(da_qc_flag))
+  ncdf4::ncvar_put(ncout,def_list[[5]] ,snow_ice_thickness)
+  ncdf4::ncvar_put(ncout,def_list[[6]] ,lake_depth)
+  ncdf4::ncvar_put(ncout,def_list[[7]] ,avg_surf_temp)
+  ncdf4::ncvar_put(ncout,def_list[[8]] ,mixing_vars)
+  ncdf4::ncvar_put(ncout,def_list[[9]] ,model_internal_depths)
+  ncdf4::ncvar_put(ncout,def_list[[10]] ,salt)
 
-  index <- 8
+  index <- 10
 
   for(i in 1:length(obs_config$state_names_obs)){
     ncdf4::ncvar_put(ncout,def_list[[index + i]] ,obs[i,,])
@@ -177,12 +183,19 @@ write_forecast_netcdf <- function(enkf_output,
   ncdf4::ncatt_put(ncout,0,"title",enkf_output$config$metadata$forecast_title, prec =  "text")
   ncdf4::ncatt_put(ncout,0,"forecast_iteration_id",enkf_output$forecast_iteration_id, prec =  "text")
   ncdf4::ncatt_put(ncout,0,"forecast_project_id",enkf_output$config$metadata$forecast_project_id, prec =  "text")
+  ncdf4::ncatt_put(ncout,0,"forecast_model_id",enkf_output$config$metadata$forecast_model_id, prec =  "text")
   ncdf4::ncatt_put(ncout,0,"local_time_zone_of_simulation",as.character(config$local_tzone), prec =  "text")
-  ncdf4::ncatt_put(ncout,0,"forecast_issue_time",paste0(as.character(time_of_forecast),"Z"), prec =  "text")
 
   ncdf4::nc_close(ncout)
 
   invisible(ncfname)
 
+
 }
+
+
+
+
+
+
 

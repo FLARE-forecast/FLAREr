@@ -117,7 +117,7 @@ create_flare_eml <- function(file_name,
   if(enkf_output$config$initial_condition_uncertainty){
     initial_conditions = list(
       # Possible values: no, contains, data_driven, propagates, assimilates
-      uncertainty = "assimilates",
+      status = "assimilates",
       # Number of parameters / dimensionality
       complexity = nstates,
       propagation = list(
@@ -133,7 +133,7 @@ create_flare_eml <- function(file_name,
   }else{
     initial_conditions = list(
       # Possible values: no, contains, data_driven, propagates, assimilates
-      uncertainty = "data_driven",
+      status = "data_driven",
       # Number of parameters / dimensionality
       complexity = nstates
     )
@@ -141,7 +141,7 @@ create_flare_eml <- function(file_name,
 
   if(enkf_output$config$parameter_uncertainty & npars > 0){
     parameters = list(
-      uncertainty = "assimilates",
+      status = "assimilates",
       complexity = npars,
       propagation = list(
         type = "ensemble", # ensemble vs analytic
@@ -155,14 +155,14 @@ create_flare_eml <- function(file_name,
     )
   }else{
     parameters = list(
-      uncertainty =  "contains",
+      status =  "present",
       complexity = 0
     )
   }
 
   if(enkf_output$config$process_uncertainty){
     process_error = list(
-      uncertainty = "propagates",
+      status = "propagates",
       propagation = list(
         type = "ensemble", # ensemble vs analytic
         size = nmembers          # required if ensemble
@@ -174,14 +174,13 @@ create_flare_eml <- function(file_name,
 
   }else{
     process_error = list(
-      uncertainty = "contains",
-      complexity = nstates
+      status = "absent"
     )
   }
 
   if(enkf_output$config$weather_uncertainty | enkf_output$config$met_downscale_uncertainty){
     drivers = list(
-      uncertainty = "propagates",
+      status = "propagates",
       complexity = length(unique(enkf_output$met_file_names)),
       propagation = list(
         type = "ensemble", # ensemble vs analytic
@@ -216,7 +215,10 @@ create_flare_eml <- function(file_name,
         initial_conditions = initial_conditions,
         parameters = parameters,
         random_effects = list(
-          uncertainty = "no"
+          status = "absent"
+        ),
+        obs_error = list(
+          status = "data_driven"
         ),
         process_error = process_error,
         drivers = drivers
@@ -235,6 +237,8 @@ create_flare_eml <- function(file_name,
 
   EFIstandards::forecast_validator(my_eml)
 
-  EML::write_eml(my_eml, paste0(enkf_output$config$run_config$forecast_location, "/", tools::file_path_sans_ext(basename(file_name)),"-eml.xml"))
+  eml_file_name <- paste0(enkf_output$config$run_config$forecast_location, "/", tools::file_path_sans_ext(basename(file_name)),"-eml.xml")
 
+  EML::write_eml(my_eml, eml_file_name)
+  invisible(eml_file_name)
 }
