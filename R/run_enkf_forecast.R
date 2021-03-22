@@ -165,8 +165,8 @@ run_enkf_forecast <- function(states_init,
                               model_sd,
                               working_directory,
                               met_file_names,
-                              inflow_file_names,
-                              outflow_file_names,
+                              inflow_file_names = NULL,
+                              outflow_file_names = NULL,
                               start_datetime,
                               end_datetime,
                               forecast_start_datetime = NA,
@@ -307,7 +307,7 @@ run_enkf_forecast <- function(states_init,
 
   x_prior <- array(NA, dim = c(nsteps, nmembers, nstates + npars))
 
-  if(!is.null(ncol(inflow_file_names))){
+  if(!is.null(inflow_file_names)){
     inflow_file_names <- as.matrix(inflow_file_names)
     outflow_file_names <- as.matrix(outflow_file_names)
   }else{
