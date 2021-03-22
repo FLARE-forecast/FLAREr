@@ -206,7 +206,6 @@ run_model <- function(i,
   update_glm_nml_names[list_index] <- "meteo_fl"
   list_index <- list_index + 1
 
-
   if(!is.null(inflow_file_name)){
     update_glm_nml_list[[list_index]] <- unlist(inflow_file_name)
     update_glm_nml_names[list_index] <- "inflow_fl"
@@ -400,11 +399,11 @@ set_up_model <- function(executable_location,
   file.copy(from = file.path(config$run_config$forecast_location, config$base_GLM_nml),
             to = paste0(working_directory, "/", "glm3.nml"), overwrite = TRUE)
 
-  non_temp_names <- state_names[which(!(state_names %in% "temp"))]
+  non_temp_names <- state_names[which(!(state_names %in% c("temp", "salt")))]
 
   flare:::update_var(length(non_temp_names), "num_wq_vars", working_directory, "glm3.nml") #GLM SPECIFIC
 
-  if(length(non_temp_names) != 0) {
+  if(length(non_temp_names) > 1) {
     flare:::update_var(non_temp_names, "wq_names", working_directory, "glm3.nml")
   }
 

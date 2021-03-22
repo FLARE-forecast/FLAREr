@@ -119,44 +119,37 @@ update_nml <- function(var_list,var_name_list,working_directory, nml){
 #' @examples
 #' add(1, 1)
 #' add(10, 1)
-get_glm_nc_var_all_wq <- function(ncFile, working_dir, z_out, vars_depth, vars_no_depth, diagnostic_vars){
-
+get_glm_nc_var_all_wq <- function(ncFile,working_dir, z_out,vars_depth, vars_no_depth, diagnostic_vars){
   glm_nc <- ncdf4::nc_open(paste0(working_dir, ncFile))
   tallest_layer <- ncdf4::ncvar_get(glm_nc, "NS")
   final_time_step <- length(tallest_layer)
-  tallest_layer <- tallest_layer[final_time_step] # Edited
-  heights <- ncdf4::ncvar_get(glm_nc, "z")
+  tallest_layer <- tallest_layer[final_time_step]
+  heights <- matrix(ncdf4::ncvar_get(glm_nc, "z"), ncol = final_time_step)
   heights_surf <- heights[tallest_layer, final_time_step]
   heights <- heights[1:tallest_layer, final_time_step]
   heights_out <- heights_surf - z_out
 
-  snow <- ncdf4::ncvar_get(glm_nc, "hsnow")[final_time_step]
-  ice_white <- ncdf4::ncvar_get(glm_nc, "hwice")[final_time_step]
-  ice_blue <- ncdf4::ncvar_get(glm_nc, "hice")[final_time_step]
-  avg_surf_temp <- ncdf4::ncvar_get(glm_nc, "avg_surf_temp")[final_time_step]
-
-
-  glm_temps <- ncdf4::ncvar_get(glm_nc, "temp")[1:tallest_layer, final_time_step]
-
+  snow <-  matrix(ncdf4::ncvar_get(glm_nc, "hsnow"), ncol = final_time_step)[final_time_step]
+  ice_white <- matrix(ncdf4::ncvar_get(glm_nc, "hwice"), ncol = final_time_step)[final_time_step]
+  ice_blue <- matrix(ncdf4::ncvar_get(glm_nc, "hice"), ncol = final_time_step)[final_time_step]
+  avg_surf_temp <- matrix(ncdf4::ncvar_get(glm_nc, "avg_surf_temp"), ncol = final_time_step)[final_time_step]
 
 
   glm_temps <- matrix(ncdf4::ncvar_get(glm_nc, "temp"), ncol = final_time_step)[1:tallest_layer,final_time_step]
 
-  output <- array(NA, dim=c(tallest_layer,length(vars_depth)))
+  output <- array(NA,dim=c(tallest_layer,length(vars_depth)))
   for(v in 1:length(vars_depth)){
-    var_modeled <- ncvar_get(glm_nc, vars_depth[v])[, final_time_step]
-    output[,v] <- var_modeled[1:tallest_layer]
-
+    var_modeled <-  matrix(ncdf4::ncvar_get(glm_nc, vars_depth[v]), ncol = final_time_step)
+    output[,v] <- var_modeled[1:tallest_layer,final_time_step]
   }
 
   output_no_depth <- NA
 
   if(length(diagnostic_vars) > 0){
-    diagnostics_output <- array(NA,dim=c(tallest_layer, length(diagnostic_vars)))
+    diagnostics_output <- array(NA,dim=c(tallest_layer,length(diagnostic_vars)))
     for(v in 1:length(diagnostic_vars)){
-      var_modeled <- ncvar_get(glm_nc, diagnostic_vars[v])[, final_time_step]
-      diagnostics_output[,v] <- var_modeled[1:tallest_layer]
-
+      var_modeled <- matrix(ncdf4::ncvar_get(glm_nc, diagnostic_vars[v]), ncol = final_time_step)
+      diagnostics_output[,v] <- var_modeled[1:tallest_layer,final_time_step]
     }
   }else{
     diagnostics_output <- NA
