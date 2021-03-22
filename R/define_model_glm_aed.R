@@ -275,7 +275,7 @@ run_model <- function(i,
               stderr = FALSE,
               env = paste0("DYLD_LIBRARY_PATH=",working_directory))
     }else if(machine == "windows"){
-      GLM3r::run_glm()
+      GLM3r::run_glm(verbose = FALSE)
       # glmtools::plot_temp()
       # system2(paste0(working_directory, "/", "glm.exe"),
       #         invisible = FALSE)
