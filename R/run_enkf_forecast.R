@@ -307,8 +307,14 @@ run_enkf_forecast <- function(states_init,
 
   x_prior <- array(NA, dim = c(nsteps, nmembers, nstates + npars))
 
-  inflow_file_names <- as.matrix(inflow_file_names)
-  outflow_file_names <- as.matrix(outflow_file_names)
+  if(!is.null(ncol(inflow_file_names))){
+    inflow_file_names <- as.matrix(inflow_file_names)
+    outflow_file_names <- as.matrix(outflow_file_names)
+  }else{
+    inflow_file_names <- NULL
+    outflow_file_names <- NULL
+  }
+
 
   flare:::set_up_model(executable_location = paste0(find.package("flare"),"/exec/"),
                config,
@@ -442,9 +448,11 @@ run_enkf_forecast <- function(states_init,
           met_index <- 1
         }
 
-        inflow_outflow_index <- inflow_outflow_index + 1
-        if(inflow_outflow_index > nrow(as.matrix(inflow_file_names))){
-          inflow_outflow_index <- 1
+        if(!is.null(ncol(inflow_file_names))) {
+          inflow_outflow_index <- inflow_outflow_index + 1
+          if(inflow_outflow_index > nrow(as.matrix(inflow_file_names))){
+            inflow_outflow_index <- 1
+          }
         }
 
 
