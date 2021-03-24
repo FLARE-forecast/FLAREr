@@ -5,25 +5,18 @@
 \title{Title}
 \usage{
 create_glm_inflow_outflow_files(
-  inflow_file,
-  met_file_names,
+  inflow_file_dir,
+  inflow_obs,
   working_directory,
   start_datetime_local,
   end_datetime_local,
   forecast_start_datetime_local,
-  local_tzone,
-  inflow_process_uncertainty,
-  future_inflow_flow_coeff,
-  future_inflow_flow_error,
-  future_inflow_temp_coeff,
-  future_inflow_temp_error,
   use_future_inflow,
-  state_names = NULL,
-  specified_files = NULL
+  state_names
 )
 }
 \arguments{
-\item{use_future_inflow}{}
+\item{state_names}{}
 }
 \value{
 

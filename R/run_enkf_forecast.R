@@ -165,8 +165,8 @@ run_enkf_forecast <- function(states_init,
                               model_sd,
                               working_directory,
                               met_file_names,
-                              inflow_file_names,
-                              outflow_file_names,
+                              inflow_file_names = NULL,
+                              outflow_file_names = NULL,
                               start_datetime,
                               end_datetime,
                               forecast_start_datetime = NA,
@@ -233,7 +233,7 @@ run_enkf_forecast <- function(states_init,
   states_config$wq_start <- wq_start
   states_config$wq_end <- wq_end
 
-  check_enkf_inputs(states_init,
+  flare:::check_enkf_inputs(states_init,
                     pars_init,
                     obs,
                     psi,
@@ -307,10 +307,16 @@ run_enkf_forecast <- function(states_init,
 
   x_prior <- array(NA, dim = c(nsteps, nmembers, nstates + npars))
 
-  inflow_file_names <- as.matrix(inflow_file_names)
-  outflow_file_names <- as.matrix(outflow_file_names)
+  if(!is.null(inflow_file_names)){
+    inflow_file_names <- as.matrix(inflow_file_names)
+    outflow_file_names <- as.matrix(outflow_file_names)
+  }else{
+    inflow_file_names <- NULL
+    outflow_file_names <- NULL
+  }
 
-  set_up_model(executable_location = paste0(find.package("flare"),"/exec/"),
+
+  flare:::set_up_model(executable_location = paste0(find.package("flare"),"/exec/"),
                config,
                working_directory,
                state_names = states_config$state_names,
@@ -381,7 +387,7 @@ run_enkf_forecast <- function(states_init,
         if(npars > 0){
           curr_pars <- x[i - 1, m , (nstates+1):(nstates+ npars)]
         }
-        
+
         if(!is.null(ncol(inflow_file_names))){
           inflow_file_name <- inflow_file_names[inflow_outflow_index, ]
           outflow_file_name <- outflow_file_names[inflow_outflow_index, ]
@@ -442,9 +448,11 @@ run_enkf_forecast <- function(states_init,
           met_index <- 1
         }
 
-        inflow_outflow_index <- inflow_outflow_index + 1
-        if(inflow_outflow_index > nrow(as.matrix(inflow_file_names))){
-          inflow_outflow_index <- 1
+        if(!is.null(ncol(inflow_file_names))) {
+          inflow_outflow_index <- inflow_outflow_index + 1
+          if(inflow_outflow_index > nrow(as.matrix(inflow_file_names))){
+            inflow_outflow_index <- 1
+          }
         }
 
 

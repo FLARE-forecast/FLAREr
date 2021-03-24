@@ -217,10 +217,10 @@ run_model <- function(i,
   }
 
 
-  flare:::update_nml(update_glm_nml_list,
-                     update_glm_nml_names,
+  flare:::update_nml(var_list = update_glm_nml_list,
+                     var_name_list = update_glm_nml_names,
                      working_directory,
-                     "glm3.nml")
+                     nml = "glm3.nml")
 
   if(list_index_aed > 1){
     flare:::update_nml(update_aed_nml_list,
@@ -274,8 +274,10 @@ run_model <- function(i,
               stderr = FALSE,
               env = paste0("DYLD_LIBRARY_PATH=",working_directory))
     }else if(machine == "windows"){
-      system2(paste0(working_directory, "/", "glm.exe"),
-              invisible = FALSE)
+      GLM3r::run_glm(verbose = FALSE)
+      # glmtools::plot_temp()
+      # system2(paste0(working_directory, "/", "glm.exe"),
+      #         invisible = FALSE)
     }else{
       print("Machine not identified")
       stop()
@@ -397,19 +399,22 @@ set_up_model <- function(executable_location,
   file.copy(from = file.path(config$run_config$forecast_location, config$base_GLM_nml),
             to = paste0(working_directory, "/", "glm3.nml"), overwrite = TRUE)
 
-  non_temp_names <- state_names[which(!(state_names %in% c("temp","salt")))]
+  non_temp_names <- state_names[which(!(state_names %in% c("temp", "salt")))]
 
-  if(length(non_temp_names) > 0){
-    update_var(length(non_temp_names), "num_wq_vars", working_directory, "glm3.nml") #GLM SPECIFIC
-    update_var(non_temp_names, "wq_names", working_directory, "glm3.nml")
+  flare:::update_var(length(non_temp_names), "num_wq_vars", working_directory, "glm3.nml") #GLM SPECIFIC
+
+  if(length(non_temp_names) > 1) {
+    flare:::update_var(non_temp_names, "wq_names", working_directory, "glm3.nml")
   }
-   
-  if(!is.null(ncol(inflow_file_names))){
-    update_var(ncol(inflow_file_names), "num_inflows", working_directory, "glm3.nml")
-    update_var(ncol(outflow_file_names), "num_outlet", working_directory, "glm3.nml")
-    update_var(inflow_var_names, "inflow_vars", working_directory, "glm3.nml")
-    update_var(length(inflow_var_names), "inflow_varnum", working_directory, "glm3.nml")
+
+  if(!is.null(ncol(inflow_file_names))) {
+    flare:::update_var(ncol(inflow_file_names), "num_inflows", working_directory, "glm3.nml")
+    flare:::update_var(ncol(outflow_file_names), "num_outlet", working_directory, "glm3.nml")
+    inflow_var_names <- c("FLOW","TEMP","SALT", non_temp_names)
+    flare:::update_var(inflow_var_names, "inflow_vars", working_directory, "glm3.nml")
+    flare:::update_var(length(inflow_var_names), "inflow_varnum", working_directory, "glm3.nml")
   }
+
 
   if(config$include_wq){
 
@@ -423,10 +428,10 @@ set_up_model <- function(executable_location,
               to = paste0(working_directory, "/", "aed2_zoop_pars.nml"), overwrite = TRUE)
 
   }
-     
-  update_var(length(config$modeled_depths), "num_depths", working_directory, "glm3.nml") #GLM SPECIFIC
 
-  update_var(config$modeled_depths, "the_depths", working_directory, "glm3.nml") #GLM SPECIFIC
+
+    flare:::update_var(length(config$modeled_depths), "num_depths", working_directory, "glm3.nml") #GLM SPECIFIC
+
 
   inflow_var_names <- c("FLOW","TEMP","SALT", non_temp_names)
 
