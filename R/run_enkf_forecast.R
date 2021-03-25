@@ -396,7 +396,7 @@ run_enkf_forecast <- function(states_init,
           outflow_file_name <- NULL
         }
 
-        out <-run_model(i,
+        out <-flare:::run_model(i,
                         m,
                         mixing_vars_start = mixing_vars[,i-1 , m],
                         curr_start,
@@ -423,9 +423,9 @@ run_enkf_forecast <- function(states_init,
                         diagnostics_names = config$diagnostics_names,
                         npars,
                         num_wq_vars,
-                        snow_ice_thickness_start = snow_ice_thickness[, i-1,m ],
+                        snow_ice_thickness_start = snow_ice_thickness[, i-1, m ],
                         avg_surf_temp_start = avg_surf_temp[i-1, m],
-                        salt_start = salt[i-1, ,m],
+                        salt_start = salt[i-1, , m],
                         nstates,
                         state_names = states_config$state_names,
                         include_wq = config$include_wq)
