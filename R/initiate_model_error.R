@@ -8,10 +8,10 @@
 #' @export
 #'
 #' @examples
-initiate_model_error <- function(config, states_config, forecast_location){
+initiate_model_error <- function(config, states_config, config_file_location){
   if(!is.null(config$states_config_process_error)){
     model_sd <- array(NA, dim = c(nrow(states_config),length(config$modeled_depths)))
-    config_process_error <- readr::read_csv(file.path(forecast_location, "configuration_files", config$states_config_process_error), col_type = readr::cols())
+    config_process_error <- readr::read_csv(file.path(config_file_location, config$states_config_process_error), col_type = readr::cols())
     for(s in 1:nrow(states_config)){
       if(states_config$state_names[s] %in% names(config_process_error)){
         model_sd[s, ] <- approx(x = config_process_error$depth, y = unlist(config_process_error[states_config$state_names[s]]), xout = config$modeled_depths)$y

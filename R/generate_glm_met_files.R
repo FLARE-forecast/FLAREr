@@ -96,7 +96,9 @@ generate_glm_met_files <- function(obs_met_file = NULL,
 
   if(!is.null(forecast_dir)){
 
-    forecast_files <- list.files(forecast_dir, full.names = TRUE)
+    forecast_files <- list.files(forecast_dir, pattern = ".nc", full.names = TRUE)
+
+    forecast_files <- forecast_files[!stringr::str_detect(string = forecast_files, pattern = basename(obs_met_file))]
 
     nfiles <-   length(forecast_files)
 
