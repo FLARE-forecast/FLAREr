@@ -1,0 +1,2 @@
+﻿state_names_obs,obs_units,obs_sd,target_variable,distance_threshold
+temp,degC,0.07117918,temperature,0.15

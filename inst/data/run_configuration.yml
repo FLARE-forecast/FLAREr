@@ -1,0 +1,11 @@
+restart_file: .na
+start_day_local: '2018-10-02'
+start_time_local: '19:00:00'
+end_day_local: .na
+forecast_start_day_local: '2018-10-04'
+forecast_horizon: 3.0
+forecast_project_id: test_run
+sim_name: test_run
+forecast_sss_on: no
+forecast_location: .na
+execute_location: .na
