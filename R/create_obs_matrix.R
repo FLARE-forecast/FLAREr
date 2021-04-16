@@ -48,8 +48,9 @@ create_obs_matrix <- function(cleaned_observations_file_long, obs_config, start_
         d1 <- d1 %>%
           dplyr::filter(abs(depth-modeled_depths[j]) < obs_config$distance_threshold[i])
         if(nrow(d1) == 0){
-          warning("No observations for ", obs_config$target_variable[i], " on ", lubridate::as_date(full_time_local[k]),
-               " at ", lubridate::hour(full_time_local[k]), ":00:00", " within ", obs_config$distance_threshold[i], "m of the modeled depth ", modeled_depths[j], "m")
+          # warning("No observations for ", obs_config$target_variable[i], " on ", lubridate::as_date(full_time_local[k]),
+               # " at ", lubridate::hour(full_time_local[k]), ":00:00", " within ", obs_config$distance_threshold[i],
+          # "m of the modeled depth ", modeled_depths[j], "m")
         }
         if(nrow(d1) >= 1){
           if(nrow(d1) > 1){
