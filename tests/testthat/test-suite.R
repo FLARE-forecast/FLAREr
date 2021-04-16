@@ -139,6 +139,10 @@ test_that("initial conditions are generated", {
 
   source(file.path(test_location, "test_met_prep.R"))
 
+  obs_tmp <- read.csv(cleaned_observations_file_long)
+  obs_tmp$hour[which(obs_tmp$hour == 7)] <- 19
+  write.csv(obs_tmp, cleaned_observations_file_long, row.names = FALSE, quote = FALSE)
+
   obs <- flare::create_obs_matrix(cleaned_observations_file_long,
                                   obs_config,
                                   start_datetime_local,
