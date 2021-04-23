@@ -613,12 +613,19 @@ run_pf_forecast <- function(states_init,
 
       LL <- rep(NA, length(nmembers))
       for(m in 1:nmembers){
-        LL[m] <- sum(dnorm(zt, mean = x_corr[m,z_index], sd = psi[z_index] * 5, log = TRUE))
+        LL[m] <- sum(dnorm(zt, mean = x_corr[m,z_index], sd = psi[z_index], log = TRUE))
       }
 
       sample <- sample.int(nmembers, replace = TRUE, prob = exp(LL))
 
       x[i, , ] <- cbind(x_corr, pars_star)[sample, ]
+
+      snow_ice_thickness[ ,i, ] <- snow_ice_thickness[ ,i, sample]
+      avg_surf_temp[i, ] <- avg_surf_temp[i, sample]
+      lake_depth[i, ] <- lake_depth[i, sample]
+      salt[i, , ] <- salt[i, ,sample]
+      model_internal_depths[i, , ] <- model_internal_depths[i, , sample]
+      diagnostics[ ,i, , ] <- diagnostics[ ,i, ,sample]
 
     }
 
