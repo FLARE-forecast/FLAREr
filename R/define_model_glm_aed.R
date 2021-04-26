@@ -263,16 +263,18 @@ run_model <- function(i,
   while(!pass){
     unlink(paste0(working_directory, "/output.nc"))
 
+    execuatable_location <- paste0(find.package("flare"),"/exec/")
+
     if(machine == "unix"){
-      system2(paste0(working_directory, "/", "glm_linux"),
+      system2(paste0(execuatable_location, "/", "glm_linux"),
               stdout = FALSE,
               stderr = FALSE,
-              env = paste0("DYLD_LIBRARY_PATH=",working_directory))
+              env = paste0("DYLD_LIBRARY_PATH=",execuatable_location))
     }else if(machine == "mac"){
-      system2(paste0(working_directory, "/", "glm"),
+      system2(paste0(execuatable_location, "/", "glm"),
               stdout = FALSE,
               stderr = FALSE,
-              env = paste0("DYLD_LIBRARY_PATH=",working_directory))
+              env = paste0("DYLD_LIBRARY_PATH=",execuatable_location))
     }else if(machine == "windows"){
       GLM3r::run_glm(verbose = FALSE)
       # glmtools::plot_temp()
@@ -399,9 +401,9 @@ set_up_model <- function(executable_location,
          Windows = { machine <- "windows"})
 
 
-  GLM_folder <- executable_location
-  fl <- c(list.files(GLM_folder, full.names = TRUE))
-  tmp <- file.copy(from = fl, to = working_directory, overwrite = TRUE)
+  #GLM_folder <- executable_location
+  #fl <- c(list.files(GLM_folder, full.names = TRUE))
+  #tmp <- file.copy(from = fl, to = working_directory, overwrite = TRUE)
 
   file.copy(from = file.path(config$run_config$forecast_location, config$base_GLM_nml),
             to = paste0(working_directory, "/", "glm3.nml"), overwrite = TRUE)
