@@ -319,14 +319,14 @@ run_enkf_forecast <- function(states_init,
 
   for(m in 1:nmembers){
     if(!dir.exists(file.path(working_directory, m))){
-      dir.create(file.path(working_directory, m))
+      dir.create(file.path(working_directory, m), showWarnings = FALSE)
     }else{
       unlink(file.path(working_directory, m), recursive = TRUE)
-      dir.create(file.path(working_directory, m))
+      dir.create(file.path(working_directory, m), showWarnings = FALSE)
     }
     flare:::set_up_model(executable_location = paste0(find.package("flare"),"/exec/"),
                          config,
-                         ens_working_directory = paste0(working_directory,m),
+                         ens_working_directory = file.path(working_directory,m),
                          state_names = states_config$state_names,
                          inflow_file_names = inflow_file_names,
                          outflow_file_names = outflow_file_names)
@@ -369,8 +369,8 @@ run_enkf_forecast <- function(states_init,
 
     setwd(working_directory)
 
-    met_index <- 1
-    inflow_outflow_index <- 1
+    met_index <- rep(1:length(met_file_names), times = nmembers)
+    inflow_outflow_index <- rep(1:length(inflow_file_names), times = nmembers)
 
     #Create array to hold GLM predictions for each ensemble
     x_star <- array(NA, dim = c(nmembers, nstates))
@@ -384,17 +384,37 @@ run_enkf_forecast <- function(states_init,
       dit_pars<- array(NA, dim = c(nmembers, npars))
     }
 
+    # if i = start_step set up cluster for parallelization
+    if(i == start_step) {
+      cl <- parallel::makeCluster(config$ncore)
+      parallel::clusterExport(cl, varlist = list("working_directory", "met_file_names", "met_index",
+                                                 "par_fit_method", "da_method", "nstates", "npars",
+                                                 "pars_config", "inflow_file_names", "inflow_outflow_index",
+                                                 "outflow_file_names", "i", "curr_start",
+                                                 "curr_stop", "par_names", "par_nml",
+                                                 "num_phytos", "full_time_local", "management",
+                                                 "hist_days", "config", "states_config",
+                                                 "ndepths_modeled", "glm_output_vars", "num_wq_vars"),
+                              envir = environment())
+      parallel::clusterEvalQ(cl, library(flare))
+    }
+
+    # Variables that need to be exported at each timestep
+    parallel::clusterExport(cl, varlist = list("x", "mixing_vars", "model_internal_depths", "lake_depth",
+                                               "snow_ice_thickness", "avg_surf_temp", "salt"),
+                            envir = environment())
+
+
     #If i == 1 then assimilate the first time step without running the process
     #model (i.e., use yesterday's forecast of today as initial conditions and
     #assimilate new observations)
     if(i > 1){
 
-      # Start loop through ensemble members
-      for(m in 1:nmembers){
+      out <- parallel::parLapply(cl, 1:nmembers, function(m) {
 
         setwd(file.path(working_directory, m))
 
-        curr_met_file <- met_file_names[met_index]
+        curr_met_file <- met_file_names[met_index[m]]
 
         if(npars > 0){
           if(par_fit_method == "inflate" & da_method == "enkf"){
@@ -411,8 +431,8 @@ run_enkf_forecast <- function(states_init,
         }
 
         if(!is.null(ncol(inflow_file_names))){
-          inflow_file_name <- inflow_file_names[inflow_outflow_index, ]
-          outflow_file_name <- outflow_file_names[inflow_outflow_index, ]
+          inflow_file_name <- inflow_file_names[inflow_outflow_index[m], ]
+          outflow_file_name <- outflow_file_names[inflow_outflow_index[m], ]
         }else{
           inflow_file_name <- NULL
           outflow_file_name <- NULL
@@ -452,31 +472,18 @@ run_enkf_forecast <- function(states_init,
                                 state_names = states_config$state_names,
                                 include_wq = config$include_wq)
 
-        x_star[m, ] <- out$x_star_end
-        lake_depth[i ,m ] <- out$lake_depth_end
-        snow_ice_thickness[,i ,m] <- out$snow_ice_thickness_end
-        avg_surf_temp[i , m] <- out$avg_surf_temp_end
-        mixing_vars[, i, m] <- out$mixing_vars_end
-        diagnostics[, i, , m] <- out$diagnostics_end
-        model_internal_depths[i, ,m] <- out$model_internal_depths
-        salt[i, , m]  <- out$salt_end
-        ########################################
-        #END GLM SPECIFIC PART
-        ########################################
+      })
 
-        #INCREMENT ThE MET_INDEX TO MOVE TO ThE NEXT NOAA ENSEMBLE
-        met_index <- met_index + 1
-        if(met_index > length(met_file_names)){
-          met_index <- 1
-        }
-
-        if(!is.null(ncol(inflow_file_names))) {
-          inflow_outflow_index <- inflow_outflow_index + 1
-          if(inflow_outflow_index > nrow(as.matrix(inflow_file_names))){
-            inflow_outflow_index <- 1
-          }
-        }
-
+      # Loop through output and assign to matrix
+      for(m in 1:nmembers) {
+        x_star[m, ] <- out[[m]]$x_star_end
+        lake_depth[i ,m ] <- out[[m]]$lake_depth_end
+        snow_ice_thickness[,i ,m] <- out[[m]]$snow_ice_thickness_end
+        avg_surf_temp[i , m] <- out[[m]]$avg_surf_temp_end
+        mixing_vars[, i, m] <- out[[m]]$mixing_vars_end
+        diagnostics[, i, , m] <- out[[m]]$diagnostics_end
+        model_internal_depths[i, ,m] <- out[[m]]$model_internal_depths
+        salt[i, , m]  <- out[[m]]$salt_end
 
         #Add process noise
         q_v[] <- NA
@@ -496,9 +503,12 @@ run_enkf_forecast <- function(states_init,
           x_corr[m, (((jj-1)*ndepths_modeled)+1):(jj*ndepths_modeled)] <-
             x_star[m, (((jj-1)*ndepths_modeled)+1):(jj*ndepths_modeled)] + q_v
         }
-
       } # END ENSEMBLE LOOP
 
+      # Close clusters at the last time step
+      if(i == nsteps) {
+        parallel::stopCluster(cl)
+      }
 
       #Correct any negative water quality states
       if(config$include_wq & config$no_negative_states){
@@ -784,7 +794,6 @@ run_enkf_forecast <- function(states_init,
                        round(sd(pars_corr[,par]),4)))
       }
     }
-
   }
 
   if(lubridate::day(full_time_local[1]) < 10){

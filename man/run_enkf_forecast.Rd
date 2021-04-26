@@ -23,7 +23,9 @@ run_enkf_forecast(
   pars_config = NULL,
   states_config,
   obs_config,
-  management = NULL
+  management = NULL,
+  da_method = "enkf",
+  par_fit_method = "inflate"
 )
 }
 \arguments{
@@ -63,6 +65,8 @@ automatically be set to \code{end_datetime}.}
 \item{obs_config}{list of observation configurations}
 
 \item{management}{list of management inputs and configuration  (Default = NULL)}
+
+\item{da_method}{data assimilation method (enkf or pf; Default = enkf)}
 }
 \value{
 enkf_output a list is passed to \code{write_forecast_netcdf()} to write the
