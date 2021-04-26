@@ -128,6 +128,7 @@
 #' @param states_config list of state configurations
 #' @param obs_config list of observation configurations
 #' @param management list of management inputs and configuration  (Default = NULL)
+#' @param da_method data assimilation method (enkf or pf; Default = enkf)
 #' @return enkf_output a list is passed to `write_forecast_netcdf()` to write the
 #' netcdf output and `create_flare_eml()` to generate the EML metadata
 #' @export
@@ -174,7 +175,8 @@ run_enkf_forecast <- function(states_init,
                               pars_config = NULL,
                               states_config,
                               obs_config,
-                              management = NULL
+                              management = NULL,
+                              da_method = "enkf"
 ){
 
   if(length(states_config$state_names) > 1){
@@ -234,14 +236,14 @@ run_enkf_forecast <- function(states_init,
   states_config$wq_end <- wq_end
 
   flare:::check_enkf_inputs(states_init,
-                    pars_init,
-                    obs,
-                    psi,
-                    model_sd,
-                    config,
-                    pars_config,
-                    states_config,
-                    obs_config)
+                            pars_init,
+                            obs,
+                            psi,
+                            model_sd,
+                            config,
+                            pars_config,
+                            states_config,
+                            obs_config)
 
   if(is.na(forecast_start_datetime)){
     forecast_start_datetime <- end_datetime
@@ -317,11 +319,11 @@ run_enkf_forecast <- function(states_init,
 
 
   flare:::set_up_model(executable_location = paste0(find.package("flare"),"/exec/"),
-               config,
-               working_directory,
-               state_names = states_config$state_names,
-               inflow_file_names = inflow_file_names,
-               outflow_file_names = outflow_file_names)
+                       config,
+                       working_directory,
+                       state_names = states_config$state_names,
+                       inflow_file_names = inflow_file_names,
+                       outflow_file_names = outflow_file_names)
 
   mixing_vars <- array(NA, dim = c(17, nsteps, nmembers))
   model_internal_depths <- array(NA, dim = c(nsteps, 500, nmembers))
@@ -354,8 +356,8 @@ run_enkf_forecast <- function(states_init,
                           tz = config$local_tzone)
 
     message(paste0("Running time step ", i-1, " : ",
-                 curr_start, " - ",
-                 curr_stop))
+                   curr_start, " - ",
+                   curr_stop))
 
     setwd(working_directory)
 
@@ -397,38 +399,38 @@ run_enkf_forecast <- function(states_init,
         }
 
         out <-flare:::run_model(i,
-                        m,
-                        mixing_vars_start = mixing_vars[,i-1 , m],
-                        curr_start,
-                        curr_stop,
-                        par_names,
-                        curr_pars,
-                        working_directory,
-                        par_nml,
-                        num_phytos,
-                        glm_depths_start = model_internal_depths[i-1, ,m ],
-                        lake_depth_start = lake_depth[i-1, m],
-                        x_start = x[i-1, m, ],
-                        full_time_local,
-                        wq_start = states_config$wq_start,
-                        wq_end = states_config$wq_end,
-                        management = management,
-                        hist_days,
-                        modeled_depths = config$modeled_depths,
-                        ndepths_modeled,
-                        curr_met_file,
-                        inflow_file_name = inflow_file_name,
-                        outflow_file_name = outflow_file_name,
-                        glm_output_vars = glm_output_vars,
-                        diagnostics_names = config$diagnostics_names,
-                        npars,
-                        num_wq_vars,
-                        snow_ice_thickness_start = snow_ice_thickness[, i-1, m ],
-                        avg_surf_temp_start = avg_surf_temp[i-1, m],
-                        salt_start = salt[i-1, , m],
-                        nstates,
-                        state_names = states_config$state_names,
-                        include_wq = config$include_wq)
+                                m,
+                                mixing_vars_start = mixing_vars[,i-1 , m],
+                                curr_start,
+                                curr_stop,
+                                par_names,
+                                curr_pars,
+                                working_directory,
+                                par_nml,
+                                num_phytos,
+                                glm_depths_start = model_internal_depths[i-1, ,m ],
+                                lake_depth_start = lake_depth[i-1, m],
+                                x_start = x[i-1, m, ],
+                                full_time_local,
+                                wq_start = states_config$wq_start,
+                                wq_end = states_config$wq_end,
+                                management = management,
+                                hist_days,
+                                modeled_depths = config$modeled_depths,
+                                ndepths_modeled,
+                                curr_met_file,
+                                inflow_file_name = inflow_file_name,
+                                outflow_file_name = outflow_file_name,
+                                glm_output_vars = glm_output_vars,
+                                diagnostics_names = config$diagnostics_names,
+                                npars,
+                                num_wq_vars,
+                                snow_ice_thickness_start = snow_ice_thickness[, i-1, m ],
+                                avg_surf_temp_start = avg_surf_temp[i-1, m],
+                                salt_start = salt[i-1, , m],
+                                nstates,
+                                state_names = states_config$state_names,
+                                include_wq = config$include_wq)
 
         x_star[m, ] <- out$x_star_end
         lake_depth[i ,m ] <- out$lake_depth_end
@@ -574,113 +576,136 @@ run_enkf_forecast <- function(states_init,
       }
       zt <- zt[which(!is.na(zt))]
 
-      #Assign which states have obs in the time step
-      h <- matrix(0, nrow = length(obs_sd) * ndepths_modeled, ncol = nstates)
+      if(da_method == "enkf"){
 
-      index <- 0
-      for(k in 1:((nstates/ndepths_modeled))){
-        for(j in 1:ndepths_modeled){
-          index <- index + 1
-          if(!is.na(dplyr::first(states_config$states_to_obs[[k]]))){
-            for(jj in 1:length(states_config$states_to_obs[[k]])){
-              if(!is.na((obs[states_config$states_to_obs[[k]][jj], i, j]))){
-                states_to_obs_index <- states_config$states_to_obs[[k]][jj]
-                index2 <- (states_to_obs_index - 1) * ndepths_modeled + j
-                h[index2,index] <- states_config$states_to_obs_mapping[[k]][jj]
+        #Assign which states have obs in the time step
+        h <- matrix(0, nrow = length(obs_sd) * ndepths_modeled, ncol = nstates)
+
+        index <- 0
+        for(k in 1:((nstates/ndepths_modeled))){
+          for(j in 1:ndepths_modeled){
+            index <- index + 1
+            if(!is.na(dplyr::first(states_config$states_to_obs[[k]]))){
+              for(jj in 1:length(states_config$states_to_obs[[k]])){
+                if(!is.na((obs[states_config$states_to_obs[[k]][jj], i, j]))){
+                  states_to_obs_index <- states_config$states_to_obs[[k]][jj]
+                  index2 <- (states_to_obs_index - 1) * ndepths_modeled + j
+                  h[index2,index] <- states_config$states_to_obs_mapping[[k]][jj]
+                }
               }
             }
           }
         }
-      }
 
-      z_index <- c()
-      for(j in 1:nrow(h)){
-        if(sum(h[j, ]) > 0){
-          z_index <- c(z_index, j)
+        z_index <- c()
+        for(j in 1:nrow(h)){
+          if(sum(h[j, ]) > 0){
+            z_index <- c(z_index, j)
+          }
         }
-      }
 
-      h <- h[z_index, ]
-      
-      if(!is.matrix(h)){
+        h <- h[z_index, ]
+
+        if(!is.matrix(h)){
           h <- t(as.matrix(h))
-       }
-
-      #Extract the data uncertainity for the data
-      #types present during the time-step
-
-      curr_psi <- psi[z_index]  ^ 2
-
-      if(length(z_index) > 1){
-        psi_t <- diag(curr_psi)
-      }else{
-        #Special case where there is only one data
-        #type during the time-step
-        psi_t <- curr_psi
-      }
-
-      d_mat <- t(mvtnorm::rmvnorm(n = nmembers, mean = zt, sigma=as.matrix(psi_t)))
-
-      #Set any negative observations of water quality variables to zero
-      d_mat[which(z_index > length(config$modeled_depths) & d_mat < 0.0)] <- 0.0
-
-      #Ensemble mean
-      ens_mean <- apply(x_corr[,], 2, mean)
-
-      if(npars > 0){
-        par_mean <- apply(pars_corr, 2, mean)
-        for(m in 1:nmembers){
-          pars_corr[m, ] <- pars_config$inflat_pars * (pars_corr[m,] - par_mean) + par_mean
         }
-        par_mean <- apply(pars_corr, 2, mean)
-      }
 
+        #Extract the data uncertainity for the data
+        #types present during the time-step
 
-      #Loop through ensemble members
-      for(m in 1:nmembers){
-        #  #Ensemble specific deviation
-        dit[m, ] <- x_corr[m, ] - ens_mean
-        if(npars > 0){
-          dit_pars[m, ] <- pars_corr[m, ] - par_mean
-        }
-        if(m == 1){
-          p_it <- dit[m, ] %*% t(dit[m, ])
-          if(npars > 0){
-            p_it_pars <- dit_pars[m, ] %*% t(dit[m, ])
-          }
+        curr_psi <- psi[z_index]  ^ 2
+
+        if(length(z_index) > 1){
+          psi_t <- diag(curr_psi)
         }else{
-          p_it <- dit[m, ] %*% t(dit[m, ]) +  p_it
+          #Special case where there is only one data
+          #type during the time-step
+          psi_t <- curr_psi
+        }
+
+        d_mat <- t(mvtnorm::rmvnorm(n = nmembers, mean = zt, sigma=as.matrix(psi_t)))
+
+        #Set any negative observations of water quality variables to zero
+        d_mat[which(z_index > length(config$modeled_depths) & d_mat < 0.0)] <- 0.0
+
+        #Ensemble mean
+        ens_mean <- apply(x_corr[,], 2, mean)
+
+        if(npars > 0){
+          par_mean <- apply(pars_corr, 2, mean)
+          for(m in 1:nmembers){
+            pars_corr[m, ] <- pars_config$inflat_pars * (pars_corr[m,] - par_mean) + par_mean
+          }
+          par_mean <- apply(pars_corr, 2, mean)
+        }
+
+
+        #Loop through ensemble members
+        for(m in 1:nmembers){
+          #  #Ensemble specific deviation
+          dit[m, ] <- x_corr[m, ] - ens_mean
           if(npars > 0){
-            p_it_pars <- dit_pars[m, ] %*% t(dit[m, ]) + p_it_pars
+            dit_pars[m, ] <- pars_corr[m, ] - par_mean
+          }
+          if(m == 1){
+            p_it <- dit[m, ] %*% t(dit[m, ])
+            if(npars > 0){
+              p_it_pars <- dit_pars[m, ] %*% t(dit[m, ])
+            }
+          }else{
+            p_it <- dit[m, ] %*% t(dit[m, ]) +  p_it
+            if(npars > 0){
+              p_it_pars <- dit_pars[m, ] %*% t(dit[m, ]) + p_it_pars
+            }
           }
         }
-      }
 
-      #estimate covariance
-      p_t <- p_it / (nmembers - 1)
-      if(npars > 0){
-        p_t_pars <- p_it_pars / (nmembers - 1)
-      }
+        #estimate covariance
+        p_t <- p_it / (nmembers - 1)
+        if(npars > 0){
+          p_t_pars <- p_it_pars / (nmembers - 1)
+        }
 
-      if(!is.na(config$localization_distance)){
-        p_t <- localization(p_t,
-                            nstates,
-                            modeled_depths = config$modeled_depths,
-                            localization_distance = config$localization_distance)
-      }
-      #Kalman gain
-      k_t <- p_t %*% t(h) %*% solve(h %*% p_t %*% t(h) + psi_t, tol = 1e-17)
-      if(npars > 0){
-        k_t_pars <- p_t_pars %*% t(h) %*% solve(h %*% p_t %*% t(h) + psi_t, tol = 1e-17)
-      }
+        if(!is.na(config$localization_distance)){
+          p_t <- localization(p_t,
+                              nstates,
+                              modeled_depths = config$modeled_depths,
+                              localization_distance = config$localization_distance)
+        }
+        #Kalman gain
+        k_t <- p_t %*% t(h) %*% solve(h %*% p_t %*% t(h) + psi_t, tol = 1e-17)
+        if(npars > 0){
+          k_t_pars <- p_t_pars %*% t(h) %*% solve(h %*% p_t %*% t(h) + psi_t, tol = 1e-17)
+        }
 
-      #Update states array (transposes are necessary to convert
-      #between the dims here and the dims in the EnKF formulations)
-      update_increment <-  k_t %*% (d_mat - h %*% t(x_corr))
-      x[i, , 1:nstates] <- t(t(x_corr) + update_increment)
-      if(npars > 0){
-        x[i, , (nstates+1):(nstates+npars)] <- t(t(pars_corr) +
-                                                   k_t_pars %*% (d_mat - h %*% t(x_corr)))
+        #Update states array (transposes are necessary to convert
+        #between the dims here and the dims in the EnKF formulations)
+        update_increment <-  k_t %*% (d_mat - h %*% t(x_corr))
+        x[i, , 1:nstates] <- t(t(x_corr) + update_increment)
+        if(npars > 0){
+          x[i, , (nstates+1):(nstates+npars)] <- t(t(pars_corr) +
+                                                     k_t_pars %*% (d_mat - h %*% t(x_corr)))
+        }
+      }else if(da_method == "pf"){
+
+        LL <- rep(NA, length(nmembers))
+        for(m in 1:nmembers){
+          LL[m] <- sum(dnorm(zt, mean = x_corr[m,z_index], sd = psi[z_index], log = TRUE))
+        }
+
+        sample <- sample.int(nmembers, replace = TRUE, prob = exp(LL))
+
+        x[i, , ] <- cbind(x_corr, pars_star)[sample, ]
+
+        snow_ice_thickness[ ,i, ] <- snow_ice_thickness[ ,i, sample]
+        avg_surf_temp[i, ] <- avg_surf_temp[i, sample]
+        lake_depth[i, ] <- lake_depth[i, sample]
+        salt[i, , ] <- salt[i, ,sample]
+        model_internal_depths[i, , ] <- model_internal_depths[i, , sample]
+        diagnostics[ ,i, , ] <- diagnostics[ ,i, ,sample]
+
+      }else{
+        message("da_method not supported; select enkf or pf")
       }
     }
 
@@ -732,8 +757,8 @@ run_enkf_forecast <- function(states_init,
     if(npars > 0){
       for(par in 1:npars){
         message(paste0(pars_config$par_names_save[par],": mean ",
-                     round(mean(pars_corr[,par]),4)," sd ",
-                     round(sd(pars_corr[,par]),4)))
+                       round(mean(pars_corr[,par]),4)," sd ",
+                       round(sd(pars_corr[,par]),4)))
       }
     }
 
