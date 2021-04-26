@@ -317,13 +317,18 @@ run_enkf_forecast <- function(states_init,
     outflow_file_names <- NULL
   }
 
-
+  for(m in 1:nmembers){
+  if(!dir.exists(file.path(working_directory, m))){
+    dir.create(file.path(working_directory, m))
+  }
   flare:::set_up_model(executable_location = paste0(find.package("flare"),"/exec/"),
                        config,
-                       working_directory,
+                       working_directory = paste0(working_directory,m),
                        state_names = states_config$state_names,
                        inflow_file_names = inflow_file_names,
                        outflow_file_names = outflow_file_names)
+  }
+
 
   mixing_vars <- array(NA, dim = c(17, nsteps, nmembers))
   model_internal_depths <- array(NA, dim = c(nsteps, 500, nmembers))
@@ -384,6 +389,8 @@ run_enkf_forecast <- function(states_init,
       # Start loop through ensemble members
       for(m in 1:nmembers){
 
+        setwd(file.path(working_directory, m))
+
         curr_met_file <- met_file_names[met_index]
 
         if(npars > 0){
@@ -405,7 +412,7 @@ run_enkf_forecast <- function(states_init,
                                 curr_stop,
                                 par_names,
                                 curr_pars,
-                                working_directory,
+                                working_directory = file.path(working_directory, m),
                                 par_nml,
                                 num_phytos,
                                 glm_depths_start = model_internal_depths[i-1, ,m ],
@@ -817,6 +824,10 @@ run_enkf_forecast <- function(states_init,
                            file_name_F_day,"_F_",
                            forecast_days,"_",
                            forecast_iteration_id)
+
+  for(m in 1:nmembers){
+    unlink(file.path(working_directory, m), recursive = TRUE)
+  }
 
 
   return(list(full_time_local = full_time_local,
