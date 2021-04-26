@@ -397,7 +397,7 @@ run_enkf_forecast <- function(states_init,
         curr_met_file <- met_file_names[met_index]
 
         if(npars > 0){
-          if(par_fit_method == "inflate"){
+          if(par_fit_method == "inflate" & da_method == "enkf"){
             curr_pars <- x[i - 1, m , (nstates+1):(nstates+ npars)]
           }else if(par_fit_method == "perturb"){
             if(i > (hist_days + 1)){
@@ -406,7 +406,7 @@ run_enkf_forecast <- function(states_init,
               curr_pars <- x[i - 1, m , (nstates+1):(nstates+ npars)]
             }
           }else{
-            message("parameter fitting method not supported.  inflate or perturb are supported")
+            message("parameter fitting method not supported.  inflate or perturb are supported. only inflate is supported for enkf")
           }
         }
 
