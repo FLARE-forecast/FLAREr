@@ -385,8 +385,18 @@ run_enkf_forecast <- function(states_init,
     }
 
     # if i = start_step set up cluster for parallelization
+    # Switch for
+    switch(Sys.info() [["sysname"]],
+           Linux = { machine <- "unix" },
+           Darwin = { machine <- "mac" },
+           Windows = { machine <- "windows"})
     if(i == start_step) {
-      cl <- parallel::makeCluster(config$ncore)
+      if(machine == "windows") {
+        cl <- parallel::makeCluster(config$ncore)
+      } else {
+        cl <- parallel::makeCluster(config$ncore, setup_strategy = "sequential")
+      }
+
       parallel::clusterExport(cl, varlist = list("working_directory", "met_file_names", "met_index",
                                                  "par_fit_method", "da_method", "nstates", "npars",
                                                  "pars_config", "inflow_file_names", "inflow_outflow_index",
