@@ -176,8 +176,8 @@ run_enkf_forecast <- function(states_init,
                               states_config,
                               obs_config,
                               management = NULL,
-                              da_method = "enkf"
-){
+                              da_method = "enkf",
+                              par_fit_method = "inflate"){
 
   if(length(states_config$state_names) > 1){
     config$include_wq <- TRUE
@@ -318,15 +318,18 @@ run_enkf_forecast <- function(states_init,
   }
 
   for(m in 1:nmembers){
-  if(!dir.exists(file.path(working_directory, m))){
-    dir.create(file.path(working_directory, m))
-  }
-  flare:::set_up_model(executable_location = paste0(find.package("flare"),"/exec/"),
-                       config,
-                       working_directory = paste0(working_directory,m),
-                       state_names = states_config$state_names,
-                       inflow_file_names = inflow_file_names,
-                       outflow_file_names = outflow_file_names)
+    if(!dir.exists(file.path(working_directory, m))){
+      dir.create(file.path(working_directory, m))
+    }else{
+      unlink(file.path(working_directory, m), recursive = TRUE)
+      dir.create(file.path(working_directory, m))
+    }
+    flare:::set_up_model(executable_location = paste0(find.package("flare"),"/exec/"),
+                         config,
+                         ens_working_directory = paste0(working_directory,m),
+                         state_names = states_config$state_names,
+                         inflow_file_names = inflow_file_names,
+                         outflow_file_names = outflow_file_names)
   }
 
 
@@ -394,7 +397,17 @@ run_enkf_forecast <- function(states_init,
         curr_met_file <- met_file_names[met_index]
 
         if(npars > 0){
-          curr_pars <- x[i - 1, m , (nstates+1):(nstates+ npars)]
+          if(par_fit_method == "inflate"){
+            curr_pars <- x[i - 1, m , (nstates+1):(nstates+ npars)]
+          }else if(par_fit_method == "perturb"){
+            if(i > (hist_days + 1)){
+              curr_pars <- x[i - 1, m , (nstates+1):(nstates+ npars)] + rnorm(npars, mean = rep(0, npars), sd = pars_config$perturb_par)
+            }else{
+              curr_pars <- x[i - 1, m , (nstates+1):(nstates+ npars)]
+            }
+          }else{
+            message("parameter fitting method not supported.  inflate or perturb are supported")
+          }
         }
 
         if(!is.null(ncol(inflow_file_names))){
@@ -640,10 +653,12 @@ run_enkf_forecast <- function(states_init,
 
         if(npars > 0){
           par_mean <- apply(pars_corr, 2, mean)
-          for(m in 1:nmembers){
-            pars_corr[m, ] <- pars_config$inflat_pars * (pars_corr[m,] - par_mean) + par_mean
+          if(par_fit_method == "inflate"){
+            for(m in 1:nmembers){
+              pars_corr[m, ] <- pars_config$inflat_pars * (pars_corr[m,] - par_mean) + par_mean
+            }
+            par_mean <- apply(pars_corr, 2, mean)
           }
-          par_mean <- apply(pars_corr, 2, mean)
         }
 
 
@@ -693,6 +708,7 @@ run_enkf_forecast <- function(states_init,
           x[i, , (nstates+1):(nstates+npars)] <- t(t(pars_corr) +
                                                      k_t_pars %*% (d_mat - h %*% t(x_corr)))
         }
+
       }else if(da_method == "pf"){
 
         LL <- rep(NA, length(nmembers))
