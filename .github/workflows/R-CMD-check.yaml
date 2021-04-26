@@ -5,6 +5,7 @@ on:
     branches:
       - main
       - master
+      - particle_filter
   pull_request:
     branches:
       - main
