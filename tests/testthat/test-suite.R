@@ -201,6 +201,30 @@ test_that("EnKF can be run", {
   aux_states_init$lake_depth <- init$lake_depth
   aux_states_init$salt <- init$salt
 
+  met_file_names = gsub("\\\\", "/", met_file_names)
+  inflow_file_names = gsub("\\\\", "/", inflow_file_names)
+  outflow_file_names = gsub("\\\\", "/", outflow_file_names)
+
+  # states_init = init$states
+  # pars_init = init$pars
+  # aux_states_init = aux_states_init
+  # obs = obs
+  # obs_sd = obs_config$obs_sd
+  # model_sd = model_sd
+  # working_directory = config$run_config$execute_location
+  # met_file_names = gsub("\\\\", "/", met_file_names)
+  # inflow_file_names = gsub("\\\\", "/", inflow_file_names)
+  # outflow_file_names = gsub("\\\\", "/", outflow_file_names)
+  # start_datetime = start_datetime_local
+  # end_datetime = end_datetime_local
+  # forecast_start_datetime = forecast_start_datetime_local
+  # config = config
+  # pars_config = pars_config
+  # states_config = states_config
+  # obs_config = obs_config
+  # da_method = "enkf"
+  # par_fit_method = "inflate"
+
   #Run EnKF
   enkf_output <- flare::run_enkf_forecast(states_init = init$states,
                                           pars_init = init$pars,
@@ -209,9 +233,9 @@ test_that("EnKF can be run", {
                                           obs_sd = obs_config$obs_sd,
                                           model_sd = model_sd,
                                           working_directory = config$run_config$execute_location,
-                                          met_file_names = basename(met_file_names),
-                                          inflow_file_names = basename(inflow_file_names),
-                                          outflow_file_names = basename(outflow_file_names),
+                                          met_file_names = (met_file_names),
+                                          inflow_file_names = (inflow_file_names),
+                                          outflow_file_names = (outflow_file_names),
                                           start_datetime = start_datetime_local,
                                           end_datetime = end_datetime_local,
                                           forecast_start_datetime = forecast_start_datetime_local,
