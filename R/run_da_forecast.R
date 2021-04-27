@@ -438,6 +438,7 @@ run_da_forecast <- function(states_init,
     if(i > 1){
 
       out <- parallel::parLapply(cl, 1:nmembers, function(m) {
+      # out <- lapply(1:nmembers, function(m) { # Commented out for debugging
 
         if(config$ncore == 1){
           ens_dir_index <- 1
