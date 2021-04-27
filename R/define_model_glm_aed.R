@@ -48,7 +48,8 @@ run_model <- function(i,
                       salt_start,
                       nstates,
                       state_names,
-                      include_wq){
+                      include_wq,
+                      debug = FALSE){
 
   switch(Sys.info() [["sysname"]],
          Linux = { machine <- "unix" },
@@ -319,6 +320,10 @@ run_model <- function(i,
                                                         vars_depth = output_vars_multi_depth,
                                                         vars_no_depth = output_vars_no_depth,
                                                         diagnostic_vars = diagnostics_names)
+
+      if(!debug){
+        unlink(paste0(working_directory, "/output.nc"))
+      }
 
       num_glm_depths <- length(GLM_temp_wq_out$depths_enkf)
       glm_temps <- rev(GLM_temp_wq_out$output[ ,1])
