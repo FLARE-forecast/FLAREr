@@ -333,7 +333,7 @@ run_da_forecast <- function(states_init,
                          inflow_file_names = inflow_file_names,
                          outflow_file_names = outflow_file_names)
   }else{
-    for(m in 1:nmembers){
+    lapply(1:nmembers, function(m){
       if(!dir.exists(file.path(working_directory, m))){
         dir.create(file.path(working_directory, m), showWarnings = FALSE)
       }else{
@@ -346,7 +346,7 @@ run_da_forecast <- function(states_init,
                            state_names = states_config$state_names,
                            inflow_file_names = inflow_file_names,
                            outflow_file_names = outflow_file_names)
-    }
+    })
   }
 
 
