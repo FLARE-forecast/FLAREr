@@ -1,6 +1,6 @@
 
 
-#### NEED A TEST HERE TO CHECK THAT MET FILES ARE GENERATED AND CORRECT
+# Met files ----
 test_that("met files are generated", {
 
   # library(tidyverse)
@@ -22,7 +22,7 @@ test_that("met files are generated", {
 })
 
 
-#Inflow Drivers (already done)
+# Inflow Drivers (already done) ----
 test_that("inflow & outflow files are generated", {
 
   # library(tidyverse)
@@ -52,8 +52,7 @@ test_that("inflow & outflow files are generated", {
 
 
 
-#Create observation matrix
-#### NEED A TEST HERE TO CHECK THAT OBS MATRIX IS GENERATED AND CORRECT
+# Create observation matrix ----
 test_that("observation matrix is generated and correct", {
 
   # library(tidyverse)
@@ -85,7 +84,7 @@ test_that("observation matrix is generated and correct", {
 })
 
 
-
+# State to obs mapping ----
 test_that("generate states to obs mapping", {
 
   # library(tidyverse)
@@ -105,7 +104,7 @@ test_that("generate states to obs mapping", {
 })
 
 
-
+# Initial model error ----
 test_that("initial model error is generated", {
 
   template_folder <- system.file("data", package= "flare")
@@ -126,7 +125,7 @@ test_that("initial model error is generated", {
 })
 
 
-#Set initial conditions
+# Set initial conditions ----
 test_that("initial conditions are generated", {
 
   template_folder <- system.file("data", package= "flare")
@@ -160,7 +159,7 @@ test_that("initial conditions are generated", {
   testthat::expect_true(any(unlist(chk)))
 })
 
-
+# EnKF ----
 test_that("EnKF can be run", {
 
   # library(tidyverse)
@@ -222,6 +221,7 @@ test_that("EnKF can be run", {
   # pars_config = pars_config
   # states_config = states_config
   # obs_config = obs_config
+  # management = NULL
   # da_method = "enkf"
   # par_fit_method = "inflate"
 
@@ -274,119 +274,121 @@ test_that("EnKF can be run", {
 
 })
 
-# test_that("particle filter can be run", {
-#
-#   # library(tidyverse)
-#
-#   template_folder <- system.file("data", package= "flare")
-#   temp_dir <- tempdir()
-#   # dir.create("example")
-#   file.copy(from = template_folder, to = temp_dir, recursive = TRUE)
-#
-#   # test_location <- "C:\\Users\\mooret\\Desktop\\FLARE\\flare-1\\inst\\data"
-#   test_location <- file.path(temp_dir, "data")
-#
-#   source(file.path(test_location, "test_enkf_prep.R"))
-#
-#   obs <- flare::create_obs_matrix(cleaned_observations_file_long,
-#                                   obs_config,
-#                                   start_datetime_local,
-#                                   end_datetime_local,
-#                                   local_tzone = config$local_tzone,
-#                                   modeled_depths = config$modeled_depths)
-#
-#   #Set observations in the "future" to NA
-#   full_time_forecast <- seq(start_datetime_local, end_datetime_local, by = "1 day")
-#   obs[ , which(full_time_forecast > forecast_start_datetime_local), ] <- NA
-#
-#   init <- flare::generate_initial_conditions(states_config,
-#                                              obs_config,
-#                                              pars_config,
-#                                              obs,
-#                                              config)
-#
-#   aux_states_init <- list()
-#   aux_states_init$snow_ice_thickness <- init$snow_ice_thickness
-#   aux_states_init$avg_surf_temp <- init$avg_surf_temp
-#   aux_states_init$the_sals_init <- config$the_sals_init
-#   aux_states_init$mixing_vars <- init$mixing_vars
-#   aux_states_init$model_internal_depths <- init$model_internal_depths
-#   aux_states_init$lake_depth <- init$lake_depth
-#   aux_states_init$salt <- init$salt
-#
-#   met_file_names = gsub("\\\\", "/", met_file_names)
-#   inflow_file_names = gsub("\\\\", "/", inflow_file_names)
-#   outflow_file_names = gsub("\\\\", "/", outflow_file_names)
-#
-#   # states_init = init$states
-#   # pars_init = init$pars
-#   # aux_states_init = aux_states_init
-#   # obs = obs
-#   # obs_sd = obs_config$obs_sd
-#   # model_sd = model_sd
-#   # working_directory = config$run_config$execute_location
-#   # met_file_names = gsub("\\\\", "/", met_file_names)
-#   # inflow_file_names = gsub("\\\\", "/", inflow_file_names)
-#   # outflow_file_names = gsub("\\\\", "/", outflow_file_names)
-#   # start_datetime = start_datetime_local
-#   # end_datetime = end_datetime_local
-#   # forecast_start_datetime = forecast_start_datetime_local
-#   # config = config
-#   # pars_config = pars_config
-#   # states_config = states_config
-#   # obs_config = obs_config
-#   # da_method = "pf"
-#   # par_fit_method = "perturb"
-#
-#   #Run EnKF
-#   enkf_output <- flare::run_da_forecast(states_init = init$states,
-#                                         pars_init = init$pars,
-#                                         aux_states_init = aux_states_init,
-#                                         obs = obs,
-#                                         obs_sd = obs_config$obs_sd,
-#                                         model_sd = model_sd,
-#                                         working_directory = config$run_config$execute_location,
-#                                         met_file_names = (met_file_names),
-#                                         inflow_file_names = (inflow_file_names),
-#                                         outflow_file_names = (outflow_file_names),
-#                                         start_datetime = start_datetime_local,
-#                                         end_datetime = end_datetime_local,
-#                                         forecast_start_datetime = forecast_start_datetime_local,
-#                                         config = config,
-#                                         pars_config = pars_config,
-#                                         states_config = states_config,
-#                                         obs_config = obs_config,
-#                                         da_method = "pf",
-#                                         par_fit_method = "perturb"
-#   )
-#
-#   #Load in pre-prepared output
-#   samp_enkf_output <- readRDS(file.path(test_location, "enkf_output.RDS"))
-#
-#   testthat::expect_true(is.list(enkf_output))
-#   chk <- lapply(1:length(enkf_output), function(x) {
-#     class(enkf_output[[x]]) == class(samp_enkf_output[[x]])
-#
-#   })
-#   testthat::expect_true(any(unlist(chk)))
-#
-#   # Save forecast
-#   saved_file <- flare::write_forecast_netcdf(enkf_output,
-#                                              forecast_location = config$run_config$forecast_location)
-#   testthat::expect_true(file.exists(saved_file))
-#
-#   #Create EML Metadata
-#   flare::create_flare_eml(file_name = saved_file,
-#                           enkf_output)
-#   file_chk <- list.files(forecast_location, pattern = ".xml")
-#   testthat::expect_true(length(file_chk) > 0)
-#
-#   flare::plotting_general(file_name = saved_file,
-#                           qaqc_location = qaqc_data_location)
-#   file_chk <- list.files(forecast_location, pattern = ".pdf")
-#   testthat::expect_true(length(file_chk) > 0)
-#
-#
-# })
+# Particle filter ----
+test_that("particle filter can be run", {
+
+  # library(tidyverse)
+
+  template_folder <- system.file("data", package= "flare")
+  temp_dir <- tempdir()
+  # dir.create("example")
+  file.copy(from = template_folder, to = temp_dir, recursive = TRUE)
+
+  # test_location <- "C:\\Users\\mooret\\Desktop\\FLARE\\flare-1\\inst\\data"
+  test_location <- file.path(temp_dir, "data")
+
+  source(file.path(test_location, "test_pf_prep.R"))
+
+  obs <- flare::create_obs_matrix(cleaned_observations_file_long,
+                                  obs_config,
+                                  start_datetime_local,
+                                  end_datetime_local,
+                                  local_tzone = config$local_tzone,
+                                  modeled_depths = config$modeled_depths)
+
+  #Set observations in the "future" to NA
+  full_time_forecast <- seq(start_datetime_local, end_datetime_local, by = "1 day")
+  obs[ , which(full_time_forecast > forecast_start_datetime_local), ] <- NA
+
+  init <- flare::generate_initial_conditions(states_config,
+                                             obs_config,
+                                             pars_config,
+                                             obs,
+                                             config)
+
+  aux_states_init <- list()
+  aux_states_init$snow_ice_thickness <- init$snow_ice_thickness
+  aux_states_init$avg_surf_temp <- init$avg_surf_temp
+  aux_states_init$the_sals_init <- config$the_sals_init
+  aux_states_init$mixing_vars <- init$mixing_vars
+  aux_states_init$model_internal_depths <- init$model_internal_depths
+  aux_states_init$lake_depth <- init$lake_depth
+  aux_states_init$salt <- init$salt
+
+  met_file_names = gsub("\\\\", "/", met_file_names)
+  inflow_file_names = gsub("\\\\", "/", inflow_file_names)
+  outflow_file_names = gsub("\\\\", "/", outflow_file_names)
+
+  # states_init = init$states
+  # pars_init = init$pars
+  # aux_states_init = aux_states_init
+  # obs = obs
+  # obs_sd = obs_config$obs_sd
+  # model_sd = model_sd
+  # working_directory = config$run_config$execute_location
+  # met_file_names = gsub("\\\\", "/", met_file_names)
+  # inflow_file_names = gsub("\\\\", "/", inflow_file_names)
+  # outflow_file_names = gsub("\\\\", "/", outflow_file_names)
+  # start_datetime = start_datetime_local
+  # end_datetime = end_datetime_local
+  # forecast_start_datetime = forecast_start_datetime_local
+  # config = config
+  # pars_config = pars_config
+  # states_config = states_config
+  # obs_config = obs_config
+  # management = NULL
+  # da_method = "pf"
+  # par_fit_method = "perturb"
+
+  #Run EnKF
+  enkf_output <- flare::run_da_forecast(states_init = init$states,
+                                        pars_init = init$pars,
+                                        aux_states_init = aux_states_init,
+                                        obs = obs,
+                                        obs_sd = obs_config$obs_sd,
+                                        model_sd = model_sd,
+                                        working_directory = config$run_config$execute_location,
+                                        met_file_names = (met_file_names),
+                                        inflow_file_names = (inflow_file_names),
+                                        outflow_file_names = (outflow_file_names),
+                                        start_datetime = start_datetime_local,
+                                        end_datetime = end_datetime_local,
+                                        forecast_start_datetime = forecast_start_datetime_local,
+                                        config = config,
+                                        pars_config = pars_config,
+                                        states_config = states_config,
+                                        obs_config = obs_config,
+                                        da_method = "pf",
+                                        par_fit_method = "perturb"
+  )
+
+  #Load in pre-prepared output
+  samp_enkf_output <- readRDS(file.path(test_location, "enkf_output.RDS"))
+
+  testthat::expect_true(is.list(enkf_output))
+  chk <- lapply(1:length(enkf_output), function(x) {
+    class(enkf_output[[x]]) == class(samp_enkf_output[[x]])
+
+  })
+  testthat::expect_true(any(unlist(chk)))
+
+  # Save forecast
+  saved_file <- flare::write_forecast_netcdf(enkf_output,
+                                             forecast_location = config$run_config$forecast_location)
+  testthat::expect_true(file.exists(saved_file))
+
+  #Create EML Metadata
+  flare::create_flare_eml(file_name = saved_file,
+                          enkf_output)
+  file_chk <- list.files(forecast_location, pattern = ".xml")
+  testthat::expect_true(length(file_chk) > 0)
+
+  flare::plotting_general(file_name = saved_file,
+                          qaqc_location = qaqc_data_location)
+  file_chk <- list.files(forecast_location, pattern = ".pdf")
+  testthat::expect_true(length(file_chk) > 0)
+
+
+})
 
 # end
