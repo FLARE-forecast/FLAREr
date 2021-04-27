@@ -132,6 +132,7 @@
 #' @return enkf_output a list is passed to `write_forecast_netcdf()` to write the
 #' netcdf output and `create_flare_eml()` to generate the EML metadata
 #' @export
+#' @importFrom parallel clusterExport detectCores clusterEvalQ parLapply stopCluster
 #' @example
 #'
 #'
