@@ -4,6 +4,7 @@ on:
       - main
       - master
       - ler
+      - particle_filter
   pull_request:
     branches:
       - main
