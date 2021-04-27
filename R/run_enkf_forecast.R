@@ -318,20 +318,34 @@ run_enkf_forecast <- function(states_init,
   }
 
   config$ncore <- min(c(config$ncore, parallel::detectCores()))
-
-  for(m in 1:nmembers){
-    if(!dir.exists(file.path(working_directory, m))){
-      dir.create(file.path(working_directory, m), showWarnings = FALSE)
+  if(config$ncore == 1){
+    if(!dir.exists(file.path(working_directory, "1"))){
+      dir.create(file.path(working_directory, "1"), showWarnings = FALSE)
     }else{
-      unlink(file.path(working_directory, m), recursive = TRUE)
-      dir.create(file.path(working_directory, m), showWarnings = FALSE)
+      unlink(file.path(working_directory, "1"), recursive = TRUE)
+      dir.create(file.path(working_directory, "1"), showWarnings = FALSE)
     }
     flare:::set_up_model(executable_location = paste0(find.package("flare"),"/exec/"),
                          config,
-                         ens_working_directory = file.path(working_directory,m),
+                         ens_working_directory = file.path(working_directory,"1"),
                          state_names = states_config$state_names,
                          inflow_file_names = inflow_file_names,
                          outflow_file_names = outflow_file_names)
+  }else{
+    for(m in 1:nmembers){
+      if(!dir.exists(file.path(working_directory, m))){
+        dir.create(file.path(working_directory, m), showWarnings = FALSE)
+      }else{
+        unlink(file.path(working_directory, m), recursive = TRUE)
+        dir.create(file.path(working_directory, m), showWarnings = FALSE)
+      }
+      flare:::set_up_model(executable_location = paste0(find.package("flare"),"/exec/"),
+                           config,
+                           ens_working_directory = file.path(working_directory,m),
+                           state_names = states_config$state_names,
+                           inflow_file_names = inflow_file_names,
+                           outflow_file_names = outflow_file_names)
+    }
   }
 
 
@@ -424,7 +438,13 @@ run_enkf_forecast <- function(states_init,
 
       out <- parallel::parLapply(cl, 1:nmembers, function(m) {
 
-        setwd(file.path(working_directory, m))
+        if(config$ncore == 1){
+          ens_dir_index <- 1
+        }else{
+          ens_dir_index <- m
+        }
+
+        setwd(file.path(working_directory, ens_dir_index))
 
         curr_met_file <- met_file_names[met_index[m]]
 
@@ -450,6 +470,7 @@ run_enkf_forecast <- function(states_init,
           outflow_file_name <- NULL
         }
 
+
         out <-flare:::run_model(i,
                                 m,
                                 mixing_vars_start = mixing_vars[,i-1 , m],
@@ -457,7 +478,7 @@ run_enkf_forecast <- function(states_init,
                                 curr_stop,
                                 par_names,
                                 curr_pars,
-                                working_directory = file.path(working_directory, m),
+                                working_directory = file.path(working_directory, ens_dir_index),
                                 par_nml,
                                 num_phytos,
                                 glm_depths_start = model_internal_depths[i-1, ,m ],
