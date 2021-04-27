@@ -408,7 +408,13 @@ run_da_forecast <- function(states_init,
            Windows = { machine <- "windows"})
     if(i == start_step) {
       if(machine == "windows") {
+        libpath <- .libPaths()
         cl <- parallel::makeCluster(config$ncore)
+
+        parallel::clusterEvalQ(cl, {
+          .libPaths(libpath)
+          library(flare)
+        })
       } else {
         cl <- parallel::makeCluster(config$ncore, setup_strategy = "sequential")
       }
@@ -422,7 +428,6 @@ run_da_forecast <- function(states_init,
                                                  "hist_days", "config", "states_config",
                                                  "ndepths_modeled", "glm_output_vars", "num_wq_vars"),
                               envir = environment())
-      # parallel::clusterEvalQ(cl, library(flare))
     }
 
     # Variables that need to be exported at each timestep
