@@ -133,7 +133,6 @@
 #' netcdf output and `create_flare_eml()` to generate the EML metadata
 #' @export
 #' @importFrom parallel clusterExport detectCores clusterEvalQ parLapply stopCluster
-#' @importFrom parallelly makeClusterPSOCK
 #' @example
 #'
 #'
@@ -411,7 +410,6 @@ run_da_forecast <- function(states_init,
     if(i == start_step) {
       if(machine == "windows") {
         cl <- parallel::makeCluster(config$ncore, setup_strategy = "sequential")
-        # cl <- parallelly::makeClusterPSOCK(config$ncore)
         parallel::clusterEvalQ(cl, library(flare))
       } else {
         cl <- parallel::makeCluster(config$ncore, setup_strategy = "sequential")
