@@ -317,6 +317,8 @@ run_enkf_forecast <- function(states_init,
     outflow_file_names <- NULL
   }
 
+  config$ncore <- min(c(config$ncore, parallel::detectCores()))
+
   for(m in 1:nmembers){
     if(!dir.exists(file.path(working_directory, m))){
       dir.create(file.path(working_directory, m), showWarnings = FALSE)
