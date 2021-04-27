@@ -410,7 +410,7 @@ run_da_forecast <- function(states_init,
     if(i == start_step) {
       if(machine == "windows") {
         # lpath <- .libPaths()
-        cl <- parallel::makeCluster(config$ncore)
+        cl <- parallelly::makeClusterPSOCK(config$ncore)
         # parallel::clusterExport(cl, varlist = list("lpath"))
         parallel::clusterEvalQ(cl, {
           # .libPaths(lpath)
