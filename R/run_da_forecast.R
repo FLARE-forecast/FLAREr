@@ -410,7 +410,7 @@ run_da_forecast <- function(states_init,
       if(machine == "windows") {
         libpath <- .libPaths()
         cl <- parallel::makeCluster(config$ncore)
-
+        parallel::clusterExport(cl, varlist = list("libpath"))
         parallel::clusterEvalQ(cl, {
           .libPaths(libpath)
           library(flare)
