@@ -31,7 +31,8 @@ Imports:
     plyr,
     ggplot2,
     rMR,
-    patchwork
+    patchwork,
+    parallel
 Suggests: 
     knitr,
     rmarkdown,

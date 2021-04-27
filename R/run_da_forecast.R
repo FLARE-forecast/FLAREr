@@ -132,6 +132,7 @@
 #' @return enkf_output a list is passed to `write_forecast_netcdf()` to write the
 #' netcdf output and `create_flare_eml()` to generate the EML metadata
 #' @export
+#' @importFrom parallel clusterExport detectCores clusterEvalQ parLapply stopCluster
 #' @example
 #'
 #'
@@ -408,7 +409,8 @@ run_da_forecast <- function(states_init,
            Windows = { machine <- "windows"})
     if(i == start_step) {
       if(machine == "windows") {
-        cl <- parallel::makeCluster(config$ncore)
+        cl <- parallel::makeCluster(config$ncore, setup_strategy = "sequential")
+        parallel::clusterEvalQ(cl, library(flare))
       } else {
         cl <- parallel::makeCluster(config$ncore, setup_strategy = "sequential")
       }
@@ -422,7 +424,6 @@ run_da_forecast <- function(states_init,
                                                  "hist_days", "config", "states_config",
                                                  "ndepths_modeled", "glm_output_vars", "num_wq_vars"),
                               envir = environment())
-      # parallel::clusterEvalQ(cl, library(flare))
     }
 
     # Variables that need to be exported at each timestep

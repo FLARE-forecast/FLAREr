@@ -23,8 +23,9 @@ jobs:
       fail-fast: false
       matrix:
         config:
-          - {os: windows-latest, r: 'release'}
-          - {os: macOS-latest, r: 'release'}
+          # - {os: windows-latest, r: 'release'}
+          - {os: windows-latest, r: 'release', usexdr: 'TRUE' }
+          - {os: macOS-latest, r: '4.0.4'}
           # - {os: ubuntu-16.04,   r: '4.0.4',     rspm: "https://packagemanager.rstudio.com/cran/__linux__/xenial/latest"}
           - {os: ubuntu-20.04, r: 'release', rspm: "https://packagemanager.rstudio.com/cran/__linux__/focal/latest"}
           # - {os: ubuntu-20.04, r: 'devel', rspm: "https://packagemanager.rstudio.com/cran/__linux__/focal/latest"}
@@ -33,6 +34,7 @@ jobs:
       R_REMOTES_NO_ERRORS_FROM_WARNINGS: true
       RSPM: ${{ matrix.config.rspm }}
       GITHUB_PAT: ${{ secrets.GITHUB_TOKEN }}
+      R_PARALLELLY_MAKENODEPSOCK_USEXDR: ${{ matrix.config.usexdr }}
 
     steps:
       - uses: actions/checkout@v2
@@ -69,12 +71,21 @@ jobs:
 
       - name: Install dependencies
         run: |
-          install.packages(c("remotes", "tidyverse"))
+          install.packages(c("remotes", "tidyverse", "parallelly"))
           remotes::install_github('eco4cast/EFIstandards')
           remotes::install_cran("xtable")
           remotes::install_github("aemon-j/GLM3r", ref = "v3.1.1")
           remotes::install_deps(dependencies = TRUE)
           remotes::install_cran("rcmdcheck")
+          install.packages(".", repos=NULL, type="source")  ## needed by parallel workers
+        shell: Rscript {0}
+
+      - name: Session info
+        run: |
+          options(width = 100)
+          parallelly::availableCores(which = "all")
+          pkgs <- installed.packages()[, "Package"]
+          sessioninfo::session_info(pkgs, include_base = TRUE)
         shell: Rscript {0}
 
       - name: Check
