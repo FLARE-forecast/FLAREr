@@ -24,7 +24,7 @@ create_glm_inflow_outflow_files <- function(inflow_file_dir,
 
 {
 
-  obs_inflow <- readr::read_csv(inflow_obs)
+  obs_inflow <- readr::read_csv(inflow_obs, col_types = readr::cols())
 
   if(use_future_inflow){
     obs_inflow <- obs_inflow %>%
@@ -49,7 +49,7 @@ create_glm_inflow_outflow_files <- function(inflow_file_dir,
   outflow_files <- all_files[stringr::str_detect(all_files,"OUTFLOW")]
 
   if(length(inflow_files) > 0){
-    d <- readr::read_csv(inflow_files[1])
+    d <- readr::read_csv(inflow_files[1], col_types = readr::cols())
     num_inflows <- max(c(d$inflow_num,obs_inflow$inflow_num))
   }else{
     num_inflows <- max(obs_inflow$inflow_num)
@@ -74,7 +74,7 @@ create_glm_inflow_outflow_files <- function(inflow_file_dir,
     }else{
 
       for(i in 1:length(inflow_files)){
-        d <- readr::read_csv(inflow_files[i]) %>%
+        d <- readr::read_csv(inflow_files[i], col_types = readr::cols()) %>%
           dplyr::filter(inflow_num == j) %>%
           dplyr::select(time, FLOW, TEMP, SALT) %>%
           dplyr::mutate_at(dplyr::vars(c("FLOW", "TEMP", "SALT")), list(~round(., 4)))
@@ -107,7 +107,7 @@ create_glm_inflow_outflow_files <- function(inflow_file_dir,
 
 
   if(length(outflow_files) > 0){
-    d <- readr::read_csv(outflow_files[1])
+    d <- readr::read_csv(outflow_files[1], col_types = readr::cols())
     num_outflows <- max(c(d$outflow_num,obs_outflow$outflow_num))
   }else{
     num_outflows <- max(obs_inflow$outflow_num)
@@ -134,7 +134,7 @@ create_glm_inflow_outflow_files <- function(inflow_file_dir,
     }else{
 
       for(i in 1:length(outflow_files)){
-        d <- readr::read_csv(outflow_files[i])%>%
+        d <- readr::read_csv(outflow_files[i], col_types = readr::cols())%>%
           dplyr::filter(outflow_num == j) %>%
           dplyr::select(time, FLOW) %>%
           dplyr::mutate_at(dplyr::vars(c("FLOW")), list(~round(., 4)))
