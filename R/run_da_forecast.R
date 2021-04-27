@@ -133,6 +133,7 @@
 #' netcdf output and `create_flare_eml()` to generate the EML metadata
 #' @export
 #' @importFrom parallel clusterExport detectCores clusterEvalQ parLapply stopCluster
+#' @importFrom parallelly makeClusterPSOCK
 #' @example
 #'
 #'

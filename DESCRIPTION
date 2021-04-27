@@ -32,7 +32,8 @@ Imports:
     ggplot2,
     rMR,
     patchwork,
-    parallel
+    parallel,
+    parallelly
 Suggests: 
     knitr,
     rmarkdown,
