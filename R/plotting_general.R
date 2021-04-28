@@ -112,7 +112,7 @@ plotting_general <- function(file_name,
 
     p <- ggplot2::ggplot(curr_tibble, ggplot2::aes(y = depth, x = curr_var)) +
       ggplot2::facet_wrap(~factor(date)) +
-      ggplot2::geom_ribbon(aes(xmin = upper_var, xmax = lower_var),
+      ggplot2::geom_ribbon(ggplot2::aes(xmin = upper_var, xmax = lower_var),
                            alpha = 0.70,
                            fill = "gray") +
       ggplot2::geom_path() +
