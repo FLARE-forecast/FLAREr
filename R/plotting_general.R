@@ -109,6 +109,18 @@ plotting_general <- function(file_name,
       ggplot2::labs(x = "Date", y = state_names[i], title = state_names[i]) +
       ggplot2::theme(axis.text.x = ggplot2::element_text(angle = 90, size = 10))
     print(p)
+
+    p <- ggplot2::ggplot(curr_tibble, ggplot2::aes(y = depth, x = curr_var)) +
+      ggplot2::facet_wrap(~factor(date)) +
+      ggplot2::geom_ribbon(ggplot2::aes(xmin = upper_var, xmax = lower_var),
+                           alpha = 0.70,
+                           fill = "gray") +
+      ggplot2::geom_path() +
+      ggplot2::geom_point(ggplot2::aes(x = observed), size = 0.5, color = "red") +
+      ggplot2::scale_y_reverse() +
+      ggplot2::theme_light() +
+      ggplot2::labs(y = "Depth(m)", x = state_names[i], title = state_names[i])
+    print(p)
   }
 
   if(length(par_names) > 0){
