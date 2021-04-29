@@ -601,6 +601,10 @@ run_enkf_forecast <- function(states_init,
       }
 
       h <- h[z_index, ]
+      
+      if(!is.matrix(h)){
+          h <- t(as.matrix(h))
+       }
 
       #Extract the data uncertainity for the data
       #types present during the time-step

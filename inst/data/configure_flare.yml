@@ -1,0 +1,158 @@
+#FULL PATHS
+qaqc_data_location: /Users/quinn/Dropbox/Research/SSC_forecasting/run_flare_package/qaqc_data
+data_location: /Users/quinn/Dropbox/Research/SSC_forecasting/SCC_data
+
+##########################
+# Lake information
+###########################
+
+lake_name_code: fcre
+lake_name: Falling Creek Reservoir
+lake_latitude: 37.307   #Degrees North
+lake_longitude: 79.837  #Degrees West
+
+#Time zone that GLM is run in
+#Currently needed to be GMT so that it interfaces with the NOAA forecast
+#reference_tzone <<- "GMT"
+#Local time zone of the lake
+local_tzone: "EST"
+
+##########################
+#  Information required to generate EML metadata file
+##########################
+
+metadata:
+    forecast_project_id: test
+    generate_eml: TRUE
+    abstract: "This is where a longer description of the forest can be added"
+    forecast_title: FLARE
+    intellectualRights: insert license
+    model_description:
+        forecast_model_id: https://github.com/rqthomas/flare/commit/d1ddcb07b9d28863890597503fc4aa4a4496de56
+        name: General Lake Model
+        type: process-based
+        repository: https://github.com/AquaticEcoDynamics/GLM/releases/tag/v3.1.0
+    me:
+        individualName:
+              givenName: "Quinn"
+              surName: "Thomas"
+        electronicMailAddress:  "INSERT"
+        id: INSERT ORCID
+
+
+
+############################
+# Run information
+#############################
+
+model_name: glm_aed #other is "null"
+
+# Relative to forecast_location
+
+base_GLM_nml: configuration_files/glm3.nml
+
+#All sources of uncertainty and data used to constrain
+use_obs_constraint: TRUE
+observation_uncertainty: TRUE
+process_uncertainty: TRUE
+weather_uncertainty: TRUE
+initial_condition_uncertainty: TRUE
+parameter_uncertainty: TRUE
+met_downscale_uncertainty: TRUE
+inflow_process_uncertainty: TRUE
+
+specified_inflow1: FCR_weir_inflow_2013_2019_20200624_allfractions_2poolsDOC.csv
+specified_outflow1: FCR_spillway_outflow_SUMMED_WeirWetland_2013_2019_20200615.csv
+
+use_future_inflow: FALSE
+future_inflow_flow_coeff: [0.0010803, 0.9478724, 0.3478991]
+future_inflow_flow_error: 0.00965
+future_inflow_temp_coeff: [0.20291, 0.94214, 0.04278]
+future_inflow_temp_error: 0.943
+
+forecast_met_model: NOAAGEFS_1hr-debias
+forecast_inflow_model: FLOWS-NOAAGEFS-AR1
+#########################
+### Depth information
+#########################
+#Depths used in the EnKF
+#This are the depths that are saved between days
+#Init depth of lake
+lake_depth_init: 9.4  #not a modeled state
+
+modeled_depths: [0.10, 0.33, 0.67,
+                1.00, 1.33, 1.67,
+                2.00, 2.33, 2.67,
+                3.00, 3.33, 3.67,
+                4.00, 4.33, 4.67,
+                5.00, 5.33, 5.67,
+                6.00, 6.33, 6.67,
+                7.00, 7.33, 7.67,
+                8.00, 8.33, 8.67,
+                9.00]
+
+default_temp_init: [25.667, 24.9101, 23.067, 21.8815, 19.6658, 16.5739, 12.9292, 12.8456, 12.8127, 12.8079, 12.778]
+default_temp_init_depths: [0.127, 1.004, 2.005, 3.021, 4.002, 5.004, 6.004, 7.01, 8.001, 9.015, 9.518]
+the_sals_init: 0.0
+
+default_snow_thickness_init: 0.0
+default_white_ice_thickness_init: 0.0
+default_blue_ice_thickness_init: 0.0
+
+#########
+#  Management
+########
+
+simulate_sss: TRUE
+sss_depth: 8.0
+use_specified_sss: TRUE
+specified_sss_inflow_file: .na
+specified_sss_outflow_file: .na
+forecast_sss_flow: 1000
+forecast_sss_oxy: 500
+#umol/m3  of oxygen if SSS turned on in forecast
+sss_fname: manual-data/FCR_SSS_inflow_2013_2020.csv
+sss_inflow_factor: 0.25
+
+
+
+##############################
+##  EnKF setup
+##############################
+ensemble_size:  100 #221 #441
+localization_distance: .na #distance in meters were covariances in the model error are used
+vert_decorr_length: 5.0
+no_negative_states: TRUE
+assimilate_first_step: FALSE
+
+#################################
+# Parameter calibration information
+#################################
+
+par_file: parameter_calibration_config.csv
+
+#####################################
+###  Observation information
+######################################
+
+obs_config_file: observations_config.csv
+
+#########################################
+###  State information
+#########################################
+
+states_config_file: states_config.csv
+states_config_process_error: states_process_error.csv
+
+#carbon to chlorophyll ratio (mg C/mg chla)
+#12 g/ mole of C vs. X g/ mole of chla
+#Initial concentration of phytoplankton (mmol C/m3)
+# biomass_to_chla <<- c((160/12),(60/12), (60/12))
+
+########################################
+# Dignostics
+#######################################
+
+diagnostics_names:  [extc_coef]
+
+
