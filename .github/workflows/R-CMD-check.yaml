@@ -74,7 +74,7 @@ jobs:
           install.packages(c("remotes", "tidyverse", "parallelly"))
           remotes::install_github('eco4cast/EFIstandards')
           remotes::install_cran("xtable")
-          remotes::install_github("aemon-j/GLM3r", ref = "v3.1.1")
+          remotes::install_github("FLARE-forecast/GLM3r")
           remotes::install_deps(dependencies = TRUE)
           remotes::install_cran("rcmdcheck")
           install.packages(".", repos = NULL, type = "source")  ## needed by parallel workers

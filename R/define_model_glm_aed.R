@@ -264,23 +264,8 @@ run_model <- function(i,
   while(!pass){
     unlink(paste0(working_directory, "/output.nc"))
 
-    execuatable_location <- paste0(find.package("flare"),"/exec/")
-
-    if(machine == "unix"){
-      system2(paste0(execuatable_location, "/", "glm_linux"),
-              stdout = FALSE,
-              stderr = FALSE,
-              env = paste0("DYLD_LIBRARY_PATH=",execuatable_location))
-    }else if(machine == "mac"){
-      system2(paste0(execuatable_location, "/", "glm"),
-              stdout = FALSE,
-              stderr = FALSE,
-              env = paste0("DYLD_LIBRARY_PATH=",execuatable_location))
-    }else if(machine == "windows"){
+    if(machine %in% c("unix", "mac", "windows")){
       GLM3r::run_glm(verbose = FALSE)
-      # glmtools::plot_temp()
-      # system2(paste0(working_directory, "/", "glm.exe"),
-      #         invisible = FALSE)
     }else{
       print("Machine not identified")
       stop()
