@@ -12,6 +12,9 @@
 #' @param output_directory, directory where the model output will be save
 #' @noRd
 #'
+#' @importFrom GLM3r run_glm
+#' @noRd
+#'
 #' @author Quinn Thomas
 #'
 
