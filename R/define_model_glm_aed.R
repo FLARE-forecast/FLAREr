@@ -378,22 +378,11 @@ run_model <- function(i,
 #' @author Quinn Thomas
 #'
 
-set_up_model <- function(executable_location,
-                         config,
+set_up_model <- function(config,
                          ens_working_directory,
                          state_names,
                          inflow_file_names,
                          outflow_file_names){
-
-  switch(Sys.info() [["sysname"]],
-         Linux = { machine <- "unix" },
-         Darwin = { machine <- "mac" },
-         Windows = { machine <- "windows"})
-
-
-  #GLM_folder <- executable_location
-  #fl <- c(list.files(GLM_folder, full.names = TRUE))
-  #tmp <- file.copy(from = fl, to = working_directory, overwrite = TRUE)
 
   file.copy(from = file.path(config$run_config$forecast_location, config$base_GLM_nml),
             to = paste0(ens_working_directory, "/", "glm3.nml"), overwrite = TRUE)
