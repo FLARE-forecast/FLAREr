@@ -265,7 +265,7 @@ run_model <- function(i,
     unlink(paste0(working_directory, "/output.nc"))
 
     if(machine %in% c("unix", "mac", "windows")){
-      GLM3r::run_glm(verbose = FALSE)
+      GLM3r::run_glm(sim_folder = working_directory, verbose = FALSE)
     }else{
       print("Machine not identified")
       stop()
