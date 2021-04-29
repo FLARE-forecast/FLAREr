@@ -382,7 +382,7 @@ run_da_forecast <- function(states_init,
 
     message(paste0("Running time step ", i-1, " : ",
                    curr_start, " - ",
-                   curr_stop))
+                   curr_stop, " [", Sys.time(), "]"))
 
     setwd(working_directory)
 
