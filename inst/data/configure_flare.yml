@@ -124,6 +124,7 @@ localization_distance: .na #distance in meters were covariances in the model err
 vert_decorr_length: 5.0
 no_negative_states: TRUE
 assimilate_first_step: FALSE
+ncore: 2
 
 #################################
 # Parameter calibration information

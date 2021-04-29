@@ -48,7 +48,8 @@ run_model <- function(i,
                       salt_start,
                       nstates,
                       state_names,
-                      include_wq){
+                      include_wq,
+                      debug = FALSE){
 
   switch(Sys.info() [["sysname"]],
          Linux = { machine <- "unix" },
@@ -263,16 +264,18 @@ run_model <- function(i,
   while(!pass){
     unlink(paste0(working_directory, "/output.nc"))
 
+    execuatable_location <- paste0(find.package("flare"),"/exec/")
+
     if(machine == "unix"){
-      system2(paste0(working_directory, "/", "glm_linux"),
+      system2(paste0(execuatable_location, "/", "glm_linux"),
               stdout = FALSE,
               stderr = FALSE,
-              env = paste0("DYLD_LIBRARY_PATH=",working_directory))
+              env = paste0("DYLD_LIBRARY_PATH=",execuatable_location))
     }else if(machine == "mac"){
-      system2(paste0(working_directory, "/", "glm"),
+      system2(paste0(execuatable_location, "/", "glm"),
               stdout = FALSE,
               stderr = FALSE,
-              env = paste0("DYLD_LIBRARY_PATH=",working_directory))
+              env = paste0("DYLD_LIBRARY_PATH=",execuatable_location))
     }else if(machine == "windows"){
       GLM3r::run_glm(verbose = FALSE)
       # glmtools::plot_temp()
@@ -317,6 +320,10 @@ run_model <- function(i,
                                                         vars_depth = output_vars_multi_depth,
                                                         vars_no_depth = output_vars_no_depth,
                                                         diagnostic_vars = diagnostics_names)
+
+      if(!debug){
+        unlink(paste0(working_directory, "/output.nc"))
+      }
 
       num_glm_depths <- length(GLM_temp_wq_out$depths_enkf)
       glm_temps <- rev(GLM_temp_wq_out$output[ ,1])
@@ -388,7 +395,7 @@ run_model <- function(i,
 
 set_up_model <- function(executable_location,
                          config,
-                         working_directory,
+                         ens_working_directory,
                          state_names,
                          inflow_file_names,
                          outflow_file_names){
@@ -399,52 +406,52 @@ set_up_model <- function(executable_location,
          Windows = { machine <- "windows"})
 
 
-  GLM_folder <- executable_location
-  fl <- c(list.files(GLM_folder, full.names = TRUE))
-  tmp <- file.copy(from = fl, to = working_directory, overwrite = TRUE)
+  #GLM_folder <- executable_location
+  #fl <- c(list.files(GLM_folder, full.names = TRUE))
+  #tmp <- file.copy(from = fl, to = working_directory, overwrite = TRUE)
 
   file.copy(from = file.path(config$run_config$forecast_location, config$base_GLM_nml),
-            to = paste0(working_directory, "/", "glm3.nml"), overwrite = TRUE)
+            to = paste0(ens_working_directory, "/", "glm3.nml"), overwrite = TRUE)
 
   non_temp_names <- state_names[which(!(state_names %in% c("temp", "salt")))]
 
-  flare:::update_var(length(non_temp_names), "num_wq_vars", working_directory, "glm3.nml") #GLM SPECIFIC
+  flare:::update_var(length(non_temp_names), "num_wq_vars", ens_working_directory, "glm3.nml") #GLM SPECIFIC
 
   if(length(non_temp_names) > 1) {
-    flare:::update_var(non_temp_names, "wq_names", working_directory, "glm3.nml")
+    flare:::update_var(non_temp_names, "wq_names", ens_working_directory, "glm3.nml")
   }
 
   if(!is.null(ncol(inflow_file_names))) {
-    flare:::update_var(ncol(inflow_file_names), "num_inflows", working_directory, "glm3.nml")
-    flare:::update_var(ncol(outflow_file_names), "num_outlet", working_directory, "glm3.nml")
+    flare:::update_var(ncol(inflow_file_names), "num_inflows", ens_working_directory, "glm3.nml")
+    flare:::update_var(ncol(outflow_file_names), "num_outlet", ens_working_directory, "glm3.nml")
     inflow_var_names <- c("FLOW","TEMP","SALT", non_temp_names)
-    flare:::update_var(inflow_var_names, "inflow_vars", working_directory, "glm3.nml")
-    flare:::update_var(length(inflow_var_names), "inflow_varnum", working_directory, "glm3.nml")
+    flare:::update_var(inflow_var_names, "inflow_vars", ens_working_directory, "glm3.nml")
+    flare:::update_var(length(inflow_var_names), "inflow_varnum", ens_working_directory, "glm3.nml")
   }
 
 
   if(config$include_wq){
 
     file.copy(from =  file.path(config$run_config$forecast_location,config$base_AED_nml),
-              to = paste0(working_directory, "/", "aed2.nml"), overwrite = TRUE)
+              to = paste0(ens_working_directory, "/", "aed2.nml"), overwrite = TRUE)
 
     file.copy(from =  file.path(config$run_config$forecast_location,config$base_AED_phyto_pars_nml),
-              to = paste0(working_directory, "/", "aed2_phyto_pars.nml"), overwrite = TRUE)
+              to = paste0(ens_working_directory, "/", "aed2_phyto_pars.nml"), overwrite = TRUE)
 
     file.copy(from =  file.path(config$run_config$forecast_location,config$base_AED_zoop_pars_nml),
-              to = paste0(working_directory, "/", "aed2_zoop_pars.nml"), overwrite = TRUE)
+              to = paste0(ens_working_directory, "/", "aed2_zoop_pars.nml"), overwrite = TRUE)
 
   }
 
 
-    flare:::update_var(length(config$modeled_depths), "num_depths", working_directory, "glm3.nml") #GLM SPECIFIC
+    flare:::update_var(length(config$modeled_depths), "num_depths", ens_working_directory, "glm3.nml") #GLM SPECIFIC
 
 
   inflow_var_names <- c("FLOW","TEMP","SALT", non_temp_names)
 
   #Create a copy of the NML to record starting initial conditions
-  file.copy(from = paste0(working_directory, "/", "glm3.nml"), #GLM SPECIFIC
-            to = paste0(working_directory, "/", "glm3_initial.nml"), overwrite = TRUE) #GLM SPECIFIC
+  file.copy(from = paste0(ens_working_directory, "/", "glm3.nml"), #GLM SPECIFIC
+            to = paste0(ens_working_directory, "/", "glm3_initial.nml"), overwrite = TRUE) #GLM SPECIFIC
 }
 
 #' @title Download and Downscale NOAA GEFS for a single site
