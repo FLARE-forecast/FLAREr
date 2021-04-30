@@ -36,7 +36,7 @@ FLAREr is a set of functions that address key steps in the forecasting workflow.
 ### Processing
 
 `write_forecast_ncdf()`: write output in Ecological Forecasting Initative standards.     
-`create_flare_eml()`: write metadata in Ecological Forecasting Initative standards. 
+`create_flare_eml()`: write metadata in Ecological Forecasting Initative standards.     
 `plotting_general()`: generates a PDF with default visualizations. 
  
 
