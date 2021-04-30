@@ -326,8 +326,7 @@ run_da_forecast <- function(states_init,
       unlink(file.path(working_directory, "1"), recursive = TRUE)
       dir.create(file.path(working_directory, "1"), showWarnings = FALSE)
     }
-    flare:::set_up_model(executable_location = paste0(find.package("flare"),"/exec/"),
-                         config,
+    flare:::set_up_model(config,
                          ens_working_directory = file.path(working_directory,"1"),
                          state_names = states_config$state_names,
                          inflow_file_names = inflow_file_names,
@@ -340,8 +339,7 @@ run_da_forecast <- function(states_init,
         unlink(file.path(working_directory, m), recursive = TRUE)
         dir.create(file.path(working_directory, m), showWarnings = FALSE)
       }
-      flare:::set_up_model(executable_location = paste0(find.package("flare"),"/exec/"),
-                           config,
+      flare:::set_up_model(config,
                            ens_working_directory = file.path(working_directory,m),
                            state_names = states_config$state_names,
                            inflow_file_names = inflow_file_names,
@@ -382,7 +380,7 @@ run_da_forecast <- function(states_init,
 
     message(paste0("Running time step ", i-1, " : ",
                    curr_start, " - ",
-                   curr_stop))
+                   curr_stop, " [", Sys.time(), "]"))
 
     setwd(working_directory)
 

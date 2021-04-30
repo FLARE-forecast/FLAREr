@@ -264,23 +264,8 @@ run_model <- function(i,
   while(!pass){
     unlink(paste0(working_directory, "/output.nc"))
 
-    execuatable_location <- paste0(find.package("flare"),"/exec/")
-
-    if(machine == "unix"){
-      system2(paste0(execuatable_location, "/", "glm_linux"),
-              stdout = FALSE,
-              stderr = FALSE,
-              env = paste0("DYLD_LIBRARY_PATH=",execuatable_location))
-    }else if(machine == "mac"){
-      system2(paste0(execuatable_location, "/", "glm"),
-              stdout = FALSE,
-              stderr = FALSE,
-              env = paste0("DYLD_LIBRARY_PATH=",execuatable_location))
-    }else if(machine == "windows"){
-      GLM3r::run_glm(verbose = FALSE)
-      # glmtools::plot_temp()
-      # system2(paste0(working_directory, "/", "glm.exe"),
-      #         invisible = FALSE)
+    if(machine %in% c("unix", "mac", "windows")){
+      GLM3r::run_glm(sim_folder = working_directory, verbose = FALSE)
     }else{
       print("Machine not identified")
       stop()
@@ -393,22 +378,11 @@ run_model <- function(i,
 #' @author Quinn Thomas
 #'
 
-set_up_model <- function(executable_location,
-                         config,
+set_up_model <- function(config,
                          ens_working_directory,
                          state_names,
                          inflow_file_names,
                          outflow_file_names){
-
-  switch(Sys.info() [["sysname"]],
-         Linux = { machine <- "unix" },
-         Darwin = { machine <- "mac" },
-         Windows = { machine <- "windows"})
-
-
-  #GLM_folder <- executable_location
-  #fl <- c(list.files(GLM_folder, full.names = TRUE))
-  #tmp <- file.copy(from = fl, to = working_directory, overwrite = TRUE)
 
   file.copy(from = file.path(config$run_config$forecast_location, config$base_GLM_nml),
             to = paste0(ens_working_directory, "/", "glm3.nml"), overwrite = TRUE)
