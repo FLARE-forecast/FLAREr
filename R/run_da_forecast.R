@@ -133,6 +133,7 @@
 #' netcdf output and `create_flare_eml()` to generate the EML metadata
 #' @export
 #' @importFrom parallel clusterExport detectCores clusterEvalQ parLapply stopCluster
+#' @importFrom GLM3r glm_version
 #' @example
 #'
 #'
@@ -367,6 +368,9 @@ run_da_forecast <- function(states_init,
   }else{
     start_step <- 2
   }
+
+  # Print GLM version
+  GLM3r::glm_version()
 
   ###START EnKF
   for(i in start_step:nsteps){
