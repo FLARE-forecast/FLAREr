@@ -31,12 +31,12 @@ Imports:
     plyr,
     ggplot2,
     rMR,
+    GLM3r,
     patchwork,
     parallel
 Suggests: 
     knitr,
     rmarkdown,
-    GLM3r,
     testthat (>= 3.0.0)
 VignetteBuilder: knitr
 Config/testthat/edition: 3
