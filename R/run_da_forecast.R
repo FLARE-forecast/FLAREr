@@ -412,11 +412,18 @@ run_da_forecast <- function(states_init,
       } else {
         cl <- parallel::makeCluster(config$ncore, setup_strategy = "sequential")
       }
+      # Close parallel sockets on exit even if function is crashed or cancelled
+      on.exit({
+        tryCatch({parallel::stopCluster(cl)},
+                 error = function(e) {
+                   return(NA)
+                 })
+      })
 
       parallel::clusterExport(cl, varlist = list("working_directory", "met_file_names", "met_index",
                                                  "par_fit_method", "da_method", "nstates", "npars",
                                                  "pars_config", "inflow_file_names", "inflow_outflow_index",
-                                                 "outflow_file_names", "i", "curr_start",
+                                                 "outflow_file_names", "curr_start",
                                                  "curr_stop", "par_names", "par_nml",
                                                  "num_phytos", "full_time_local", "management",
                                                  "hist_days", "config", "states_config",
@@ -425,7 +432,7 @@ run_da_forecast <- function(states_init,
     }
 
     # Variables that need to be exported at each timestep
-    parallel::clusterExport(cl, varlist = list("x", "mixing_vars", "model_internal_depths", "lake_depth",
+    parallel::clusterExport(cl, varlist = list("x", "i", "mixing_vars", "model_internal_depths", "lake_depth",
                                                "snow_ice_thickness", "avg_surf_temp", "salt"),
                             envir = environment())
 
@@ -537,11 +544,6 @@ run_da_forecast <- function(states_init,
             x_star[m, (((jj-1)*ndepths_modeled)+1):(jj*ndepths_modeled)] + q_v
         }
       } # END ENSEMBLE LOOP
-
-      # Close clusters at the last time step
-      if(i == nsteps) {
-        parallel::stopCluster(cl)
-      }
 
       #Correct any negative water quality states
       if(config$include_wq & config$no_negative_states){
