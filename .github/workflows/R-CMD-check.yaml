@@ -84,9 +84,10 @@ jobs:
         run: |
           options(width = 100)
           message("Number of cores: ", parallel::detectCores())
+          glm_v <- GLM3r::glm_version()
+          message("Using GLM ", substr(glm_v[3], 35, 58))
           pkgs <- installed.packages()[, "Package"]
           sessioninfo::session_info(pkgs, include_base = TRUE)
-          GLM3r::glm_version()
         shell: Rscript {0}
 
       - name: Check
