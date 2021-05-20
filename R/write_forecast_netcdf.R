@@ -21,7 +21,7 @@ write_forecast_netcdf <- function(enkf_output,
   data_assimilation_flag = enkf_output$data_assimilation_flag
   forecast_flag = enkf_output$forecast_flag
   da_qc_flag = enkf_output$da_qc_flag
-  full_time_local <- enkf_output$full_time_local
+  full_time <- enkf_output$full_time
   forecast_start_datetime <- enkf_output$forecast_start_datetime
   avg_surf_temp <- enkf_output$avg_surf_temp
   mixing_vars <- enkf_output$mixing_vars
@@ -35,7 +35,7 @@ write_forecast_netcdf <- function(enkf_output,
 
   diagnostics <- enkf_output$diagnostics
 
-  hist_days <- as.numeric(forecast_start_datetime - full_time_local[1])
+  hist_days <- as.numeric(forecast_start_datetime - full_time[1])
   start_forecast_step <- 1 + hist_days
 
   npars <- nrow(pars_config)
@@ -48,7 +48,7 @@ write_forecast_netcdf <- function(enkf_output,
   #Set dimensions
   ens <- seq(1,dim(x)[2],1)
   depths <- config$modeled_depths
-  t <- as.numeric(as.POSIXct(lubridate::with_tz(full_time_local),origin = '1970-01-01 00:00.00 UTC'))
+  t <- as.numeric(as.POSIXct(lubridate::with_tz(full_time),origin = '1970-01-01 00:00.00 UTC'))
   states <- seq(1,nstates,1)
   #obs_states <- seq(1,dim(obs)[3],1)
 
@@ -184,7 +184,7 @@ write_forecast_netcdf <- function(enkf_output,
   ncdf4::ncatt_put(ncout,0,"forecast_iteration_id",enkf_output$forecast_iteration_id, prec =  "text")
   ncdf4::ncatt_put(ncout,0,"forecast_project_id",enkf_output$config$metadata$forecast_project_id, prec =  "text")
   ncdf4::ncatt_put(ncout,0,"forecast_model_id",enkf_output$config$metadata$model_description$forecast_model_id, prec =  "text")
-  ncdf4::ncatt_put(ncout,0,"local_time_zone_of_simulation",as.character(config$local_tzone), prec =  "text")
+  ncdf4::ncatt_put(ncout,0,"time_zone_of_simulation","UTC", prec =  "text")
 
   ncdf4::nc_close(ncout)
 

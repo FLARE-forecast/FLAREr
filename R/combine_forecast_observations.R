@@ -16,9 +16,8 @@ local_tzone <- ncdf4::ncatt_get(nc, 0)$local_time_zone_of_simulation
 full_time <- as.POSIXct(t,
                         origin = '1970-01-01 00:00.00 UTC',
                         tz = "UTC")
-full_time_local <- lubridate::with_tz(full_time, local_tzone)
-full_time_day_local <- lubridate::as_date(full_time_local)
-nsteps <- length(full_time_day_local)
+full_time_day <- lubridate::as_date(full_time)
+nsteps <- length(full_time_day)
 forecast <- ncdf4::ncvar_get(nc, 'forecast')
 depths <- round(ncdf4::ncvar_get(nc, 'depth'),2)
 
@@ -148,18 +147,18 @@ d <- readr::read_csv(cleaned_observations_file_long,
 
 obs_list <- list()
 
-full_time_local_extended <- seq(full_time_local[1] - lubridate::days(extra_historical_days), max(full_time_local), by = "1 day")
+full_time_extended <- seq(full_time[1] - lubridate::days(extra_historical_days), max(full_time), by = "1 day")
 for(i in 1:length(obs_names)){
   print(paste0("Extracting ",target_variable[i]))
 
-  obs_tmp <- array(NA,dim = c(length(full_time_local_extended),length(depths)))
+  obs_tmp <- array(NA,dim = c(length(full_time_extended),length(depths)))
 
-  for(k in 1:length(full_time_local_extended)){
+  for(k in 1:length(full_time_extended)){
     for(j in 1:length(depths)){
       d1 <- d %>%
         dplyr::filter(variable == target_variable[i],
-                      date == lubridate::as_date(full_time_local_extended[k]),
-                      (is.na(hour) | hour == lubridate::hour(full_time_local_extended[k])),
+                      date == lubridate::as_date(full_time_extended[k]),
+                      (is.na(hour) | hour == lubridate::hour(full_time_extended[k])),
                       abs(depth-depths[j]) < distance_threshold[i])
 
       if(nrow(d1) == 1){
@@ -176,13 +175,13 @@ for(i in 1:length(obs_names)){
 #### STEP 7: CREATE THE Z ARRAY (OBSERVATIONS x TIME)
 ####################################################
 
-obs <- array(NA, dim = c(length(full_time_local_extended), length(depths), length(obs_names)))
+obs <- array(NA, dim = c(length(full_time_extended), length(depths), length(obs_names)))
 for(i in 1:length(obs_names)){
   obs[ , , i] <-  obs_list[[i]]
 }
 
 return(list(obs = obs,
-            full_time_local_extended = full_time_local_extended,
+            full_time_extended = full_time_extended,
             diagnostic_list = diagnostic_list,
             state_list = state_list,
             forecast = forecast,
@@ -191,7 +190,7 @@ return(list(obs = obs,
             state_names = state_names,
             par_names = par_names,
             diagnostics_names = diagnostics_names,
-            full_time_local = full_time_local,
+            full_time = full_time,
             obs_long = d,
             depths = depths,
             obs_names = obs_names))

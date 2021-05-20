@@ -3,9 +3,9 @@
 #' @param inflow_file_dir
 #' @param inflow_obs
 #' @param working_directory
-#' @param start_datetime_local
-#' @param end_datetime_local
-#' @param forecast_start_datetime_local
+#' @param start_datetime
+#' @param end_datetime
+#' @param forecast_start_datetime
 #' @param use_future_inflow
 #' @param state_names
 #'
@@ -16,9 +16,9 @@
 create_glm_inflow_outflow_files <- function(inflow_file_dir,
                                             inflow_obs,
                                             working_directory,
-                                            start_datetime_local,
-                                            end_datetime_local,
-                                            forecast_start_datetime_local,
+                                            start_datetime,
+                                            end_datetime,
+                                            forecast_start_datetime,
                                             use_future_inflow,
                                             state_names)
 
@@ -28,11 +28,11 @@ create_glm_inflow_outflow_files <- function(inflow_file_dir,
 
   if(use_future_inflow){
     obs_inflow <- obs_inflow %>%
-      dplyr::filter(time >= lubridate::as_date(start_datetime_local) & time <= lubridate::as_date(forecast_start_datetime_local)) %>%
+      dplyr::filter(time >= lubridate::as_date(start_datetime) & time <= lubridate::as_date(forecast_start_datetime)) %>%
       dplyr::mutate(inflow_num = 1)
   }else{
     obs_inflow <- obs_inflow %>%
-      dplyr::filter(time >= lubridate::as_date(start_datetime_local) & time <= lubridate::as_date(end_datetime_local)) %>%
+      dplyr::filter(time >= lubridate::as_date(start_datetime) & time <= lubridate::as_date(end_datetime)) %>%
       dplyr::mutate(inflow_num = 1)
 
 
@@ -59,7 +59,7 @@ create_glm_inflow_outflow_files <- function(inflow_file_dir,
 
   for(j in 1:num_inflows){
 
-    if(length(inflow_files) == 0 | end_datetime_local == forecast_start_datetime_local){
+    if(length(inflow_files) == 0 | end_datetime == forecast_start_datetime){
 
       obs_inflow_tmp <- obs_inflow %>%
         dplyr::filter(inflow_num == j) %>%
@@ -81,7 +81,7 @@ create_glm_inflow_outflow_files <- function(inflow_file_dir,
 
         obs_inflow_tmp <- obs_inflow %>%
           dplyr::filter(inflow_num == j,
-                        time < lubridate::as_date(forecast_start_datetime_local)) %>%
+                        time < lubridate::as_date(forecast_start_datetime)) %>%
           dplyr::select(c("time", "FLOW", "TEMP", "SALT"))
 
 
@@ -119,7 +119,7 @@ create_glm_inflow_outflow_files <- function(inflow_file_dir,
 
   for(j in 1:num_outflows){
 
-    if(length(inflow_files) == 0 | end_datetime_local == forecast_start_datetime_local){
+    if(length(inflow_files) == 0 | end_datetime == forecast_start_datetime){
 
       obs_outflow_tmp <- obs_outflow %>%
         dplyr::filter(outflow_num == j) %>%
@@ -141,7 +141,7 @@ create_glm_inflow_outflow_files <- function(inflow_file_dir,
 
         obs_outflow_tmp <- obs_outflow %>%
           dplyr::filter(outflow_num == j,
-                        time < lubridate::as_date(forecast_start_datetime_local)) %>%
+                        time < lubridate::as_date(forecast_start_datetime)) %>%
           dplyr::select(-outflow_num)
 
         outflow <- rbind(obs_outflow_tmp, d)

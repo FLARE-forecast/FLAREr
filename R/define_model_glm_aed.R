@@ -32,7 +32,7 @@ run_model <- function(i,
                       glm_depths_start,
                       lake_depth_start,
                       x_start,
-                      full_time_local,
+                      full_time,
                       wq_start,
                       wq_end,
                       management = NULL,
@@ -141,7 +141,7 @@ run_model <- function(i,
         FLAREr:::create_sss_input_output(x = x_start,
                                         i,
                                         m,
-                                        full_time_local,
+                                        full_time,
                                         working_directory,
                                         wq_start,
                                         management$management_input,
@@ -452,7 +452,7 @@ set_up_model <- function(config,
 create_sss_input_output <- function(x,
                                     i,
                                     m,
-                                    full_time_local,
+                                    full_time,
                                     working_directory,
                                     wq_start,
                                     management_input,
@@ -466,7 +466,7 @@ create_sss_input_output <- function(x,
                                     forecast_sss_oxy,
                                     salt){
 
-  full_time_day_local <- lubridate::as_date(full_time_local)
+  full_time_day_local <- lubridate::as_date(full_time)
 
   sss_oxy_factor <- 1.0
 

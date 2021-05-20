@@ -8,9 +8,9 @@ create_glm_inflow_outflow_files(
   inflow_file_dir,
   inflow_obs,
   working_directory,
-  start_datetime_local,
-  end_datetime_local,
-  forecast_start_datetime_local,
+  start_datetime,
+  end_datetime,
+  forecast_start_datetime,
   use_future_inflow,
   state_names
 )

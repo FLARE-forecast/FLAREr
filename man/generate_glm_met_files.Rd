@@ -8,10 +8,9 @@ generate_glm_met_files(
   obs_met_file = NULL,
   out_dir,
   forecast_dir = NULL,
-  local_tzone,
-  start_datetime_local,
-  end_datetime_local,
-  forecast_start_datetime_local,
+  start_datetime,
+  end_datetime,
+  forecast_start_datetime,
   use_forecasted_met
 )
 }

@@ -33,13 +33,13 @@ obs_config <- readr::read_csv(file.path(config$run_config$forecast_location, con
 states_config <- readr::read_csv(file.path(config$run_config$forecast_location,config$states_config_file), col_types = readr::cols())
 
 # Set up timings
-start_datetime_local <- lubridate::as_datetime(paste0(config$run_config$start_day_local," ",config$run_config$start_time_local), tz = config$local_tzone)
-if(is.na(config$run_config$forecast_start_day_local)){
-  end_datetime_local <- lubridate::as_datetime(paste0(config$run_config$end_day_local," ",config$run_config$start_time_local), tz = config$local_tzone)
-  forecast_start_datetime_local <- end_datetime_local
+start_datetime <- lubridate::as_datetime(paste0(config$run_config$start_day," ",config$run_config$start_time), tz = "UTC")
+if(is.na(config$run_config$forecast_start_day)){
+  end_datetime <- lubridate::as_datetime(paste0(config$run_config$end_day," ",config$run_config$start_time), tz = "UTC")
+  forecast_start_datetime <- end_datetime
 }else{
-  forecast_start_datetime_local <- lubridate::as_datetime(paste0(config$run_config$forecast_start_day_local," ",config$run_config$start_time_local), tz = config$local_tzone)
-  end_datetime_local <- forecast_start_datetime_local + lubridate::days(config$run_config$forecast_horizon)
+  forecast_start_datetime <- lubridate::as_datetime(paste0(config$run_config$forecast_start_day," ",config$run_config$start_time), tz = "UTC")
+  end_datetime <- forecast_start_datetime + lubridate::days(config$run_config$forecast_horizon)
 }
 
 #Download and process observations (already done)
@@ -51,20 +51,16 @@ observed_met_file <- file.path(config$qaqc_data_location,"observed-met_fcre.nc")
 #Step up Drivers
 
 #Weather Drivers
-start_datetime_UTC <-  lubridate::with_tz(start_datetime_local, tzone = "UTC")
-end_datetime_UTC <-  lubridate::with_tz(end_datetime_local, tzone = "UTC")
-forecast_start_datetime_UTC <- lubridate::with_tz(forecast_start_datetime_local, tzone = "UTC")
-forecast_hour <- lubridate::hour(forecast_start_datetime_UTC)
+forecast_hour <- lubridate::hour(forecast_start_datetime)
 if(forecast_hour < 10){forecast_hour <- paste0("0",forecast_hour)}
 forecast_path <- file.path(config$data_location, config$forecast_met_model)
 
 met_out <- FLAREr::generate_glm_met_files(obs_met_file = observed_met_file,
                                          out_dir = config$run_config$execute_location,
                                          forecast_dir = forecast_path,
-                                         local_tzone = config$local_tzone,
-                                         start_datetime_local = start_datetime_local,
-                                         end_datetime_local = end_datetime_local,
-                                         forecast_start_datetime = forecast_start_datetime_local,
+                                         start_datetime = start_datetime,
+                                         end_datetime = end_datetime,
+                                         forecast_start_datetime = forecast_start_datetime,
                                          use_forecasted_met = TRUE)
 met_file_names <- met_out$filenames
 
@@ -77,9 +73,9 @@ suppressMessages({
   inflow_outflow_files <- FLAREr::create_glm_inflow_outflow_files(inflow_file_dir = inflow_forecast_path,
                                                                  inflow_obs = cleaned_inflow_file,
                                                                  working_directory = config$run_config$execute_location,
-                                                                 start_datetime_local = start_datetime_local,
-                                                                 end_datetime_local = end_datetime_local,
-                                                                 forecast_start_datetime_local = forecast_start_datetime_local,
+                                                                 start_datetime = start_datetime,
+                                                                 end_datetime = end_datetime,
+                                                                 forecast_start_datetime = forecast_start_datetime,
                                                                  use_future_inflow = TRUE,
                                                                  state_names = NULL)
 })
@@ -92,14 +88,13 @@ write.csv(obs_tmp, cleaned_observations_file_long, row.names = FALSE, quote = FA
 
 obs <- FLAREr::create_obs_matrix(cleaned_observations_file_long,
                                 obs_config,
-                                start_datetime_local,
-                                end_datetime_local,
-                                local_tzone = config$local_tzone,
+                                start_datetime,
+                                end_datetime,
                                 modeled_depths = config$modeled_depths)
 
 #Set observations in the "future" to NA
-full_time_forecast <- seq(start_datetime_local, end_datetime_local, by = "1 day")
-obs[ , which(full_time_forecast > forecast_start_datetime_local), ] <- NA
+full_time_forecast <- seq(start_datetime, end_datetime, by = "1 day")
+obs[ , which(full_time_forecast > forecast_start_datetime), ] <- NA
 
 
 states_config <- FLAREr::generate_states_to_obs_mapping(states_config, obs_config)

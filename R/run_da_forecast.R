@@ -151,9 +151,9 @@
 #'               met_file_names = met_file_names,
 #'               inflow_file_names = inflow_file_names,
 #'               outflow_file_names = outflow_file_names,
-#'               start_datetime = start_datetime_local,
-#'               end_datetime = end_datetime_local,
-#'               forecast_start_datetime = forecast_start_datetime_local,
+#'               start_datetime = start_datetime,
+#'               end_datetime = end_datetime,
+#'               forecast_start_datetime = forecast_start_datetime,
 #'               config = config,
 #'               pars_config = pars_config,
 #'               states_config = states_config,
@@ -255,7 +255,7 @@ run_da_forecast <- function(states_init,
 
   hist_days <- as.numeric(forecast_start_datetime - start_datetime)
   start_forecast_step <- 1 + hist_days
-  full_time_local <- seq(start_datetime, end_datetime, by = "1 day")
+  full_time <- seq(start_datetime, end_datetime, by = "1 day")
   forecast_days <- as.numeric(end_datetime - forecast_start_datetime)
 
 
@@ -270,7 +270,7 @@ run_da_forecast <- function(states_init,
   }
 
   nstates <- dim(x_init)[2] -  npars
-  nsteps <- length(full_time_local)
+  nsteps <- length(full_time)
   nmembers <- dim(x_init)[1]
   n_met_members <- length(met_file_names)
   ndepths_modeled <- length(config$modeled_depths)
@@ -307,9 +307,9 @@ run_da_forecast <- function(states_init,
 
   num_phytos <- length(which(stringr::str_detect(states_config$state_names,"PHY_") & !stringr::str_detect(states_config$state_names,"_IP") & !stringr::str_detect(states_config$state_names,"_IN")))
 
-  full_time_local_char <- strftime(full_time_local,
+  full_time_char <- strftime(full_time,
                                    format="%Y-%m-%d %H:%M",
-                                   tz = config$local_tzone)
+                                   tz = "UTC")
 
   x_prior <- array(NA, dim = c(nsteps, nmembers, nstates + npars))
 
@@ -380,12 +380,12 @@ run_da_forecast <- function(states_init,
   ###START EnKF
   for(i in start_step:nsteps){
 
-    curr_start <- strftime(full_time_local[i - 1],
+    curr_start <- strftime(full_time[i - 1],
                            format="%Y-%m-%d %H:%M",
-                           tz = config$local_tzone)
-    curr_stop <- strftime(full_time_local[i],
+                           tz = "UTC")
+    curr_stop <- strftime(full_time[i],
                           format="%Y-%m-%d %H:%M",
-                          tz = config$local_tzone)
+                          tz = "UTC")
 
     message(paste0("Running time step ", i-1, " : ",
                    curr_start, " - ",
@@ -434,7 +434,7 @@ run_da_forecast <- function(states_init,
                                                  "pars_config", "inflow_file_names", "inflow_outflow_index",
                                                  "outflow_file_names", "curr_start",
                                                  "curr_stop", "par_names", "par_nml",
-                                                 "num_phytos", "full_time_local", "management",
+                                                 "num_phytos", "full_time", "management",
                                                  "hist_days", "config", "states_config",
                                                  "ndepths_modeled", "glm_output_vars", "num_wq_vars"),
                               envir = environment())
@@ -503,7 +503,7 @@ run_da_forecast <- function(states_init,
                                 glm_depths_start = model_internal_depths[i-1, ,m ],
                                 lake_depth_start = lake_depth[i-1, m],
                                 x_start = x[i-1, m, ],
-                                full_time_local,
+                                full_time,
                                 wq_start = states_config$wq_start,
                                 wq_end = states_config$wq_end,
                                 management = management,
@@ -843,25 +843,25 @@ run_da_forecast <- function(states_init,
     }
   }
 
-  if(lubridate::day(full_time_local[1]) < 10){
-    file_name_H_day <- paste0("0",lubridate::day(full_time_local[1]))
+  if(lubridate::day(full_time[1]) < 10){
+    file_name_H_day <- paste0("0",lubridate::day(full_time[1]))
   }else{
-    file_name_H_day <- lubridate::day(full_time_local[1])
+    file_name_H_day <- lubridate::day(full_time[1])
   }
-  if(lubridate::day(full_time_local[hist_days+1]) < 10){
-    file_name_F_day <- paste0("0",lubridate::day(full_time_local[hist_days+1]))
+  if(lubridate::day(full_time[hist_days+1]) < 10){
+    file_name_F_day <- paste0("0",lubridate::day(full_time[hist_days+1]))
   }else{
-    file_name_F_day <- lubridate::day(full_time_local[hist_days+1])
+    file_name_F_day <- lubridate::day(full_time[hist_days+1])
   }
-  if(lubridate::month(full_time_local[1]) < 10){
-    file_name_H_month <- paste0("0",lubridate::month(full_time_local[1]))
+  if(lubridate::month(full_time[1]) < 10){
+    file_name_H_month <- paste0("0",lubridate::month(full_time[1]))
   }else{
-    file_name_H_month <- lubridate::month(full_time_local[1])
+    file_name_H_month <- lubridate::month(full_time[1])
   }
-  if(lubridate::month(full_time_local[hist_days+1]) < 10){
-    file_name_F_month <- paste0("0",lubridate::month(full_time_local[hist_days+1]))
+  if(lubridate::month(full_time[hist_days+1]) < 10){
+    file_name_F_month <- paste0("0",lubridate::month(full_time[hist_days+1]))
   }else{
-    file_name_F_month <- lubridate::month(full_time_local[hist_days+1])
+    file_name_F_month <- lubridate::month(full_time[hist_days+1])
   }
 
 
@@ -888,10 +888,10 @@ run_da_forecast <- function(states_init,
                                   curr_second)
 
   save_file_name <- paste0(config$run_config$sim_name, "_H_",
-                           (lubridate::year(full_time_local[1])),"_",
+                           (lubridate::year(full_time[1])),"_",
                            file_name_H_month,"_",
                            file_name_H_day,"_",
-                           (lubridate::year(full_time_local[hist_days+1])),"_",
+                           (lubridate::year(full_time[hist_days+1])),"_",
                            file_name_F_month,"_",
                            file_name_F_day,"_F_",
                            forecast_days,"_",
@@ -902,7 +902,7 @@ run_da_forecast <- function(states_init,
   }
 
 
-  return(list(full_time_local = full_time_local,
+  return(list(full_time = full_time,
               forecast_start_datetime = forecast_start_datetime,
               x = x,
               obs = obs,

@@ -18,10 +18,9 @@
 
 
 extract_observations <- function(fname,
-                               start_datetime_local,
-                               end_datetime_local,
+                               start_datetime,
+                               end_datetime,
                                modeled_depths,
-                               local_tzone,
                                target_variable,
                                distance_threshold_meter,
                                time_threshold_seconds,
@@ -32,7 +31,7 @@ extract_observations <- function(fname,
   d <- readr::read_csv(fname,
                 col_types = readr::cols())
 
-  d$timestamp <- lubridate::with_tz(d$timestamp, tzone = local_tzone)
+  d$timestamp <- lubridate::with_tz(d$timestamp, tzone = "UTC")
 
   obs <- array(NA,dim = c(length(full_time_local),length(modeled_depths)))
 

@@ -1,9 +1,8 @@
 ##' @param cleaned_observations_file_long
 ##'
 ##' @param obs_config
-##' @param start_datetime_local
-##' @param end_datetime_local
-##' @param local_tzone
+##' @param start_datetime
+##' @param end_datetime
 ##' @param modeled_depths
 ##'
 ##' @title Create matrix of observations in the format required by run_ENKF
@@ -14,9 +13,9 @@
 ##'
 ##'
 
-create_obs_matrix <- function(cleaned_observations_file_long, obs_config, start_datetime_local, end_datetime_local, local_tzone, modeled_depths){
+create_obs_matrix <- function(cleaned_observations_file_long, obs_config, start_datetime, end_datetime, modeled_depths){
 
-  full_time_local <- seq(start_datetime_local, end_datetime_local, by = "1 day")
+  full_time <- seq(start_datetime, end_datetime, by = "1 day")
 
   d <- readr::read_csv(cleaned_observations_file_long,
                        col_types = readr::cols())
@@ -25,9 +24,9 @@ create_obs_matrix <- function(cleaned_observations_file_long, obs_config, start_
   for(i in 1:length(obs_config$state_names_obs)){
     message("Extracting ",obs_config$target_variable[i])
 
-    obs_tmp <- array(NA,dim = c(length(full_time_local),length(modeled_depths)))
+    obs_tmp <- array(NA,dim = c(length(full_time),length(modeled_depths)))
 
-    for(k in 1:length(full_time_local)){
+    for(k in 1:length(full_time)){
       for(j in 1:length(modeled_depths)){
         d1 <- d %>%
           dplyr::filter(variable == obs_config$target_variable[i])
@@ -35,21 +34,21 @@ create_obs_matrix <- function(cleaned_observations_file_long, obs_config, start_
           warning("No observations for ", obs_config$target_variable[i])
         }
         d1 <- d1 %>%
-          dplyr::filter(date == lubridate::as_date(full_time_local[k]))
+          dplyr::filter(date == lubridate::as_date(full_time[k]))
         if(nrow(d1) == 0){
-          warning("No observations for ", obs_config$target_variable[i], " on ", lubridate::as_date(full_time_local[k]))
+          warning("No observations for ", obs_config$target_variable[i], " on ", lubridate::as_date(full_time[k]))
         }
         d1 <- d1 %>%
-          dplyr::filter((is.na(hour) | hour == lubridate::hour(full_time_local[k])))
+          dplyr::filter((is.na(hour) | hour == lubridate::hour(full_time[k])))
         if(nrow(d1) == 0){
-          warning("No observations for ", obs_config$target_variable[i], " on ", lubridate::as_date(full_time_local[k]),
-               " at ", lubridate::hour(full_time_local[k]), ":00:00")
+          warning("No observations for ", obs_config$target_variable[i], " on ", lubridate::as_date(full_time[k]),
+               " at ", lubridate::hour(full_time[k]), ":00:00")
         }
         d1 <- d1 %>%
           dplyr::filter(abs(depth-modeled_depths[j]) < obs_config$distance_threshold[i])
         if(nrow(d1) == 0){
-          # warning("No observations for ", obs_config$target_variable[i], " on ", lubridate::as_date(full_time_local[k]),
-               # " at ", lubridate::hour(full_time_local[k]), ":00:00", " within ", obs_config$distance_threshold[i],
+          # warning("No observations for ", obs_config$target_variable[i], " on ", lubridate::as_date(full_time[k]),
+               # " at ", lubridate::hour(full_time[k]), ":00:00", " within ", obs_config$distance_threshold[i],
           # "m of the modeled depth ", modeled_depths[j], "m")
         }
         if(nrow(d1) >= 1){
@@ -73,7 +72,7 @@ create_obs_matrix <- function(cleaned_observations_file_long, obs_config, start_
   #### STEP 7: CREATE THE Z ARRAY (OBSERVATIONS x TIME)
   ####################################################
 
-  obs <- array(NA, dim = c(length(obs_config$state_names_obs), length(full_time_local), length(modeled_depths)))
+  obs <- array(NA, dim = c(length(obs_config$state_names_obs), length(full_time), length(modeled_depths)))
   for(i in 1:nrow(obs_config)){
     obs[i , , ] <-  obs_list[[i]]
   }

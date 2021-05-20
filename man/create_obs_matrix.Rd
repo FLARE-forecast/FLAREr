@@ -7,9 +7,8 @@
 create_obs_matrix(
   cleaned_observations_file_long,
   obs_config,
-  start_datetime_local,
-  end_datetime_local,
-  local_tzone,
+  start_datetime,
+  end_datetime,
   modeled_depths
 )
 }
