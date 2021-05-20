@@ -15,7 +15,7 @@ knitr::opts_chunk$set(
 ```
 
 ```{r setup}
-library(flare)
+library(FLAREr)
 ```
 
 ## Step 1: Acquire data
