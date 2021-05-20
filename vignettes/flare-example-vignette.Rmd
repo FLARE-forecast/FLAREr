@@ -14,11 +14,556 @@ knitr::opts_chunk$set(
 )
 ```
 
-```{r setup}
-library(FLAREr)
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(tidyverse)
+library(ncdf4)
+library(lubridate)
+set.seed(1)
 ```
 
-## Step 1: Acquire data
+## Background
+
+This document serves as a users guide and a tutorial for the FLARE (Forecasting Lake and Reservior Ecosystems) system ([Thomas et al. 2020](https://agupubs.onlinelibrary.wiley.com/doi/abs/10.1029/2019WR026138)). FLARE generates forecasts and forecast uncertainty of water temperature and water quality for a 16-day time horizon at multiple depths of a lake or reservior. It uses data assimilation to update the initial starting point for a forecast and the model parameters based a real-time statistical comparsions to observations.  It has been developed, tested, and evaluated for Falling  Creek Reservior in Vinton,VA ([Thomas et al. 2020](https://agupubs.onlinelibrary.wiley.com/doi/abs/10.1029/2019WR026138)).
+
+FLARE is a set of R scripts that
+
+* Generating the inputs and configuration files required by the General Lake Model (GLM)
+* Applying data assimilation to GLM
+* Processing and archiving forecast output
+* Visualizing forecast output
+
+FLARE uses the 1-D General Lake Model ([Hipsey et al. 2019](https://www.geosci-model-dev.net/12/473/2019/)) as the mechanistic process model that predicts hydrodynamics of the lake or reservoir.  For forecasts of water quality, it uses GLM with the Aquatic Ecosystem Dynamics library.   The binaries for GLM and GLM-AED are included in the FLARE code that is available on GitHub. FLARE requires GLM version 3.1 or higher.
+
+More information about the GLM can be found here:
+
+* [GLM users guide](https://aed.see.uwa.edu.au/research/models/GLM/index.html) 
+* [GLM 3.0.0 manuscript](https://www.geosci-model-dev.net/12/473/2019/) 
+* [GLM on GitHub](https://github.com/AquaticEcoDynamics/GLM)
+* [AED on GitHub](https://github.com/AquaticEcoDynamics/libaed2)
+
+FLARE development has been supported by grants from National Science Foundation (CNS-1737424, DEB-1753639, EF-1702506, DBI-1933016, DEB-1926050)
+
+## Requirements
+* [RStudio](https://rstudio.com/products/rstudio/download/)
+* `FLAREr` R package
+* `FLAREr` dependencies
+
+
+## 1: Set up
+
+First, install the `FLAREr` package from GitHub. There will be other required packages that will also be downloaded.
+
+```{r}
+remotes::install_github("flare-forecast/FLAREr")
+```
+
+Second, create a directory that will be your working directory for your FLARE run
+
+```{r}
+forecast_location <- "/Users/quinn/Dropbox/Research/SSC_forecasting/flare_users_guide_v2/forecast_location"
+working_directory <- "/Users/quinn/Dropbox/Research/SSC_forecasting/flare_users_guide_v2/working_directory"
+```
+
+## 2: Configuration files
+
+First, `FLAREr` requires two configuration yaml files.  The code below copies examples from the `FLAREr` package.
+
+```{r}
+file.copy(system.file("data", "configure_flare.yml", package="FLAREr"), forecast_location)
+file.copy(system.file("data", "run_configuration.yml", package="FLAREr"), forecast_location)
+```
+
+Second, `FLAREr` requires a set of configuration CSV files.  The CSV files are used to define the states that are simulated and the parameters that are calibrated. The code below copies examples from the `FLAREr` package
+
+```{r}
+file.copy(system.file("data", "parameter_calibration_config.csv", package="FLAREr"), forecast_location)
+file.copy(system.file("data", "states_config.csv", package="FLAREr"), forecast_location)
+file.copy(system.file("data", "states_process_error.csv", package="FLAREr"), forecast_location)
+file.copy(system.file("data", "observations_config.csv", package="FLAREr"), forecast_location)
+```
+
+Third, FLAREr requires GLM specific configurations files.  For applications that require on water temperature, only the GLM namelist file is needed.  Applications that require other water quality variables will require additional namelist files that are associated with the AED model.
+
+```{r}
+file.copy(system.file("data", "glm3.nml", package="FLAREr"), forecast_location)
+```
+
+## 3: Observation and driver files
+
+Since the FLAREr package for general application, scripts to download and process observation and drivers are not included in the package.  Therefore the application of FLARE to a lake will require a set of additional scripts that are specific to the data formats for the lakes.  The example includes files for application to FCR.  
+
+```{r}
+file.copy(from = system.file("data/input_data", package= "FLAREr"), to = forecast_location, recursive = TRUE)
+```
+
+First, FLAREr requires the observation file to have a specific name (observations_postQAQC_long.csv) and format.
+
+```{r}
+head(read_csv("forecast_location/input_data/observations_postQAQC_long.csv", col_types = readr::cols()))
+```
+
+Second, FLARE are requires the observed (historical) meteorology to be a specific name (observed-met_fcre.nc) and format. 
+
+```{r}
+ncdf4::nc_open("forecast_location/input_data/observed-met_fcre.nc")
+```
+Third, FLARE are requires the observed (historical) inflow and outflow to be a specific name (inflow_postQAQC.csv) and format. 
+
+```{r}
+head(read_csv("forecast_location/input_data/inflow_postQAQC.csv", col_types = readr::cols()))
+```
+
+Finally, if using forecasted meteorology and inflows, FLAREr requires specific file formats and file names with specific characters (INFLOW or OUTFLOW). The follow set of files are the forecasted inflow files in the example. 
+
+```{r}
+all_files <- list.files("forecast_location/input_data/FLOWS-NOAAGEFS-AR1", full.names = TRUE)
+all_files[stringr::str_detect(all_files,"INFLOW")]
+```
+with the following format
+
+```{r}
+head(read_csv(all_files[stringr::str_detect(all_files,"INFLOW")][1], col_types = readr::cols()))
+```
+
+Similarily, the forecasted NOAA GEFS meterology has a specific file formats and file names with specific characters (NOAAGEGS_1hr). The follow set of files are the forecasted meterology files in the example.
+
+```{r}
+all_files <- list.files("forecast_location/input_data/NOAAGEFS_1hr-debias", full.names = TRUE)
+all_files
+```
+```{r}
+ncdf4::nc_open(all_files[1])
+```
+## 2: Configure simulation (GLM)
+
+The configuration functions are spread across the files. These files are described in more detail below
+
+ * `glm3.nml`
+ * `configure_flare.yml`
+ * `run_configuration.yml`
+ * `states_config.csv`
+ * `observations_config.csv`
+ * `parameter_calibration_config.csv`
+ * `states_process_error.csv`
+
+### run_configuration.yml
+
+This file is the configuration file that define the specific timing of the run. 
+
+* `forecast_location`: This is the `flare_simulation` directory  (full path; 
+you will need to change this to reflect the location of your directory)
+* `execute_location`: This is the same as `forecast_location` unless you are
+  executing the simulation in a different directory. I use this to execute the
+  code on a RAM disk to save read-writes to my hard disk. You don't need to do 
+  this in the tutorial
+* `restart_file`: This is the full path to the file that you want to use as
+  initial conditions for the simulation. You will set this to `NA` if the 
+  simulation is not a continuation of a previous simulation.
+* `sim_name`: a string with the name of your simulation. This will appear in 
+  your output file names
+* `forecast_days`: This is your forecast horizon. The max is `16` days. Set to 
+  `0`if only doing data assimilation with observed drivers.
+* `start_day_local`: The date that your simulation starts. Uses the YYYY-MM-DD
+   format (e.g., "2019-09-20"). `2018-07-12` is the first day in the SCC project
+   (when the catwalk temperature data comes online)
+* `start_time_local`: The time of day you want to start a forecast. Because GLM
+  is a daily timestep model, the simulation will start at this time. It 
+  uses `mm:hh:ss` format and must only be a whole hour. It is in the **local time
+  zone** of the lake in standard time. It can be any hour if only doing data 
+  assimilation with observed drivers (forecast_days = 0). If forecasting 
+  (forecast_days > 0) it is required to match up with the availability of a NOAA 
+  forecast. NOAA forecasts are available at the following times GMT so you must
+  select a local time that matches one of these times (i.e., 07:00:00 at FCR is
+  the 12:00:00 GMT NOAA forecast).
+  * 00:00:00 GMT
+  * 06:00:00 GMT
+  * 12:00:00 GMT
+  * 18:00:00 GMT
+* `forecast_start_day_local`: The date that you want forecasting to start in 
+   your simulation. Uses the YYYY-MM-DD format (e.g., "2019-09-20"). The 
+   difference between `start_time_local` and `forecast_start_day_local` 
+   determines how many days of data assimilation occur using observed drivers 
+   before handing off to forecasted drivers and not assimilating data
+* `forecast_sss_on`: Only used in AED simulations for setting the SSS 
+   (hypolimnetic oxygenation system) to on in the forecast
+
+### glm3.nml
+
+`glm3.nml` is the configuration file that is required by GLM.  It can be configured to run only GLM or GLM + AED.  This version is already configured to run only GLM for FCR and you do not need to modify it for the example simulation.
+
+### configure_flare.yml
+
+`configure_flare.yml` has the bulk of the configurations for FLARE that you will set once and reuse. The end of this document describes all of the configurations in `configure_flare.yml`. Later in the tutorial, you will modify key configurations in `configure_flare.yml`
+
+### states_config.csv
+
+Needs to be in your `forecast_location`
+
+### observations_config.csv
+
+Needs to be in your `forecast_location`
+
+### observations_config.csv
+
+Needs to be in your `forecast_location`
+
+## 3: Run your GLM example simulation
+
+Read configuration files
+
+The following reads in the configuration files and overwrites the directory locations based on the forecast_location and working_directory provided above.  In practice you will specific these directories in the configurate file and not overwrite them.
+
+```{r}
+config <- yaml::read_yaml(file.path(forecast_location,"configure_flare.yml"))
+run_config <- yaml::read_yaml(file.path(forecast_location,"run_configuration.yml"))
+
+config$run_config <- run_config
+config$run_config$forecast_location <- file.path(forecast_location, "input_data")
+config$run_config$execute_location <- file.path(working_directory, "output")
+
+config$data_location <- file.path(forecast_location, "input_data")
+config$qaqc_data_location <- file.path(forecast_location, "input_data")
+
+if(!dir.exists(config$run_config$execute_location)){
+  dir.create(config$run_config$execute_location)
+}
+```
+
+Read in configuration CSV files
+
+```{r}
+pars_config <- readr::read_csv(file.path(config$run_config$forecast_location, config$par_file), col_types = readr::cols())
+obs_config <- readr::read_csv(file.path(config$run_config$forecast_location, config$obs_config_file), col_types = readr::cols())
+states_config <- readr::read_csv(file.path(config$run_config$forecast_location,config$states_config_file), col_types = readr::cols())
+```
+
+Set up time vectors and names
+
+```{r}
+start_datetime_local <- lubridate::as_datetime(paste0(config$run_config$start_day_local," ",config$run_config$start_time_local), tz = config$local_tzone)
+if(is.na(config$run_config$forecast_start_day_local)){
+  end_datetime_local <- lubridate::as_datetime(paste0(config$run_config$end_day_local," ",config$run_config$start_time_local), tz = config$local_tzone)
+  forecast_start_datetime_local <- end_datetime_local
+}else{
+  forecast_start_datetime_local <- lubridate::as_datetime(paste0(config$run_config$forecast_start_day_local," ",config$run_config$start_time_local), tz = config$local_tzone)
+  end_datetime_local <- forecast_start_datetime_local + lubridate::days(config$run_config$forecast_horizon)
+}
+
+start_datetime_UTC <-  lubridate::with_tz(start_datetime_local, tzone = "UTC")
+end_datetime_UTC <-  lubridate::with_tz(end_datetime_local, tzone = "UTC")
+forecast_start_datetime_UTC <- lubridate::with_tz(forecast_start_datetime_local, tzone = "UTC")
+forecast_hour <- lubridate::hour(forecast_start_datetime_UTC)
+if(forecast_hour < 10){forecast_hour <- paste0("0",forecast_hour)}
+```
+
+Download and process observations (already done)
+
+```{r}
+cleaned_observations_file_long <- file.path(config$qaqc_data_location,"observations_postQAQC_long.csv")
+cleaned_inflow_file <- file.path(config$qaqc_data_location, "/inflow_postQAQC.csv")
+observed_met_file <- file.path(config$qaqc_data_location,"observed-met_fcre.nc")
+```
+
+Set up weather drivers in GLM format
+
+```{r}
+met_out <- FLAREr::generate_glm_met_files(obs_met_file = observed_met_file,
+                                         out_dir = config$run_config$execute_location,
+                                         forecast_dir = file.path(config$data_location, config$forecast_met_model),
+                                         local_tzone = config$local_tzone,
+                                         start_datetime_local = start_datetime_local,
+                                         end_datetime_local = end_datetime_local,
+                                         forecast_start_datetime = forecast_start_datetime_local,
+                                         use_forecasted_met = TRUE)
+```
+
+Set up inflow and outflow drivers in GLM format
+
+```{r}
+inflow_outflow_files <- FLAREr::create_glm_inflow_outflow_files(inflow_file_dir = file.path(config$data_location, config$forecast_inflow_model),
+                                                               inflow_obs = cleaned_inflow_file,
+                                                               working_directory = config$run_config$execute_location,
+                                                               start_datetime_local = start_datetime_local,
+                                                               end_datetime_local = end_datetime_local,
+                                                               forecast_start_datetime_local = forecast_start_datetime_local,
+                                                               use_future_inflow = TRUE,
+                                                               state_names = NULL)
+```
+
+Create observation matrix.  The rows of the matrix are observation type (i.e. temperature) x number of depths model.  The columns are the number of days simulated.
+ 
+```{r}
+obs <- FLAREr::create_obs_matrix(cleaned_observations_file_long,
+                                obs_config,
+                                start_datetime_local,
+                                end_datetime_local,
+                                local_tzone = config$local_tzone,
+                                modeled_depths = config$modeled_depths)
+```
+
+Because we are forecasting for a period where we already have the data collected, we need to put NA values for "future" dates.
+
+```{r}
+full_time_forecast <- seq(start_datetime_local, end_datetime_local, by = "1 day")
+obs[ , which(full_time_forecast > forecast_start_datetime_local), ] <- NA
+```
+
+Map the states to the observations matrix
+
+```{r}
+states_config <- FLAREr::generate_states_to_obs_mapping(states_config, obs_config)
+```
+
+Initialize the model error vector
+
+```{r}
+model_sd <- FLAREr::initiate_model_error(config, states_config, config_file_location = config$run_config$forecast_location)
+```
+
+Set inital conditions
+
+```{r}
+init <- FLAREr::generate_initial_conditions(states_config,
+                                             obs_config,
+                                             pars_config,
+                                             obs,
+                                             config,
+                                             restart_file = run_config$restart_file,
+                                             historical_met_error = met_out$historical_met_error)
+
+aux_states_init <- list()
+aux_states_init$snow_ice_thickness <- init$snow_ice_thickness
+aux_states_init$avg_surf_temp <- init$avg_surf_temp
+aux_states_init$the_sals_init <- config$the_sals_init
+aux_states_init$mixing_vars <- init$mixing_vars
+aux_states_init$model_internal_depths <- init$model_internal_depths
+aux_states_init$lake_depth <- init$lake_depth
+aux_states_init$salt <- init$salt
+```
+
+#Run EnKF
+
+```{r}
+enkf_output <- FLAREr::run_da_forecast(states_init = init$states,
+                                        pars_init = init$pars,
+                                        aux_states_init = aux_states_init,
+                                        obs = obs,
+                                        obs_sd = obs_config$obs_sd,
+                                        model_sd = model_sd,
+                                        working_directory = config$run_config$execute_location,
+                                        met_file_names = met_out$filenames,
+                                        inflow_file_names = inflow_outflow_files$inflow_file_name,
+                                        outflow_file_names = inflow_outflow_files$outflow_file_name,
+                                        start_datetime = start_datetime_local,
+                                        end_datetime = end_datetime_local,
+                                        forecast_start_datetime = forecast_start_datetime_local,
+                                        config = config,
+                                        pars_config = pars_config,
+                                        states_config = states_config,
+                                        obs_config = obs_config,
+                                        da_method = config$da_method,
+                                        par_fit_method = config$par_fit_method)
+```
+
+```{r}
+# Save forecast
+saved_file <- FLAREr::write_forecast_netcdf(enkf_output,
+                                           forecast_location = config$run_config$forecast_location)
+```
+
+
+```{r}
+#Create EML Metadata
+FLAREr::create_flare_eml(file_name = saved_file,
+                        enkf_output)
+```
+
+```{r}
+FLAREr::plotting_general(file_name = saved_file,
+                        qaqc_location = config$qaqc_data_location)
+```
+
+
+To run your first FLARE simulation confirm that the following variables are set in your `run_configuration.yml` file:
+
+* `restart_file <- NA`
+* `sim_name <- "test"`
+* `forecast_days <- 16`
+* `start_day_local <- "2018-07-12"`  
+* `start_time_local <- "07:00:00"`
+* `forecast_start_day_local <- "2018-07-15"`
+
+You will find that a `working_directory` directory is created in your `forecast_location` directory. This is were all the files for the simulation are stored. After the simulation is finished all the important files are moved to the `forecast_location` directory so it is fine to delete the `working_directory`.
+
+Once the simulation is complete you will find a PDF, a netcdf (.nc) file, and an xml in `forecast_location` directory. The PDF is the plotted output, the netcdf file is the FLARE output, and the xml is the metadata.
+
+## 6: Modifying FLARE
+
+### Turning off data assimilation
+
+In configure_flare.yml you can change `da_method` to "none"
+  
+### Removing parameter estimation
+
+Pending
+
+### Increasing observational uncertainty
+
+The second modification you will do is to to increase the observational uncertainty. In `observations_config.csv` set `obs_sd = 1`.
+
+### Changing the ensemble size
+
+The variable `ensemble_size` allows you to adjust the size of the ensemble. 
+
+### Changing the number of depths simulated
+
+The variable `modeled_depths` allows you to adjust the depths that FLARE simulates
+
+## Appendix:  FLARE Configurations
+
+A guide to the variables in `configure_flare.yml` and in the `observations_config.csv`,
+`parameter_calibration_config.csv`, and `states_config.csv`.
+
+### General set-up
+
+*  `model_name`: specific ID of the model (`glm_aed` and `null` are the only 
+    two options) 
+
+### Lake specific variables
+
+* `lake_name_code`: four letter code name for lake.
+* `lake_name`: full name of lake
+* `lake_latitude`: Degrees North
+* `lake_longitude`: Degrees West
+* `local_tzone`: In standard time. Must be recognized by R.
+
+### Weather forcing options
+* `use_future_met`
+  * `TRUE`: use NOAA forecast for "Future"
+  * `FALSE` = use observed weather for "Future"; only works if "forecasting" 
+    past dates
+* `forecast_met_model`:  directory name within the data_location that contains the NOAA model output (i.e., NOAAGEFS_1hr-debias)
 
 
 
+### Inflow options
+
+* `use_future_inflow`: Use forecast inflow vs. observed inflow (if available)
+  * `TRUE`: Future inflow
+  * `FALSE`: Observed inflow
+* `forecast_inflow_model`: directory name within the data_location that contains the inflow model output (i.e., FLOWS-NOAAGEFS-AR1)
+
+### GLM namelist files
+
+* `base_GLM_nml`: full path to the glm namelist or path relative to forecast directory
+* `base_AED_nml`: full path to the aed namelist or path relative to forecast directory
+* `base_AED_phyto_pars_nml`: full path to the phyto_pars namelist or path relative to forecast directory
+* `base_AED_zoop_pars_nml`: full path to the zoop_pars namelist or path relative to forecast directory
+
+### Depth information
+
+* `modeled_depths`: Vector of depths are that represented in the data assimilation
+
+### Data assimilation description
+* `da_method`: method for data assimilation (`enkf` or `pf` or `none`)
+* `par_fit_method`: method for parameter fitting
+  * if `da_method` = `enkf`, then `inflate` or `perturb` are options
+  * if `da_method` = `pf`, then only `perturb` is an option
+* `ensemble_size`: Total number of ensemble members
+* `vert_decorr_length`: The length in meters where process uncertainty becomes
+   decoupled.
+* `no_negative_states`: Set any states that become negative do to the addition 
+   of process uncertainty or from EnKF update to zero
+* `localization_distance`: distance in meters were covariances in the model 
+   error are used
+* `assimilate_first_step`: TRUE or FALSE
+* `ncore`: number of computer cores to use for parrallel processing
+
+### Parameter calibration information
+
+* `par_file`: 
+  * `par_names`: vector of GLM names of parameter values estimated
+  * `par_names_save`: vector of names of parameter values estimated  that are 
+     desired in output and plots
+  * `par_nml`: vector of nml file names that contains the parameter that is being 
+     estimated
+  * `par_init_mean`: vector of initial mean value for parameters
+  * `par_init_lowerbound`: vector of lower bound for the initial uniform 
+     distribution of the parameters
+  * `par_init_upperbound`: vector of upper bound for the initial uniform 
+     distribution of the parameters
+  * `par_lowerbound`: vector of lower bounds that a parameter can have
+  * `par_upperbound`: vector of upper bounds that a parameter can have
+  * `inflat_pars`: The variance inflation factor applied to the parameter 
+     component of the ensemble. Value greater than 1.
+  * `pertrub_par`: The standard deviation of the normally distributed random noise that is added to parameters
+  * `par_units`: Units of parameter for plotting
+
+### State information
+
+* `states_config.csv`:
+  * `state_names`: name of states.  
+  * `initial_conditions`: The initial conditions for the state if observations
+     are not available to initialize.  Assumes the initial conditions are 
+     constant over all depths, except for temperature which uses the `default_temp_init`
+     variable in `configure_flare.R` to set the depth profile when observations
+     are lacking
+  * `model_sd`: the standard deviation of the process error for the tate
+  * `initial_model_sd`: the standard deviation on the initial distribution of the state
+  * `states_to_obs_mapping`: a multiplier on the state to convert to the observation.
+     In most cases this is 1.  However, in the case of phytoplankton,  the model
+     predicts mmol/m3 biomass but the observations are ug/L chla.  Therefore the multiplier
+     is the biomass to chla conversion
+  * `states_to_obs_1`: The observation that the state contributes to
+    * `NA` is required if no matching observations
+    * Name in this column must match an observation name
+  * `states_to_obs_2`: A second observation that the state contributes to
+    * `NA` is required if no matching observations
+    * Name in this column must match an observation name
+  * `init_obs_name`: the name of observation that is used to initialize the state
+     if there is an observation
+  * `init_obs_mapping`: a multiplier on the observation when used to initialize.
+     For example, if using a combined DOC measurement to initialize two DOC 
+     states, you need to provide the proportion of the observation that is 
+     assigned to each state.
+     
+* `states_process_error.csv`:
+  * `depth`
+  * column name = variable name for states that have depth varying process uncertainity
+
+### Observation information
+
+* `obs_config_file`:
+  * `state_names_obs`: names of states with observations
+  * `obs_sd`: the standard deviation of the observation uncertainty
+  * `target_variable`: the name of variable in the data file that is used for the observed state.
+  * `distance_threshold`: this is the distances in meters that an 
+  observation has to be within to be matched to a value in `modeled_depths`..
+
+### Initial Conditions (GLM)
+
+* `lake_depth_init`: initial lake depth (meters)
+* `default_temp_init`: vector of initial temperature profile
+* `default_temp_init_depths`: vector of depths in initial temperature profile
+* `the_sals_init`: vector of initial salinty values
+* `default_snow_thickness_init`: initial snow thickness (cm)
+* `default_white_ice_thickness_init`:  initial white ice thickness (cm)
+* `default_blue_ice_thickness_init`: initial blue ice thickness (cm)
+
+### Management specific variables
+
+* `simulate_SSS`: include SSS (bottom-water oxygenation) in simulations with 
+  observed drivers (i.e., data assimilation simulations)
+  * `TRUE`: include
+  * `FALSE`: don't include
+* `forecast_no_SSS`: Include SSS in forecast
+  * `TRUE`: include
+  * `FALSE`: don't include
+* `use_specified_sss`: Use sss inflow and oxygen from file in forecast.  If 
+  `FALSE` then provide `forecast_SSS_flow` and `forecast_SSS_Oxy`.
+* `forecast_SSS_flow`: Flow rate of SSS in forecast (m3/day)
+* `forecast_SSS_Oxy`: Oxygen concentration of SSS in forecast (mmol/m3)
+* `sss_fname`: full path to the file that has the SSS Flow and oxygen data
+* `sss_inflow_factor`: a scalar to multiply FLOW rate of SSS
+* `sss_depth`: The depth (meters) of the SSS inflow/outflow
