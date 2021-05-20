@@ -1,8 +1,8 @@
 ---
-title: "flare-example-vignette"
+title: "FLAREr-example-vignette"
 output: rmarkdown::html_vignette
 vignette: >
-  %\VignetteIndexEntry{flare-example-vignette}
+  %\VignetteIndexEntry{FLAREr-example-vignette}
   %\VignetteEngine{knitr::rmarkdown}
   %\VignetteEncoding{UTF-8}
 ---
