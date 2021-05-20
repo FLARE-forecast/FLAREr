@@ -54,15 +54,15 @@ FLARE development has been supported by grants from National Science Foundation 
 
 First, install the `FLAREr` package from GitHub. There will be other required packages that will also be downloaded.
 
-```{r}
+```{r eval = FALSE}
 remotes::install_github("flare-forecast/FLAREr")
 ```
 
 Second, create a directory that will be your working directory for your FLARE run
 
 ```{r}
-forecast_location <- "/Users/quinn/Dropbox/Research/SSC_forecasting/flare_users_guide_v2/forecast_location"
-working_directory <- "/Users/quinn/Dropbox/Research/SSC_forecasting/flare_users_guide_v2/working_directory"
+forecast_location <- tempdir()
+working_directory <- file.path(forecast_location, "working_directory")
 ```
 
 ## 2: Configuration files
