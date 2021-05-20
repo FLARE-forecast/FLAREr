@@ -54,6 +54,9 @@
   </a>
   <ul class="dropdown-menu" role="menu">
 <li>
+      <a href="../articles/flare-config-vignette.html">FLAREr configurations</a>
+    </li>
+    <li>
       <a href="../articles/flare-example-vignette.html">FLAREr-example-vignette</a>
     </li>
   </ul>
@@ -171,7 +174,7 @@
 <p>Second, FLARE are requires the observed (historical) meteorology to be a specific name (observed-met_fcre.nc) and format.</p>
 <div class="sourceCode" id="cb8"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span class="fu">ncdf4</span><span class="fu">::</span><span class="fu"><a href="https://rdrr.io/pkg/ncdf4/man/nc_open.html">nc_open</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/file.path.html">file.path</a></span><span class="op">(</span><span class="va">forecast_location</span>, <span class="st">"input_data/observed-met_fcre.nc"</span><span class="op">)</span><span class="op">)</span>
-<span class="co">#&gt; File /var/folders/ms/kf9vk0w17p18pvs8k_23t5y80000gq/T//RtmpGaXYed/input_data/observed-met_fcre.nc (NC_FORMAT_CLASSIC):</span>
+<span class="co">#&gt; File /var/folders/ms/kf9vk0w17p18pvs8k_23t5y80000gq/T//Rtmp5T4png/input_data/observed-met_fcre.nc (NC_FORMAT_CLASSIC):</span>
 <span class="co">#&gt; </span>
 <span class="co">#&gt;      8 variables (excluding dimension variables):</span>
 <span class="co">#&gt;         float air_temperature[time,latitude,longitude]   </span>
@@ -225,27 +228,27 @@
 <div class="sourceCode" id="cb10"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span class="va">all_files</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/list.files.html">list.files</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/file.path.html">file.path</a></span><span class="op">(</span><span class="va">forecast_location</span>,<span class="st">"input_data/FLOWS-NOAAGEFS-AR1"</span><span class="op">)</span>, full.names <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span>
 <span class="va">all_files</span><span class="op">[</span><span class="fu">stringr</span><span class="fu">::</span><span class="fu"><a href="https://stringr.tidyverse.org/reference/str_detect.html">str_detect</a></span><span class="op">(</span><span class="va">all_files</span>,<span class="st">"INFLOW"</span><span class="op">)</span><span class="op">]</span>
-<span class="co">#&gt;  [1] "/var/folders/ms/kf9vk0w17p18pvs8k_23t5y80000gq/T//RtmpGaXYed/input_data/FLOWS-NOAAGEFS-AR1/INFLOW-FLOWS-NOAAGEFS-AR1_fcre_2018-10-05_2018-10-20_ens01.csv"</span>
-<span class="co">#&gt;  [2] "/var/folders/ms/kf9vk0w17p18pvs8k_23t5y80000gq/T//RtmpGaXYed/input_data/FLOWS-NOAAGEFS-AR1/INFLOW-FLOWS-NOAAGEFS-AR1_fcre_2018-10-05_2018-10-20_ens02.csv"</span>
-<span class="co">#&gt;  [3] "/var/folders/ms/kf9vk0w17p18pvs8k_23t5y80000gq/T//RtmpGaXYed/input_data/FLOWS-NOAAGEFS-AR1/INFLOW-FLOWS-NOAAGEFS-AR1_fcre_2018-10-05_2018-10-20_ens03.csv"</span>
-<span class="co">#&gt;  [4] "/var/folders/ms/kf9vk0w17p18pvs8k_23t5y80000gq/T//RtmpGaXYed/input_data/FLOWS-NOAAGEFS-AR1/INFLOW-FLOWS-NOAAGEFS-AR1_fcre_2018-10-05_2018-10-20_ens04.csv"</span>
-<span class="co">#&gt;  [5] "/var/folders/ms/kf9vk0w17p18pvs8k_23t5y80000gq/T//RtmpGaXYed/input_data/FLOWS-NOAAGEFS-AR1/INFLOW-FLOWS-NOAAGEFS-AR1_fcre_2018-10-05_2018-10-20_ens05.csv"</span>
-<span class="co">#&gt;  [6] "/var/folders/ms/kf9vk0w17p18pvs8k_23t5y80000gq/T//RtmpGaXYed/input_data/FLOWS-NOAAGEFS-AR1/INFLOW-FLOWS-NOAAGEFS-AR1_fcre_2018-10-05_2018-10-20_ens06.csv"</span>
-<span class="co">#&gt;  [7] "/var/folders/ms/kf9vk0w17p18pvs8k_23t5y80000gq/T//RtmpGaXYed/input_data/FLOWS-NOAAGEFS-AR1/INFLOW-FLOWS-NOAAGEFS-AR1_fcre_2018-10-05_2018-10-20_ens07.csv"</span>
-<span class="co">#&gt;  [8] "/var/folders/ms/kf9vk0w17p18pvs8k_23t5y80000gq/T//RtmpGaXYed/input_data/FLOWS-NOAAGEFS-AR1/INFLOW-FLOWS-NOAAGEFS-AR1_fcre_2018-10-05_2018-10-20_ens08.csv"</span>
-<span class="co">#&gt;  [9] "/var/folders/ms/kf9vk0w17p18pvs8k_23t5y80000gq/T//RtmpGaXYed/input_data/FLOWS-NOAAGEFS-AR1/INFLOW-FLOWS-NOAAGEFS-AR1_fcre_2018-10-05_2018-10-20_ens09.csv"</span>
-<span class="co">#&gt; [10] "/var/folders/ms/kf9vk0w17p18pvs8k_23t5y80000gq/T//RtmpGaXYed/input_data/FLOWS-NOAAGEFS-AR1/INFLOW-FLOWS-NOAAGEFS-AR1_fcre_2018-10-05_2018-10-20_ens10.csv"</span>
-<span class="co">#&gt; [11] "/var/folders/ms/kf9vk0w17p18pvs8k_23t5y80000gq/T//RtmpGaXYed/input_data/FLOWS-NOAAGEFS-AR1/INFLOW-FLOWS-NOAAGEFS-AR1_fcre_2018-10-05_2018-10-20_ens11.csv"</span>
-<span class="co">#&gt; [12] "/var/folders/ms/kf9vk0w17p18pvs8k_23t5y80000gq/T//RtmpGaXYed/input_data/FLOWS-NOAAGEFS-AR1/INFLOW-FLOWS-NOAAGEFS-AR1_fcre_2018-10-05_2018-10-20_ens12.csv"</span>
-<span class="co">#&gt; [13] "/var/folders/ms/kf9vk0w17p18pvs8k_23t5y80000gq/T//RtmpGaXYed/input_data/FLOWS-NOAAGEFS-AR1/INFLOW-FLOWS-NOAAGEFS-AR1_fcre_2018-10-05_2018-10-20_ens13.csv"</span>
-<span class="co">#&gt; [14] "/var/folders/ms/kf9vk0w17p18pvs8k_23t5y80000gq/T//RtmpGaXYed/input_data/FLOWS-NOAAGEFS-AR1/INFLOW-FLOWS-NOAAGEFS-AR1_fcre_2018-10-05_2018-10-20_ens14.csv"</span>
-<span class="co">#&gt; [15] "/var/folders/ms/kf9vk0w17p18pvs8k_23t5y80000gq/T//RtmpGaXYed/input_data/FLOWS-NOAAGEFS-AR1/INFLOW-FLOWS-NOAAGEFS-AR1_fcre_2018-10-05_2018-10-20_ens15.csv"</span>
-<span class="co">#&gt; [16] "/var/folders/ms/kf9vk0w17p18pvs8k_23t5y80000gq/T//RtmpGaXYed/input_data/FLOWS-NOAAGEFS-AR1/INFLOW-FLOWS-NOAAGEFS-AR1_fcre_2018-10-05_2018-10-20_ens16.csv"</span>
-<span class="co">#&gt; [17] "/var/folders/ms/kf9vk0w17p18pvs8k_23t5y80000gq/T//RtmpGaXYed/input_data/FLOWS-NOAAGEFS-AR1/INFLOW-FLOWS-NOAAGEFS-AR1_fcre_2018-10-05_2018-10-20_ens17.csv"</span>
-<span class="co">#&gt; [18] "/var/folders/ms/kf9vk0w17p18pvs8k_23t5y80000gq/T//RtmpGaXYed/input_data/FLOWS-NOAAGEFS-AR1/INFLOW-FLOWS-NOAAGEFS-AR1_fcre_2018-10-05_2018-10-20_ens18.csv"</span>
-<span class="co">#&gt; [19] "/var/folders/ms/kf9vk0w17p18pvs8k_23t5y80000gq/T//RtmpGaXYed/input_data/FLOWS-NOAAGEFS-AR1/INFLOW-FLOWS-NOAAGEFS-AR1_fcre_2018-10-05_2018-10-20_ens19.csv"</span>
-<span class="co">#&gt; [20] "/var/folders/ms/kf9vk0w17p18pvs8k_23t5y80000gq/T//RtmpGaXYed/input_data/FLOWS-NOAAGEFS-AR1/INFLOW-FLOWS-NOAAGEFS-AR1_fcre_2018-10-05_2018-10-20_ens20.csv"</span>
-<span class="co">#&gt; [21] "/var/folders/ms/kf9vk0w17p18pvs8k_23t5y80000gq/T//RtmpGaXYed/input_data/FLOWS-NOAAGEFS-AR1/INFLOW-FLOWS-NOAAGEFS-AR1_fcre_2018-10-05_2018-10-20_ens21.csv"</span></code></pre></div>
+<span class="co">#&gt;  [1] "/var/folders/ms/kf9vk0w17p18pvs8k_23t5y80000gq/T//Rtmp5T4png/input_data/FLOWS-NOAAGEFS-AR1/INFLOW-FLOWS-NOAAGEFS-AR1_fcre_2018-10-05_2018-10-20_ens01.csv"</span>
+<span class="co">#&gt;  [2] "/var/folders/ms/kf9vk0w17p18pvs8k_23t5y80000gq/T//Rtmp5T4png/input_data/FLOWS-NOAAGEFS-AR1/INFLOW-FLOWS-NOAAGEFS-AR1_fcre_2018-10-05_2018-10-20_ens02.csv"</span>
+<span class="co">#&gt;  [3] "/var/folders/ms/kf9vk0w17p18pvs8k_23t5y80000gq/T//Rtmp5T4png/input_data/FLOWS-NOAAGEFS-AR1/INFLOW-FLOWS-NOAAGEFS-AR1_fcre_2018-10-05_2018-10-20_ens03.csv"</span>
+<span class="co">#&gt;  [4] "/var/folders/ms/kf9vk0w17p18pvs8k_23t5y80000gq/T//Rtmp5T4png/input_data/FLOWS-NOAAGEFS-AR1/INFLOW-FLOWS-NOAAGEFS-AR1_fcre_2018-10-05_2018-10-20_ens04.csv"</span>
+<span class="co">#&gt;  [5] "/var/folders/ms/kf9vk0w17p18pvs8k_23t5y80000gq/T//Rtmp5T4png/input_data/FLOWS-NOAAGEFS-AR1/INFLOW-FLOWS-NOAAGEFS-AR1_fcre_2018-10-05_2018-10-20_ens05.csv"</span>
+<span class="co">#&gt;  [6] "/var/folders/ms/kf9vk0w17p18pvs8k_23t5y80000gq/T//Rtmp5T4png/input_data/FLOWS-NOAAGEFS-AR1/INFLOW-FLOWS-NOAAGEFS-AR1_fcre_2018-10-05_2018-10-20_ens06.csv"</span>
+<span class="co">#&gt;  [7] "/var/folders/ms/kf9vk0w17p18pvs8k_23t5y80000gq/T//Rtmp5T4png/input_data/FLOWS-NOAAGEFS-AR1/INFLOW-FLOWS-NOAAGEFS-AR1_fcre_2018-10-05_2018-10-20_ens07.csv"</span>
+<span class="co">#&gt;  [8] "/var/folders/ms/kf9vk0w17p18pvs8k_23t5y80000gq/T//Rtmp5T4png/input_data/FLOWS-NOAAGEFS-AR1/INFLOW-FLOWS-NOAAGEFS-AR1_fcre_2018-10-05_2018-10-20_ens08.csv"</span>
+<span class="co">#&gt;  [9] "/var/folders/ms/kf9vk0w17p18pvs8k_23t5y80000gq/T//Rtmp5T4png/input_data/FLOWS-NOAAGEFS-AR1/INFLOW-FLOWS-NOAAGEFS-AR1_fcre_2018-10-05_2018-10-20_ens09.csv"</span>
+<span class="co">#&gt; [10] "/var/folders/ms/kf9vk0w17p18pvs8k_23t5y80000gq/T//Rtmp5T4png/input_data/FLOWS-NOAAGEFS-AR1/INFLOW-FLOWS-NOAAGEFS-AR1_fcre_2018-10-05_2018-10-20_ens10.csv"</span>
+<span class="co">#&gt; [11] "/var/folders/ms/kf9vk0w17p18pvs8k_23t5y80000gq/T//Rtmp5T4png/input_data/FLOWS-NOAAGEFS-AR1/INFLOW-FLOWS-NOAAGEFS-AR1_fcre_2018-10-05_2018-10-20_ens11.csv"</span>
+<span class="co">#&gt; [12] "/var/folders/ms/kf9vk0w17p18pvs8k_23t5y80000gq/T//Rtmp5T4png/input_data/FLOWS-NOAAGEFS-AR1/INFLOW-FLOWS-NOAAGEFS-AR1_fcre_2018-10-05_2018-10-20_ens12.csv"</span>
+<span class="co">#&gt; [13] "/var/folders/ms/kf9vk0w17p18pvs8k_23t5y80000gq/T//Rtmp5T4png/input_data/FLOWS-NOAAGEFS-AR1/INFLOW-FLOWS-NOAAGEFS-AR1_fcre_2018-10-05_2018-10-20_ens13.csv"</span>
+<span class="co">#&gt; [14] "/var/folders/ms/kf9vk0w17p18pvs8k_23t5y80000gq/T//Rtmp5T4png/input_data/FLOWS-NOAAGEFS-AR1/INFLOW-FLOWS-NOAAGEFS-AR1_fcre_2018-10-05_2018-10-20_ens14.csv"</span>
+<span class="co">#&gt; [15] "/var/folders/ms/kf9vk0w17p18pvs8k_23t5y80000gq/T//Rtmp5T4png/input_data/FLOWS-NOAAGEFS-AR1/INFLOW-FLOWS-NOAAGEFS-AR1_fcre_2018-10-05_2018-10-20_ens15.csv"</span>
+<span class="co">#&gt; [16] "/var/folders/ms/kf9vk0w17p18pvs8k_23t5y80000gq/T//Rtmp5T4png/input_data/FLOWS-NOAAGEFS-AR1/INFLOW-FLOWS-NOAAGEFS-AR1_fcre_2018-10-05_2018-10-20_ens16.csv"</span>
+<span class="co">#&gt; [17] "/var/folders/ms/kf9vk0w17p18pvs8k_23t5y80000gq/T//Rtmp5T4png/input_data/FLOWS-NOAAGEFS-AR1/INFLOW-FLOWS-NOAAGEFS-AR1_fcre_2018-10-05_2018-10-20_ens17.csv"</span>
+<span class="co">#&gt; [18] "/var/folders/ms/kf9vk0w17p18pvs8k_23t5y80000gq/T//Rtmp5T4png/input_data/FLOWS-NOAAGEFS-AR1/INFLOW-FLOWS-NOAAGEFS-AR1_fcre_2018-10-05_2018-10-20_ens18.csv"</span>
+<span class="co">#&gt; [19] "/var/folders/ms/kf9vk0w17p18pvs8k_23t5y80000gq/T//Rtmp5T4png/input_data/FLOWS-NOAAGEFS-AR1/INFLOW-FLOWS-NOAAGEFS-AR1_fcre_2018-10-05_2018-10-20_ens19.csv"</span>
+<span class="co">#&gt; [20] "/var/folders/ms/kf9vk0w17p18pvs8k_23t5y80000gq/T//Rtmp5T4png/input_data/FLOWS-NOAAGEFS-AR1/INFLOW-FLOWS-NOAAGEFS-AR1_fcre_2018-10-05_2018-10-20_ens20.csv"</span>
+<span class="co">#&gt; [21] "/var/folders/ms/kf9vk0w17p18pvs8k_23t5y80000gq/T//Rtmp5T4png/input_data/FLOWS-NOAAGEFS-AR1/INFLOW-FLOWS-NOAAGEFS-AR1_fcre_2018-10-05_2018-10-20_ens21.csv"</span></code></pre></div>
 <p>with the following format</p>
 <div class="sourceCode" id="cb11"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span class="fu"><a href="https://rdrr.io/r/utils/head.html">head</a></span><span class="op">(</span><span class="fu">read_csv</span><span class="op">(</span><span class="va">all_files</span><span class="op">[</span><span class="fu">stringr</span><span class="fu">::</span><span class="fu"><a href="https://stringr.tidyverse.org/reference/str_detect.html">str_detect</a></span><span class="op">(</span><span class="va">all_files</span>,<span class="st">"INFLOW"</span><span class="op">)</span><span class="op">]</span><span class="op">[</span><span class="fl">1</span><span class="op">]</span>, col_types <span class="op">=</span> <span class="fu">readr</span><span class="fu">::</span><span class="fu"><a href="https://readr.tidyverse.org/reference/cols.html">cols</a></span><span class="op">(</span><span class="op">)</span><span class="op">)</span><span class="op">)</span>
@@ -262,30 +265,30 @@
 <div class="sourceCode" id="cb12"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span class="va">all_files</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/list.files.html">list.files</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/file.path.html">file.path</a></span><span class="op">(</span><span class="va">forecast_location</span>, <span class="st">"input_data/NOAAGEFS_1hr-debias"</span><span class="op">)</span>, full.names <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span>
 <span class="va">all_files</span>
-<span class="co">#&gt;  [1] "/var/folders/ms/kf9vk0w17p18pvs8k_23t5y80000gq/T//RtmpGaXYed/input_data/NOAAGEFS_1hr-debias/NOAAGEFS_1hr-debias_fcre_2018-10-05T00_2018-10-21T00_ens01.nc"</span>
-<span class="co">#&gt;  [2] "/var/folders/ms/kf9vk0w17p18pvs8k_23t5y80000gq/T//RtmpGaXYed/input_data/NOAAGEFS_1hr-debias/NOAAGEFS_1hr-debias_fcre_2018-10-05T00_2018-10-21T00_ens02.nc"</span>
-<span class="co">#&gt;  [3] "/var/folders/ms/kf9vk0w17p18pvs8k_23t5y80000gq/T//RtmpGaXYed/input_data/NOAAGEFS_1hr-debias/NOAAGEFS_1hr-debias_fcre_2018-10-05T00_2018-10-21T00_ens03.nc"</span>
-<span class="co">#&gt;  [4] "/var/folders/ms/kf9vk0w17p18pvs8k_23t5y80000gq/T//RtmpGaXYed/input_data/NOAAGEFS_1hr-debias/NOAAGEFS_1hr-debias_fcre_2018-10-05T00_2018-10-21T00_ens04.nc"</span>
-<span class="co">#&gt;  [5] "/var/folders/ms/kf9vk0w17p18pvs8k_23t5y80000gq/T//RtmpGaXYed/input_data/NOAAGEFS_1hr-debias/NOAAGEFS_1hr-debias_fcre_2018-10-05T00_2018-10-21T00_ens05.nc"</span>
-<span class="co">#&gt;  [6] "/var/folders/ms/kf9vk0w17p18pvs8k_23t5y80000gq/T//RtmpGaXYed/input_data/NOAAGEFS_1hr-debias/NOAAGEFS_1hr-debias_fcre_2018-10-05T00_2018-10-21T00_ens06.nc"</span>
-<span class="co">#&gt;  [7] "/var/folders/ms/kf9vk0w17p18pvs8k_23t5y80000gq/T//RtmpGaXYed/input_data/NOAAGEFS_1hr-debias/NOAAGEFS_1hr-debias_fcre_2018-10-05T00_2018-10-21T00_ens07.nc"</span>
-<span class="co">#&gt;  [8] "/var/folders/ms/kf9vk0w17p18pvs8k_23t5y80000gq/T//RtmpGaXYed/input_data/NOAAGEFS_1hr-debias/NOAAGEFS_1hr-debias_fcre_2018-10-05T00_2018-10-21T00_ens08.nc"</span>
-<span class="co">#&gt;  [9] "/var/folders/ms/kf9vk0w17p18pvs8k_23t5y80000gq/T//RtmpGaXYed/input_data/NOAAGEFS_1hr-debias/NOAAGEFS_1hr-debias_fcre_2018-10-05T00_2018-10-21T00_ens09.nc"</span>
-<span class="co">#&gt; [10] "/var/folders/ms/kf9vk0w17p18pvs8k_23t5y80000gq/T//RtmpGaXYed/input_data/NOAAGEFS_1hr-debias/NOAAGEFS_1hr-debias_fcre_2018-10-05T00_2018-10-21T00_ens10.nc"</span>
-<span class="co">#&gt; [11] "/var/folders/ms/kf9vk0w17p18pvs8k_23t5y80000gq/T//RtmpGaXYed/input_data/NOAAGEFS_1hr-debias/NOAAGEFS_1hr-debias_fcre_2018-10-05T00_2018-10-21T00_ens11.nc"</span>
-<span class="co">#&gt; [12] "/var/folders/ms/kf9vk0w17p18pvs8k_23t5y80000gq/T//RtmpGaXYed/input_data/NOAAGEFS_1hr-debias/NOAAGEFS_1hr-debias_fcre_2018-10-05T00_2018-10-21T00_ens12.nc"</span>
-<span class="co">#&gt; [13] "/var/folders/ms/kf9vk0w17p18pvs8k_23t5y80000gq/T//RtmpGaXYed/input_data/NOAAGEFS_1hr-debias/NOAAGEFS_1hr-debias_fcre_2018-10-05T00_2018-10-21T00_ens13.nc"</span>
-<span class="co">#&gt; [14] "/var/folders/ms/kf9vk0w17p18pvs8k_23t5y80000gq/T//RtmpGaXYed/input_data/NOAAGEFS_1hr-debias/NOAAGEFS_1hr-debias_fcre_2018-10-05T00_2018-10-21T00_ens14.nc"</span>
-<span class="co">#&gt; [15] "/var/folders/ms/kf9vk0w17p18pvs8k_23t5y80000gq/T//RtmpGaXYed/input_data/NOAAGEFS_1hr-debias/NOAAGEFS_1hr-debias_fcre_2018-10-05T00_2018-10-21T00_ens15.nc"</span>
-<span class="co">#&gt; [16] "/var/folders/ms/kf9vk0w17p18pvs8k_23t5y80000gq/T//RtmpGaXYed/input_data/NOAAGEFS_1hr-debias/NOAAGEFS_1hr-debias_fcre_2018-10-05T00_2018-10-21T00_ens16.nc"</span>
-<span class="co">#&gt; [17] "/var/folders/ms/kf9vk0w17p18pvs8k_23t5y80000gq/T//RtmpGaXYed/input_data/NOAAGEFS_1hr-debias/NOAAGEFS_1hr-debias_fcre_2018-10-05T00_2018-10-21T00_ens17.nc"</span>
-<span class="co">#&gt; [18] "/var/folders/ms/kf9vk0w17p18pvs8k_23t5y80000gq/T//RtmpGaXYed/input_data/NOAAGEFS_1hr-debias/NOAAGEFS_1hr-debias_fcre_2018-10-05T00_2018-10-21T00_ens18.nc"</span>
-<span class="co">#&gt; [19] "/var/folders/ms/kf9vk0w17p18pvs8k_23t5y80000gq/T//RtmpGaXYed/input_data/NOAAGEFS_1hr-debias/NOAAGEFS_1hr-debias_fcre_2018-10-05T00_2018-10-21T00_ens19.nc"</span>
-<span class="co">#&gt; [20] "/var/folders/ms/kf9vk0w17p18pvs8k_23t5y80000gq/T//RtmpGaXYed/input_data/NOAAGEFS_1hr-debias/NOAAGEFS_1hr-debias_fcre_2018-10-05T00_2018-10-21T00_ens20.nc"</span>
-<span class="co">#&gt; [21] "/var/folders/ms/kf9vk0w17p18pvs8k_23t5y80000gq/T//RtmpGaXYed/input_data/NOAAGEFS_1hr-debias/NOAAGEFS_1hr-debias_fcre_2018-10-05T00_2018-10-21T00_ens21.nc"</span></code></pre></div>
+<span class="co">#&gt;  [1] "/var/folders/ms/kf9vk0w17p18pvs8k_23t5y80000gq/T//Rtmp5T4png/input_data/NOAAGEFS_1hr-debias/NOAAGEFS_1hr-debias_fcre_2018-10-05T00_2018-10-21T00_ens01.nc"</span>
+<span class="co">#&gt;  [2] "/var/folders/ms/kf9vk0w17p18pvs8k_23t5y80000gq/T//Rtmp5T4png/input_data/NOAAGEFS_1hr-debias/NOAAGEFS_1hr-debias_fcre_2018-10-05T00_2018-10-21T00_ens02.nc"</span>
+<span class="co">#&gt;  [3] "/var/folders/ms/kf9vk0w17p18pvs8k_23t5y80000gq/T//Rtmp5T4png/input_data/NOAAGEFS_1hr-debias/NOAAGEFS_1hr-debias_fcre_2018-10-05T00_2018-10-21T00_ens03.nc"</span>
+<span class="co">#&gt;  [4] "/var/folders/ms/kf9vk0w17p18pvs8k_23t5y80000gq/T//Rtmp5T4png/input_data/NOAAGEFS_1hr-debias/NOAAGEFS_1hr-debias_fcre_2018-10-05T00_2018-10-21T00_ens04.nc"</span>
+<span class="co">#&gt;  [5] "/var/folders/ms/kf9vk0w17p18pvs8k_23t5y80000gq/T//Rtmp5T4png/input_data/NOAAGEFS_1hr-debias/NOAAGEFS_1hr-debias_fcre_2018-10-05T00_2018-10-21T00_ens05.nc"</span>
+<span class="co">#&gt;  [6] "/var/folders/ms/kf9vk0w17p18pvs8k_23t5y80000gq/T//Rtmp5T4png/input_data/NOAAGEFS_1hr-debias/NOAAGEFS_1hr-debias_fcre_2018-10-05T00_2018-10-21T00_ens06.nc"</span>
+<span class="co">#&gt;  [7] "/var/folders/ms/kf9vk0w17p18pvs8k_23t5y80000gq/T//Rtmp5T4png/input_data/NOAAGEFS_1hr-debias/NOAAGEFS_1hr-debias_fcre_2018-10-05T00_2018-10-21T00_ens07.nc"</span>
+<span class="co">#&gt;  [8] "/var/folders/ms/kf9vk0w17p18pvs8k_23t5y80000gq/T//Rtmp5T4png/input_data/NOAAGEFS_1hr-debias/NOAAGEFS_1hr-debias_fcre_2018-10-05T00_2018-10-21T00_ens08.nc"</span>
+<span class="co">#&gt;  [9] "/var/folders/ms/kf9vk0w17p18pvs8k_23t5y80000gq/T//Rtmp5T4png/input_data/NOAAGEFS_1hr-debias/NOAAGEFS_1hr-debias_fcre_2018-10-05T00_2018-10-21T00_ens09.nc"</span>
+<span class="co">#&gt; [10] "/var/folders/ms/kf9vk0w17p18pvs8k_23t5y80000gq/T//Rtmp5T4png/input_data/NOAAGEFS_1hr-debias/NOAAGEFS_1hr-debias_fcre_2018-10-05T00_2018-10-21T00_ens10.nc"</span>
+<span class="co">#&gt; [11] "/var/folders/ms/kf9vk0w17p18pvs8k_23t5y80000gq/T//Rtmp5T4png/input_data/NOAAGEFS_1hr-debias/NOAAGEFS_1hr-debias_fcre_2018-10-05T00_2018-10-21T00_ens11.nc"</span>
+<span class="co">#&gt; [12] "/var/folders/ms/kf9vk0w17p18pvs8k_23t5y80000gq/T//Rtmp5T4png/input_data/NOAAGEFS_1hr-debias/NOAAGEFS_1hr-debias_fcre_2018-10-05T00_2018-10-21T00_ens12.nc"</span>
+<span class="co">#&gt; [13] "/var/folders/ms/kf9vk0w17p18pvs8k_23t5y80000gq/T//Rtmp5T4png/input_data/NOAAGEFS_1hr-debias/NOAAGEFS_1hr-debias_fcre_2018-10-05T00_2018-10-21T00_ens13.nc"</span>
+<span class="co">#&gt; [14] "/var/folders/ms/kf9vk0w17p18pvs8k_23t5y80000gq/T//Rtmp5T4png/input_data/NOAAGEFS_1hr-debias/NOAAGEFS_1hr-debias_fcre_2018-10-05T00_2018-10-21T00_ens14.nc"</span>
+<span class="co">#&gt; [15] "/var/folders/ms/kf9vk0w17p18pvs8k_23t5y80000gq/T//Rtmp5T4png/input_data/NOAAGEFS_1hr-debias/NOAAGEFS_1hr-debias_fcre_2018-10-05T00_2018-10-21T00_ens15.nc"</span>
+<span class="co">#&gt; [16] "/var/folders/ms/kf9vk0w17p18pvs8k_23t5y80000gq/T//Rtmp5T4png/input_data/NOAAGEFS_1hr-debias/NOAAGEFS_1hr-debias_fcre_2018-10-05T00_2018-10-21T00_ens16.nc"</span>
+<span class="co">#&gt; [17] "/var/folders/ms/kf9vk0w17p18pvs8k_23t5y80000gq/T//Rtmp5T4png/input_data/NOAAGEFS_1hr-debias/NOAAGEFS_1hr-debias_fcre_2018-10-05T00_2018-10-21T00_ens17.nc"</span>
+<span class="co">#&gt; [18] "/var/folders/ms/kf9vk0w17p18pvs8k_23t5y80000gq/T//Rtmp5T4png/input_data/NOAAGEFS_1hr-debias/NOAAGEFS_1hr-debias_fcre_2018-10-05T00_2018-10-21T00_ens18.nc"</span>
+<span class="co">#&gt; [19] "/var/folders/ms/kf9vk0w17p18pvs8k_23t5y80000gq/T//Rtmp5T4png/input_data/NOAAGEFS_1hr-debias/NOAAGEFS_1hr-debias_fcre_2018-10-05T00_2018-10-21T00_ens19.nc"</span>
+<span class="co">#&gt; [20] "/var/folders/ms/kf9vk0w17p18pvs8k_23t5y80000gq/T//Rtmp5T4png/input_data/NOAAGEFS_1hr-debias/NOAAGEFS_1hr-debias_fcre_2018-10-05T00_2018-10-21T00_ens20.nc"</span>
+<span class="co">#&gt; [21] "/var/folders/ms/kf9vk0w17p18pvs8k_23t5y80000gq/T//Rtmp5T4png/input_data/NOAAGEFS_1hr-debias/NOAAGEFS_1hr-debias_fcre_2018-10-05T00_2018-10-21T00_ens21.nc"</span></code></pre></div>
 <div class="sourceCode" id="cb13"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span class="fu">ncdf4</span><span class="fu">::</span><span class="fu"><a href="https://rdrr.io/pkg/ncdf4/man/nc_open.html">nc_open</a></span><span class="op">(</span><span class="va">all_files</span><span class="op">[</span><span class="fl">1</span><span class="op">]</span><span class="op">)</span>
-<span class="co">#&gt; File /var/folders/ms/kf9vk0w17p18pvs8k_23t5y80000gq/T//RtmpGaXYed/input_data/NOAAGEFS_1hr-debias/NOAAGEFS_1hr-debias_fcre_2018-10-05T00_2018-10-21T00_ens01.nc (NC_FORMAT_CLASSIC):</span>
+<span class="co">#&gt; File /var/folders/ms/kf9vk0w17p18pvs8k_23t5y80000gq/T//Rtmp5T4png/input_data/NOAAGEFS_1hr-debias/NOAAGEFS_1hr-debias_fcre_2018-10-05T00_2018-10-21T00_ens01.nc (NC_FORMAT_CLASSIC):</span>
 <span class="co">#&gt; </span>
 <span class="co">#&gt;      6 variables (excluding dimension variables):</span>
 <span class="co">#&gt;         float air_temperature[time,latitude,longitude]   </span>
@@ -513,27 +516,27 @@
                                         da_method <span class="op">=</span> <span class="va">config</span><span class="op">$</span><span class="va">da_method</span>,
                                         par_fit_method <span class="op">=</span> <span class="va">config</span><span class="op">$</span><span class="va">par_fit_method</span><span class="op">)</span>
 <span class="co">#&gt; Using GLM Version 3.2.0a1</span>
-<span class="co">#&gt; Running time step 1 : 2018-10-02 07:00 - 2018-10-03 07:00 [2021-05-20 13:25:13]</span>
+<span class="co">#&gt; Running time step 1 : 2018-10-02 07:00 - 2018-10-03 07:00 [2021-05-20 13:41:08]</span>
 <span class="co">#&gt; zone1temp: mean 10.1073 sd 3.0197</span>
 <span class="co">#&gt; zone2temp: mean 15.3774 sd 2.8364</span>
 <span class="co">#&gt; sw_factor: mean 0.986 sd 0.2961</span>
-<span class="co">#&gt; Running time step 2 : 2018-10-03 07:00 - 2018-10-04 07:00 [2021-05-20 13:25:16]</span>
+<span class="co">#&gt; Running time step 2 : 2018-10-03 07:00 - 2018-10-04 07:00 [2021-05-20 13:41:11]</span>
 <span class="co">#&gt; zone1temp: mean 10.8881 sd 1.9097</span>
 <span class="co">#&gt; zone2temp: mean 15.2147 sd 2.8943</span>
 <span class="co">#&gt; sw_factor: mean 0.9515 sd 0.2584</span>
-<span class="co">#&gt; Running time step 3 : 2018-10-04 07:00 - 2018-10-05 07:00 [2021-05-20 13:25:19]</span>
+<span class="co">#&gt; Running time step 3 : 2018-10-04 07:00 - 2018-10-05 07:00 [2021-05-20 13:41:14]</span>
 <span class="co">#&gt; zone1temp: mean 11.9676 sd 1.3952</span>
 <span class="co">#&gt; zone2temp: mean 15.0395 sd 2.7265</span>
 <span class="co">#&gt; sw_factor: mean 0.9577 sd 0.1752</span>
-<span class="co">#&gt; Running time step 4 : 2018-10-05 07:00 - 2018-10-06 07:00 [2021-05-20 13:25:22]</span>
+<span class="co">#&gt; Running time step 4 : 2018-10-05 07:00 - 2018-10-06 07:00 [2021-05-20 13:41:17]</span>
 <span class="co">#&gt; zone1temp: mean 12.1865 sd 0.9341</span>
 <span class="co">#&gt; zone2temp: mean 15.0309 sd 2.6013</span>
 <span class="co">#&gt; sw_factor: mean 0.9121 sd 0.135</span>
-<span class="co">#&gt; Running time step 5 : 2018-10-06 07:00 - 2018-10-07 07:00 [2021-05-20 13:25:25]</span>
+<span class="co">#&gt; Running time step 5 : 2018-10-06 07:00 - 2018-10-07 07:00 [2021-05-20 13:41:21]</span>
 <span class="co">#&gt; zone1temp: mean 12.1865 sd 0.9341</span>
 <span class="co">#&gt; zone2temp: mean 15.0309 sd 2.6013</span>
 <span class="co">#&gt; sw_factor: mean 0.9121 sd 0.135</span>
-<span class="co">#&gt; Running time step 6 : 2018-10-07 07:00 - 2018-10-08 07:00 [2021-05-20 13:25:28]</span>
+<span class="co">#&gt; Running time step 6 : 2018-10-07 07:00 - 2018-10-08 07:00 [2021-05-20 13:41:24]</span>
 <span class="co">#&gt; zone1temp: mean 12.1865 sd 0.9341</span>
 <span class="co">#&gt; zone2temp: mean 15.0309 sd 2.6013</span>
 <span class="co">#&gt; sw_factor: mean 0.9121 sd 0.135</span></code></pre></div>
@@ -649,275 +652,6 @@
 <p>The variable <code>modeled_depths</code> allows you to adjust the depths that FLARE simulates</p>
 </div>
 </div>
-<div id="appendix-flare-configurations" class="section level2">
-<h2 class="hasAnchor">
-<a href="#appendix-flare-configurations" class="anchor"></a>Appendix: FLARE Configurations</h2>
-<p>A guide to the variables in <code>configure_flare.yml</code> and in the <code>observations_config.csv</code>, <code>parameter_calibration_config.csv</code>, and <code>states_config.csv</code>.</p>
-<div id="general-set-up" class="section level3">
-<h3 class="hasAnchor">
-<a href="#general-set-up" class="anchor"></a>General set-up</h3>
-<ul>
-<li>
-<code>model_name</code>: specific ID of the model (<code>glm_aed</code> and <code>null</code> are the only two options)</li>
-</ul>
-</div>
-<div id="lake-specific-variables" class="section level3">
-<h3 class="hasAnchor">
-<a href="#lake-specific-variables" class="anchor"></a>Lake specific variables</h3>
-<ul>
-<li>
-<code>lake_name_code</code>: four letter code name for lake.</li>
-<li>
-<code>lake_name</code>: full name of lake</li>
-<li>
-<code>lake_latitude</code>: Degrees North</li>
-<li>
-<code>lake_longitude</code>: Degrees West</li>
-<li>
-<code>local_tzone</code>: In standard time. Must be recognized by R.</li>
-</ul>
-</div>
-<div id="weather-forcing-options" class="section level3">
-<h3 class="hasAnchor">
-<a href="#weather-forcing-options" class="anchor"></a>Weather forcing options</h3>
-<ul>
-<li>
-<code>use_future_met</code>
-<ul>
-<li>
-<code>TRUE</code>: use NOAA forecast for “Future”</li>
-<li>
-<code>FALSE</code> = use observed weather for “Future”; only works if “forecasting” past dates</li>
-</ul>
-</li>
-<li>
-<code>forecast_met_model</code>: directory name within the data_location that contains the NOAA model output (i.e., NOAAGEFS_1hr-debias)</li>
-</ul>
-</div>
-<div id="inflow-options" class="section level3">
-<h3 class="hasAnchor">
-<a href="#inflow-options" class="anchor"></a>Inflow options</h3>
-<ul>
-<li>
-<code>use_future_inflow</code>: Use forecast inflow vs. observed inflow (if available)
-<ul>
-<li>
-<code>TRUE</code>: Future inflow</li>
-<li>
-<code>FALSE</code>: Observed inflow</li>
-</ul>
-</li>
-<li>
-<code>forecast_inflow_model</code>: directory name within the data_location that contains the inflow model output (i.e., FLOWS-NOAAGEFS-AR1)</li>
-</ul>
-</div>
-<div id="glm-namelist-files" class="section level3">
-<h3 class="hasAnchor">
-<a href="#glm-namelist-files" class="anchor"></a>GLM namelist files</h3>
-<ul>
-<li>
-<code>base_GLM_nml</code>: full path to the glm namelist or path relative to forecast directory</li>
-<li>
-<code>base_AED_nml</code>: full path to the aed namelist or path relative to forecast directory</li>
-<li>
-<code>base_AED_phyto_pars_nml</code>: full path to the phyto_pars namelist or path relative to forecast directory</li>
-<li>
-<code>base_AED_zoop_pars_nml</code>: full path to the zoop_pars namelist or path relative to forecast directory</li>
-</ul>
-</div>
-<div id="depth-information" class="section level3">
-<h3 class="hasAnchor">
-<a href="#depth-information" class="anchor"></a>Depth information</h3>
-<ul>
-<li>
-<code>modeled_depths</code>: Vector of depths are that represented in the data assimilation</li>
-</ul>
-</div>
-<div id="data-assimilation-description" class="section level3">
-<h3 class="hasAnchor">
-<a href="#data-assimilation-description" class="anchor"></a>Data assimilation description</h3>
-<ul>
-<li>
-<code>da_method</code>: method for data assimilation (<code>enkf</code> or <code>pf</code> or <code>none</code>)</li>
-<li>
-<code>par_fit_method</code>: method for parameter fitting
-<ul>
-<li>if <code>da_method</code> = <code>enkf</code>, then <code>inflate</code> or <code>perturb</code> are options</li>
-<li>if <code>da_method</code> = <code>pf</code>, then only <code>perturb</code> is an option</li>
-</ul>
-</li>
-<li>
-<code>ensemble_size</code>: Total number of ensemble members</li>
-<li>
-<code>vert_decorr_length</code>: The length in meters where process uncertainty becomes decoupled.</li>
-<li>
-<code>no_negative_states</code>: Set any states that become negative do to the addition of process uncertainty or from EnKF update to zero</li>
-<li>
-<code>localization_distance</code>: distance in meters were covariances in the model error are used</li>
-<li>
-<code>assimilate_first_step</code>: TRUE or FALSE</li>
-<li>
-<code>ncore</code>: number of computer cores to use for parrallel processing</li>
-</ul>
-</div>
-<div id="parameter-calibration-information" class="section level3">
-<h3 class="hasAnchor">
-<a href="#parameter-calibration-information" class="anchor"></a>Parameter calibration information</h3>
-<ul>
-<li>
-<code>par_file</code>:
-<ul>
-<li>
-<code>par_names</code>: vector of GLM names of parameter values estimated</li>
-<li>
-<code>par_names_save</code>: vector of names of parameter values estimated that are desired in output and plots</li>
-<li>
-<code>par_nml</code>: vector of nml file names that contains the parameter that is being estimated</li>
-<li>
-<code>par_init_mean</code>: vector of initial mean value for parameters</li>
-<li>
-<code>par_init_lowerbound</code>: vector of lower bound for the initial uniform distribution of the parameters</li>
-<li>
-<code>par_init_upperbound</code>: vector of upper bound for the initial uniform distribution of the parameters</li>
-<li>
-<code>par_lowerbound</code>: vector of lower bounds that a parameter can have</li>
-<li>
-<code>par_upperbound</code>: vector of upper bounds that a parameter can have</li>
-<li>
-<code>inflat_pars</code>: The variance inflation factor applied to the parameter component of the ensemble. Value greater than 1.</li>
-<li>
-<code>pertrub_par</code>: The standard deviation of the normally distributed random noise that is added to parameters</li>
-<li>
-<code>par_units</code>: Units of parameter for plotting</li>
-</ul>
-</li>
-</ul>
-</div>
-<div id="state-information" class="section level3">
-<h3 class="hasAnchor">
-<a href="#state-information" class="anchor"></a>State information</h3>
-<ul>
-<li>
-<code>states_config.csv</code>:
-<ul>
-<li>
-<code>state_names</code>: name of states.<br>
-</li>
-<li>
-<code>initial_conditions</code>: The initial conditions for the state if observations are not available to initialize. Assumes the initial conditions are constant over all depths, except for temperature which uses the <code>default_temp_init</code> variable in <code>configure_flare.R</code> to set the depth profile when observations are lacking</li>
-<li>
-<code>model_sd</code>: the standard deviation of the process error for the tate</li>
-<li>
-<code>initial_model_sd</code>: the standard deviation on the initial distribution of the state</li>
-<li>
-<code>states_to_obs_mapping</code>: a multiplier on the state to convert to the observation. In most cases this is 1. However, in the case of phytoplankton, the model predicts mmol/m3 biomass but the observations are ug/L chla. Therefore the multiplier is the biomass to chla conversion</li>
-<li>
-<code>states_to_obs_1</code>: The observation that the state contributes to
-<ul>
-<li>
-<code>NA</code> is required if no matching observations</li>
-<li>Name in this column must match an observation name</li>
-</ul>
-</li>
-<li>
-<code>states_to_obs_2</code>: A second observation that the state contributes to
-<ul>
-<li>
-<code>NA</code> is required if no matching observations</li>
-<li>Name in this column must match an observation name</li>
-</ul>
-</li>
-<li>
-<code>init_obs_name</code>: the name of observation that is used to initialize the state if there is an observation</li>
-<li>
-<code>init_obs_mapping</code>: a multiplier on the observation when used to initialize. For example, if using a combined DOC measurement to initialize two DOC states, you need to provide the proportion of the observation that is assigned to each state.</li>
-</ul>
-</li>
-<li>
-<code>states_process_error.csv</code>:
-<ul>
-<li><code>depth</code></li>
-<li>column name = variable name for states that have depth varying process uncertainity</li>
-</ul>
-</li>
-</ul>
-</div>
-<div id="observation-information" class="section level3">
-<h3 class="hasAnchor">
-<a href="#observation-information" class="anchor"></a>Observation information</h3>
-<ul>
-<li>
-<code>obs_config_file</code>:
-<ul>
-<li>
-<code>state_names_obs</code>: names of states with observations</li>
-<li>
-<code>obs_sd</code>: the standard deviation of the observation uncertainty</li>
-<li>
-<code>target_variable</code>: the name of variable in the data file that is used for the observed state.</li>
-<li>
-<code>distance_threshold</code>: this is the distances in meters that an observation has to be within to be matched to a value in <code>modeled_depths</code>..</li>
-</ul>
-</li>
-</ul>
-</div>
-<div id="initial-conditions-glm" class="section level3">
-<h3 class="hasAnchor">
-<a href="#initial-conditions-glm" class="anchor"></a>Initial Conditions (GLM)</h3>
-<ul>
-<li>
-<code>lake_depth_init</code>: initial lake depth (meters)</li>
-<li>
-<code>default_temp_init</code>: vector of initial temperature profile</li>
-<li>
-<code>default_temp_init_depths</code>: vector of depths in initial temperature profile</li>
-<li>
-<code>the_sals_init</code>: vector of initial salinty values</li>
-<li>
-<code>default_snow_thickness_init</code>: initial snow thickness (cm)</li>
-<li>
-<code>default_white_ice_thickness_init</code>: initial white ice thickness (cm)</li>
-<li>
-<code>default_blue_ice_thickness_init</code>: initial blue ice thickness (cm)</li>
-</ul>
-</div>
-<div id="management-specific-variables" class="section level3">
-<h3 class="hasAnchor">
-<a href="#management-specific-variables" class="anchor"></a>Management specific variables</h3>
-<ul>
-<li>
-<code>simulate_SSS</code>: include SSS (bottom-water oxygenation) in simulations with observed drivers (i.e., data assimilation simulations)
-<ul>
-<li>
-<code>TRUE</code>: include</li>
-<li>
-<code>FALSE</code>: don’t include</li>
-</ul>
-</li>
-<li>
-<code>forecast_no_SSS</code>: Include SSS in forecast
-<ul>
-<li>
-<code>TRUE</code>: include</li>
-<li>
-<code>FALSE</code>: don’t include</li>
-</ul>
-</li>
-<li>
-<code>use_specified_sss</code>: Use sss inflow and oxygen from file in forecast. If <code>FALSE</code> then provide <code>forecast_SSS_flow</code> and <code>forecast_SSS_Oxy</code>.</li>
-<li>
-<code>forecast_SSS_flow</code>: Flow rate of SSS in forecast (m3/day)</li>
-<li>
-<code>forecast_SSS_Oxy</code>: Oxygen concentration of SSS in forecast (mmol/m3)</li>
-<li>
-<code>sss_fname</code>: full path to the file that has the SSS Flow and oxygen data</li>
-<li>
-<code>sss_inflow_factor</code>: a scalar to multiply FLOW rate of SSS</li>
-<li>
-<code>sss_depth</code>: The depth (meters) of the SSS inflow/outflow</li>
-</ul>
-</div>
-</div>
   </div>
 
   <div class="col-md-3 hidden-xs hidden-sm" id="pkgdown-sidebar">
@@ -931,7 +665,7 @@
 
 
       <footer><div class="copyright">
-  <p>Developed by R. Quinn Thomas.</p>
+  <p>Developed by Tadhg Moore.</p>
 </div>
 
 <div class="pkgdown">
