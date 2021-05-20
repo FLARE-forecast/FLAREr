@@ -5,9 +5,8 @@
 #' @param state_names names of states that are initialized
 #' @param par_names (optional) names of parameters that are initialized
 #' @param restart_index (optional) time index in restart file used for initalization
-#'
+#' @noRd
 #' @return
-#' @export
 #'
 #' @examples
 generate_restart_initial_conditions <- function(restart_file, state_names, par_names = NULL, restart_index = NULL){

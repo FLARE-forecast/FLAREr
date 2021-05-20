@@ -126,7 +126,7 @@ generate_initial_conditions <- function(states_config,
       restart_index <- max(which(forecast == 0))
     }
 
-    init <- FLAREr::generate_restart_initial_conditions(
+    init <- FLAREr:::generate_restart_initial_conditions(
       restart_file = run_config$restart_file,
       state_names = states_config$state_names,
       par_names = pars_config$par_names_save,
