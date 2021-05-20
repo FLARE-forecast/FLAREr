@@ -181,6 +181,8 @@ run_da_forecast <- function(states_init,
                               da_method = "enkf",
                               par_fit_method = "inflate"){
 
+
+
   if(length(states_config$state_names) > 1){
     config$include_wq <- TRUE
   }else{
@@ -465,14 +467,17 @@ run_da_forecast <- function(states_init,
         if(npars > 0){
           if(par_fit_method == "inflate" & da_method == "enkf"){
             curr_pars <- x[i - 1, m , (nstates+1):(nstates+ npars)]
-          }else if(par_fit_method == "perturb"){
+          }else if(par_fit_method == "perturb" & da_method != "none"){
             if(i > (hist_days + 1)){
               curr_pars <- x[i - 1, m , (nstates+1):(nstates+ npars)] + rnorm(npars, mean = rep(0, npars), sd = pars_config$perturb_par)
             }else{
               curr_pars <- x[i - 1, m , (nstates+1):(nstates+ npars)]
             }
+          }else if(da_method == "none"){
+            curr_pars <- x[i - 1, m , (nstates+1):(nstates+ npars)]
           }else{
             message("parameter fitting method not supported.  inflate or perturb are supported. only inflate is supported for enkf")
+
           }
         }
 
@@ -594,7 +599,7 @@ run_da_forecast <- function(states_init,
 
     #if no observations at a time step then just propogate model uncertainity
 
-    if(length(z_index) == 0){
+    if(length(z_index) == 0 | da_method == "none"){
 
       if(i > (hist_days + 1)){
         data_assimilation_flag[i] <- 0
@@ -780,7 +785,7 @@ run_da_forecast <- function(states_init,
         diagnostics[ ,i, , ] <- diagnostics[ ,i, ,sample]
 
       }else{
-        message("da_method not supported; select enkf or pf")
+        message("da_method not supported; select enkf or pf or none")
       }
     }
 
