@@ -89,7 +89,6 @@ inflow_file_names <- inflow_outflow_files$inflow_file_name
 outflow_file_names <- inflow_outflow_files$outflow_file_name
 
 obs_tmp <- read.csv(cleaned_observations_file_long)
-#obs_tmp$hour[which(obs_tmp$hour == 7)] <- 19
 write.csv(obs_tmp, cleaned_observations_file_long, row.names = FALSE, quote = FALSE)
 
 obs <- FLAREr::create_obs_matrix(cleaned_observations_file_long,
