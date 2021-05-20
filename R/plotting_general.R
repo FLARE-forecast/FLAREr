@@ -16,7 +16,7 @@ plotting_general <- function(file_name,
 
   pdf_file_name <- paste0(tools::file_path_sans_ext(file_name),".pdf")
 
-  output <- flare::combine_forecast_observations(file_name,
+  output <- FLAREr::combine_forecast_observations(file_name,
                                 qaqc_location,
                                 extra_historical_days = 0)
   obs <- output$obs

@@ -141,7 +141,7 @@
 #'  end_datetime_local <- lubridate(as_datetime("2018-07-15 07:00:00, tz = "EST"))
 #'  forecast_start_datetime <- lubridate(as_datetime("2018-07-13 07:00:00, tz = "EST"))
 #'
-#'enkf_output <- flare::run_enkf_forecast(states_init = init$states,
+#'enkf_output <- FLAREr::run_data_forecast(states_init = init$states,
 #'               pars_init = init$pars,
 #'               aux_states_init = aux_states_init,
 #'               obs = obs,
@@ -237,7 +237,7 @@ run_da_forecast <- function(states_init,
   states_config$wq_start <- wq_start
   states_config$wq_end <- wq_end
 
-  flare:::check_enkf_inputs(states_init,
+  FLAREr:::check_enkf_inputs(states_init,
                             pars_init,
                             obs,
                             psi,
@@ -327,7 +327,7 @@ run_da_forecast <- function(states_init,
       unlink(file.path(working_directory, "1"), recursive = TRUE)
       dir.create(file.path(working_directory, "1"), showWarnings = FALSE)
     }
-    flare:::set_up_model(config,
+    FLAREr:::set_up_model(config,
                          ens_working_directory = file.path(working_directory,"1"),
                          state_names = states_config$state_names,
                          inflow_file_names = inflow_file_names,
@@ -340,7 +340,7 @@ run_da_forecast <- function(states_init,
         unlink(file.path(working_directory, m), recursive = TRUE)
         dir.create(file.path(working_directory, m), showWarnings = FALSE)
       }
-      flare:::set_up_model(config,
+      FLAREr:::set_up_model(config,
                            ens_working_directory = file.path(working_directory,m),
                            state_names = states_config$state_names,
                            inflow_file_names = inflow_file_names,
@@ -485,7 +485,7 @@ run_da_forecast <- function(states_init,
         }
 
 
-        out <-flare:::run_model(i,
+        out <-FLAREr:::run_model(i,
                                 m,
                                 mixing_vars_start = mixing_vars[,i-1 , m],
                                 curr_start,

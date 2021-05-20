@@ -139,7 +139,7 @@
 #'  end_datetime_local <- lubridate(as_datetime("2018-07-15 07:00:00, tz = "EST"))
 #'  forecast_start_datetime <- lubridate(as_datetime("2018-07-13 07:00:00, tz = "EST"))
 #'
-#'enkf_output <- flare::run_enkf_forecast(states_init = init$states,
+#'enkf_output <- FLAREr::run_enkf_forecast(states_init = init$states,
 #'               pars_init = init$pars,
 #'               aux_states_init = aux_states_init,
 #'               obs = obs,
@@ -181,7 +181,7 @@ run_enkf_forecast <- function(states_init,
 
   message("run_enkf_forecast can been replaced by run_da_forecast. run_enkf_forecast is a wrapper for run_da_forecast and will be removed in future flare versions.  Please update scripts with run_da_forecast.")
 
-  out <- flare::run_da_forecast(states_init,
+  out <- FLAREr::run_da_forecast(states_init,
                               pars_init = pars_init,
                               aux_states_init,
                               obs,

@@ -49,7 +49,7 @@ model_name: glm_aed #other is "null"
 
 # Relative to forecast_location
 
-base_GLM_nml: configuration_files/glm3.nml
+base_GLM_nml: glm3.nml
 
 #All sources of uncertainty and data used to constrain
 use_obs_constraint: TRUE

@@ -9,11 +9,13 @@ generate_initial_conditions(
   obs_config,
   pars_config = NULL,
   obs,
-  config
+  config,
+  restart_file = NA,
+  historical_met_error = FALSE
 )
 }
 \arguments{
-\item{config}{}
+\item{historical_met_error}{}
 }
 \value{
 
