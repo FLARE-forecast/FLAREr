@@ -1,0 +1,165 @@
+---
+title: "FLAREr configurations"
+output: html_document
+---
+---
+title: "FLAREr Configurations"
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{flare-config-vignette}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+```{r, include = FALSE}
+knitr::opts_chunk$set(
+  collapse = TRUE,
+  comment = "#>",
+  echo = TRUE
+)
+```
+
+A guide to the variables in `configure_flare.yml` and in the `observations_config.csv`,
+`parameter_calibration_config.csv`, and `states_config.csv`.
+
+## General set-up
+
+*  `model_name`: specific ID of the model (`glm_aed` and `null` are the only 
+
+## Lake specific variables
+
+* `lake_name_code`: four letter code name for lake.
+* `lake_name`: full name of lake
+* `lake_latitude`: Degrees North
+* `lake_longitude`: Degrees West
+* `local_tzone`: In standard time. Must be recognized by R.
+
+## Weather forcing options
+* `use_future_met`
+  * `TRUE`: use NOAA forecast for "Future"
+  * `FALSE` = use observed weather for "Future"; only works if "forecasting" 
+    past dates
+* `forecast_met_model`:  directory name within the data_location that contains the NOAA model output (i.e., NOAAGEFS_1hr-debias)
+
+
+
+## Inflow options
+
+* `use_future_inflow`: Use forecast inflow vs. observed inflow (if available)
+  * `TRUE`: Future inflow
+  * `FALSE`: Observed inflow
+* `forecast_inflow_model`: directory name within the data_location that contains the inflow model output (i.e., FLOWS-NOAAGEFS-AR1)
+
+## GLM namelist files
+
+* `base_GLM_nml`: full path to the glm namelist or path relative to forecast directory
+* `base_AED_nml`: full path to the aed namelist or path relative to forecast directory
+* `base_AED_phyto_pars_nml`: full path to the phyto_pars namelist or path relative to forecast directory
+* `base_AED_zoop_pars_nml`: full path to the zoop_pars namelist or path relative to forecast directory
+
+## Depth information
+
+* `modeled_depths`: Vector of depths are that represented in the data assimilation
+
+## Data assimilation description
+* `da_method`: method for data assimilation (`enkf` or `pf` or `none`)
+* `par_fit_method`: method for parameter fitting
+  * if `da_method` = `enkf`, then `inflate` or `perturb` are options
+  * if `da_method` = `pf`, then only `perturb` is an option
+* `ensemble_size`: Total number of ensemble members
+* `vert_decorr_length`: The length in meters where process uncertainty becomes
+   decoupled.
+* `no_negative_states`: Set any states that become negative do to the addition 
+   of process uncertainty or from EnKF update to zero
+* `localization_distance`: distance in meters were covariances in the model 
+   error are used
+* `assimilate_first_step`: TRUE or FALSE
+* `ncore`: number of computer cores to use for parrallel processing
+
+## Parameter calibration information
+
+* `par_file`: 
+  * `par_names`: vector of GLM names of parameter values estimated
+  * `par_names_save`: vector of names of parameter values estimated  that are 
+     desired in output and plots
+  * `par_nml`: vector of nml file names that contains the parameter that is being 
+     estimated
+  * `par_init_mean`: vector of initial mean value for parameters
+  * `par_init_lowerbound`: vector of lower bound for the initial uniform 
+     distribution of the parameters
+  * `par_init_upperbound`: vector of upper bound for the initial uniform 
+     distribution of the parameters
+  * `par_lowerbound`: vector of lower bounds that a parameter can have
+  * `par_upperbound`: vector of upper bounds that a parameter can have
+  * `inflat_pars`: The variance inflation factor applied to the parameter 
+     component of the ensemble. Value greater than 1.
+  * `pertrub_par`: The standard deviation of the normally distributed random noise that is added to parameters
+  * `par_units`: Units of parameter for plotting
+
+## State information
+
+* `states_config.csv`:
+  * `state_names`: name of states.  
+  * `initial_conditions`: The initial conditions for the state if observations
+     are not available to initialize.  Assumes the initial conditions are 
+     constant over all depths, except for temperature which uses the `default_temp_init`
+     variable in `configure_flare.R` to set the depth profile when observations
+     are lacking
+  * `model_sd`: the standard deviation of the process error for the tate
+  * `initial_model_sd`: the standard deviation on the initial distribution of the state
+  * `states_to_obs_mapping`: a multiplier on the state to convert to the observation.
+     In most cases this is 1.  However, in the case of phytoplankton,  the model
+     predicts mmol/m3 biomass but the observations are ug/L chla.  Therefore the multiplier
+     is the biomass to chla conversion
+  * `states_to_obs_1`: The observation that the state contributes to
+    * `NA` is required if no matching observations
+    * Name in this column must match an observation name
+  * `states_to_obs_2`: A second observation that the state contributes to
+    * `NA` is required if no matching observations
+    * Name in this column must match an observation name
+  * `init_obs_name`: the name of observation that is used to initialize the state
+     if there is an observation
+  * `init_obs_mapping`: a multiplier on the observation when used to initialize.
+     For example, if using a combined DOC measurement to initialize two DOC 
+     states, you need to provide the proportion of the observation that is 
+     assigned to each state.
+     
+* `states_process_error.csv`:
+  * `depth`
+  * column name = variable name for states that have depth varying process uncertainity
+
+## Observation information
+
+* `obs_config_file`:
+  * `state_names_obs`: names of states with observations
+  * `obs_sd`: the standard deviation of the observation uncertainty
+  * `target_variable`: the name of variable in the data file that is used for the observed state.
+  * `distance_threshold`: this is the distances in meters that an 
+  observation has to be within to be matched to a value in `modeled_depths`..
+
+## Initial Conditions (GLM)
+
+* `lake_depth_init`: initial lake depth (meters)
+* `default_temp_init`: vector of initial temperature profile
+* `default_temp_init_depths`: vector of depths in initial temperature profile
+* `the_sals_init`: vector of initial salinty values
+* `default_snow_thickness_init`: initial snow thickness (cm)
+* `default_white_ice_thickness_init`:  initial white ice thickness (cm)
+* `default_blue_ice_thickness_init`: initial blue ice thickness (cm)
+
+## Management specific variables
+
+* `simulate_SSS`: include SSS (bottom-water oxygenation) in simulations with 
+  observed drivers (i.e., data assimilation simulations)
+  * `TRUE`: include
+  * `FALSE`: don't include
+* `forecast_no_SSS`: Include SSS in forecast
+  * `TRUE`: include
+  * `FALSE`: don't include
+* `use_specified_sss`: Use sss inflow and oxygen from file in forecast.  If 
+  `FALSE` then provide `forecast_SSS_flow` and `forecast_SSS_Oxy`.
+* `forecast_SSS_flow`: Flow rate of SSS in forecast (m3/day)
+* `forecast_SSS_Oxy`: Oxygen concentration of SSS in forecast (mmol/m3)
+* `sss_fname`: full path to the file that has the SSS Flow and oxygen data
+* `sss_inflow_factor`: a scalar to multiply FLOW rate of SSS
+* `sss_depth`: The depth (meters) of the SSS inflow/outflow
