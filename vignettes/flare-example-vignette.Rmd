@@ -61,8 +61,8 @@ remotes::install_github("flare-forecast/FLAREr")
 Second, create a directory that will be your working directory for your FLARE run
 
 ```{r}
-forecast_location <- tempdir()
-working_directory <- file.path(forecast_location, "working_directory")
+forecast_location <-  tempdir()
+#forecast_location <- "/Users/quinn/Dropbox/Research/SSC_forecasting/flare_users_guide_v2/forecast_location"
 ```
 
 ## 2: Configuration files
@@ -100,41 +100,43 @@ file.copy(from = system.file("data/input_data", package= "FLAREr"), to = forecas
 First, FLAREr requires the observation file to have a specific name (observations_postQAQC_long.csv) and format.
 
 ```{r}
-head(read_csv("forecast_location/input_data/observations_postQAQC_long.csv", col_types = readr::cols()))
+head(read_csv(file.path(forecast_location,"/input_data/observations_postQAQC_long.csv"), col_types = readr::cols()))
 ```
 
 Second, FLARE are requires the observed (historical) meteorology to be a specific name (observed-met_fcre.nc) and format. 
 
 ```{r}
-ncdf4::nc_open("forecast_location/input_data/observed-met_fcre.nc")
+ncdf4::nc_open(file.path(forecast_location, "input_data/observed-met_fcre.nc"))
 ```
 Third, FLARE are requires the observed (historical) inflow and outflow to be a specific name (inflow_postQAQC.csv) and format. 
 
 ```{r}
-head(read_csv("forecast_location/input_data/inflow_postQAQC.csv", col_types = readr::cols()))
+head(read_csv(file.path(forecast_location, "/input_data/inflow_postQAQC.csv"), col_types = readr::cols()))
 ```
 
 Finally, if using forecasted meteorology and inflows, FLAREr requires specific file formats and file names with specific characters (INFLOW or OUTFLOW). The follow set of files are the forecasted inflow files in the example. 
 
 ```{r}
-all_files <- list.files("forecast_location/input_data/FLOWS-NOAAGEFS-AR1", full.names = TRUE)
+all_files <- list.files(file.path(forecast_location,"input_data/FLOWS-NOAAGEFS-AR1"), full.names = TRUE)
 all_files[stringr::str_detect(all_files,"INFLOW")]
 ```
+
 with the following format
 
 ```{r}
 head(read_csv(all_files[stringr::str_detect(all_files,"INFLOW")][1], col_types = readr::cols()))
 ```
 
-Similarily, the forecasted NOAA GEFS meterology has a specific file formats and file names with specific characters (NOAAGEGS_1hr). The follow set of files are the forecasted meterology files in the example.
+Similarly, the forecasted NOAA GEFS meteorology has a specific file formats and file names with specific characters (NOAAGEGS_1hr). The follow set of files are the forecasted meteorology files in the example.
 
 ```{r}
-all_files <- list.files("forecast_location/input_data/NOAAGEFS_1hr-debias", full.names = TRUE)
+all_files <- list.files(file.path(forecast_location, "input_data/NOAAGEFS_1hr-debias"), full.names = TRUE)
 all_files
 ```
 ```{r}
 ncdf4::nc_open(all_files[1])
 ```
+
 ## 2: Configure simulation (GLM)
 
 The configuration functions are spread across the files. These files are described in more detail below
@@ -219,8 +221,8 @@ config <- yaml::read_yaml(file.path(forecast_location,"configure_flare.yml"))
 run_config <- yaml::read_yaml(file.path(forecast_location,"run_configuration.yml"))
 
 config$run_config <- run_config
-config$run_config$forecast_location <- file.path(forecast_location, "input_data")
-config$run_config$execute_location <- file.path(working_directory, "output")
+config$run_config$forecast_location <- file.path(forecast_location)
+config$run_config$execute_location <- file.path(forecast_location, "working_directory")
 
 config$data_location <- file.path(forecast_location, "input_data")
 config$qaqc_data_location <- file.path(forecast_location, "input_data")
@@ -383,18 +385,6 @@ FLAREr::create_flare_eml(file_name = saved_file,
 FLAREr::plotting_general(file_name = saved_file,
                         qaqc_location = config$qaqc_data_location)
 ```
-
-
-To run your first FLARE simulation confirm that the following variables are set in your `run_configuration.yml` file:
-
-* `restart_file <- NA`
-* `sim_name <- "test"`
-* `forecast_days <- 16`
-* `start_day_local <- "2018-07-12"`  
-* `start_time_local <- "07:00:00"`
-* `forecast_start_day_local <- "2018-07-15"`
-
-You will find that a `working_directory` directory is created in your `forecast_location` directory. This is were all the files for the simulation are stored. After the simulation is finished all the important files are moved to the `forecast_location` directory so it is fine to delete the `working_directory`.
 
 Once the simulation is complete you will find a PDF, a netcdf (.nc) file, and an xml in `forecast_location` directory. The PDF is the plotted output, the netcdf file is the FLARE output, and the xml is the metadata.
 
