@@ -5,7 +5,7 @@ test_that("met files are generated", {
 
   # library(tidyverse)
 
-  template_folder <- system.file("data", package= "flare")
+  template_folder <- system.file("data", package= "FLAREr")
 
   source(file.path(template_folder, "test_met_prep.R"))
 
@@ -26,7 +26,7 @@ test_that("met files are generated", {
 test_that("inflow & outflow files are generated", {
 
   # library(tidyverse)
-  template_folder <- system.file("data", package= "flare")
+  template_folder <- system.file("data", package= "FLAREr")
 
   source(file.path(template_folder, "test_inflow_prep.R"))
 
@@ -57,7 +57,7 @@ test_that("observation matrix is generated and correct", {
 
   # library(tidyverse)
 
-  template_folder <- system.file("data", package = "flare")
+  template_folder <- system.file("data", package = "FLAREr")
   temp_dir <- tempdir()
   # dir.create("example")
   file.copy(from = template_folder, to = temp_dir, recursive = TRUE)
@@ -89,7 +89,7 @@ test_that("generate states to obs mapping", {
 
   # library(tidyverse)
 
-  template_folder <- system.file("data", package= "flare")
+  template_folder <- system.file("data", package= "FLAREr")
   temp_dir <- tempdir()
   # dir.create("example")
   file.copy(from = template_folder, to = temp_dir, recursive = TRUE)
@@ -107,7 +107,7 @@ test_that("generate states to obs mapping", {
 # Initial model error ----
 test_that("initial model error is generated", {
 
-  template_folder <- system.file("data", package= "flare")
+  template_folder <- system.file("data", package= "FLAREr")
   temp_dir <- tempdir()
   # dir.create("example")
   file.copy(from = template_folder, to = temp_dir, recursive = TRUE)
@@ -128,7 +128,7 @@ test_that("initial model error is generated", {
 # Set initial conditions ----
 test_that("initial conditions are generated", {
 
-  template_folder <- system.file("data", package= "flare")
+  template_folder <- system.file("data", package= "FLAREr")
   temp_dir <- tempdir()
   # dir.create("example")
   file.copy(from = template_folder, to = temp_dir, recursive = TRUE)
@@ -164,7 +164,7 @@ test_that("EnKF can be run", {
 
   # library(tidyverse)
 
-  template_folder <- system.file("data", package= "flare")
+  template_folder <- system.file("data", package= "FLAREr")
   temp_dir <- tempdir()
   # dir.create("example")
   file.copy(from = template_folder, to = temp_dir, recursive = TRUE)
@@ -279,7 +279,7 @@ test_that("particle filter can be run", {
 
   # library(tidyverse)
 
-  template_folder <- system.file("data", package= "flare")
+  template_folder <- system.file("data", package= "FLAREr")
   temp_dir <- tempdir()
   # dir.create("example")
   file.copy(from = template_folder, to = temp_dir, recursive = TRUE)
