@@ -165,16 +165,16 @@
 <span class="co">#&gt; # A tibble: 6 x 5</span>
 <span class="co">#&gt;   date        hour depth value variable   </span>
 <span class="co">#&gt;   &lt;date&gt;     &lt;dbl&gt; &lt;dbl&gt; &lt;dbl&gt; &lt;chr&gt;      </span>
-<span class="co">#&gt; 1 2018-07-06     7     0  28.4 temperature</span>
-<span class="co">#&gt; 2 2018-07-06     7     1  28.4 temperature</span>
-<span class="co">#&gt; 3 2018-07-06     7     2  24.2 temperature</span>
-<span class="co">#&gt; 4 2018-07-06     7     3  18.2 temperature</span>
-<span class="co">#&gt; 5 2018-07-06     7     4  13.5 temperature</span>
-<span class="co">#&gt; 6 2018-07-06     7     5  11.2 temperature</span></code></pre></div>
+<span class="co">#&gt; 1 2018-07-06     0     0  28.4 temperature</span>
+<span class="co">#&gt; 2 2018-07-06     0     1  28.4 temperature</span>
+<span class="co">#&gt; 3 2018-07-06     0     2  24.2 temperature</span>
+<span class="co">#&gt; 4 2018-07-06     0     3  18.2 temperature</span>
+<span class="co">#&gt; 5 2018-07-06     0     4  13.5 temperature</span>
+<span class="co">#&gt; 6 2018-07-06     0     5  11.2 temperature</span></code></pre></div>
 <p>Second, FLARE are requires the observed (historical) meteorology to be a specific name (observed-met_fcre.nc) and format.</p>
 <div class="sourceCode" id="cb8"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span class="fu">ncdf4</span><span class="fu">::</span><span class="fu"><a href="https://rdrr.io/pkg/ncdf4/man/nc_open.html">nc_open</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/file.path.html">file.path</a></span><span class="op">(</span><span class="va">forecast_location</span>, <span class="st">"input_data/observed-met_fcre.nc"</span><span class="op">)</span><span class="op">)</span>
-<span class="co">#&gt; File /var/folders/ms/kf9vk0w17p18pvs8k_23t5y80000gq/T//RtmpDHdBY8/input_data/observed-met_fcre.nc (NC_FORMAT_CLASSIC):</span>
+<span class="co">#&gt; File /var/folders/ms/kf9vk0w17p18pvs8k_23t5y80000gq/T//RtmptLxPN9/input_data/observed-met_fcre.nc (NC_FORMAT_CLASSIC):</span>
 <span class="co">#&gt; </span>
 <span class="co">#&gt;      8 variables (excluding dimension variables):</span>
 <span class="co">#&gt;         float air_temperature[time,latitude,longitude]   </span>
@@ -228,27 +228,27 @@
 <div class="sourceCode" id="cb10"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span class="va">all_files</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/list.files.html">list.files</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/file.path.html">file.path</a></span><span class="op">(</span><span class="va">forecast_location</span>,<span class="st">"input_data/FLOWS-NOAAGEFS-AR1"</span><span class="op">)</span>, full.names <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span>
 <span class="va">all_files</span><span class="op">[</span><span class="fu">stringr</span><span class="fu">::</span><span class="fu"><a href="https://stringr.tidyverse.org/reference/str_detect.html">str_detect</a></span><span class="op">(</span><span class="va">all_files</span>,<span class="st">"INFLOW"</span><span class="op">)</span><span class="op">]</span>
-<span class="co">#&gt;  [1] "/var/folders/ms/kf9vk0w17p18pvs8k_23t5y80000gq/T//RtmpDHdBY8/input_data/FLOWS-NOAAGEFS-AR1/INFLOW-FLOWS-NOAAGEFS-AR1_fcre_2018-10-05_2018-10-20_ens01.csv"</span>
-<span class="co">#&gt;  [2] "/var/folders/ms/kf9vk0w17p18pvs8k_23t5y80000gq/T//RtmpDHdBY8/input_data/FLOWS-NOAAGEFS-AR1/INFLOW-FLOWS-NOAAGEFS-AR1_fcre_2018-10-05_2018-10-20_ens02.csv"</span>
-<span class="co">#&gt;  [3] "/var/folders/ms/kf9vk0w17p18pvs8k_23t5y80000gq/T//RtmpDHdBY8/input_data/FLOWS-NOAAGEFS-AR1/INFLOW-FLOWS-NOAAGEFS-AR1_fcre_2018-10-05_2018-10-20_ens03.csv"</span>
-<span class="co">#&gt;  [4] "/var/folders/ms/kf9vk0w17p18pvs8k_23t5y80000gq/T//RtmpDHdBY8/input_data/FLOWS-NOAAGEFS-AR1/INFLOW-FLOWS-NOAAGEFS-AR1_fcre_2018-10-05_2018-10-20_ens04.csv"</span>
-<span class="co">#&gt;  [5] "/var/folders/ms/kf9vk0w17p18pvs8k_23t5y80000gq/T//RtmpDHdBY8/input_data/FLOWS-NOAAGEFS-AR1/INFLOW-FLOWS-NOAAGEFS-AR1_fcre_2018-10-05_2018-10-20_ens05.csv"</span>
-<span class="co">#&gt;  [6] "/var/folders/ms/kf9vk0w17p18pvs8k_23t5y80000gq/T//RtmpDHdBY8/input_data/FLOWS-NOAAGEFS-AR1/INFLOW-FLOWS-NOAAGEFS-AR1_fcre_2018-10-05_2018-10-20_ens06.csv"</span>
-<span class="co">#&gt;  [7] "/var/folders/ms/kf9vk0w17p18pvs8k_23t5y80000gq/T//RtmpDHdBY8/input_data/FLOWS-NOAAGEFS-AR1/INFLOW-FLOWS-NOAAGEFS-AR1_fcre_2018-10-05_2018-10-20_ens07.csv"</span>
-<span class="co">#&gt;  [8] "/var/folders/ms/kf9vk0w17p18pvs8k_23t5y80000gq/T//RtmpDHdBY8/input_data/FLOWS-NOAAGEFS-AR1/INFLOW-FLOWS-NOAAGEFS-AR1_fcre_2018-10-05_2018-10-20_ens08.csv"</span>
-<span class="co">#&gt;  [9] "/var/folders/ms/kf9vk0w17p18pvs8k_23t5y80000gq/T//RtmpDHdBY8/input_data/FLOWS-NOAAGEFS-AR1/INFLOW-FLOWS-NOAAGEFS-AR1_fcre_2018-10-05_2018-10-20_ens09.csv"</span>
-<span class="co">#&gt; [10] "/var/folders/ms/kf9vk0w17p18pvs8k_23t5y80000gq/T//RtmpDHdBY8/input_data/FLOWS-NOAAGEFS-AR1/INFLOW-FLOWS-NOAAGEFS-AR1_fcre_2018-10-05_2018-10-20_ens10.csv"</span>
-<span class="co">#&gt; [11] "/var/folders/ms/kf9vk0w17p18pvs8k_23t5y80000gq/T//RtmpDHdBY8/input_data/FLOWS-NOAAGEFS-AR1/INFLOW-FLOWS-NOAAGEFS-AR1_fcre_2018-10-05_2018-10-20_ens11.csv"</span>
-<span class="co">#&gt; [12] "/var/folders/ms/kf9vk0w17p18pvs8k_23t5y80000gq/T//RtmpDHdBY8/input_data/FLOWS-NOAAGEFS-AR1/INFLOW-FLOWS-NOAAGEFS-AR1_fcre_2018-10-05_2018-10-20_ens12.csv"</span>
-<span class="co">#&gt; [13] "/var/folders/ms/kf9vk0w17p18pvs8k_23t5y80000gq/T//RtmpDHdBY8/input_data/FLOWS-NOAAGEFS-AR1/INFLOW-FLOWS-NOAAGEFS-AR1_fcre_2018-10-05_2018-10-20_ens13.csv"</span>
-<span class="co">#&gt; [14] "/var/folders/ms/kf9vk0w17p18pvs8k_23t5y80000gq/T//RtmpDHdBY8/input_data/FLOWS-NOAAGEFS-AR1/INFLOW-FLOWS-NOAAGEFS-AR1_fcre_2018-10-05_2018-10-20_ens14.csv"</span>
-<span class="co">#&gt; [15] "/var/folders/ms/kf9vk0w17p18pvs8k_23t5y80000gq/T//RtmpDHdBY8/input_data/FLOWS-NOAAGEFS-AR1/INFLOW-FLOWS-NOAAGEFS-AR1_fcre_2018-10-05_2018-10-20_ens15.csv"</span>
-<span class="co">#&gt; [16] "/var/folders/ms/kf9vk0w17p18pvs8k_23t5y80000gq/T//RtmpDHdBY8/input_data/FLOWS-NOAAGEFS-AR1/INFLOW-FLOWS-NOAAGEFS-AR1_fcre_2018-10-05_2018-10-20_ens16.csv"</span>
-<span class="co">#&gt; [17] "/var/folders/ms/kf9vk0w17p18pvs8k_23t5y80000gq/T//RtmpDHdBY8/input_data/FLOWS-NOAAGEFS-AR1/INFLOW-FLOWS-NOAAGEFS-AR1_fcre_2018-10-05_2018-10-20_ens17.csv"</span>
-<span class="co">#&gt; [18] "/var/folders/ms/kf9vk0w17p18pvs8k_23t5y80000gq/T//RtmpDHdBY8/input_data/FLOWS-NOAAGEFS-AR1/INFLOW-FLOWS-NOAAGEFS-AR1_fcre_2018-10-05_2018-10-20_ens18.csv"</span>
-<span class="co">#&gt; [19] "/var/folders/ms/kf9vk0w17p18pvs8k_23t5y80000gq/T//RtmpDHdBY8/input_data/FLOWS-NOAAGEFS-AR1/INFLOW-FLOWS-NOAAGEFS-AR1_fcre_2018-10-05_2018-10-20_ens19.csv"</span>
-<span class="co">#&gt; [20] "/var/folders/ms/kf9vk0w17p18pvs8k_23t5y80000gq/T//RtmpDHdBY8/input_data/FLOWS-NOAAGEFS-AR1/INFLOW-FLOWS-NOAAGEFS-AR1_fcre_2018-10-05_2018-10-20_ens20.csv"</span>
-<span class="co">#&gt; [21] "/var/folders/ms/kf9vk0w17p18pvs8k_23t5y80000gq/T//RtmpDHdBY8/input_data/FLOWS-NOAAGEFS-AR1/INFLOW-FLOWS-NOAAGEFS-AR1_fcre_2018-10-05_2018-10-20_ens21.csv"</span></code></pre></div>
+<span class="co">#&gt;  [1] "/var/folders/ms/kf9vk0w17p18pvs8k_23t5y80000gq/T//RtmptLxPN9/input_data/FLOWS-NOAAGEFS-AR1/INFLOW-FLOWS-NOAAGEFS-AR1_fcre_2018-10-05_2018-10-20_ens01.csv"</span>
+<span class="co">#&gt;  [2] "/var/folders/ms/kf9vk0w17p18pvs8k_23t5y80000gq/T//RtmptLxPN9/input_data/FLOWS-NOAAGEFS-AR1/INFLOW-FLOWS-NOAAGEFS-AR1_fcre_2018-10-05_2018-10-20_ens02.csv"</span>
+<span class="co">#&gt;  [3] "/var/folders/ms/kf9vk0w17p18pvs8k_23t5y80000gq/T//RtmptLxPN9/input_data/FLOWS-NOAAGEFS-AR1/INFLOW-FLOWS-NOAAGEFS-AR1_fcre_2018-10-05_2018-10-20_ens03.csv"</span>
+<span class="co">#&gt;  [4] "/var/folders/ms/kf9vk0w17p18pvs8k_23t5y80000gq/T//RtmptLxPN9/input_data/FLOWS-NOAAGEFS-AR1/INFLOW-FLOWS-NOAAGEFS-AR1_fcre_2018-10-05_2018-10-20_ens04.csv"</span>
+<span class="co">#&gt;  [5] "/var/folders/ms/kf9vk0w17p18pvs8k_23t5y80000gq/T//RtmptLxPN9/input_data/FLOWS-NOAAGEFS-AR1/INFLOW-FLOWS-NOAAGEFS-AR1_fcre_2018-10-05_2018-10-20_ens05.csv"</span>
+<span class="co">#&gt;  [6] "/var/folders/ms/kf9vk0w17p18pvs8k_23t5y80000gq/T//RtmptLxPN9/input_data/FLOWS-NOAAGEFS-AR1/INFLOW-FLOWS-NOAAGEFS-AR1_fcre_2018-10-05_2018-10-20_ens06.csv"</span>
+<span class="co">#&gt;  [7] "/var/folders/ms/kf9vk0w17p18pvs8k_23t5y80000gq/T//RtmptLxPN9/input_data/FLOWS-NOAAGEFS-AR1/INFLOW-FLOWS-NOAAGEFS-AR1_fcre_2018-10-05_2018-10-20_ens07.csv"</span>
+<span class="co">#&gt;  [8] "/var/folders/ms/kf9vk0w17p18pvs8k_23t5y80000gq/T//RtmptLxPN9/input_data/FLOWS-NOAAGEFS-AR1/INFLOW-FLOWS-NOAAGEFS-AR1_fcre_2018-10-05_2018-10-20_ens08.csv"</span>
+<span class="co">#&gt;  [9] "/var/folders/ms/kf9vk0w17p18pvs8k_23t5y80000gq/T//RtmptLxPN9/input_data/FLOWS-NOAAGEFS-AR1/INFLOW-FLOWS-NOAAGEFS-AR1_fcre_2018-10-05_2018-10-20_ens09.csv"</span>
+<span class="co">#&gt; [10] "/var/folders/ms/kf9vk0w17p18pvs8k_23t5y80000gq/T//RtmptLxPN9/input_data/FLOWS-NOAAGEFS-AR1/INFLOW-FLOWS-NOAAGEFS-AR1_fcre_2018-10-05_2018-10-20_ens10.csv"</span>
+<span class="co">#&gt; [11] "/var/folders/ms/kf9vk0w17p18pvs8k_23t5y80000gq/T//RtmptLxPN9/input_data/FLOWS-NOAAGEFS-AR1/INFLOW-FLOWS-NOAAGEFS-AR1_fcre_2018-10-05_2018-10-20_ens11.csv"</span>
+<span class="co">#&gt; [12] "/var/folders/ms/kf9vk0w17p18pvs8k_23t5y80000gq/T//RtmptLxPN9/input_data/FLOWS-NOAAGEFS-AR1/INFLOW-FLOWS-NOAAGEFS-AR1_fcre_2018-10-05_2018-10-20_ens12.csv"</span>
+<span class="co">#&gt; [13] "/var/folders/ms/kf9vk0w17p18pvs8k_23t5y80000gq/T//RtmptLxPN9/input_data/FLOWS-NOAAGEFS-AR1/INFLOW-FLOWS-NOAAGEFS-AR1_fcre_2018-10-05_2018-10-20_ens13.csv"</span>
+<span class="co">#&gt; [14] "/var/folders/ms/kf9vk0w17p18pvs8k_23t5y80000gq/T//RtmptLxPN9/input_data/FLOWS-NOAAGEFS-AR1/INFLOW-FLOWS-NOAAGEFS-AR1_fcre_2018-10-05_2018-10-20_ens14.csv"</span>
+<span class="co">#&gt; [15] "/var/folders/ms/kf9vk0w17p18pvs8k_23t5y80000gq/T//RtmptLxPN9/input_data/FLOWS-NOAAGEFS-AR1/INFLOW-FLOWS-NOAAGEFS-AR1_fcre_2018-10-05_2018-10-20_ens15.csv"</span>
+<span class="co">#&gt; [16] "/var/folders/ms/kf9vk0w17p18pvs8k_23t5y80000gq/T//RtmptLxPN9/input_data/FLOWS-NOAAGEFS-AR1/INFLOW-FLOWS-NOAAGEFS-AR1_fcre_2018-10-05_2018-10-20_ens16.csv"</span>
+<span class="co">#&gt; [17] "/var/folders/ms/kf9vk0w17p18pvs8k_23t5y80000gq/T//RtmptLxPN9/input_data/FLOWS-NOAAGEFS-AR1/INFLOW-FLOWS-NOAAGEFS-AR1_fcre_2018-10-05_2018-10-20_ens17.csv"</span>
+<span class="co">#&gt; [18] "/var/folders/ms/kf9vk0w17p18pvs8k_23t5y80000gq/T//RtmptLxPN9/input_data/FLOWS-NOAAGEFS-AR1/INFLOW-FLOWS-NOAAGEFS-AR1_fcre_2018-10-05_2018-10-20_ens18.csv"</span>
+<span class="co">#&gt; [19] "/var/folders/ms/kf9vk0w17p18pvs8k_23t5y80000gq/T//RtmptLxPN9/input_data/FLOWS-NOAAGEFS-AR1/INFLOW-FLOWS-NOAAGEFS-AR1_fcre_2018-10-05_2018-10-20_ens19.csv"</span>
+<span class="co">#&gt; [20] "/var/folders/ms/kf9vk0w17p18pvs8k_23t5y80000gq/T//RtmptLxPN9/input_data/FLOWS-NOAAGEFS-AR1/INFLOW-FLOWS-NOAAGEFS-AR1_fcre_2018-10-05_2018-10-20_ens20.csv"</span>
+<span class="co">#&gt; [21] "/var/folders/ms/kf9vk0w17p18pvs8k_23t5y80000gq/T//RtmptLxPN9/input_data/FLOWS-NOAAGEFS-AR1/INFLOW-FLOWS-NOAAGEFS-AR1_fcre_2018-10-05_2018-10-20_ens21.csv"</span></code></pre></div>
 <p>with the following format</p>
 <div class="sourceCode" id="cb11"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span class="fu"><a href="https://rdrr.io/r/utils/head.html">head</a></span><span class="op">(</span><span class="fu">read_csv</span><span class="op">(</span><span class="va">all_files</span><span class="op">[</span><span class="fu">stringr</span><span class="fu">::</span><span class="fu"><a href="https://stringr.tidyverse.org/reference/str_detect.html">str_detect</a></span><span class="op">(</span><span class="va">all_files</span>,<span class="st">"INFLOW"</span><span class="op">)</span><span class="op">]</span><span class="op">[</span><span class="fl">1</span><span class="op">]</span>, col_types <span class="op">=</span> <span class="fu">readr</span><span class="fu">::</span><span class="fu"><a href="https://readr.tidyverse.org/reference/cols.html">cols</a></span><span class="op">(</span><span class="op">)</span><span class="op">)</span><span class="op">)</span>
@@ -265,30 +265,30 @@
 <div class="sourceCode" id="cb12"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span class="va">all_files</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/list.files.html">list.files</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/file.path.html">file.path</a></span><span class="op">(</span><span class="va">forecast_location</span>, <span class="st">"input_data/NOAAGEFS_1hr-debias"</span><span class="op">)</span>, full.names <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span>
 <span class="va">all_files</span>
-<span class="co">#&gt;  [1] "/var/folders/ms/kf9vk0w17p18pvs8k_23t5y80000gq/T//RtmpDHdBY8/input_data/NOAAGEFS_1hr-debias/NOAAGEFS_1hr-debias_fcre_2018-10-05T00_2018-10-21T00_ens01.nc"</span>
-<span class="co">#&gt;  [2] "/var/folders/ms/kf9vk0w17p18pvs8k_23t5y80000gq/T//RtmpDHdBY8/input_data/NOAAGEFS_1hr-debias/NOAAGEFS_1hr-debias_fcre_2018-10-05T00_2018-10-21T00_ens02.nc"</span>
-<span class="co">#&gt;  [3] "/var/folders/ms/kf9vk0w17p18pvs8k_23t5y80000gq/T//RtmpDHdBY8/input_data/NOAAGEFS_1hr-debias/NOAAGEFS_1hr-debias_fcre_2018-10-05T00_2018-10-21T00_ens03.nc"</span>
-<span class="co">#&gt;  [4] "/var/folders/ms/kf9vk0w17p18pvs8k_23t5y80000gq/T//RtmpDHdBY8/input_data/NOAAGEFS_1hr-debias/NOAAGEFS_1hr-debias_fcre_2018-10-05T00_2018-10-21T00_ens04.nc"</span>
-<span class="co">#&gt;  [5] "/var/folders/ms/kf9vk0w17p18pvs8k_23t5y80000gq/T//RtmpDHdBY8/input_data/NOAAGEFS_1hr-debias/NOAAGEFS_1hr-debias_fcre_2018-10-05T00_2018-10-21T00_ens05.nc"</span>
-<span class="co">#&gt;  [6] "/var/folders/ms/kf9vk0w17p18pvs8k_23t5y80000gq/T//RtmpDHdBY8/input_data/NOAAGEFS_1hr-debias/NOAAGEFS_1hr-debias_fcre_2018-10-05T00_2018-10-21T00_ens06.nc"</span>
-<span class="co">#&gt;  [7] "/var/folders/ms/kf9vk0w17p18pvs8k_23t5y80000gq/T//RtmpDHdBY8/input_data/NOAAGEFS_1hr-debias/NOAAGEFS_1hr-debias_fcre_2018-10-05T00_2018-10-21T00_ens07.nc"</span>
-<span class="co">#&gt;  [8] "/var/folders/ms/kf9vk0w17p18pvs8k_23t5y80000gq/T//RtmpDHdBY8/input_data/NOAAGEFS_1hr-debias/NOAAGEFS_1hr-debias_fcre_2018-10-05T00_2018-10-21T00_ens08.nc"</span>
-<span class="co">#&gt;  [9] "/var/folders/ms/kf9vk0w17p18pvs8k_23t5y80000gq/T//RtmpDHdBY8/input_data/NOAAGEFS_1hr-debias/NOAAGEFS_1hr-debias_fcre_2018-10-05T00_2018-10-21T00_ens09.nc"</span>
-<span class="co">#&gt; [10] "/var/folders/ms/kf9vk0w17p18pvs8k_23t5y80000gq/T//RtmpDHdBY8/input_data/NOAAGEFS_1hr-debias/NOAAGEFS_1hr-debias_fcre_2018-10-05T00_2018-10-21T00_ens10.nc"</span>
-<span class="co">#&gt; [11] "/var/folders/ms/kf9vk0w17p18pvs8k_23t5y80000gq/T//RtmpDHdBY8/input_data/NOAAGEFS_1hr-debias/NOAAGEFS_1hr-debias_fcre_2018-10-05T00_2018-10-21T00_ens11.nc"</span>
-<span class="co">#&gt; [12] "/var/folders/ms/kf9vk0w17p18pvs8k_23t5y80000gq/T//RtmpDHdBY8/input_data/NOAAGEFS_1hr-debias/NOAAGEFS_1hr-debias_fcre_2018-10-05T00_2018-10-21T00_ens12.nc"</span>
-<span class="co">#&gt; [13] "/var/folders/ms/kf9vk0w17p18pvs8k_23t5y80000gq/T//RtmpDHdBY8/input_data/NOAAGEFS_1hr-debias/NOAAGEFS_1hr-debias_fcre_2018-10-05T00_2018-10-21T00_ens13.nc"</span>
-<span class="co">#&gt; [14] "/var/folders/ms/kf9vk0w17p18pvs8k_23t5y80000gq/T//RtmpDHdBY8/input_data/NOAAGEFS_1hr-debias/NOAAGEFS_1hr-debias_fcre_2018-10-05T00_2018-10-21T00_ens14.nc"</span>
-<span class="co">#&gt; [15] "/var/folders/ms/kf9vk0w17p18pvs8k_23t5y80000gq/T//RtmpDHdBY8/input_data/NOAAGEFS_1hr-debias/NOAAGEFS_1hr-debias_fcre_2018-10-05T00_2018-10-21T00_ens15.nc"</span>
-<span class="co">#&gt; [16] "/var/folders/ms/kf9vk0w17p18pvs8k_23t5y80000gq/T//RtmpDHdBY8/input_data/NOAAGEFS_1hr-debias/NOAAGEFS_1hr-debias_fcre_2018-10-05T00_2018-10-21T00_ens16.nc"</span>
-<span class="co">#&gt; [17] "/var/folders/ms/kf9vk0w17p18pvs8k_23t5y80000gq/T//RtmpDHdBY8/input_data/NOAAGEFS_1hr-debias/NOAAGEFS_1hr-debias_fcre_2018-10-05T00_2018-10-21T00_ens17.nc"</span>
-<span class="co">#&gt; [18] "/var/folders/ms/kf9vk0w17p18pvs8k_23t5y80000gq/T//RtmpDHdBY8/input_data/NOAAGEFS_1hr-debias/NOAAGEFS_1hr-debias_fcre_2018-10-05T00_2018-10-21T00_ens18.nc"</span>
-<span class="co">#&gt; [19] "/var/folders/ms/kf9vk0w17p18pvs8k_23t5y80000gq/T//RtmpDHdBY8/input_data/NOAAGEFS_1hr-debias/NOAAGEFS_1hr-debias_fcre_2018-10-05T00_2018-10-21T00_ens19.nc"</span>
-<span class="co">#&gt; [20] "/var/folders/ms/kf9vk0w17p18pvs8k_23t5y80000gq/T//RtmpDHdBY8/input_data/NOAAGEFS_1hr-debias/NOAAGEFS_1hr-debias_fcre_2018-10-05T00_2018-10-21T00_ens20.nc"</span>
-<span class="co">#&gt; [21] "/var/folders/ms/kf9vk0w17p18pvs8k_23t5y80000gq/T//RtmpDHdBY8/input_data/NOAAGEFS_1hr-debias/NOAAGEFS_1hr-debias_fcre_2018-10-05T00_2018-10-21T00_ens21.nc"</span></code></pre></div>
+<span class="co">#&gt;  [1] "/var/folders/ms/kf9vk0w17p18pvs8k_23t5y80000gq/T//RtmptLxPN9/input_data/NOAAGEFS_1hr-debias/NOAAGEFS_1hr-debias_fcre_2018-10-05T00_2018-10-21T00_ens01.nc"</span>
+<span class="co">#&gt;  [2] "/var/folders/ms/kf9vk0w17p18pvs8k_23t5y80000gq/T//RtmptLxPN9/input_data/NOAAGEFS_1hr-debias/NOAAGEFS_1hr-debias_fcre_2018-10-05T00_2018-10-21T00_ens02.nc"</span>
+<span class="co">#&gt;  [3] "/var/folders/ms/kf9vk0w17p18pvs8k_23t5y80000gq/T//RtmptLxPN9/input_data/NOAAGEFS_1hr-debias/NOAAGEFS_1hr-debias_fcre_2018-10-05T00_2018-10-21T00_ens03.nc"</span>
+<span class="co">#&gt;  [4] "/var/folders/ms/kf9vk0w17p18pvs8k_23t5y80000gq/T//RtmptLxPN9/input_data/NOAAGEFS_1hr-debias/NOAAGEFS_1hr-debias_fcre_2018-10-05T00_2018-10-21T00_ens04.nc"</span>
+<span class="co">#&gt;  [5] "/var/folders/ms/kf9vk0w17p18pvs8k_23t5y80000gq/T//RtmptLxPN9/input_data/NOAAGEFS_1hr-debias/NOAAGEFS_1hr-debias_fcre_2018-10-05T00_2018-10-21T00_ens05.nc"</span>
+<span class="co">#&gt;  [6] "/var/folders/ms/kf9vk0w17p18pvs8k_23t5y80000gq/T//RtmptLxPN9/input_data/NOAAGEFS_1hr-debias/NOAAGEFS_1hr-debias_fcre_2018-10-05T00_2018-10-21T00_ens06.nc"</span>
+<span class="co">#&gt;  [7] "/var/folders/ms/kf9vk0w17p18pvs8k_23t5y80000gq/T//RtmptLxPN9/input_data/NOAAGEFS_1hr-debias/NOAAGEFS_1hr-debias_fcre_2018-10-05T00_2018-10-21T00_ens07.nc"</span>
+<span class="co">#&gt;  [8] "/var/folders/ms/kf9vk0w17p18pvs8k_23t5y80000gq/T//RtmptLxPN9/input_data/NOAAGEFS_1hr-debias/NOAAGEFS_1hr-debias_fcre_2018-10-05T00_2018-10-21T00_ens08.nc"</span>
+<span class="co">#&gt;  [9] "/var/folders/ms/kf9vk0w17p18pvs8k_23t5y80000gq/T//RtmptLxPN9/input_data/NOAAGEFS_1hr-debias/NOAAGEFS_1hr-debias_fcre_2018-10-05T00_2018-10-21T00_ens09.nc"</span>
+<span class="co">#&gt; [10] "/var/folders/ms/kf9vk0w17p18pvs8k_23t5y80000gq/T//RtmptLxPN9/input_data/NOAAGEFS_1hr-debias/NOAAGEFS_1hr-debias_fcre_2018-10-05T00_2018-10-21T00_ens10.nc"</span>
+<span class="co">#&gt; [11] "/var/folders/ms/kf9vk0w17p18pvs8k_23t5y80000gq/T//RtmptLxPN9/input_data/NOAAGEFS_1hr-debias/NOAAGEFS_1hr-debias_fcre_2018-10-05T00_2018-10-21T00_ens11.nc"</span>
+<span class="co">#&gt; [12] "/var/folders/ms/kf9vk0w17p18pvs8k_23t5y80000gq/T//RtmptLxPN9/input_data/NOAAGEFS_1hr-debias/NOAAGEFS_1hr-debias_fcre_2018-10-05T00_2018-10-21T00_ens12.nc"</span>
+<span class="co">#&gt; [13] "/var/folders/ms/kf9vk0w17p18pvs8k_23t5y80000gq/T//RtmptLxPN9/input_data/NOAAGEFS_1hr-debias/NOAAGEFS_1hr-debias_fcre_2018-10-05T00_2018-10-21T00_ens13.nc"</span>
+<span class="co">#&gt; [14] "/var/folders/ms/kf9vk0w17p18pvs8k_23t5y80000gq/T//RtmptLxPN9/input_data/NOAAGEFS_1hr-debias/NOAAGEFS_1hr-debias_fcre_2018-10-05T00_2018-10-21T00_ens14.nc"</span>
+<span class="co">#&gt; [15] "/var/folders/ms/kf9vk0w17p18pvs8k_23t5y80000gq/T//RtmptLxPN9/input_data/NOAAGEFS_1hr-debias/NOAAGEFS_1hr-debias_fcre_2018-10-05T00_2018-10-21T00_ens15.nc"</span>
+<span class="co">#&gt; [16] "/var/folders/ms/kf9vk0w17p18pvs8k_23t5y80000gq/T//RtmptLxPN9/input_data/NOAAGEFS_1hr-debias/NOAAGEFS_1hr-debias_fcre_2018-10-05T00_2018-10-21T00_ens16.nc"</span>
+<span class="co">#&gt; [17] "/var/folders/ms/kf9vk0w17p18pvs8k_23t5y80000gq/T//RtmptLxPN9/input_data/NOAAGEFS_1hr-debias/NOAAGEFS_1hr-debias_fcre_2018-10-05T00_2018-10-21T00_ens17.nc"</span>
+<span class="co">#&gt; [18] "/var/folders/ms/kf9vk0w17p18pvs8k_23t5y80000gq/T//RtmptLxPN9/input_data/NOAAGEFS_1hr-debias/NOAAGEFS_1hr-debias_fcre_2018-10-05T00_2018-10-21T00_ens18.nc"</span>
+<span class="co">#&gt; [19] "/var/folders/ms/kf9vk0w17p18pvs8k_23t5y80000gq/T//RtmptLxPN9/input_data/NOAAGEFS_1hr-debias/NOAAGEFS_1hr-debias_fcre_2018-10-05T00_2018-10-21T00_ens19.nc"</span>
+<span class="co">#&gt; [20] "/var/folders/ms/kf9vk0w17p18pvs8k_23t5y80000gq/T//RtmptLxPN9/input_data/NOAAGEFS_1hr-debias/NOAAGEFS_1hr-debias_fcre_2018-10-05T00_2018-10-21T00_ens20.nc"</span>
+<span class="co">#&gt; [21] "/var/folders/ms/kf9vk0w17p18pvs8k_23t5y80000gq/T//RtmptLxPN9/input_data/NOAAGEFS_1hr-debias/NOAAGEFS_1hr-debias_fcre_2018-10-05T00_2018-10-21T00_ens21.nc"</span></code></pre></div>
 <div class="sourceCode" id="cb13"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span class="fu">ncdf4</span><span class="fu">::</span><span class="fu"><a href="https://rdrr.io/pkg/ncdf4/man/nc_open.html">nc_open</a></span><span class="op">(</span><span class="va">all_files</span><span class="op">[</span><span class="fl">1</span><span class="op">]</span><span class="op">)</span>
-<span class="co">#&gt; File /var/folders/ms/kf9vk0w17p18pvs8k_23t5y80000gq/T//RtmpDHdBY8/input_data/NOAAGEFS_1hr-debias/NOAAGEFS_1hr-debias_fcre_2018-10-05T00_2018-10-21T00_ens01.nc (NC_FORMAT_CLASSIC):</span>
+<span class="co">#&gt; File /var/folders/ms/kf9vk0w17p18pvs8k_23t5y80000gq/T//RtmptLxPN9/input_data/NOAAGEFS_1hr-debias/NOAAGEFS_1hr-debias_fcre_2018-10-05T00_2018-10-21T00_ens01.nc (NC_FORMAT_CLASSIC):</span>
 <span class="co">#&gt; </span>
 <span class="co">#&gt;      6 variables (excluding dimension variables):</span>
 <span class="co">#&gt;         float air_temperature[time,latitude,longitude]   </span>
@@ -350,9 +350,9 @@
 <li>
 <code>forecast_days</code>: This is your forecast horizon. The max is <code>16</code> days. Set to <code>0</code>if only doing data assimilation with observed drivers.</li>
 <li>
-<code>start_day_local</code>: The date that your simulation starts. Uses the YYYY-MM-DD format (e.g., “2019-09-20”). <code>2018-07-12</code> is the first day in the SCC project (when the catwalk temperature data comes online)</li>
+<code>start_day</code>: The date that your simulation starts. Uses the YYYY-MM-DD format (e.g., “2019-09-20”). <code>2018-07-12</code> is the first day in the SCC project (when the catwalk temperature data comes online)</li>
 <li>
-<code>start_time_local</code>: The time of day you want to start a forecast. Because GLM is a daily timestep model, the simulation will start at this time. It uses <code>mm:hh:ss</code> format and must only be a whole hour. It is in the <strong>local time zone</strong> of the lake in standard time. It can be any hour if only doing data assimilation with observed drivers (forecast_days = 0). If forecasting (forecast_days &gt; 0) it is required to match up with the availability of a NOAA forecast. NOAA forecasts are available at the following times GMT so you must select a local time that matches one of these times (i.e., 07:00:00 at FCR is the 12:00:00 GMT NOAA forecast).
+<code>start_time</code>: The time of day you want to start a forecast. Because GLM is a daily timestep model, the simulation will start at this time. It uses <code>mm:hh:ss</code> format and must only be a whole hour. It is in the UTC time. It can be any hour if only doing data assimilation with observed drivers (forecast_days = 0). If forecasting (forecast_days &gt; 0) it is required to match up with the availability of a NOAA forecast. NOAA forecasts are available at the following times GMT so you must select a local time that matches one of these times (i.e., 07:00:00 at FCR is the 12:00:00 GMT NOAA forecast).
 <ul>
 <li>00:00:00 GMT</li>
 <li>06:00:00 GMT</li>
@@ -361,7 +361,7 @@
 </ul>
 </li>
 <li>
-<code>forecast_start_day_local</code>: The date that you want forecasting to start in your simulation. Uses the YYYY-MM-DD format (e.g., “2019-09-20”). The difference between <code>start_time_local</code> and <code>forecast_start_day_local</code> determines how many days of data assimilation occur using observed drivers before handing off to forecasted drivers and not assimilating data</li>
+<code>forecast_start_day</code>: The date that you want forecasting to start in your simulation. Uses the YYYY-MM-DD format (e.g., “2019-09-20”). The difference between <code>start_time</code> and <code>forecast_start_day</code> determines how many days of data assimilation occur using observed drivers before handing off to forecasted drivers and not assimilating data</li>
 <li>
 <code>forecast_sss_on</code>: Only used in AED simulations for setting the SSS (hypolimnetic oxygenation system) to on in the forecast</li>
 </ul>
@@ -418,19 +418,16 @@
 <span class="va">states_config</span> <span class="op">&lt;-</span> <span class="fu">readr</span><span class="fu">::</span><span class="fu"><a href="https://readr.tidyverse.org/reference/read_delim.html">read_csv</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/file.path.html">file.path</a></span><span class="op">(</span><span class="va">config</span><span class="op">$</span><span class="va">run_config</span><span class="op">$</span><span class="va">forecast_location</span>,<span class="va">config</span><span class="op">$</span><span class="va">states_config_file</span><span class="op">)</span>, col_types <span class="op">=</span> <span class="fu">readr</span><span class="fu">::</span><span class="fu"><a href="https://readr.tidyverse.org/reference/cols.html">cols</a></span><span class="op">(</span><span class="op">)</span><span class="op">)</span></code></pre></div>
 <p>Set up time vectors and names</p>
 <div class="sourceCode" id="cb16"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span class="va">start_datetime_local</span> <span class="op">&lt;-</span> <span class="fu">lubridate</span><span class="fu">::</span><span class="fu"><a href="http://lubridate.tidyverse.org/reference/as_date.html">as_datetime</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/paste.html">paste0</a></span><span class="op">(</span><span class="va">config</span><span class="op">$</span><span class="va">run_config</span><span class="op">$</span><span class="va">start_day_local</span>,<span class="st">" "</span>,<span class="va">config</span><span class="op">$</span><span class="va">run_config</span><span class="op">$</span><span class="va">start_time_local</span><span class="op">)</span>, tz <span class="op">=</span> <span class="va">config</span><span class="op">$</span><span class="va">local_tzone</span><span class="op">)</span>
-<span class="kw">if</span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/NA.html">is.na</a></span><span class="op">(</span><span class="va">config</span><span class="op">$</span><span class="va">run_config</span><span class="op">$</span><span class="va">forecast_start_day_local</span><span class="op">)</span><span class="op">)</span><span class="op">{</span>
-  <span class="va">end_datetime_local</span> <span class="op">&lt;-</span> <span class="fu">lubridate</span><span class="fu">::</span><span class="fu"><a href="http://lubridate.tidyverse.org/reference/as_date.html">as_datetime</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/paste.html">paste0</a></span><span class="op">(</span><span class="va">config</span><span class="op">$</span><span class="va">run_config</span><span class="op">$</span><span class="va">end_day_local</span>,<span class="st">" "</span>,<span class="va">config</span><span class="op">$</span><span class="va">run_config</span><span class="op">$</span><span class="va">start_time_local</span><span class="op">)</span>, tz <span class="op">=</span> <span class="va">config</span><span class="op">$</span><span class="va">local_tzone</span><span class="op">)</span>
-  <span class="va">forecast_start_datetime_local</span> <span class="op">&lt;-</span> <span class="va">end_datetime_local</span>
+<code class="sourceCode R"><span class="va">start_datetime</span> <span class="op">&lt;-</span> <span class="fu">lubridate</span><span class="fu">::</span><span class="fu"><a href="http://lubridate.tidyverse.org/reference/as_date.html">as_datetime</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/paste.html">paste0</a></span><span class="op">(</span><span class="va">config</span><span class="op">$</span><span class="va">run_config</span><span class="op">$</span><span class="va">start_day</span>,<span class="st">" "</span>,<span class="va">config</span><span class="op">$</span><span class="va">run_config</span><span class="op">$</span><span class="va">start_time</span><span class="op">)</span>, tz <span class="op">=</span> <span class="st">"UTC"</span><span class="op">)</span>
+<span class="kw">if</span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/NA.html">is.na</a></span><span class="op">(</span><span class="va">config</span><span class="op">$</span><span class="va">run_config</span><span class="op">$</span><span class="va">forecast_start_day</span><span class="op">)</span><span class="op">)</span><span class="op">{</span>
+  <span class="va">end_datetime</span> <span class="op">&lt;-</span> <span class="fu">lubridate</span><span class="fu">::</span><span class="fu"><a href="http://lubridate.tidyverse.org/reference/as_date.html">as_datetime</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/paste.html">paste0</a></span><span class="op">(</span><span class="va">config</span><span class="op">$</span><span class="va">run_config</span><span class="op">$</span><span class="va">end_day</span>,<span class="st">" "</span>,<span class="va">config</span><span class="op">$</span><span class="va">run_config</span><span class="op">$</span><span class="va">start_time</span><span class="op">)</span>, tz <span class="op">=</span> <span class="st">"UTC"</span><span class="op">)</span>
+  <span class="va">forecast_start_datetime</span> <span class="op">&lt;-</span> <span class="va">end_datetime</span>
 <span class="op">}</span><span class="kw">else</span><span class="op">{</span>
-  <span class="va">forecast_start_datetime_local</span> <span class="op">&lt;-</span> <span class="fu">lubridate</span><span class="fu">::</span><span class="fu"><a href="http://lubridate.tidyverse.org/reference/as_date.html">as_datetime</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/paste.html">paste0</a></span><span class="op">(</span><span class="va">config</span><span class="op">$</span><span class="va">run_config</span><span class="op">$</span><span class="va">forecast_start_day_local</span>,<span class="st">" "</span>,<span class="va">config</span><span class="op">$</span><span class="va">run_config</span><span class="op">$</span><span class="va">start_time_local</span><span class="op">)</span>, tz <span class="op">=</span> <span class="va">config</span><span class="op">$</span><span class="va">local_tzone</span><span class="op">)</span>
-  <span class="va">end_datetime_local</span> <span class="op">&lt;-</span> <span class="va">forecast_start_datetime_local</span> <span class="op">+</span> <span class="fu">lubridate</span><span class="fu">::</span><span class="fu"><a href="http://lubridate.tidyverse.org/reference/period.html">days</a></span><span class="op">(</span><span class="va">config</span><span class="op">$</span><span class="va">run_config</span><span class="op">$</span><span class="va">forecast_horizon</span><span class="op">)</span>
+  <span class="va">forecast_start_datetime</span> <span class="op">&lt;-</span> <span class="fu">lubridate</span><span class="fu">::</span><span class="fu"><a href="http://lubridate.tidyverse.org/reference/as_date.html">as_datetime</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/paste.html">paste0</a></span><span class="op">(</span><span class="va">config</span><span class="op">$</span><span class="va">run_config</span><span class="op">$</span><span class="va">forecast_start_day</span>,<span class="st">" "</span>,<span class="va">config</span><span class="op">$</span><span class="va">run_config</span><span class="op">$</span><span class="va">start_time</span><span class="op">)</span>, tz <span class="op">=</span> <span class="st">"UTC"</span><span class="op">)</span>
+  <span class="va">end_datetime</span> <span class="op">&lt;-</span> <span class="va">forecast_start_datetime</span> <span class="op">+</span> <span class="fu">lubridate</span><span class="fu">::</span><span class="fu"><a href="http://lubridate.tidyverse.org/reference/period.html">days</a></span><span class="op">(</span><span class="va">config</span><span class="op">$</span><span class="va">run_config</span><span class="op">$</span><span class="va">forecast_horizon</span><span class="op">)</span>
 <span class="op">}</span>
 
-<span class="va">start_datetime_UTC</span> <span class="op">&lt;-</span>  <span class="fu">lubridate</span><span class="fu">::</span><span class="fu"><a href="http://lubridate.tidyverse.org/reference/with_tz.html">with_tz</a></span><span class="op">(</span><span class="va">start_datetime_local</span>, tzone <span class="op">=</span> <span class="st">"UTC"</span><span class="op">)</span>
-<span class="va">end_datetime_UTC</span> <span class="op">&lt;-</span>  <span class="fu">lubridate</span><span class="fu">::</span><span class="fu"><a href="http://lubridate.tidyverse.org/reference/with_tz.html">with_tz</a></span><span class="op">(</span><span class="va">end_datetime_local</span>, tzone <span class="op">=</span> <span class="st">"UTC"</span><span class="op">)</span>
-<span class="va">forecast_start_datetime_UTC</span> <span class="op">&lt;-</span> <span class="fu">lubridate</span><span class="fu">::</span><span class="fu"><a href="http://lubridate.tidyverse.org/reference/with_tz.html">with_tz</a></span><span class="op">(</span><span class="va">forecast_start_datetime_local</span>, tzone <span class="op">=</span> <span class="st">"UTC"</span><span class="op">)</span>
-<span class="va">forecast_hour</span> <span class="op">&lt;-</span> <span class="fu">lubridate</span><span class="fu">::</span><span class="fu"><a href="http://lubridate.tidyverse.org/reference/hour.html">hour</a></span><span class="op">(</span><span class="va">forecast_start_datetime_UTC</span><span class="op">)</span>
+<span class="va">forecast_hour</span> <span class="op">&lt;-</span> <span class="fu">lubridate</span><span class="fu">::</span><span class="fu"><a href="http://lubridate.tidyverse.org/reference/hour.html">hour</a></span><span class="op">(</span><span class="va">forecast_start_datetime</span><span class="op">)</span>
 <span class="kw">if</span><span class="op">(</span><span class="va">forecast_hour</span> <span class="op">&lt;</span> <span class="fl">10</span><span class="op">)</span><span class="op">{</span><span class="va">forecast_hour</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/paste.html">paste0</a></span><span class="op">(</span><span class="st">"0"</span>,<span class="va">forecast_hour</span><span class="op">)</span><span class="op">}</span></code></pre></div>
 <p>Download and process observations (already done)</p>
 <div class="sourceCode" id="cb17"><pre class="downlit sourceCode r">
@@ -442,34 +439,32 @@
 <code class="sourceCode R"><span class="va">met_out</span> <span class="op">&lt;-</span> <span class="fu">FLAREr</span><span class="fu">::</span><span class="fu"><a href="../reference/generate_glm_met_files.html">generate_glm_met_files</a></span><span class="op">(</span>obs_met_file <span class="op">=</span> <span class="va">observed_met_file</span>,
                                          out_dir <span class="op">=</span> <span class="va">config</span><span class="op">$</span><span class="va">run_config</span><span class="op">$</span><span class="va">execute_location</span>,
                                          forecast_dir <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/file.path.html">file.path</a></span><span class="op">(</span><span class="va">config</span><span class="op">$</span><span class="va">data_location</span>, <span class="va">config</span><span class="op">$</span><span class="va">forecast_met_model</span><span class="op">)</span>,
-                                         local_tzone <span class="op">=</span> <span class="va">config</span><span class="op">$</span><span class="va">local_tzone</span>,
-                                         start_datetime_local <span class="op">=</span> <span class="va">start_datetime_local</span>,
-                                         end_datetime_local <span class="op">=</span> <span class="va">end_datetime_local</span>,
-                                         forecast_start_datetime <span class="op">=</span> <span class="va">forecast_start_datetime_local</span>,
+                                         start_datetime <span class="op">=</span> <span class="va">start_datetime</span>,
+                                         end_datetime <span class="op">=</span> <span class="va">end_datetime</span>,
+                                         forecast_start_datetime <span class="op">=</span> <span class="va">forecast_start_datetime</span>,
                                          use_forecasted_met <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span></code></pre></div>
 <p>Set up inflow and outflow drivers in GLM format</p>
 <div class="sourceCode" id="cb19"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span class="va">inflow_outflow_files</span> <span class="op">&lt;-</span> <span class="fu">FLAREr</span><span class="fu">::</span><span class="fu"><a href="../reference/create_glm_inflow_outflow_files.html">create_glm_inflow_outflow_files</a></span><span class="op">(</span>inflow_file_dir <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/file.path.html">file.path</a></span><span class="op">(</span><span class="va">config</span><span class="op">$</span><span class="va">data_location</span>, <span class="va">config</span><span class="op">$</span><span class="va">forecast_inflow_model</span><span class="op">)</span>,
                                                                inflow_obs <span class="op">=</span> <span class="va">cleaned_inflow_file</span>,
                                                                working_directory <span class="op">=</span> <span class="va">config</span><span class="op">$</span><span class="va">run_config</span><span class="op">$</span><span class="va">execute_location</span>,
-                                                               start_datetime_local <span class="op">=</span> <span class="va">start_datetime_local</span>,
-                                                               end_datetime_local <span class="op">=</span> <span class="va">end_datetime_local</span>,
-                                                               forecast_start_datetime_local <span class="op">=</span> <span class="va">forecast_start_datetime_local</span>,
+                                                               start_datetime <span class="op">=</span> <span class="va">start_datetime</span>,
+                                                               end_datetime <span class="op">=</span> <span class="va">end_datetime</span>,
+                                                               forecast_start_datetime <span class="op">=</span> <span class="va">forecast_start_datetime</span>,
                                                                use_future_inflow <span class="op">=</span> <span class="cn">TRUE</span>,
                                                                state_names <span class="op">=</span> <span class="cn">NULL</span><span class="op">)</span></code></pre></div>
 <p>Create observation matrix. The rows of the matrix are observation type (i.e. temperature) x number of depths model. The columns are the number of days simulated.</p>
 <div class="sourceCode" id="cb20"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span class="va">obs</span> <span class="op">&lt;-</span> <span class="fu">FLAREr</span><span class="fu">::</span><span class="fu"><a href="../reference/create_obs_matrix.html">create_obs_matrix</a></span><span class="op">(</span><span class="va">cleaned_observations_file_long</span>,
                                 <span class="va">obs_config</span>,
-                                <span class="va">start_datetime_local</span>,
-                                <span class="va">end_datetime_local</span>,
-                                local_tzone <span class="op">=</span> <span class="va">config</span><span class="op">$</span><span class="va">local_tzone</span>,
+                                <span class="va">start_datetime</span>,
+                                <span class="va">end_datetime</span>,
                                 modeled_depths <span class="op">=</span> <span class="va">config</span><span class="op">$</span><span class="va">modeled_depths</span><span class="op">)</span>
 <span class="co">#&gt; Extracting temperature</span></code></pre></div>
 <p>Because we are forecasting for a period where we already have the data collected, we need to put NA values for “future” dates.</p>
 <div class="sourceCode" id="cb21"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span class="va">full_time_forecast</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/seq.html">seq</a></span><span class="op">(</span><span class="va">start_datetime_local</span>, <span class="va">end_datetime_local</span>, by <span class="op">=</span> <span class="st">"1 day"</span><span class="op">)</span>
-<span class="va">obs</span><span class="op">[</span> , <span class="fu"><a href="https://rdrr.io/r/base/which.html">which</a></span><span class="op">(</span><span class="va">full_time_forecast</span> <span class="op">&gt;</span> <span class="va">forecast_start_datetime_local</span><span class="op">)</span>, <span class="op">]</span> <span class="op">&lt;-</span> <span class="cn">NA</span></code></pre></div>
+<code class="sourceCode R"><span class="va">full_time_forecast</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/seq.html">seq</a></span><span class="op">(</span><span class="va">start_datetime</span>, <span class="va">end_datetime</span>, by <span class="op">=</span> <span class="st">"1 day"</span><span class="op">)</span>
+<span class="va">obs</span><span class="op">[</span> , <span class="fu"><a href="https://rdrr.io/r/base/which.html">which</a></span><span class="op">(</span><span class="va">full_time_forecast</span> <span class="op">&gt;</span> <span class="va">forecast_start_datetime</span><span class="op">)</span>, <span class="op">]</span> <span class="op">&lt;-</span> <span class="cn">NA</span></code></pre></div>
 <p>Map the states to the observations matrix</p>
 <div class="sourceCode" id="cb22"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span class="va">states_config</span> <span class="op">&lt;-</span> <span class="fu">FLAREr</span><span class="fu">::</span><span class="fu"><a href="../reference/generate_states_to_obs_mapping.html">generate_states_to_obs_mapping</a></span><span class="op">(</span><span class="va">states_config</span>, <span class="va">obs_config</span><span class="op">)</span></code></pre></div>
@@ -506,9 +501,9 @@
                                         met_file_names <span class="op">=</span> <span class="va">met_out</span><span class="op">$</span><span class="va">filenames</span>,
                                         inflow_file_names <span class="op">=</span> <span class="va">inflow_outflow_files</span><span class="op">$</span><span class="va">inflow_file_name</span>,
                                         outflow_file_names <span class="op">=</span> <span class="va">inflow_outflow_files</span><span class="op">$</span><span class="va">outflow_file_name</span>,
-                                        start_datetime <span class="op">=</span> <span class="va">start_datetime_local</span>,
-                                        end_datetime <span class="op">=</span> <span class="va">end_datetime_local</span>,
-                                        forecast_start_datetime <span class="op">=</span> <span class="va">forecast_start_datetime_local</span>,
+                                        start_datetime <span class="op">=</span> <span class="va">start_datetime</span>,
+                                        end_datetime <span class="op">=</span> <span class="va">end_datetime</span>,
+                                        forecast_start_datetime <span class="op">=</span> <span class="va">forecast_start_datetime</span>,
                                         config <span class="op">=</span> <span class="va">config</span>,
                                         pars_config <span class="op">=</span> <span class="va">pars_config</span>,
                                         states_config <span class="op">=</span> <span class="va">states_config</span>,
@@ -516,30 +511,30 @@
                                         da_method <span class="op">=</span> <span class="va">config</span><span class="op">$</span><span class="va">da_method</span>,
                                         par_fit_method <span class="op">=</span> <span class="va">config</span><span class="op">$</span><span class="va">par_fit_method</span><span class="op">)</span>
 <span class="co">#&gt; Using GLM Version 3.2.0a1</span>
-<span class="co">#&gt; Running time step 1 : 2018-10-02 07:00 - 2018-10-03 07:00 [2021-05-20 13:46:22]</span>
+<span class="co">#&gt; Running time step 1 : 2018-10-02 00:00 - 2018-10-03 00:00 [2021-05-20 17:26:32]</span>
 <span class="co">#&gt; zone1temp: mean 10.1073 sd 3.0197</span>
 <span class="co">#&gt; zone2temp: mean 15.3774 sd 2.8364</span>
 <span class="co">#&gt; sw_factor: mean 0.986 sd 0.2961</span>
-<span class="co">#&gt; Running time step 2 : 2018-10-03 07:00 - 2018-10-04 07:00 [2021-05-20 13:46:26]</span>
-<span class="co">#&gt; zone1temp: mean 10.8881 sd 1.9097</span>
-<span class="co">#&gt; zone2temp: mean 15.2147 sd 2.8943</span>
-<span class="co">#&gt; sw_factor: mean 0.9515 sd 0.2584</span>
-<span class="co">#&gt; Running time step 3 : 2018-10-04 07:00 - 2018-10-05 07:00 [2021-05-20 13:46:29]</span>
-<span class="co">#&gt; zone1temp: mean 11.9676 sd 1.3952</span>
-<span class="co">#&gt; zone2temp: mean 15.0395 sd 2.7265</span>
-<span class="co">#&gt; sw_factor: mean 0.9577 sd 0.1752</span>
-<span class="co">#&gt; Running time step 4 : 2018-10-05 07:00 - 2018-10-06 07:00 [2021-05-20 13:46:32]</span>
-<span class="co">#&gt; zone1temp: mean 12.1865 sd 0.9341</span>
-<span class="co">#&gt; zone2temp: mean 15.0309 sd 2.6013</span>
-<span class="co">#&gt; sw_factor: mean 0.9121 sd 0.135</span>
-<span class="co">#&gt; Running time step 5 : 2018-10-06 07:00 - 2018-10-07 07:00 [2021-05-20 13:46:35]</span>
-<span class="co">#&gt; zone1temp: mean 12.1865 sd 0.9341</span>
-<span class="co">#&gt; zone2temp: mean 15.0309 sd 2.6013</span>
-<span class="co">#&gt; sw_factor: mean 0.9121 sd 0.135</span>
-<span class="co">#&gt; Running time step 6 : 2018-10-07 07:00 - 2018-10-08 07:00 [2021-05-20 13:46:38]</span>
-<span class="co">#&gt; zone1temp: mean 12.1865 sd 0.9341</span>
-<span class="co">#&gt; zone2temp: mean 15.0309 sd 2.6013</span>
-<span class="co">#&gt; sw_factor: mean 0.9121 sd 0.135</span></code></pre></div>
+<span class="co">#&gt; Running time step 2 : 2018-10-03 00:00 - 2018-10-04 00:00 [2021-05-20 17:26:36]</span>
+<span class="co">#&gt; zone1temp: mean 10.8451 sd 1.8984</span>
+<span class="co">#&gt; zone2temp: mean 14.9783 sd 2.9112</span>
+<span class="co">#&gt; sw_factor: mean 0.6882 sd 0.1963</span>
+<span class="co">#&gt; Running time step 3 : 2018-10-04 00:00 - 2018-10-05 00:00 [2021-05-20 17:26:39]</span>
+<span class="co">#&gt; zone1temp: mean 12.0036 sd 1.3582</span>
+<span class="co">#&gt; zone2temp: mean 14.6547 sd 2.726</span>
+<span class="co">#&gt; sw_factor: mean 0.6772 sd 0.1153</span>
+<span class="co">#&gt; Running time step 4 : 2018-10-05 00:00 - 2018-10-06 00:00 [2021-05-20 17:26:42]</span>
+<span class="co">#&gt; zone1temp: mean 12.3964 sd 0.8849</span>
+<span class="co">#&gt; zone2temp: mean 14.5902 sd 2.5966</span>
+<span class="co">#&gt; sw_factor: mean 0.6829 sd 0.0912</span>
+<span class="co">#&gt; Running time step 5 : 2018-10-06 00:00 - 2018-10-07 00:00 [2021-05-20 17:26:45]</span>
+<span class="co">#&gt; zone1temp: mean 12.3964 sd 0.8849</span>
+<span class="co">#&gt; zone2temp: mean 14.5902 sd 2.5966</span>
+<span class="co">#&gt; sw_factor: mean 0.6829 sd 0.0912</span>
+<span class="co">#&gt; Running time step 6 : 2018-10-07 00:00 - 2018-10-08 00:00 [2021-05-20 17:26:48]</span>
+<span class="co">#&gt; zone1temp: mean 12.3964 sd 0.8849</span>
+<span class="co">#&gt; zone2temp: mean 14.5902 sd 2.5966</span>
+<span class="co">#&gt; sw_factor: mean 0.6829 sd 0.0912</span></code></pre></div>
 <div class="sourceCode" id="cb26"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span class="co"># Save forecast</span>
 <span class="va">saved_file</span> <span class="op">&lt;-</span> <span class="fu">FLAREr</span><span class="fu">::</span><span class="fu"><a href="../reference/write_forecast_netcdf.html">write_forecast_netcdf</a></span><span class="op">(</span><span class="va">enkf_output</span>,
@@ -615,10 +610,6 @@
 <span class="co">#&gt; [1] "sw_factor"</span>
 <span class="co">#&gt; [1] "extc_coef"</span>
 <span class="co">#&gt; Warning: Removed 1 row(s) containing missing values (geom_path).</span>
-<span class="co">#&gt; [1] "secchi"</span>
-<span class="co">#&gt; Joining, by = "date"</span>
-<span class="co">#&gt; Warning: Removed 1 row(s) containing missing values (geom_path).</span>
-<span class="co">#&gt; Warning: Removed 6 rows containing missing values (geom_point).</span>
 <span class="co">#&gt; agg_png </span>
 <span class="co">#&gt;       2</span></code></pre></div>
 <p>Once the simulation is complete you will find a PDF, a netcdf (.nc) file, and an xml in <code>forecast_location</code> directory. The PDF is the plotted output, the netcdf file is the FLARE output, and the xml is the metadata.</p>
