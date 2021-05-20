@@ -138,7 +138,7 @@ run_model <- function(i,
 
     if(simulate_sss){
       if(is.na(management$specified_sss_inflow_file)){
-        flare:::create_sss_input_output(x = x_start,
+        FLAREr:::create_sss_input_output(x = x_start,
                                         i,
                                         m,
                                         full_time_local,
@@ -221,20 +221,20 @@ run_model <- function(i,
   }
 
 
-  flare:::update_nml(var_list = update_glm_nml_list,
+  FLAREr:::update_nml(var_list = update_glm_nml_list,
                      var_name_list = update_glm_nml_names,
                      working_directory,
                      nml = "glm3.nml")
 
   if(list_index_aed > 1){
-    flare:::update_nml(update_aed_nml_list,
+    FLAREr:::update_nml(update_aed_nml_list,
                        update_aed_nml_names,
                        working_directory,
                        "aed2.nml")
   }
 
   if(list_index_phyto > 1){
-    flare:::update_nml(update_phyto_nml_list,
+    FLAREr:::update_nml(update_phyto_nml_list,
                        update_phyto_nml_names,
                        working_directory,
                        "aed2_phyto_pars.nml")
@@ -302,7 +302,7 @@ run_model <- function(i,
       output_vars_multi_depth <- state_names
       output_vars_no_depth <- NA
 
-      GLM_temp_wq_out <-  flare:::get_glm_nc_var_all_wq(ncFile = "/output.nc",
+      GLM_temp_wq_out <-  FLAREr:::get_glm_nc_var_all_wq(ncFile = "/output.nc",
                                                         working_dir = working_directory,
                                                         z_out = modeled_depths,
                                                         vars_depth = output_vars_multi_depth,
@@ -392,18 +392,18 @@ set_up_model <- function(config,
 
   non_temp_names <- state_names[which(!(state_names %in% c("temp", "salt")))]
 
-  flare:::update_var(length(non_temp_names), "num_wq_vars", ens_working_directory, "glm3.nml") #GLM SPECIFIC
+  FLAREr:::update_var(length(non_temp_names), "num_wq_vars", ens_working_directory, "glm3.nml") #GLM SPECIFIC
 
   if(length(non_temp_names) > 1) {
-    flare:::update_var(non_temp_names, "wq_names", ens_working_directory, "glm3.nml")
+    FLAREr:::update_var(non_temp_names, "wq_names", ens_working_directory, "glm3.nml")
   }
 
   if(!is.null(ncol(inflow_file_names))) {
-    flare:::update_var(ncol(inflow_file_names), "num_inflows", ens_working_directory, "glm3.nml")
-    flare:::update_var(ncol(outflow_file_names), "num_outlet", ens_working_directory, "glm3.nml")
+    FLAREr:::update_var(ncol(inflow_file_names), "num_inflows", ens_working_directory, "glm3.nml")
+    FLAREr:::update_var(ncol(outflow_file_names), "num_outlet", ens_working_directory, "glm3.nml")
     inflow_var_names <- c("FLOW","TEMP","SALT", non_temp_names)
-    flare:::update_var(inflow_var_names, "inflow_vars", ens_working_directory, "glm3.nml")
-    flare:::update_var(length(inflow_var_names), "inflow_varnum", ens_working_directory, "glm3.nml")
+    FLAREr:::update_var(inflow_var_names, "inflow_vars", ens_working_directory, "glm3.nml")
+    FLAREr:::update_var(length(inflow_var_names), "inflow_varnum", ens_working_directory, "glm3.nml")
   }
 
 
@@ -421,7 +421,7 @@ set_up_model <- function(config,
   }
 
 
-    flare:::update_var(length(config$modeled_depths), "num_depths", ens_working_directory, "glm3.nml") #GLM SPECIFIC
+  FLAREr:::update_var(length(config$modeled_depths), "num_depths", ens_working_directory, "glm3.nml") #GLM SPECIFIC
 
 
   inflow_var_names <- c("FLOW","TEMP","SALT", non_temp_names)

@@ -187,7 +187,7 @@ cleaned_met_file <- paste0(config$qaqc_data_location, "/met_full_postQAQC.csv")
 
 
 if(is.na(config$specified_metfile)){
-  missing_met <- flare::create_obs_met_input(fname = cleaned_met_file,
+  missing_met <- FLAREr::create_obs_met_input(fname = cleaned_met_file,
                                       outfile = obs_met_outfile,
                                       full_time_local,
                                       config$local_tzone,
@@ -249,7 +249,7 @@ if(missing_met  == FALSE){
                        "LongWave" = "LongWave",
                        "Rain" = "Rain")
 
-  temp_met_file<- flare::process_downscale_GEFS(folder = config$code_folder,
+  temp_met_file<- FLAREr::process_downscale_GEFS(folder = config$code_folder,
                                          noaa_location = config$noaa_location,
                                          input_met_file = cleaned_met_file,
                                          working_directory,
@@ -321,7 +321,7 @@ if(forecast_days > 0 & config$use_future_met){
                        "LongWave" = "LongWave",
                        "Rain" = "Rain")
 
-  met_file_names[] <- flare::process_downscale_GEFS(folder = config$code_folder,
+  met_file_names[] <- FLAREr::process_downscale_GEFS(folder = config$code_folder,
                                              noaa_location = file.path(config$data_location, config$noaa_location),
                                              input_met_file = cleaned_met_file,
                                              working_directory,
@@ -360,7 +360,7 @@ cleaned_inflow_file <- paste0(config$qaqc_data_location, "/inflow_postQAQC.csv")
 
 start_forecast_step <- as.numeric(forecast_start_datetime_local - start_datetime_local) + 1
 
-inflow_outflow_files <- flare::create_inflow_outflow_file(full_time_local,
+inflow_outflow_files <- FLAREr::create_inflow_outflow_file(full_time_local,
                                                    working_directory,
                                                    input_file_tz = "EST",
                                                    start_forecast_step,
@@ -399,7 +399,7 @@ if(is.na(config$specified_inflow1)){
 cleaned_observations_file_long <- paste0(config$qaqc_data_location,
                                          "/observations_postQAQC_long.csv")
 
-obs <- flare::create_obs_matrix(cleaned_observations_file_long,
+obs <- FLAREr::create_obs_matrix(cleaned_observations_file_long,
                                 obs_config,
                                 start_datetime_local,
                                 end_datetime_local,
@@ -463,87 +463,23 @@ states_config$states_to_obs_mapping <- states_to_obs_mapping
 ################################################################
 #### STEP 11: CREATE THE X ARRAY (STATES X TIME);INCLUDES INITIALATION
 ################################################################
-nmembers <- config$ensemble_size
+init <- FLAREr::generate_initial_conditions(states_config,
+                                            obs_config,
+                                            pars_config,
+                                            obs,
+                                            config,
+                                            restart_file = run_config$restart_file,
+                                            historical_met_error = met_out$historical_met_error)
 
-nstates <- length(states_config$state_names)
+aux_states_init <- list()
+aux_states_init$snow_ice_thickness <- init$snow_ice_thickness
+aux_states_init$avg_surf_temp <- init$avg_surf_temp
+aux_states_init$the_sals_init <- config$the_sals_init
+aux_states_init$mixing_vars <- init$mixing_vars
+aux_states_init$model_internal_depths <- init$model_internal_depths
+aux_states_init$lake_depth <- init$lake_depth
+aux_states_init$salt <- init$salt
 
-init <- list()
-
-
-restart_present <- FALSE
-if(!is.na(run_config$restart_file)){
-  if(file.exists(restart_file)){
-    restart_present <- TRUE
-  }
-}
-
-#Initial conditions
-if(!restart_present){
-
-  init$states <- array(NA, dim=c(nstates, ndepths_modeled, nmembers))
-  init$pars <- array(NA, dim=c(npars, nmembers))
-  init$lake_depth <- array(NA, dim=c(nmembers))
-  init$snow_ice_thickness <- array(NA, dim=c(3, nmembers))
-  init$avg_surf_temp <- array(NA, dim=c(nmembers))
-  init$mixing_vars <- array(NA, dim=c(17, nmembers))
-  init$model_internal_depths <- array(NA, dim = c(500, nmembers))
-  init$salt <- array(NA, dim = c(ndepths_modeled, nmembers))
-
-  alpha_v <- 1 - exp(-config$vert_decorr_length)
-
-  q_v <- rep(NA ,ndepths_modeled)
-  w <- rep(NA, ndepths_modeled)
-
-  combined_initial_conditions <- init_depth
-
-
-  for(m in 1:nmembers){
-    q_v[] <- NA
-    w[] <- NA
-    for(jj in 1:nstates){
-      w[] <- rnorm(ndepths_modeled, 0, 1)
-      q_v[1] <- states_config$initial_model_sd[jj] * w[1]
-      for(kk in 2:ndepths_modeled){
-        q_v[kk] <- alpha_v * q_v[kk-1] + sqrt(1 - alpha_v^2) * states_config$initial_model_sd[jj] * w[kk]
-      }
-
-      if(config$single_run | (config$initial_condition_uncertainty == FALSE & hist_days == 0)){
-        init$states[jj, , m] <- combined_initial_conditions[jj, ]
-      }else{
-        init$states[jj, , m] <- combined_initial_conditions[jj, ] + q_v
-      }
-      if(jj > 1){
-      init$states[jj,which(init$states[jj, , m]) < 0.0 , m] <- 0.0
-      }
-    }
-  }
-
-  for(par in 1:npars){
-    init$pars[par, ] <- runif(n=nmembers,pars_config$par_init_lowerbound[par], pars_config$par_init_upperbound[par])
-    if(config$single_run){
-      init$pars[par, ] <-  rep(pars_config$par_init[par], nmembers)
-    }
-  }
-
-  init$lake_depth[] <- round(config$lake_depth_init, 3)
-  #Matrix to store snow and ice heights
-  init$snow_ice_thickness[1, ] <- config$default_snow_thickness_init
-  init$snow_ice_thickness[2, ] <- config$default_white_ice_thickness_init
-  init$snow_ice_thickness[3, ] <- config$default_blue_ice_thickness_init
-  init$avg_surf_temp[] <- init$states[1 , 1, ]
-  init$mixing_vars[, ] <- 0.0
-  init$salt[, ] <- config$the_sals_init
-
-  for(m in 1:nmembers){
-    init$model_internal_depths[1:ndepths_modeled, m] <- config$modeled_depths
-  }
-}else{
-  #Restart from yesterday's run
-  init <- flare::generate_restart_initial_conditions(restart_file,
-                                                     state_names = states_config$state_names,
-                                                     par_names = pars_config$par_names_save)
-
-}
 
 #### Create management
 
@@ -595,7 +531,7 @@ aux_states_init$lake_depth <- init$lake_depth
 aux_states_init$salt <- init$salt
 
 
-enkf_output <- flare::run_EnKF(states_init = init$states,
+enkf_output <- FLAREr::run_EnKF(states_init = init$states,
                                pars_init = init$pars,
                                obs = obs,
                                obs_sd = obs_config$obs_sd,
@@ -616,11 +552,11 @@ enkf_output <- flare::run_EnKF(states_init = init$states,
 )
 
 ###SAVE FORECAST
-saved_file <- flare::write_forecast_netcdf(enkf_output,
+saved_file <- FLAREr::write_forecast_netcdf(enkf_output,
                                            forecast_location = run_config$forecast_location)
 
 #Create EML Metadata
-flare::create_flare_eml(file_name = saved_file,
+FLAREr::create_flare_eml(file_name = saved_file,
                         enkf_output)
 
 unlink(working_directory)
