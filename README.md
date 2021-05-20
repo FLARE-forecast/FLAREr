@@ -26,7 +26,7 @@ FLAREr is a set of functions that address key steps in the forecasting workflow.
 `create_glm_inflow_outflow_files()`:   
 `create_obs_matrix()`:    
 `generate_glm_met_files.R()`:   
-`generate_initial_conditions()` and `generate_restart_initial_conditions()`:    
+`generate_initial_conditions()`:    
 `initiate_model_error()`:    
 
 ### Run
