@@ -1,5 +1,5 @@
 
-template_folder <- system.file("data", package= "flare")
+template_folder <- system.file("data", package= "FLAREr")
 temp_dir <- tempdir()
 # dir.create("example")
 file.copy(from = template_folder, to = temp_dir, recursive = TRUE)

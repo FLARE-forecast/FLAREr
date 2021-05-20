@@ -415,7 +415,7 @@ run_da_forecast <- function(states_init,
     if(i == start_step) {
       if(machine == "windows") {
         cl <- parallel::makeCluster(config$ncore, setup_strategy = "sequential")
-        parallel::clusterEvalQ(cl, library(flare))
+        parallel::clusterEvalQ(cl, library(FLAREr))
       } else {
         cl <- parallel::makeCluster(config$ncore, setup_strategy = "sequential")
       }

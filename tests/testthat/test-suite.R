@@ -9,7 +9,7 @@ test_that("met files are generated", {
 
   source(file.path(template_folder, "test_met_prep.R"))
 
-  met_out <- flare::generate_glm_met_files(obs_met_file = observed_met_file,
+  met_out <- FLAREr::generate_glm_met_files(obs_met_file = observed_met_file,
                                            out_dir = config$run_config$execute_location,
                                            forecast_dir = forecast_path,
                                            local_tzone = config$local_tzone,
@@ -34,7 +34,7 @@ test_that("inflow & outflow files are generated", {
   inflow_forecast_path <- file.path(config$data_location)
 
   #### NEED A TEST HERE TO CHECK THAT INFLOW FILES ARE GENERATED AND CORRECT
-  inflow_outflow_files <- flare::create_glm_inflow_outflow_files(inflow_file_dir = inflow_forecast_path,
+  inflow_outflow_files <- FLAREr::create_glm_inflow_outflow_files(inflow_file_dir = inflow_forecast_path,
                                                                  inflow_obs = cleaned_inflow_file,
                                                                  working_directory = config$run_config$execute_location,
                                                                  start_datetime_local = start_datetime_local,
@@ -99,7 +99,7 @@ test_that("generate states to obs mapping", {
 
   source(file.path(test_location, "test_met_prep.R"))
 
-  states_config <- flare::generate_states_to_obs_mapping(states_config, obs_config)
+  states_config <- FLAREr::generate_states_to_obs_mapping(states_config, obs_config)
   testthat::expect_true(is.data.frame(states_config))
 })
 
@@ -119,7 +119,7 @@ test_that("initial model error is generated", {
 
   config_file_location <- config$run_config$forecast_location
 
-  model_sd <- flare::initiate_model_error(config, states_config, config_file_location)
+  model_sd <- FLAREr::initiate_model_error(config, states_config, config_file_location)
   testthat::expect_true(is.array(model_sd))
   testthat::expect_true(any(!is.na(model_sd)))
 })
@@ -142,14 +142,14 @@ test_that("initial conditions are generated", {
   obs_tmp$hour[which(obs_tmp$hour == 7)] <- 19
   write.csv(obs_tmp, cleaned_observations_file_long, row.names = FALSE, quote = FALSE)
 
-  obs <- flare::create_obs_matrix(cleaned_observations_file_long,
+  obs <- FLAREr::create_obs_matrix(cleaned_observations_file_long,
                                   obs_config,
                                   start_datetime_local,
                                   end_datetime_local,
                                   local_tzone = config$local_tzone,
                                   modeled_depths = config$modeled_depths)
 
-  init <- flare::generate_initial_conditions(states_config,
+  init <- FLAREr::generate_initial_conditions(states_config,
                                              obs_config,
                                              pars_config,
                                              obs,
@@ -174,7 +174,7 @@ test_that("EnKF can be run", {
 
   source(file.path(test_location, "test_enkf_prep.R"))
 
-  obs <- flare::create_obs_matrix(cleaned_observations_file_long,
+  obs <- FLAREr::create_obs_matrix(cleaned_observations_file_long,
                                   obs_config,
                                   start_datetime_local,
                                   end_datetime_local,
@@ -185,7 +185,7 @@ test_that("EnKF can be run", {
   full_time_forecast <- seq(start_datetime_local, end_datetime_local, by = "1 day")
   obs[ , which(full_time_forecast > forecast_start_datetime_local), ] <- NA
 
-  init <- flare::generate_initial_conditions(states_config,
+  init <- FLAREr::generate_initial_conditions(states_config,
                                              obs_config,
                                              pars_config,
                                              obs,
@@ -226,7 +226,7 @@ test_that("EnKF can be run", {
   # par_fit_method = "inflate"
 
   #Run EnKF
-  enkf_output <- flare::run_da_forecast(states_init = init$states,
+  enkf_output <- FLAREr::run_da_forecast(states_init = init$states,
                                           pars_init = init$pars,
                                           aux_states_init = aux_states_init,
                                           obs = obs,
@@ -256,17 +256,17 @@ test_that("EnKF can be run", {
   testthat::expect_true(any(unlist(chk)))
 
   # Save forecast
-  saved_file <- flare::write_forecast_netcdf(enkf_output,
+  saved_file <- FLAREr::write_forecast_netcdf(enkf_output,
                                              forecast_location = config$run_config$forecast_location)
   testthat::expect_true(file.exists(saved_file))
 
   #Create EML Metadata
-  flare::create_flare_eml(file_name = saved_file,
+  FLAREr::create_flare_eml(file_name = saved_file,
                           enkf_output)
   file_chk <- list.files(forecast_location, pattern = ".xml")
   testthat::expect_true(length(file_chk) > 0)
 
-  flare::plotting_general(file_name = saved_file,
+  FLAREr::plotting_general(file_name = saved_file,
                           qaqc_location = qaqc_data_location)
   file_chk <- list.files(forecast_location, pattern = ".pdf")
   testthat::expect_true(length(file_chk) > 0)
@@ -289,7 +289,7 @@ test_that("particle filter can be run", {
 
   source(file.path(test_location, "test_pf_prep.R"))
 
-  obs <- flare::create_obs_matrix(cleaned_observations_file_long,
+  obs <- FLAREr::create_obs_matrix(cleaned_observations_file_long,
                                   obs_config,
                                   start_datetime_local,
                                   end_datetime_local,
@@ -300,7 +300,7 @@ test_that("particle filter can be run", {
   full_time_forecast <- seq(start_datetime_local, end_datetime_local, by = "1 day")
   obs[ , which(full_time_forecast > forecast_start_datetime_local), ] <- NA
 
-  init <- flare::generate_initial_conditions(states_config,
+  init <- FLAREr::generate_initial_conditions(states_config,
                                              obs_config,
                                              pars_config,
                                              obs,
@@ -341,7 +341,7 @@ test_that("particle filter can be run", {
   # par_fit_method = "perturb"
 
   #Run EnKF
-  enkf_output <- flare::run_da_forecast(states_init = init$states,
+  enkf_output <- FLAREr::run_da_forecast(states_init = init$states,
                                         pars_init = init$pars,
                                         aux_states_init = aux_states_init,
                                         obs = obs,
@@ -373,17 +373,17 @@ test_that("particle filter can be run", {
   testthat::expect_true(any(unlist(chk)))
 
   # Save forecast
-  saved_file <- flare::write_forecast_netcdf(enkf_output,
+  saved_file <- FLAREr::write_forecast_netcdf(enkf_output,
                                              forecast_location = config$run_config$forecast_location)
   testthat::expect_true(file.exists(saved_file))
 
   #Create EML Metadata
-  flare::create_flare_eml(file_name = saved_file,
+  FLAREr::create_flare_eml(file_name = saved_file,
                           enkf_output)
   file_chk <- list.files(forecast_location, pattern = ".xml")
   testthat::expect_true(length(file_chk) > 0)
 
-  flare::plotting_general(file_name = saved_file,
+  FLAREr::plotting_general(file_name = saved_file,
                           qaqc_location = qaqc_data_location)
   file_chk <- list.files(forecast_location, pattern = ".pdf")
   testthat::expect_true(length(file_chk) > 0)

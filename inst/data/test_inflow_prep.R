@@ -56,7 +56,7 @@ forecast_hour <- lubridate::hour(forecast_start_datetime_UTC)
 if(forecast_hour < 10){forecast_hour <- paste0("0",forecast_hour)}
 forecast_path <- file.path(config$data_location, "NOAAGEFS")
 
-met_out <- flare::generate_glm_met_files(obs_met_file = observed_met_file,
+met_out <- FLAREr::generate_glm_met_files(obs_met_file = observed_met_file,
                                          out_dir = config$run_config$execute_location,
                                          forecast_dir = forecast_path,
                                          local_tzone = config$local_tzone,

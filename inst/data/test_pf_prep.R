@@ -59,7 +59,7 @@ forecast_hour <- lubridate::hour(forecast_start_datetime_UTC)
 if(forecast_hour < 10){forecast_hour <- paste0("0",forecast_hour)}
 forecast_path <- file.path(config$data_location, "NOAAGEFS")
 
-met_out <- flare::generate_glm_met_files(obs_met_file = observed_met_file,
+met_out <- FLAREr::generate_glm_met_files(obs_met_file = observed_met_file,
                                          out_dir = config$run_config$execute_location,
                                          forecast_dir = forecast_path,
                                          local_tzone = config$local_tzone,
@@ -75,7 +75,7 @@ suppressMessages({
   inflow_forecast_path <- file.path(config$data_location)
 
   #### NEED A TEST HERE TO CHECK THAT INFLOW FILES ARE GENERATED AND CORRECT
-  inflow_outflow_files <- flare::create_glm_inflow_outflow_files(inflow_file_dir = inflow_forecast_path,
+  inflow_outflow_files <- FLAREr::create_glm_inflow_outflow_files(inflow_file_dir = inflow_forecast_path,
                                                                  inflow_obs = cleaned_inflow_file,
                                                                  working_directory = config$run_config$execute_location,
                                                                  start_datetime_local = start_datetime_local,
@@ -92,7 +92,7 @@ obs_tmp <- read.csv(cleaned_observations_file_long)
 #obs_tmp$hour[which(obs_tmp$hour == 7)] <- 19
 write.csv(obs_tmp, cleaned_observations_file_long, row.names = FALSE, quote = FALSE)
 
-obs <- flare::create_obs_matrix(cleaned_observations_file_long,
+obs <- FLAREr::create_obs_matrix(cleaned_observations_file_long,
                                 obs_config,
                                 start_datetime_local,
                                 end_datetime_local,
@@ -104,12 +104,12 @@ full_time_forecast <- seq(start_datetime_local, end_datetime_local, by = "1 day"
 obs[ , which(full_time_forecast > forecast_start_datetime_local), ] <- NA
 
 
-states_config <- flare::generate_states_to_obs_mapping(states_config, obs_config)
+states_config <- FLAREr::generate_states_to_obs_mapping(states_config, obs_config)
 config_file_location <- config$run_config$forecast_location
 
-model_sd <- flare::initiate_model_error(config, states_config, config_file_location)
+model_sd <- FLAREr::initiate_model_error(config, states_config, config_file_location)
 
-init <- flare::generate_initial_conditions(states_config,
+init <- FLAREr::generate_initial_conditions(states_config,
                                            obs_config,
                                            pars_config,
                                            obs,
