@@ -33,16 +33,6 @@ pars_config <- readr::read_csv(file.path(config$run_config$forecast_location, co
 obs_config <- readr::read_csv(file.path(config$run_config$forecast_location, config$obs_config_file), col_types = readr::cols())
 states_config <- readr::read_csv(file.path(config$run_config$forecast_location,config$states_config_file), col_types = readr::cols())
 
-# Set up timings
-start_datetime <- lubridate::as_datetime(paste0(config$run_config$start_day," ",config$run_config$start_time), tz = "UTC")
-if(is.na(config$run_config$forecast_start_day)){
-  end_datetime <- lubridate::as_datetime(paste0(config$run_config$end_day," ",config$run_config$start_time), tz = "UTC")
-  forecast_start_datetime <- end_datetime
-}else{
-  forecast_start_datetime <- lubridate::as_datetime(paste0(config$run_config$forecast_start_day," ",config$run_config$start_time), tz = "UTC")
-  end_datetime <- forecast_start_datetime + lubridate::days(config$run_config$forecast_horizon)
-}
-
 #Download and process observations (already done)
 
 cleaned_observations_file_long <- file.path(config$qaqc_data_location,"observations_postQAQC_long.csv")
@@ -59,10 +49,7 @@ forecast_path <- file.path(config$data_location, config$forecast_met_model)
 met_out <- FLAREr::generate_glm_met_files(obs_met_file = observed_met_file,
                                          out_dir = config$run_config$execute_location,
                                          forecast_dir = forecast_path,
-                                         start_datetime = start_datetime,
-                                         end_datetime = end_datetime,
-                                         forecast_start_datetime = forecast_start_datetime,
-                                         use_forecasted_met = TRUE)
+                                         config)
 met_file_names <- met_out$filenames
 
 historical_met_error <- met_out$historical_met_error
@@ -74,10 +61,7 @@ suppressMessages({
   inflow_outflow_files <- FLAREr::create_glm_inflow_outflow_files(inflow_file_dir = inflow_forecast_path,
                                                                  inflow_obs = cleaned_inflow_file,
                                                                  working_directory = config$run_config$execute_location,
-                                                                 start_datetime = start_datetime,
-                                                                 end_datetime = end_datetime,
-                                                                 forecast_start_datetime = forecast_start_datetime,
-                                                                 use_future_inflow = TRUE,
+                                                                 config,
                                                                  state_names = NULL)
 })
 
@@ -89,14 +73,7 @@ write.csv(obs_tmp, cleaned_observations_file_long, row.names = FALSE, quote = FA
 
 obs <- FLAREr::create_obs_matrix(cleaned_observations_file_long,
                                 obs_config,
-                                start_datetime,
-                                end_datetime,
-                                modeled_depths = config$modeled_depths)
-
-#Set observations in the "future" to NA
-full_time_forecast <- seq(start_datetime, end_datetime, by = "1 day")
-obs[ , which(full_time_forecast > forecast_start_datetime), ] <- NA
-
+                                config)
 
 states_config <- FLAREr::generate_states_to_obs_mapping(states_config, obs_config)
 config_file_location <- config$run_config$forecast_location

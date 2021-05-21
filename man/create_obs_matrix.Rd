@@ -4,18 +4,12 @@
 \alias{create_obs_matrix}
 \title{Create matrix of observations in the format required by run_ENKF}
 \usage{
-create_obs_matrix(
-  cleaned_observations_file_long,
-  obs_config,
-  start_datetime,
-  end_datetime,
-  modeled_depths
-)
+create_obs_matrix(cleaned_observations_file_long, obs_config, config)
 }
 \arguments{
 \item{cleaned_observations_file_long}{}
 
-\item{modeled_depths}{}
+\item{config}{}
 }
 \description{
 Create matrix of observations in the format required by run_ENKF

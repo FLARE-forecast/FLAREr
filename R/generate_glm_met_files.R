@@ -3,12 +3,7 @@
 #' @param obs_met_file
 #' @param out_dir
 #' @param forecast_dir
-#' @param start_datetime
-#' @param end_datetime
-#' @param forecast_start_datetime
-#' @param use_forecasted_met
-#' @param spatial_downscale
-#' @param spatial_downscale_coeff
+#' @param config
 #'
 #' @return
 #' @export
@@ -17,17 +12,24 @@
 generate_glm_met_files <- function(obs_met_file = NULL,
                                    out_dir,
                                    forecast_dir = NULL,
-                                   start_datetime,
-                                   end_datetime,
-                                   forecast_start_datetime,
+                                   config,
                                    use_forecasted_met){
 
   if(is.null(obs_met_file) & is.null(forecast_dir)){
     stop("missing files to convert")
   }
 
+  start_datetime <- lubridate::as_datetime(config$run_config$start_datetime)
+  if(is.na(config$run_config$forecast_start_datetime)){
+    end_datetime <- lubridate::as_datetime(config$run_config$end_datetime)
+    forecast_start_datetime <- end_datetime
+  }else{
+    forecast_start_datetime <- lubridate::as_datetime(config$run_config$forecast_start_datetime)
+    end_datetime <- forecast_start_datetime + lubridate::days(config$run_config$forecast_horizon)
+  }
+
   full_time <- seq(start_datetime, end_datetime, by = "1 hour")
-  if(use_forecasted_met){
+  if(config$use_forecasted_met){
     if(forecast_start_datetime > start_datetime){
       full_time_hist <- seq(start_datetime, forecast_start_datetime - lubridate::hours(1), by = "1 hour")
     }else{
@@ -105,7 +107,7 @@ generate_glm_met_files <- function(obs_met_file = NULL,
 
   for(j in 1:nfiles){
 
-    if(!is.null(forecast_dir) & use_forecasted_met){
+    if(!is.null(forecast_dir) & config$use_forecasted_met){
 
 
       ens <- dplyr::last(unlist(stringr::str_split(basename(forecast_files[j]),"_")))

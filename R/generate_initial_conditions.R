@@ -114,6 +114,19 @@ generate_initial_conditions <- function(states_config,
       init$model_internal_depths[1:ndepths_modeled, m] <- config$modeled_depths
     }
 
+    aux_states_init <- list()
+    aux_states_init$snow_ice_thickness <- init$snow_ice_thickness
+    aux_states_init$avg_surf_temp <- init$avg_surf_temp
+    aux_states_init$the_sals_init <- config$the_sals_init
+    aux_states_init$mixing_vars <- init$mixing_vars
+    aux_states_init$model_internal_depths <- init$model_internal_depths
+    aux_states_init$lake_depth <- init$lake_depth
+    aux_states_init$salt <- init$salt
+
+    init <- list(states = init$states,
+                 pars = init$pars,
+                 aux_states_init = aux_states_init)
+
   }else{
     nc <- ncdf4::nc_open(run_config$restart_file)
     forecast <- ncdf4::ncvar_get(nc, "forecast")
@@ -126,11 +139,25 @@ generate_initial_conditions <- function(states_config,
       restart_index <- max(which(forecast == 0))
     }
 
-    init <- FLAREr:::generate_restart_initial_conditions(
+    out <- FLAREr:::generate_restart_initial_conditions(
       restart_file = run_config$restart_file,
       state_names = states_config$state_names,
       par_names = pars_config$par_names_save,
       restart_index = restart_index)
+
+    aux_states_init <- list()
+    aux_states_init$snow_ice_thickness <- out$snow_ice_thickness
+    aux_states_init$avg_surf_temp <- out$avg_surf_temp
+    aux_states_init$the_sals_init <- config$the_sals_init
+    aux_states_init$mixing_vars <- out$mixing_vars
+    aux_states_init$model_internal_depths <- out$model_internal_depths
+    aux_states_init$lake_depth <- out$lake_depth
+    aux_states_init$salt <- out$salt
+
+    init <- list(states = out$states,
+                 pars = out$pars,
+                 aux_states_init = aux_states_init)
+
   }
 
   return(init)

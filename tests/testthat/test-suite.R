@@ -12,10 +12,7 @@ test_that("met files are generated", {
   met_out <- FLAREr::generate_glm_met_files(obs_met_file = observed_met_file,
                                            out_dir = config$run_config$execute_location,
                                            forecast_dir = forecast_path,
-                                           start_datetime = start_datetime,
-                                           end_datetime = end_datetime,
-                                           forecast_start_datetime = forecast_start_datetime,
-                                           use_forecasted_met = TRUE)
+                                           config)
   met_file_names <- met_out$filenames
   testthat::expect_equal(file.exists(met_file_names), expected = rep(TRUE, 21))
 })
@@ -36,10 +33,7 @@ test_that("inflow & outflow files are generated", {
   inflow_outflow_files <- FLAREr::create_glm_inflow_outflow_files(inflow_file_dir = inflow_forecast_path,
                                                                  inflow_obs = cleaned_inflow_file,
                                                                  working_directory = config$run_config$execute_location,
-                                                                 start_datetime = start_datetime,
-                                                                 end_datetime = end_datetime,
-                                                                 forecast_start_datetime = forecast_start_datetime,
-                                                                 use_future_inflow = TRUE,
+                                                                 config,
                                                                  state_names = NULL)
 
   inflow_file_names <- inflow_outflow_files$inflow_file_name
@@ -71,9 +65,7 @@ test_that("observation matrix is generated and correct", {
 
   obs <- FLAREr::create_obs_matrix(cleaned_observations_file_long,
                                   obs_config,
-                                  start_datetime,
-                                  end_datetime,
-                                  modeled_depths = config$modeled_depths)
+                                  config)
   testthat::expect_true(is.array(obs))
 
   testthat::expect_true(any(!is.na(obs[1, , ])))
@@ -136,14 +128,11 @@ test_that("initial conditions are generated", {
   source(file.path(test_location, "test_met_prep.R"))
 
   obs_tmp <- read.csv(cleaned_observations_file_long)
-  obs_tmp$hour[which(obs_tmp$hour == 7)] <- 19
   write.csv(obs_tmp, cleaned_observations_file_long, row.names = FALSE, quote = FALSE)
 
   obs <- FLAREr::create_obs_matrix(cleaned_observations_file_long,
                                   obs_config,
-                                  start_datetime,
-                                  end_datetime,
-                                  modeled_depths = config$modeled_depths)
+                                  config)
 
   init <- FLAREr::generate_initial_conditions(states_config,
                                              obs_config,
@@ -172,28 +161,13 @@ test_that("EnKF can be run", {
 
   obs <- FLAREr::create_obs_matrix(cleaned_observations_file_long,
                                   obs_config,
-                                  start_datetime,
-                                  end_datetime,
-                                  modeled_depths = config$modeled_depths)
-
-  #Set observations in the "future" to NA
-  full_time_forecast <- seq(start_datetime, end_datetime, by = "1 day")
-  obs[ , which(full_time_forecast > forecast_start_datetime), ] <- NA
+                                  config)
 
   init <- FLAREr::generate_initial_conditions(states_config,
                                              obs_config,
                                              pars_config,
                                              obs,
                                              config)
-
-  aux_states_init <- list()
-  aux_states_init$snow_ice_thickness <- init$snow_ice_thickness
-  aux_states_init$avg_surf_temp <- init$avg_surf_temp
-  aux_states_init$the_sals_init <- config$the_sals_init
-  aux_states_init$mixing_vars <- init$mixing_vars
-  aux_states_init$model_internal_depths <- init$model_internal_depths
-  aux_states_init$lake_depth <- init$lake_depth
-  aux_states_init$salt <- init$salt
 
   met_file_names = gsub("\\\\", "/", met_file_names)
   inflow_file_names = gsub("\\\\", "/", inflow_file_names)
@@ -223,7 +197,7 @@ test_that("EnKF can be run", {
   #Run EnKF
   enkf_output <- FLAREr::run_da_forecast(states_init = init$states,
                                           pars_init = init$pars,
-                                          aux_states_init = aux_states_init,
+                                          aux_states_init = init$aux_states_init,
                                           obs = obs,
                                           obs_sd = obs_config$obs_sd,
                                           model_sd = model_sd,
@@ -231,9 +205,6 @@ test_that("EnKF can be run", {
                                           met_file_names = (met_file_names),
                                           inflow_file_names = (inflow_file_names),
                                           outflow_file_names = (outflow_file_names),
-                                          start_datetime = start_datetime,
-                                          end_datetime = end_datetime,
-                                          forecast_start_datetime = forecast_start_datetime,
                                           config = config,
                                           pars_config = pars_config,
                                           states_config = states_config,
@@ -286,28 +257,13 @@ test_that("particle filter can be run", {
 
   obs <- FLAREr::create_obs_matrix(cleaned_observations_file_long,
                                   obs_config,
-                                  start_datetime,
-                                  end_datetime,
-                                  modeled_depths = config$modeled_depths)
-
-  #Set observations in the "future" to NA
-  full_time_forecast <- seq(start_datetime, end_datetime, by = "1 day")
-  obs[ , which(full_time_forecast > forecast_start_datetime), ] <- NA
+                                  config)
 
   init <- FLAREr::generate_initial_conditions(states_config,
                                              obs_config,
                                              pars_config,
                                              obs,
                                              config)
-
-  aux_states_init <- list()
-  aux_states_init$snow_ice_thickness <- init$snow_ice_thickness
-  aux_states_init$avg_surf_temp <- init$avg_surf_temp
-  aux_states_init$the_sals_init <- config$the_sals_init
-  aux_states_init$mixing_vars <- init$mixing_vars
-  aux_states_init$model_internal_depths <- init$model_internal_depths
-  aux_states_init$lake_depth <- init$lake_depth
-  aux_states_init$salt <- init$salt
 
   met_file_names = gsub("\\\\", "/", met_file_names)
   inflow_file_names = gsub("\\\\", "/", inflow_file_names)
@@ -337,7 +293,7 @@ test_that("particle filter can be run", {
   #Run EnKF
   enkf_output <- FLAREr::run_da_forecast(states_init = init$states,
                                         pars_init = init$pars,
-                                        aux_states_init = aux_states_init,
+                                        aux_states_init = init$aux_states_init,
                                         obs = obs,
                                         obs_sd = obs_config$obs_sd,
                                         model_sd = model_sd,
@@ -345,9 +301,6 @@ test_that("particle filter can be run", {
                                         met_file_names = (met_file_names),
                                         inflow_file_names = (inflow_file_names),
                                         outflow_file_names = (outflow_file_names),
-                                        start_datetime = start_datetime,
-                                        end_datetime = end_datetime,
-                                        forecast_start_datetime = forecast_start_datetime,
                                         config = config,
                                         pars_config = pars_config,
                                         states_config = states_config,

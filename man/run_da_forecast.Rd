@@ -16,9 +16,6 @@ run_da_forecast(
   met_file_names,
   inflow_file_names = NULL,
   outflow_file_names = NULL,
-  start_datetime,
-  end_datetime,
-  forecast_start_datetime = NA,
   config,
   pars_config = NULL,
   states_config,
@@ -48,13 +45,6 @@ with a value in \code{model_sd}.}
 \item{inflow_file_names}{vector of inflow file names}
 
 \item{outflow_file_names}{vector of outflow file names}
-
-\item{start_datetime}{datetime of beginning of the simulation.  A datetime class ("YYYY-MM-DD HH:MM:SS"). Use the local time zone for the lake}
-
-\item{end_datetime}{datetime of the end of the simulation. A datetime class ("YYYY-MM-DD HH:MM:SS"). Use the local time zone for the lake}
-
-\item{forecast_start_datetime}{datetime when simulation is a forecast.  Must be equal to or earlier than \code{end_datetime}. If after \code{end_datetime}, it will
-automatically be set to \code{end_datetime}.}
 
 \item{config}{list of configurations}
 

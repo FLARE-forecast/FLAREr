@@ -20,9 +20,11 @@ file.copy(from = system.file("data/input_data", package= "FLAREr"), to = forecas
 config <- yaml::read_yaml(file.path(forecast_location,"configure_flare.yml"))
 run_config <- yaml::read_yaml(file.path(forecast_location,"run_configuration.yml"))
 
+
 config$run_config <- run_config
-config$run_config$forecast_location <- forecast_location
-config$run_config$execute_location <- file.path(working_directory, "output")
+config$run_config$forecast_location <- file.path(forecast_location)
+config$run_config$execute_location <- file.path(forecast_location, "working_directory")
+
 config$data_location <- file.path(forecast_location, "input_data")
 config$qaqc_data_location <- file.path(forecast_location, "input_data")
 
@@ -34,20 +36,6 @@ pars_config <- readr::read_csv(file.path(config$run_config$forecast_location, co
 obs_config <- readr::read_csv(file.path(config$run_config$forecast_location, config$obs_config_file), col_types = readr::cols())
 states_config <- readr::read_csv(file.path(config$run_config$forecast_location,config$states_config_file), col_types = readr::cols())
 
-# Set up timings
-start_datetime <- lubridate::as_datetime(paste0(config$run_config$start_day," ",config$run_config$start_time), tz = "UTC")
-if(is.na(config$run_config$forecast_start_day)){
-  end_datetime <- lubridate::as_datetime(paste0(config$run_config$end_day," ",config$run_config$start_time), tz = "UTC")
-  forecast_start_datetime <- end_datetime
-}else{
-  forecast_start_datetime <- lubridate::as_datetime(paste0(config$run_config$forecast_start_day," ",config$run_config$start_time), tz = "UTC")
-  end_datetime <- forecast_start_datetime + lubridate::days(config$run_config$forecast_horizon)
-}
-
-forecast_hour <- lubridate::hour(forecast_start_datetime)
-if(forecast_hour < 10){forecast_hour <- paste0("0",forecast_hour)}
-forecast_path <- file.path(config$data_location, config$forecast_met_model)
-
 cleaned_observations_file_long <- file.path(config$qaqc_data_location,"observations_postQAQC_long.csv")
 cleaned_inflow_file <- file.path(config$qaqc_data_location, "/inflow_postQAQC.csv")
 observed_met_file <- file.path(config$qaqc_data_location,"observed-met_fcre.nc")
@@ -55,28 +43,17 @@ observed_met_file <- file.path(config$qaqc_data_location,"observed-met_fcre.nc")
 met_out <- FLAREr::generate_glm_met_files(obs_met_file = observed_met_file,
                                           out_dir = config$run_config$execute_location,
                                           forecast_dir = file.path(config$data_location, config$forecast_met_model),
-                                          start_datetime = start_datetime,
-                                          end_datetime = end_datetime,
-                                          forecast_start_datetime = forecast_start_datetime,
-                                          use_forecasted_met = TRUE)
+                                          config = config)
 
 inflow_outflow_files <- FLAREr::create_glm_inflow_outflow_files(inflow_file_dir = file.path(config$data_location, config$forecast_inflow_model),
                                                                 inflow_obs = cleaned_inflow_file,
                                                                 working_directory = config$run_config$execute_location,
-                                                                start_datetime = start_datetime,
-                                                                end_datetime = end_datetime,
-                                                                forecast_start_datetime = forecast_start_datetime,
-                                                                use_future_inflow = TRUE,
+                                                                config = config,
                                                                 state_names = NULL)
 
 obs <- FLAREr::create_obs_matrix(cleaned_observations_file_long,
                                  obs_config,
-                                 start_datetime,
-                                 end_datetime,
-                                 modeled_depths = config$modeled_depths)
-
-full_time_forecast <- seq(start_datetime, end_datetime, by = "1 day")
-obs[ , which(full_time_forecast > forecast_start_datetime), ] <- NA
+                                 config)
 
 states_config <- FLAREr::generate_states_to_obs_mapping(states_config, obs_config)
 
@@ -87,21 +64,12 @@ init <- FLAREr::generate_initial_conditions(states_config,
                                             pars_config,
                                             obs,
                                             config,
-                                            restart_file = run_config$restart_file,
+                                            restart_file = config$run_config$restart_file,
                                             historical_met_error = met_out$historical_met_error)
-
-aux_states_init <- list()
-aux_states_init$snow_ice_thickness <- init$snow_ice_thickness
-aux_states_init$avg_surf_temp <- init$avg_surf_temp
-aux_states_init$the_sals_init <- config$the_sals_init
-aux_states_init$mixing_vars <- init$mixing_vars
-aux_states_init$model_internal_depths <- init$model_internal_depths
-aux_states_init$lake_depth <- init$lake_depth
-aux_states_init$salt <- init$salt
 
 enkf_output <- FLAREr::run_da_forecast(states_init = init$states,
                                        pars_init = init$pars,
-                                       aux_states_init = aux_states_init,
+                                       aux_states_init = init$aux_states_init,
                                        obs = obs,
                                        obs_sd = obs_config$obs_sd,
                                        model_sd = model_sd,
@@ -109,9 +77,6 @@ enkf_output <- FLAREr::run_da_forecast(states_init = init$states,
                                        met_file_names = met_out$filenames,
                                        inflow_file_names = inflow_outflow_files$inflow_file_name,
                                        outflow_file_names = inflow_outflow_files$outflow_file_name,
-                                       start_datetime = start_datetime,
-                                       end_datetime = end_datetime,
-                                       forecast_start_datetime = forecast_start_datetime,
                                        config = config,
                                        pars_config = pars_config,
                                        states_config = states_config,

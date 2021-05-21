@@ -143,9 +143,6 @@ forecasts</p>
   <span class='va'>met_file_names</span>,
   inflow_file_names <span class='op'>=</span> <span class='cn'>NULL</span>,
   outflow_file_names <span class='op'>=</span> <span class='cn'>NULL</span>,
-  <span class='va'>start_datetime</span>,
-  <span class='va'>end_datetime</span>,
-  forecast_start_datetime <span class='op'>=</span> <span class='cn'>NA</span>,
   <span class='va'>config</span>,
   pars_config <span class='op'>=</span> <span class='cn'>NULL</span>,
   <span class='va'>states_config</span>,
@@ -195,19 +192,6 @@ with a value in <code>model_sd</code>.</p></td>
     <tr>
       <th>outflow_file_names</th>
       <td><p>vector of outflow file names</p></td>
-    </tr>
-    <tr>
-      <th>start_datetime</th>
-      <td><p>datetime of beginning of the simulation.  A datetime class ("YYYY-MM-DD HH:MM:SS"). Use the local time zone for the lake</p></td>
-    </tr>
-    <tr>
-      <th>end_datetime</th>
-      <td><p>datetime of the end of the simulation. A datetime class ("YYYY-MM-DD HH:MM:SS"). Use the local time zone for the lake</p></td>
-    </tr>
-    <tr>
-      <th>forecast_start_datetime</th>
-      <td><p>datetime when simulation is a forecast.  Must be equal to or earlier than <code>end_datetime</code>. If after <code>end_datetime</code>, it will
-automatically be set to <code>end_datetime</code>.</p></td>
     </tr>
     <tr>
       <th>config</th>

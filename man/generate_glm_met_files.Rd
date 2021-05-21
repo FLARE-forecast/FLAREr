@@ -8,14 +8,12 @@ generate_glm_met_files(
   obs_met_file = NULL,
   out_dir,
   forecast_dir = NULL,
-  start_datetime,
-  end_datetime,
-  forecast_start_datetime,
+  config,
   use_forecasted_met
 )
 }
 \arguments{
-\item{spatial_downscale_coeff}{}
+\item{config}{}
 }
 \value{
 

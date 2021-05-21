@@ -119,10 +119,6 @@
 #' @param met_file_names vector of meterology file names
 #' @param inflow_file_names vector of inflow file names
 #' @param outflow_file_names vector of outflow file names
-#' @param start_datetime datetime of beginning of the simulation.  A datetime class ("YYYY-MM-DD HH:MM:SS"). Use the local time zone for the lake
-#' @param end_datetime datetime of the end of the simulation. A datetime class ("YYYY-MM-DD HH:MM:SS"). Use the local time zone for the lake
-#' @param forecast_start_datetime datetime when simulation is a forecast.  Must be equal to or earlier than `end_datetime`. If after `end_datetime`, it will
-#' automatically be set to `end_datetime`.
 #' @param config list of configurations
 #' @param pars_config list of parameter configurations  (Default = NULL)
 #' @param states_config list of state configurations
@@ -170,9 +166,6 @@ run_da_forecast <- function(states_init,
                               met_file_names,
                               inflow_file_names = NULL,
                               outflow_file_names = NULL,
-                              start_datetime,
-                              end_datetime,
-                              forecast_start_datetime = NA,
                               config,
                               pars_config = NULL,
                               states_config,
@@ -249,15 +242,19 @@ run_da_forecast <- function(states_init,
                             states_config,
                             obs_config)
 
-  if(is.na(forecast_start_datetime)){
+  start_datetime <- lubridate::as_datetime(config$run_config$start_datetime)
+  if(is.na(config$run_config$forecast_start_datetime)){
+    end_datetime <- lubridate::as_datetime(config$run_config$end_datetime)
     forecast_start_datetime <- end_datetime
+  }else{
+    forecast_start_datetime <- lubridate::as_datetime(config$run_config$forecast_start_datetime)
+    end_datetime <- forecast_start_datetime + lubridate::days(config$run_config$forecast_horizon)
   }
 
   hist_days <- as.numeric(forecast_start_datetime - start_datetime)
   start_forecast_step <- 1 + hist_days
   full_time <- seq(start_datetime, end_datetime, by = "1 day")
   forecast_days <- as.numeric(end_datetime - forecast_start_datetime)
-
 
   if(!is.null(pars_config)){
     npars <- nrow(pars_config)
@@ -378,6 +375,7 @@ run_da_forecast <- function(states_init,
   config$model_name <- glm_v
 
   ###START EnKF
+
   for(i in start_step:nsteps){
 
     curr_start <- strftime(full_time[i - 1],
@@ -452,7 +450,7 @@ run_da_forecast <- function(states_init,
     if(i > 1){
 
       out <- parallel::parLapply(cl, 1:nmembers, function(m) {
-      # out <- lapply(1:nmembers, function(m) { # Commented out for debugging
+      #out <- lapply(1:nmembers, function(m) { # Commented out for debugging
 
         if(config$ncore == 1){
           ens_dir_index <- 1
@@ -488,7 +486,6 @@ run_da_forecast <- function(states_init,
           inflow_file_name <- NULL
           outflow_file_name <- NULL
         }
-
 
         out <-FLAREr:::run_model(i,
                                 m,

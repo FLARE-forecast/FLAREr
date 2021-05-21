@@ -30,16 +30,6 @@ pars_config <- readr::read_csv(file.path(config$run_config$forecast_location, co
 obs_config <- readr::read_csv(file.path(config$run_config$forecast_location, config$obs_config_file), col_types = readr::cols())
 states_config <- readr::read_csv(file.path(config$run_config$forecast_location,config$states_config_file), col_types = readr::cols())
 
-# Set up timings
-start_datetime <- lubridate::as_datetime(paste0(config$run_config$start_day," ",config$run_config$start_time), tz = "UTC")
-if(is.na(config$run_config$forecast_start_day)){
-  end_datetime <- lubridate::as_datetime(paste0(config$run_config$end_day," ",config$run_config$start_time), tz = "UTC")
-  forecast_start_datetime <- end_datetime
-}else{
-  forecast_start_datetime <- lubridate::as_datetime(paste0(config$run_config$forecast_start_day," ",config$run_config$start_time), tz = "UTC")
-  end_datetime <- forecast_start_datetime + lubridate::days(config$run_config$forecast_horizon)
-}
-
 #Download and process observations (already done)
 
 cleaned_observations_file_long <- file.path(config$qaqc_data_location,"observations_postQAQC_long.csv")
@@ -48,17 +38,9 @@ observed_met_file <- file.path(config$qaqc_data_location,"observed-met_fcre.nc")
 
 #Step up Drivers
 
-#Weather Drivers
-forecast_hour <- lubridate::hour(forecast_start_datetime)
-if(forecast_hour < 10){forecast_hour <- paste0("0",forecast_hour)}
-forecast_path <- file.path(config$data_location, config$forecast_met_model)
-
 met_out <- FLAREr::generate_glm_met_files(obs_met_file = observed_met_file,
                                          out_dir = config$run_config$execute_location,
-                                         forecast_dir = forecast_path,
-                                         start_datetime = start_datetime,
-                                         end_datetime = end_datetime,
-                                         forecast_start_datetime = forecast_start_datetime,
-                                         use_forecasted_met = TRUE)
+                                         forecast_dir = file.path(config$data_location, config$forecast_met_model),
+                                         config)
 
 historical_met_error <- met_out$historical_met_error

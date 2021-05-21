@@ -55,7 +55,7 @@ FLARE development has been supported by grants from National Science Foundation 
 First, install the `FLAREr` package from GitHub. There will be other required packages that will also be downloaded.
 
 ```{r eval = FALSE}
-remotes::install_github("flare-forecast/FLAREr")
+#remotes::install_github("flare-forecast/FLAREr")
 ```
 
 Second, create a directory that will be your working directory for your FLARE run
@@ -118,7 +118,7 @@ Finally, if using forecasted meteorology and inflows, FLAREr requires specific f
 
 ```{r}
 all_files <- list.files(file.path(forecast_location,"input_data/FLOWS-NOAAGEFS-AR1"), full.names = TRUE)
-all_files[stringr::str_detect(all_files,"INFLOW")]
+basename(all_files[stringr::str_detect(all_files,"INFLOW")])
 ```
 
 with the following format
@@ -131,8 +131,9 @@ Similarly, the forecasted NOAA GEFS meteorology has a specific file formats and 
 
 ```{r}
 all_files <- list.files(file.path(forecast_location, "input_data/NOAAGEFS_1hr-debias"), full.names = TRUE)
-all_files
+basename(all_files)
 ```
+
 ```{r}
 ncdf4::nc_open(all_files[1])
 ```
@@ -155,35 +156,16 @@ This file is the configuration file that define the specific timing of the run.
 
 * `forecast_location`: This is the `flare_simulation` directory  (full path; you will need to change this to reflect the location of your directory)
 * `execute_location`: This is the same as `forecast_location` unless you are executing the simulation in a different directory. I use this to execute the code on a RAM disk to save read-writes to my hard disk. You don't need to do this in the tutorial
-* `restart_file`: This is the full path to the file that you want to use as
-  initial conditions for the simulation. You will set this to `NA` if the 
-  simulation is not a continuation of a previous simulation.
-* `sim_name`: a string with the name of your simulation. This will appear in 
-  your output file names
-* `forecast_days`: This is your forecast horizon. The max is `16` days. Set to 
-  `0`if only doing data assimilation with observed drivers.
-* `start_day`: The date that your simulation starts. Uses the YYYY-MM-DD
-   format (e.g., "2019-09-20"). `2018-07-12` is the first day in the SCC project
-   (when the catwalk temperature data comes online)
-* `start_time`: The time of day you want to start a forecast. Because GLM
-  is a daily timestep model, the simulation will start at this time. It 
-  uses `mm:hh:ss` format and must only be a whole hour. It is in the UTC time. It can be any hour if only doing data 
-  assimilation with observed drivers (forecast_days = 0). If forecasting 
-  (forecast_days > 0) it is required to match up with the availability of a NOAA 
-  forecast. NOAA forecasts are available at the following times GMT so you must
-  select a local time that matches one of these times (i.e., 07:00:00 at FCR is
-  the 12:00:00 GMT NOAA forecast).
-  * 00:00:00 GMT
-  * 06:00:00 GMT
-  * 12:00:00 GMT
-  * 18:00:00 GMT
-* `forecast_start_day`: The date that you want forecasting to start in 
-   your simulation. Uses the YYYY-MM-DD format (e.g., "2019-09-20"). The 
-   difference between `start_time` and `forecast_start_day` 
-   determines how many days of data assimilation occur using observed drivers 
-   before handing off to forecasted drivers and not assimilating data
-* `forecast_sss_on`: Only used in AED simulations for setting the SSS 
-   (hypolimnetic oxygenation system) to on in the forecast
+* `restart_file`: This is the full path to the file that you want to use as initial conditions for the simulation. You will set this to `NA` if the simulation is not a continuation of a previous simulation.
+* `sim_name`: a string with the name of your simulation. This will appear in your output file names
+* `forecast_days`: This is your forecast horizon. The max is `16` days. Set to `0`if only doing data assimilation with observed drivers.
+* `start_datetime`: The date time of day you want to start a forecast. Because GLM is a daily timestep model, the simulation will start at this time. It uses `YYYY-MM-DD mm:hh:ss` format and must only be a whole hour. It is in the UTC time. It can be any hour if only doing data assimilation with observed drivers (forecast_days = 0). If forecasting (forecast_days > 0) it is required to match up with the availability of a NOAA forecast. NOAA forecasts are available at the following times UTC so you must select a local time that matches one of these times (i.e., 07:00:00 at FCR is the 12:00:00 UTC NOAA forecast).
+  * 00:00:00 UTC
+  * 06:00:00 UTC
+  * 12:00:00 UTC
+  * 18:00:00 UTC
+* `forecast_start_datetime`: The date that you want forecasting to start in your simulation. Uses the YYYY-MM-DD mm:hh:ss format (e.g., "2019-09-20 00:00:00"). The difference between `start_time` and `forecast_start_fyryimr` determines how many days of data assimilation occur using observed drivers before handing off to forecasted drivers and not assimilating data
+* `forecast_sss_on`: Only used in AED simulations for setting the SSS (hypolimnetic oxygenation system) to on in the forecast
 
 ### glm3.nml
 
@@ -235,22 +217,6 @@ obs_config <- readr::read_csv(file.path(config$run_config$forecast_location, con
 states_config <- readr::read_csv(file.path(config$run_config$forecast_location,config$states_config_file), col_types = readr::cols())
 ```
 
-Set up time vectors and names
-
-```{r}
-start_datetime <- lubridate::as_datetime(paste0(config$run_config$start_day," ",config$run_config$start_time), tz = "UTC")
-if(is.na(config$run_config$forecast_start_day)){
-  end_datetime <- lubridate::as_datetime(paste0(config$run_config$end_day," ",config$run_config$start_time), tz = "UTC")
-  forecast_start_datetime <- end_datetime
-}else{
-  forecast_start_datetime <- lubridate::as_datetime(paste0(config$run_config$forecast_start_day," ",config$run_config$start_time), tz = "UTC")
-  end_datetime <- forecast_start_datetime + lubridate::days(config$run_config$forecast_horizon)
-}
-
-forecast_hour <- lubridate::hour(forecast_start_datetime)
-if(forecast_hour < 10){forecast_hour <- paste0("0",forecast_hour)}
-```
-
 Download and process observations (already done)
 
 ```{r}
@@ -265,10 +231,7 @@ Set up weather drivers in GLM format
 met_out <- FLAREr::generate_glm_met_files(obs_met_file = observed_met_file,
                                          out_dir = config$run_config$execute_location,
                                          forecast_dir = file.path(config$data_location, config$forecast_met_model),
-                                         start_datetime = start_datetime,
-                                         end_datetime = end_datetime,
-                                         forecast_start_datetime = forecast_start_datetime,
-                                         use_forecasted_met = TRUE)
+                                         config)
 ```
 
 Set up inflow and outflow drivers in GLM format
@@ -277,10 +240,7 @@ Set up inflow and outflow drivers in GLM format
 inflow_outflow_files <- FLAREr::create_glm_inflow_outflow_files(inflow_file_dir = file.path(config$data_location, config$forecast_inflow_model),
                                                                inflow_obs = cleaned_inflow_file,
                                                                working_directory = config$run_config$execute_location,
-                                                               start_datetime = start_datetime,
-                                                               end_datetime = end_datetime,
-                                                               forecast_start_datetime = forecast_start_datetime,
-                                                               use_future_inflow = TRUE,
+                                                               config,
                                                                state_names = NULL)
 ```
 
@@ -289,16 +249,7 @@ Create observation matrix.  The rows of the matrix are observation type (i.e. te
 ```{r}
 obs <- FLAREr::create_obs_matrix(cleaned_observations_file_long,
                                 obs_config,
-                                start_datetime,
-                                end_datetime,
-                                modeled_depths = config$modeled_depths)
-```
-
-Because we are forecasting for a period where we already have the data collected, we need to put NA values for "future" dates.
-
-```{r}
-full_time_forecast <- seq(start_datetime, end_datetime, by = "1 day")
-obs[ , which(full_time_forecast > forecast_start_datetime), ] <- NA
+                                config)
 ```
 
 Map the states to the observations matrix
@@ -313,7 +264,7 @@ Initialize the model error vector
 model_sd <- FLAREr::initiate_model_error(config, states_config, config_file_location = config$run_config$forecast_location)
 ```
 
-Set inital conditions
+Set initial conditions
 
 ```{r}
 init <- FLAREr::generate_initial_conditions(states_config,
@@ -323,39 +274,27 @@ init <- FLAREr::generate_initial_conditions(states_config,
                                              config,
                                              restart_file = run_config$restart_file,
                                              historical_met_error = met_out$historical_met_error)
-
-aux_states_init <- list()
-aux_states_init$snow_ice_thickness <- init$snow_ice_thickness
-aux_states_init$avg_surf_temp <- init$avg_surf_temp
-aux_states_init$the_sals_init <- config$the_sals_init
-aux_states_init$mixing_vars <- init$mixing_vars
-aux_states_init$model_internal_depths <- init$model_internal_depths
-aux_states_init$lake_depth <- init$lake_depth
-aux_states_init$salt <- init$salt
 ```
 
 #Run EnKF
 
 ```{r}
 enkf_output <- FLAREr::run_da_forecast(states_init = init$states,
-                                        pars_init = init$pars,
-                                        aux_states_init = aux_states_init,
-                                        obs = obs,
-                                        obs_sd = obs_config$obs_sd,
-                                        model_sd = model_sd,
-                                        working_directory = config$run_config$execute_location,
-                                        met_file_names = met_out$filenames,
-                                        inflow_file_names = inflow_outflow_files$inflow_file_name,
-                                        outflow_file_names = inflow_outflow_files$outflow_file_name,
-                                        start_datetime = start_datetime,
-                                        end_datetime = end_datetime,
-                                        forecast_start_datetime = forecast_start_datetime,
-                                        config = config,
-                                        pars_config = pars_config,
-                                        states_config = states_config,
-                                        obs_config = obs_config,
-                                        da_method = config$da_method,
-                                        par_fit_method = config$par_fit_method)
+                                       pars_init = init$pars,
+                                       aux_states_init = init$aux_states_init,
+                                       obs = obs,
+                                       obs_sd = obs_config$obs_sd,
+                                       model_sd = model_sd,
+                                       working_directory = config$run_config$execute_location,
+                                       met_file_names = met_out$filenames,
+                                       inflow_file_names = inflow_outflow_files$inflow_file_name,
+                                       outflow_file_names = inflow_outflow_files$outflow_file_name,
+                                       config = config,
+                                       pars_config = pars_config,
+                                       states_config = states_config,
+                                       obs_config = obs_config,
+                                       da_method = config$da_method,
+                                       par_fit_method = config$par_fit_method)
 ```
 
 ```{r}

@@ -1,8 +1,7 @@
 restart_file: .na
-start_day_local: '2018-10-02'
-start_time_local: '00:00:00'
-end_day_local: .na
-forecast_start_day_local: '2018-10-05'
+start_datetime: '2018-10-02 00:00:00'
+end_datetime: .na
+forecast_start_datetime: '2018-10-05 00:00:00'
 forecast_horizon: 3.0
 sim_name: test_run
 forecast_sss_on: no
