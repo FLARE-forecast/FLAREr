@@ -11,7 +11,7 @@ test_that("met files are generated", {
 
   met_out <- FLAREr::generate_glm_met_files(obs_met_file = observed_met_file,
                                            out_dir = config$run_config$execute_location,
-                                           forecast_dir = forecast_path,
+                                           forecast_dir = file.path(config$data_location, config$forecast_met_model),
                                            config)
   met_file_names <- met_out$filenames
   testthat::expect_equal(file.exists(met_file_names), expected = rep(TRUE, 21))

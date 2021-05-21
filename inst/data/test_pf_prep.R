@@ -39,16 +39,11 @@ cleaned_observations_file_long <- file.path(config$qaqc_data_location,"observati
 cleaned_inflow_file <- file.path(config$qaqc_data_location, "/inflow_postQAQC.csv")
 observed_met_file <- file.path(config$qaqc_data_location,"observed-met_fcre.nc")
 
-#Step up Drivers
-
 #Weather Drivers
-forecast_hour <- lubridate::hour(forecast_start_datetime)
-if(forecast_hour < 10){forecast_hour <- paste0("0",forecast_hour)}
-forecast_path <- file.path(config$data_location, config$forecast_met_model)
 
 met_out <- FLAREr::generate_glm_met_files(obs_met_file = observed_met_file,
                                          out_dir = config$run_config$execute_location,
-                                         forecast_dir = forecast_path,
+                                         forecast_dir = file.path(config$data_location, config$forecast_met_model),
                                          config)
 met_file_names <- met_out$filenames
 
