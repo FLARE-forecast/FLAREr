@@ -1,3 +1,25 @@
+---
+title: "Example Workflow"
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{Example Workflow}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+```{r, include = FALSE}
+knitr::opts_chunk$set(
+  collapse = TRUE,
+  comment = "#>"
+)
+```
+
+
+## Workflow
+
+Here is a workflow example that combines all the functions in FLAREr to generate a forecast.  See the FLARE example vignette for more details
+
+```{r eval = FALSE}
 library(tidyverse)
 set.seed(1)
 
@@ -93,4 +115,4 @@ FLAREr::create_flare_metadata(file_name = saved_file,
 
 FLAREr::plotting_general(file_name = saved_file,
                          qaqc_location = config$qaqc_data_location)
-
+```

@@ -1,8 +1,8 @@
 ---
-title: "FLAREr-example-vignette"
+title: "FLAREr example"
 output: rmarkdown::html_vignette
 vignette: >
-  %\VignetteIndexEntry{FLAREr-example-vignette}
+  %\VignetteIndexEntry{FLAREr example}
   %\VignetteEngine{knitr::rmarkdown}
   %\VignetteEncoding{UTF-8}
 ---
@@ -24,7 +24,7 @@ set.seed(1)
 
 ## Background
 
-This document serves as a users guide and a tutorial for the FLARE (Forecasting Lake and Reservior Ecosystems) system ([Thomas et al. 2020](https://agupubs.onlinelibrary.wiley.com/doi/abs/10.1029/2019WR026138)). FLARE generates forecasts and forecast uncertainty of water temperature and water quality for a 16-day time horizon at multiple depths of a lake or reservior. It uses data assimilation to update the initial starting point for a forecast and the model parameters based a real-time statistical comparsions to observations.  It has been developed, tested, and evaluated for Falling  Creek Reservior in Vinton,VA ([Thomas et al. 2020](https://agupubs.onlinelibrary.wiley.com/doi/abs/10.1029/2019WR026138)).
+This document serves as a users guide and a tutorial for the FLARE (Forecasting Lake and Reservoir Ecosystems) system ([Thomas et al. 2020](https://agupubs.onlinelibrary.wiley.com/doi/abs/10.1029/2019WR026138)). FLARE generates forecasts and forecast uncertainty of water temperature and water quality for a 16-day time horizon at multiple depths of a lake or reservoir. It uses data assimilation to update the initial starting point for a forecast and the model parameters based a real-time statistical comparsions to observations.  It has been developed, tested, and evaluated for Falling  Creek Reservoir in Vinton,VA ([Thomas et al. 2020](https://agupubs.onlinelibrary.wiley.com/doi/abs/10.1029/2019WR026138)).
 
 FLARE is a set of R scripts that
 
@@ -48,7 +48,6 @@ FLARE development has been supported by grants from National Science Foundation 
 * [RStudio](https://rstudio.com/products/rstudio/download/)
 * `FLAREr` R package
 * `FLAREr` dependencies
-
 
 ## 1: Set up
 
@@ -306,7 +305,7 @@ saved_file <- FLAREr::write_forecast_netcdf(enkf_output,
 
 ```{r}
 #Create EML Metadata
-FLAREr::create_flare_eml(file_name = saved_file,
+FLAREr::create_flare_metadata(file_name = saved_file,
                         enkf_output)
 ```
 

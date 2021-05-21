@@ -11,7 +11,7 @@
 #'
 #'
 
-create_flare_eml <- function(file_name,
+create_flare_metadata <- function(file_name,
                              enkf_output){
 
   emld::eml_version("eml-2.2.0")
