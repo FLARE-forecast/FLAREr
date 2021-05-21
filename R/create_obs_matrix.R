@@ -30,8 +30,7 @@ create_obs_matrix <- function(cleaned_observations_file_long,
                                                                                hour = readr::col_double(),
                                                                                depth = readr::col_double(),
                                                                                value = readr::col_double(),
-                                                                               variable = readr::col_character(),
-                                                                               method = readr::col_character()))
+                                                                               variable = readr::col_character()))
 
   obs_list <- list()
   for(i in 1:length(obs_config$state_names_obs)){
