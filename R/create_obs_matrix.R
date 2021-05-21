@@ -26,8 +26,12 @@ create_obs_matrix <- function(cleaned_observations_file_long,
 
   full_time <- seq(start_datetime, end_datetime, by = "1 day")
 
-  d <- readr::read_csv(cleaned_observations_file_long,
-                       col_types = readr::cols())
+  d <- readr::read_csv(cleaned_observations_file_long, col_types = readr::cols(date = col_date(format = ""),
+                                                                               hour = col_double(),
+                                                                               depth = col_double(),
+                                                                               value = col_double(),
+                                                                               variable = col_character(),
+                                                                               method = col_character()))
 
   obs_list <- list()
   for(i in 1:length(obs_config$state_names_obs)){
