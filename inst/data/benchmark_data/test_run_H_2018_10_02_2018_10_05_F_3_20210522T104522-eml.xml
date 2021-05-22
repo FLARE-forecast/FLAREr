@@ -44,7 +44,7 @@
       <entityName>forecast</entityName>
       <entityDescription>Forecast of water physics, chemistry, and biology</entityDescription>
       <physical>
-        <objectName>test_run_H_2018_10_02_2018_10_05_F_3_20210520T130946.nc</objectName>
+        <objectName>test_run_H_2018_10_02_2018_10_05_F_3_20210522T104522.nc</objectName>
         <dataFormat>
           <textFormat>
             <recordDelimiter>&#13;
@@ -297,7 +297,7 @@
           <status>propagates</status>
         </drivers>
         <forecast_horizon>3</forecast_horizon>
-        <forecast_iteration_id>20210520T130946</forecast_iteration_id>
+        <forecast_iteration_id>20210522T104522</forecast_iteration_id>
         <forecast_project_id>test</forecast_project_id>
         <initial_conditions>
           <assimilation>

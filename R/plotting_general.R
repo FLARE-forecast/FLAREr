@@ -225,65 +225,67 @@ plotting_general <- function(file_name,
       print(p)
     }
 
-  # if("extc_coef" %in% diagnostics_names){
-  #
-  #   print("secchi")
-  #
-  #   obs_date <- tibble::tibble(date = lubridate::as_date(full_time))
-  #
-  #   obs_secchi <- obs_long %>% dplyr::filter(variable == "secchi")
-  #
-  #   if(nrow(obs_secchi) > 0){
-  #     obs_curr <- dplyr::left_join(obs_date, obs_secchi, by = "date")
-  #     obs_curr <- obs_curr$value
-  #   }else{
-  #     obs_curr <- rep(NA, length(obs_date))
-  #   }
-  #
-  #   i <- which(diagnostics_names == "extc_coef")
-  #   ii <- which.min(abs(depths-1.0))
-  #   curr_var <- diagnostic_list[[i]]
-  #
-  #
-  #   mean_var <- array(NA, dim = c(length(full_time)))
-  #   upper_var <- array(NA, dim = c(length(full_time)))
-  #   lower_var <- array(NA,dim = c(length(full_time)))
-  #   for(j in 1:length(full_time)){
-  #     sechi <- 1.7 / curr_var[j,ii , ]
-  #     mean_var[j] <- mean(sechi, na.rm = TRUE)
-  #     upper_var[j] <- quantile(sechi, 0.1, na.rm = TRUE)
-  #     lower_var[j] <- quantile(sechi, 0.9, na.rm = TRUE)
-  #   }
-  #
-  #
-  #   curr_tibble <- tibble::tibble(date = lubridate::as_datetime(full_time),
-  #                                 curr_var = c(mean_var),
-  #                                 upper_var = c(upper_var),
-  #                                 lower_var = c(lower_var),
-  #                                 observed = unlist(obs_curr))
-  #
-  #   if(forecast_index > 0){
-  #     forecast_start_day <- full_time[forecast_index-1]
-  #     forecast_start_day_alpha <- 1.0
-  #   }else{
-  #     forecast_start_day <- dplyr::last(full_time)
-  #     forecast_start_day_alpha <- 0.0
-  #   }
-  #
-  #   p <- ggplot2::ggplot(curr_tibble, ggplot2::aes(x = date)) +
-  #     ggplot2::geom_ribbon(ggplot2::aes(ymin = lower_var, ymax = upper_var),
-  #                          alpha = 0.70,
-  #                          fill = "gray") +
-  #     ggplot2::geom_line(ggplot2::aes(y = curr_var), size = 0.5) +
-  #     ggplot2::scale_y_reverse() +
-  #     ggplot2::geom_vline(xintercept = forecast_start_day,
-  #                         alpha = forecast_start_day_alpha) +
-  #     ggplot2::geom_point(ggplot2::aes(y = observed), size = 1, color = "red") +
-  #     ggplot2::theme_light() +
-  #     ggplot2::labs(x = "Date", y = "Sechi depth (m)", title = "Sechi depth") +
-  #     ggplot2::theme(axis.text.x = ggplot2::element_text(angle = 90, size = 10))
-  #   print(p)
-  # }
+  if("extc_coef" %in% diagnostics_names){
+
+    print("secchi")
+
+    obs_date <- tibble::tibble(date = lubridate::as_date(full_time)) %>%
+      mutate(date = as.character(date))
+
+    obs_secchi <- obs_long %>% dplyr::filter(variable == "secchi") %>%
+      mutate(date = as.character(date))
+
+    if(nrow(obs_secchi) > 0){
+      obs_curr <- dplyr::left_join(obs_date, obs_secchi, by = "date")
+      obs_curr <- obs_curr$value
+    }else{
+      obs_curr <- rep(NA, length(obs_date))
+    }
+
+    i <- which(diagnostics_names == "extc_coef")
+    ii <- which.min(abs(depths-1.0))
+    curr_var <- diagnostic_list[[i]]
+
+
+    mean_var <- array(NA, dim = c(length(full_time)))
+    upper_var <- array(NA, dim = c(length(full_time)))
+    lower_var <- array(NA,dim = c(length(full_time)))
+    for(j in 1:length(full_time)){
+      sechi <- 1.7 / curr_var[j,ii , ]
+      mean_var[j] <- mean(sechi, na.rm = TRUE)
+      upper_var[j] <- quantile(sechi, 0.1, na.rm = TRUE)
+      lower_var[j] <- quantile(sechi, 0.9, na.rm = TRUE)
+    }
+
+
+    curr_tibble <- tibble::tibble(date = lubridate::as_datetime(full_time),
+                                  curr_var = c(mean_var),
+                                  upper_var = c(upper_var),
+                                  lower_var = c(lower_var),
+                                  observed = unlist(obs_curr))
+
+    if(forecast_index > 0){
+      forecast_start_day <- full_time[forecast_index-1]
+      forecast_start_day_alpha <- 1.0
+    }else{
+      forecast_start_day <- dplyr::last(full_time)
+      forecast_start_day_alpha <- 0.0
+    }
+
+    p <- ggplot2::ggplot(curr_tibble, ggplot2::aes(x = date)) +
+      ggplot2::geom_ribbon(ggplot2::aes(ymin = lower_var, ymax = upper_var),
+                           alpha = 0.70,
+                           fill = "gray") +
+      ggplot2::geom_line(ggplot2::aes(y = curr_var), size = 0.5) +
+      ggplot2::scale_y_reverse() +
+      ggplot2::geom_vline(xintercept = forecast_start_day,
+                          alpha = forecast_start_day_alpha) +
+      ggplot2::geom_point(ggplot2::aes(y = observed), size = 1, color = "red") +
+      ggplot2::theme_light() +
+      ggplot2::labs(x = "Date", y = "Sechi depth (m)", title = "Sechi depth") +
+      ggplot2::theme(axis.text.x = ggplot2::element_text(angle = 90, size = 10))
+    print(p)
+  }
 
   dev.off()
 
