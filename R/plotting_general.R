@@ -230,10 +230,10 @@ plotting_general <- function(file_name,
     print("secchi")
 
     obs_date <- tibble::tibble(date = lubridate::as_date(full_time)) %>%
-      mutate(date = as.character(date))
+      dplyr::mutate(date = as.character(date))
 
     obs_secchi <- obs_long %>% dplyr::filter(variable == "secchi") %>%
-      mutate(date = as.character(date))
+      dplyr::mutate(date = as.character(date))
 
     if(nrow(obs_secchi) > 0){
       obs_curr <- dplyr::left_join(obs_date, obs_secchi, by = "date")
