@@ -163,6 +163,6 @@ create_glm_inflow_outflow_files <- function(inflow_file_dir,
     }
   }
 
-  return(list(inflow_file_names = as.character(inflow_file_names),
-              outflow_file_names = as.character(outflow_file_names)))
+  return(list(inflow_file_names = as.character(gsub("\\\\", "/", inflow_file_names)),
+              outflow_file_names = as.character(gsub("\\\\", "/", outflow_file_names))))
 }
