@@ -449,6 +449,7 @@ run_da_forecast <- function(states_init,
     #assimilate new observations)
     if(i > 1){
 
+      #for(m in 1:nmembers){
       out <- parallel::parLapply(cl, 1:nmembers, function(m) {
       #out <- lapply(1:nmembers, function(m) { # Commented out for debugging
 
@@ -522,6 +523,7 @@ run_da_forecast <- function(states_init,
                                 include_wq = config$include_wq)
 
       })
+      #}
 
       # Loop through output and assign to matrix
       for(m in 1:nmembers) {

@@ -284,6 +284,7 @@ run_model <- function(i,
 
     if(!is.null(nc)){
       tallest_layer <- ncdf4::ncvar_get(nc, "NS")[1]
+      if(!is.na(tallest_layer)){
       if(tallest_layer > 1) {
         success <- TRUE
       } else {
@@ -291,6 +292,9 @@ run_model <- function(i,
         message("'output.nc' file generated but has one layer in the file. Re-running simulation...")
         success <- FALSE
       }
+    }else{
+      success <- FALSE
+    }
     }else{
       success <- FALSE
     }
