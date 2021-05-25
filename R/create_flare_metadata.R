@@ -33,7 +33,11 @@ create_flare_metadata <- function(file_name,
   forecast_iteration_id <- ncdf4::ncatt_get(nc, varid = 0)$forecast_iteration_id
   forecast_project_id <- ncdf4::ncatt_get(nc, varid = 0)$forecast_project_id
 
-  npars <- nrow(enkf_output$pars_config)
+  if(!is.null(enkf_output$pars_config)){
+    npars <- nrow(enkf_output$pars_config)
+  }else{
+    npars <- 0
+  }
   nstates <- dim(enkf_output$x)[3] - npars
 
   nmembers <- length(ncdf4::ncvar_get(nc, "ensemble"))
