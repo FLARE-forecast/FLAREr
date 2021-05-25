@@ -218,6 +218,14 @@ run_model <- function(i,
     update_glm_nml_list[[list_index]] <- unlist(outflow_file_name)
     update_glm_nml_names[list_index] <- "outflow_fl"
     list_index <- list_index + 1
+  } else {
+    update_glm_nml_list[[list_index]] <- 0
+    update_glm_nml_names[list_index] <- "num_inflows"
+    list_index <- list_index + 1
+
+    update_glm_nml_list[[list_index]] <- 0
+    update_glm_nml_names[list_index] <- "num_outlet"
+    list_index <- list_index + 1
   }
 
 

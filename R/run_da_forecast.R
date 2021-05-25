@@ -392,7 +392,11 @@ run_da_forecast <- function(states_init,
     setwd(working_directory)
 
     met_index <- rep(1:length(met_file_names), times = nmembers)
-    inflow_outflow_index <- rep(1:nrow(inflow_file_names), times = nmembers)
+    if(!is.null(ncol(inflow_file_names))) {
+      inflow_outflow_index <- rep(1:nrow(inflow_file_names), times = nmembers)
+    } else {
+      inflow_outflow_index <- NULL
+    }
 
     #Create array to hold GLM predictions for each ensemble
     x_star <- array(NA, dim = c(nmembers, nstates))
