@@ -203,7 +203,7 @@ run_da_forecast <- function(states_init,
     }else{
       x_init[m,1:(nstates * ndepths_modeled)] <- states_init[1, ,m]
     }
-    if(!is.null(pars_init) | npars == 0){
+    if(!is.null(pars_init) & npars > 0){
       x_init[m,(nstates * ndepths_modeled + 1):(nstates * ndepths_modeled + npars)] <- pars_init[, m]
     }
   }
