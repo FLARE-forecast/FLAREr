@@ -38,8 +38,10 @@ check_enkf_inputs <- function(states_init,
     stop("states_init has too many dimensions (should be 2)")
   }
 
-  if(dim(pars_init)[2] != dim(states_init)[3]){
-    stop("pars_init and states_init don't have same number of ensemble members")
+  if(!is.null(pars_init)){
+    if(dim(pars_init)[2] != dim(states_init)[3]){
+      stop("pars_init and states_init don't have same number of ensemble members")
+    }
   }
 
   if(nrow(model_sd) != nrow(states_config)){
