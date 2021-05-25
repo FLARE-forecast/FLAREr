@@ -467,7 +467,7 @@ run_da_forecast <- function(states_init,
           if(par_fit_method == "inflate" & da_method == "enkf"){
             curr_pars <- x[i - 1, m , (nstates+1):(nstates+ npars)]
           }else if(par_fit_method == "perturb" & da_method != "none"){
-            if(i > (hist_days + 1)){
+            if(i < (hist_days + 1)){
               curr_pars <- x[i - 1, m , (nstates+1):(nstates+ npars)] + rnorm(npars, mean = rep(0, npars), sd = pars_config$perturb_par)
             }else{
               curr_pars <- x[i - 1, m , (nstates+1):(nstates+ npars)]
