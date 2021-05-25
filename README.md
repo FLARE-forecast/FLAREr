@@ -5,7 +5,7 @@
 
 # FLAREr
 
-The [FLARE project](Forecasting Lake and Reservoir Ecosystems)(https://flare-forecast.org/) creates open-source software for flexible, scalable, robust, and near-real time iterative ecological forecasts in lakes and reservoirs.  It uses data assimilation to update the initial starting point for a forecast and the model parameters based a real-time statistical comparisons to observations.  It has been developed, tested, and evaluated for Falling  Creek Reservoir in Vinton,VA ([Thomas et al. 2020](https://agupubs.onlinelibrary.wiley.com/doi/abs/10.1029/2019WR026138)).
+The [FLARE project](Forecasting Lake and Reservoir Ecosystems)(https://flare-forecast.org/) creates open-source software for flexible, scalable, robust, and near-real time iterative ecological forecasts in lakes and reservoirs. It uses data assimilation to update the initial starting point for a forecast and the model parameters based a real-time statistical comparisons to observations. It has been developed, tested, and evaluated for Falling  Creek Reservoir in Vinton, VA ([Thomas et al. 2020](https://agupubs.onlinelibrary.wiley.com/doi/abs/10.1029/2019WR026138)).
 
 FLAREr is a set of R scripts that
 
@@ -14,7 +14,7 @@ FLAREr is a set of R scripts that
 * Processing and archiving forecast output
 * Visualizing forecast output
 
-FLARE uses the 1-D General Lake Model ([Hipsey et al. 2019](https://www.geosci-model-dev.net/12/473/2019/)) as the mechanistic process model that predicts hydrodynamics of the lake or reservoir.  For forecasts of water quality, it uses GLM with the Aquatic Ecosystem Dynamics library.   The binaries for GLM and GLM-AED are included in the FLARE code that is available on GitHub. FLARE requires GLM version 3.1 or higher.
+FLARE uses the 1-D General Lake Model ([Hipsey et al. 2019](https://www.geosci-model-dev.net/12/473/2019/)) as the mechanistic process model that predicts hydrodynamics of the lake or reservoir. For forecasts of water quality, it uses GLM with the Aquatic Ecosystem Dynamics library. The binaries for GLM and GLM-AED are included in the FLARE code that is available on GitHub. FLARE requires GLM version 3.1 or higher.
 
 More information about the GLM can be found here:
 
@@ -23,7 +23,7 @@ More information about the GLM can be found here:
 * [GLM on GitHub](https://github.com/AquaticEcoDynamics/GLM)
 * [AED on GitHub](https://github.com/AquaticEcoDynamics/libaed2)
 
-FLARE development has been supported by grants from National Science Foundation (CNS-1737424, DEB-1753639, EF-1702506, DBI-1933016, DEB-1926050)
+FLARE development has been supported by grants from the U.S. National Science Foundation (CNS-1737424, DBI-1933016, DBI-1933102)
 
 ## Installation
 
