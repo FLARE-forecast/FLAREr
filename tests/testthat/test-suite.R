@@ -227,7 +227,7 @@ test_that("EnKF can be run", {
   testthat::expect_true(file.exists(saved_file))
 
   #Create EML Metadata
-  FLAREr::create_flare_eml(file_name = saved_file,
+  FLAREr::create_flare_metadata(file_name = saved_file,
                           enkf_output)
   file_chk <- list.files(forecast_location, pattern = ".xml")
   testthat::expect_true(length(file_chk) > 0)
@@ -325,7 +325,7 @@ test_that("particle filter can be run", {
   testthat::expect_true(file.exists(saved_file))
 
   #Create EML Metadata
-  FLAREr::create_flare_eml(file_name = saved_file,
+  FLAREr::create_flare_metadata(file_name = saved_file,
                           enkf_output)
   file_chk <- list.files(forecast_location, pattern = ".xml")
   testthat::expect_true(length(file_chk) > 0)

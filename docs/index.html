@@ -57,7 +57,10 @@
       <a href="articles/flare-config-vignette.html">FLAREr configurations</a>
     </li>
     <li>
-      <a href="articles/flare-example-vignette.html">FLAREr-example-vignette</a>
+      <a href="articles/flare-example-vignette.html">FLAREr example</a>
+    </li>
+    <li>
+      <a href="articles/flare-workflow-vignette.html">Example Workflow</a>
     </li>
   </ul>
 </li>
@@ -79,11 +82,27 @@
 <div id="flarer" class="section level1">
 <div class="page-header"><h1 class="hasAnchor">
 <a href="#flarer" class="anchor"></a>FLAREr</h1></div>
-<p>The <a href="https://flare-forecast.org/">FLARE project</a> creates open-source software for flexible, scalable, robust, and near-real time iterative ecological forecasts in lakes and reservoirs.</p>
+<p>The <a href="Forecasting%20Lake%20and%20Reservoir%20Ecosystems">FLARE project</a>(<a href="https://flare-forecast.org/" class="uri">https://flare-forecast.org/</a>) creates open-source software for flexible, scalable, robust, and near-real time iterative ecological forecasts in lakes and reservoirs. It uses data assimilation to update the initial starting point for a forecast and the model parameters based a real-time statistical comparisons to observations. It has been developed, tested, and evaluated for Falling Creek Reservoir in Vinton,VA (<a href="https://agupubs.onlinelibrary.wiley.com/doi/abs/10.1029/2019WR026138">Thomas et al. 2020</a>).</p>
+<p>FLAREr is a set of R scripts that</p>
+<ul>
+<li>Generating the inputs and configuration files required by the General Lake Model (GLM)</li>
+<li>Applying data assimilation to GLM</li>
+<li>Processing and archiving forecast output</li>
+<li>Visualizing forecast output</li>
+</ul>
+<p>FLARE uses the 1-D General Lake Model (<a href="https://www.geosci-model-dev.net/12/473/2019/">Hipsey et al. 2019</a>) as the mechanistic process model that predicts hydrodynamics of the lake or reservoir. For forecasts of water quality, it uses GLM with the Aquatic Ecosystem Dynamics library. The binaries for GLM and GLM-AED are included in the FLARE code that is available on GitHub. FLARE requires GLM version 3.1 or higher.</p>
+<p>More information about the GLM can be found here:</p>
+<ul>
+<li><a href="https://aed.see.uwa.edu.au/research/models/GLM/index.html">GLM users guide</a></li>
+<li><a href="https://www.geosci-model-dev.net/12/473/2019/">GLM 3.0.0 manuscript</a></li>
+<li><a href="https://github.com/AquaticEcoDynamics/GLM">GLM on GitHub</a></li>
+<li><a href="https://github.com/AquaticEcoDynamics/libaed2">AED on GitHub</a></li>
+</ul>
+<p>FLARE development has been supported by grants from National Science Foundation (CNS-1737424, DEB-1753639, EF-1702506, DBI-1933016, DEB-1926050)</p>
 <div id="installation" class="section level2">
 <h2 class="hasAnchor">
 <a href="#installation" class="anchor"></a>Installation</h2>
-<p>FLARE uses the <a href="https://aed.see.uwa.edu.au/research/models/GLM/">General Lake Model (GLM)</a> for forecasting. You will need to download the necessary packages prior to running.</p>
+<p>You will need to download the necessary packages prior to running.</p>
 <pre><code><a href="https://remotes.r-lib.org/reference/install_github.html">remotes::install_github("FLARE-forecast/GLM3r")
 remotes::install_github("FLARE-forecast/FLAREr")
 </a></code></pre>
@@ -92,10 +111,15 @@ remotes::install_github("FLARE-forecast/FLAREr")
 <h2 class="hasAnchor">
 <a href="#use" class="anchor"></a>Use</h2>
 <p>FLAREr is a set of functions that address key steps in the forecasting workflow.</p>
+<div id="requires" class="section level3">
+<h3 class="hasAnchor">
+<a href="#requires" class="anchor"></a>Requires</h3>
+<p>User generated <em>in situ</em> observations, meteorology, and inflow/outflow in a specified format. See FLARE example vignette for format specification.</p>
+</div>
 <div id="set-up" class="section level3">
 <h3 class="hasAnchor">
 <a href="#set-up" class="anchor"></a>Set up</h3>
-<p><code><a href="reference/create_glm_inflow_outflow_files.html">create_glm_inflow_outflow_files()</a></code>:<br><code><a href="reference/create_obs_matrix.html">create_obs_matrix()</a></code>:<br><code>generate_glm_met_files.R()</code>:<br><code><a href="reference/generate_initial_conditions.html">generate_initial_conditions()</a></code>:<br><code><a href="reference/initiate_model_error.html">initiate_model_error()</a></code>:</p>
+<p><code><a href="reference/create_glm_inflow_outflow_files.html">create_glm_inflow_outflow_files()</a></code>:<br><code><a href="reference/create_obs_matrix.html">create_obs_matrix()</a></code>:<br><code><a href="reference/generate_glm_met_files.html">generate_glm_met_files()</a></code>:<br><code><a href="reference/generate_initial_conditions.html">generate_initial_conditions()</a></code>:<br><code><a href="reference/initiate_model_error.html">initiate_model_error()</a></code>:</p>
 </div>
 <div id="run" class="section level3">
 <h3 class="hasAnchor">
@@ -105,7 +129,7 @@ remotes::install_github("FLARE-forecast/FLAREr")
 <div id="processing" class="section level3">
 <h3 class="hasAnchor">
 <a href="#processing" class="anchor"></a>Processing</h3>
-<p><code>write_forecast_ncdf()</code>: write output in Ecological Forecasting Initative standards.<br><code><a href="reference/create_flare_eml.html">create_flare_eml()</a></code>: write metadata in Ecological Forecasting Initative standards.<br><code><a href="reference/plotting_general.html">plotting_general()</a></code>: generates a PDF with default visualizations.</p>
+<p><code><a href="reference/write_forecast_netcdf.html">write_forecast_netcdf()</a></code>: write output in Ecological Forecasting Initiative standards.<br><code><a href="reference/create_flare_metadata.html">create_flare_metadata()</a></code>: write metadata in Ecological Forecasting Initiative standards.<br><code><a href="reference/plotting_general.html">plotting_general()</a></code>: generates a PDF with default visualizations.</p>
 </div>
 </div>
 </div>
@@ -123,8 +147,7 @@ remotes::install_github("FLARE-forecast/FLAREr")
 <h2>Developers</h2>
 <ul class="list-unstyled">
 <li>R. Quinn Thomas <br><small class="roles"> Author, maintainer </small> <a href="https://orcid.org/0000-0003-1282-7825" target="orcid.widget" aria-label="ORCID"><span class="fab fa-orcid orcid" aria-hidden="true"></span></a> </li>
-<li>Vahid Daneshmand <br><small class="roles"> Author </small>  </li>
-<li>Tadhg Moore <br><small class="roles"> Author </small>  </li>
+<li><a href="authors.html">All authors...</a></li>
 </ul>
 </div>
 
@@ -140,7 +163,7 @@ remotes::install_github("FLARE-forecast/FLAREr")
 
 
       <footer><div class="copyright">
-  <p>Developed by R. Quinn Thomas, Vahid Daneshmand, Tadhg Moore.</p>
+  <p>Developed by R. Quinn Thomas.</p>
 </div>
 
 <div class="pkgdown">

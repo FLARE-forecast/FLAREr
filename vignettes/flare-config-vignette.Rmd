@@ -1,12 +1,8 @@
 ---
 title: "FLAREr configurations"
-output: html_document
----
----
-title: "FLAREr Configurations"
 output: rmarkdown::html_vignette
 vignette: >
-  %\VignetteIndexEntry{flare-config-vignette}
+  %\VignetteIndexEntry{FLAREr configurations}
   %\VignetteEngine{knitr::rmarkdown}
   %\VignetteEncoding{UTF-8}
 ---

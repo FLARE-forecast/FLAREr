@@ -203,7 +203,7 @@ run_da_forecast <- function(states_init,
     }else{
       x_init[m,1:(nstates * ndepths_modeled)] <- states_init[1, ,m]
     }
-    if(!is.null(pars_init) | npars == 0){
+    if(!is.null(pars_init) & npars > 0){
       x_init[m,(nstates * ndepths_modeled + 1):(nstates * ndepths_modeled + npars)] <- pars_init[, m]
     }
   }
@@ -453,6 +453,7 @@ run_da_forecast <- function(states_init,
     #assimilate new observations)
     if(i > 1){
 
+      #for(m in 1:nmembers){
       out <- parallel::parLapply(cl, 1:nmembers, function(m) {
       #out <- lapply(1:nmembers, function(m) { # Commented out for debugging
 
@@ -470,7 +471,7 @@ run_da_forecast <- function(states_init,
           if(par_fit_method == "inflate" & da_method == "enkf"){
             curr_pars <- x[i - 1, m , (nstates+1):(nstates+ npars)]
           }else if(par_fit_method == "perturb" & da_method != "none"){
-            if(i > (hist_days + 1)){
+            if(i < (hist_days + 1)){
               curr_pars <- x[i - 1, m , (nstates+1):(nstates+ npars)] + rnorm(npars, mean = rep(0, npars), sd = pars_config$perturb_par)
             }else{
               curr_pars <- x[i - 1, m , (nstates+1):(nstates+ npars)]
@@ -526,6 +527,7 @@ run_da_forecast <- function(states_init,
                                 include_wq = config$include_wq)
 
       })
+      #}
 
       # Loop through output and assign to matrix
       for(m in 1:nmembers) {
