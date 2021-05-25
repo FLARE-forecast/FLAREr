@@ -271,22 +271,18 @@ test_that("particle filter can be run", {
 
   # states_init = init$states
   # pars_init = init$pars
-  # aux_states_init = aux_states_init
+  # aux_states_init = init$aux_states_init
   # obs = obs
   # obs_sd = obs_config$obs_sd
   # model_sd = model_sd
   # working_directory = config$run_config$execute_location
-  # met_file_names = gsub("\\\\", "/", met_file_names)
-  # inflow_file_names = gsub("\\\\", "/", inflow_file_names)
-  # outflow_file_names = gsub("\\\\", "/", outflow_file_names)
-  # start_datetime = start_datetime
-  # end_datetime = end_datetime
-  # forecast_start_datetime = forecast_start_datetime
+  # met_file_names = (met_file_names)
+  # inflow_file_names = (inflow_file_names)
+  # outflow_file_names = (outflow_file_names)
   # config = config
   # pars_config = pars_config
   # states_config = states_config
   # obs_config = obs_config
-  # management = NULL
   # da_method = "pf"
   # par_fit_method = "perturb"
 
