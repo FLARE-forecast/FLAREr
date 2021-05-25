@@ -338,4 +338,80 @@ test_that("particle filter can be run", {
 
 })
 
+# EnKF ----
+test_that("EnKF can be run with NO inflows/outflows", {
+
+  # library(tidyverse)
+
+  template_folder <- system.file("data", package= "FLAREr")
+  temp_dir <- tempdir()
+  # dir.create("example")
+  file.copy(from = template_folder, to = temp_dir, recursive = TRUE)
+
+  # test_location <- "C:\\Users\\mooret\\Desktop\\FLARE\\flare-1\\inst\\data"
+  test_location <- file.path(temp_dir, "data")
+
+  source(file.path(test_location, "test_enkf_prep.R"))
+
+  obs <- FLAREr::create_obs_matrix(cleaned_observations_file_long,
+                                   obs_config,
+                                   config)
+
+  init <- FLAREr::generate_initial_conditions(states_config,
+                                              obs_config,
+                                              pars_config,
+                                              obs,
+                                              config)
+
+  met_file_names = gsub("\\\\", "/", met_file_names)
+  inflow_file_names = gsub("\\\\", "/", inflow_file_names)
+  outflow_file_names = gsub("\\\\", "/", outflow_file_names)
+
+  #Run EnKF
+  enkf_output <- FLAREr::run_da_forecast(states_init = init$states,
+                                         pars_init = init$pars,
+                                         aux_states_init = init$aux_states_init,
+                                         obs = obs,
+                                         obs_sd = obs_config$obs_sd,
+                                         model_sd = model_sd,
+                                         working_directory = config$run_config$execute_location,
+                                         met_file_names = (met_file_names),
+                                         inflow_file_names = NULL,
+                                         outflow_file_names = NULL,
+                                         config = config,
+                                         pars_config = pars_config,
+                                         states_config = states_config,
+                                         obs_config = obs_config
+  )
+
+  #Load in pre-prepared output
+  samp_enkf_output <- readRDS(file.path(test_location, "enkf_output.RDS"))
+
+  testthat::expect_true(is.list(enkf_output))
+  chk <- lapply(1:length(enkf_output), function(x) {
+    class(enkf_output[[x]]) == class(samp_enkf_output[[x]])
+
+  })
+  testthat::expect_true(any(unlist(chk)))
+
+  # Save forecast
+  saved_file <- FLAREr::write_forecast_netcdf(enkf_output,
+                                              forecast_location = config$run_config$forecast_location)
+  testthat::expect_true(file.exists(saved_file))
+
+  #Create EML Metadata
+  FLAREr::create_flare_metadata(file_name = saved_file,
+                                enkf_output)
+  file_chk <- list.files(forecast_location, pattern = ".xml")
+  testthat::expect_true(length(file_chk) > 0)
+
+  FLAREr::plotting_general(file_name = saved_file,
+                           qaqc_location = qaqc_data_location)
+  file_chk <- list.files(forecast_location, pattern = ".pdf")
+  testthat::expect_true(length(file_chk) > 0)
+
+
+})
+
+
 # end
