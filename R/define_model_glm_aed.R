@@ -373,7 +373,8 @@ run_model <- function(i,
               mixing_vars_end = GLM_temp_wq_out$mixing_vars,
               salt_end = salt_end,
               diagnostics_end  = diagnostics,
-              model_internal_depths  = glm_depths_end))
+              model_internal_depths  = glm_depths_end,
+              curr_pars = curr_pars))
 }
 
 #' @title Download and Downscale NOAA GEFS for a single site

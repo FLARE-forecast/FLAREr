@@ -157,22 +157,22 @@
 #'
 
 run_da_forecast <- function(states_init,
-                            pars_init = NULL,
-                            aux_states_init,
-                            obs,
-                            obs_sd,
-                            model_sd,
-                            working_directory,
-                            met_file_names,
-                            inflow_file_names = NULL,
-                            outflow_file_names = NULL,
-                            config,
-                            pars_config = NULL,
-                            states_config,
-                            obs_config,
-                            management = NULL,
-                            da_method = "enkf",
-                            par_fit_method = "inflate"){
+                              pars_init = NULL,
+                              aux_states_init,
+                              obs,
+                              obs_sd,
+                              model_sd,
+                              working_directory,
+                              met_file_names,
+                              inflow_file_names = NULL,
+                              outflow_file_names = NULL,
+                              config,
+                              pars_config = NULL,
+                              states_config,
+                              obs_config,
+                              management = NULL,
+                              da_method = "enkf",
+                              par_fit_method = "inflate"){
 
 
 
@@ -233,14 +233,14 @@ run_da_forecast <- function(states_init,
   states_config$wq_end <- wq_end
 
   FLAREr:::check_enkf_inputs(states_init,
-                             pars_init,
-                             obs,
-                             psi,
-                             model_sd,
-                             config,
-                             pars_config,
-                             states_config,
-                             obs_config)
+                            pars_init,
+                            obs,
+                            psi,
+                            model_sd,
+                            config,
+                            pars_config,
+                            states_config,
+                            obs_config)
 
   start_datetime <- lubridate::as_datetime(config$run_config$start_datetime)
   if(is.na(config$run_config$forecast_start_datetime)){
@@ -305,8 +305,8 @@ run_da_forecast <- function(states_init,
   num_phytos <- length(which(stringr::str_detect(states_config$state_names,"PHY_") & !stringr::str_detect(states_config$state_names,"_IP") & !stringr::str_detect(states_config$state_names,"_IN")))
 
   full_time_char <- strftime(full_time,
-                             format="%Y-%m-%d %H:%M",
-                             tz = "UTC")
+                                   format="%Y-%m-%d %H:%M",
+                                   tz = "UTC")
 
   x_prior <- array(NA, dim = c(nsteps, nmembers, nstates + npars))
 
@@ -327,10 +327,10 @@ run_da_forecast <- function(states_init,
       dir.create(file.path(working_directory, "1"), showWarnings = FALSE)
     }
     FLAREr:::set_up_model(config,
-                          ens_working_directory = file.path(working_directory,"1"),
-                          state_names = states_config$state_names,
-                          inflow_file_names = inflow_file_names,
-                          outflow_file_names = outflow_file_names)
+                         ens_working_directory = file.path(working_directory,"1"),
+                         state_names = states_config$state_names,
+                         inflow_file_names = inflow_file_names,
+                         outflow_file_names = outflow_file_names)
   }else{
     lapply(1:nmembers, function(m){
       if(!dir.exists(file.path(working_directory, m))){
@@ -340,10 +340,10 @@ run_da_forecast <- function(states_init,
         dir.create(file.path(working_directory, m), showWarnings = FALSE)
       }
       FLAREr:::set_up_model(config,
-                            ens_working_directory = file.path(working_directory,m),
-                            state_names = states_config$state_names,
-                            inflow_file_names = inflow_file_names,
-                            outflow_file_names = outflow_file_names)
+                           ens_working_directory = file.path(working_directory,m),
+                           state_names = states_config$state_names,
+                           inflow_file_names = inflow_file_names,
+                           outflow_file_names = outflow_file_names)
     })
   }
 
@@ -401,6 +401,7 @@ run_da_forecast <- function(states_init,
     #Create array to hold GLM predictions for each ensemble
     x_star <- array(NA, dim = c(nmembers, nstates))
     x_corr <- array(NA, dim = c(nmembers, nstates))
+    curr_pars <- array(NA, dim = c(nmembers, npars))
 
     #Matrix to store calculated ensemble specific deviations and innovations
     dit <- array(NA, dim = c(nmembers, nstates))
@@ -455,7 +456,7 @@ run_da_forecast <- function(states_init,
 
       #for(m in 1:nmembers){
       out <- parallel::parLapply(cl, 1:nmembers, function(m) {
-        #out <- lapply(1:nmembers, function(m) { # Commented out for debugging
+      #out <- lapply(1:nmembers, function(m) { # Commented out for debugging
 
         if(config$ncore == 1){
           ens_dir_index <- 1
@@ -469,15 +470,15 @@ run_da_forecast <- function(states_init,
 
         if(npars > 0){
           if(par_fit_method == "inflate" & da_method == "enkf"){
-            curr_pars <- x[i - 1, m , (nstates+1):(nstates+ npars)]
+            curr_pars_ens <- x[i - 1, m , (nstates+1):(nstates+ npars)]
           }else if(par_fit_method == "perturb" & da_method != "none"){
             if(i < (hist_days + 1)){
-              curr_pars <- x[i - 1, m , (nstates+1):(nstates+ npars)] + rnorm(npars, mean = rep(0, npars), sd = pars_config$perturb_par)
+              curr_pars_ens <- x[i - 1, m , (nstates+1):(nstates+ npars)] + rnorm(npars, mean = rep(0, npars), sd = pars_config$perturb_par)
             }else{
-              curr_pars <- x[i - 1, m , (nstates+1):(nstates+ npars)]
+              curr_pars_ens <- x[i - 1, m , (nstates+1):(nstates+ npars)]
             }
           }else if(da_method == "none"){
-            curr_pars <- x[i - 1, m , (nstates+1):(nstates+ npars)]
+            curr_pars_ens <- x[i - 1, m , (nstates+1):(nstates+ npars)]
           }else{
             message("parameter fitting method not supported.  inflate or perturb are supported. only inflate is supported for enkf")
 
@@ -493,38 +494,38 @@ run_da_forecast <- function(states_init,
         }
 
         out <-FLAREr:::run_model(i,
-                                 m,
-                                 mixing_vars_start = mixing_vars[,i-1 , m],
-                                 curr_start,
-                                 curr_stop,
-                                 par_names,
-                                 curr_pars,
-                                 working_directory = file.path(working_directory, ens_dir_index),
-                                 par_nml,
-                                 num_phytos,
-                                 glm_depths_start = model_internal_depths[i-1, ,m ],
-                                 lake_depth_start = lake_depth[i-1, m],
-                                 x_start = x[i-1, m, ],
-                                 full_time,
-                                 wq_start = states_config$wq_start,
-                                 wq_end = states_config$wq_end,
-                                 management = management,
-                                 hist_days,
-                                 modeled_depths = config$modeled_depths,
-                                 ndepths_modeled,
-                                 curr_met_file,
-                                 inflow_file_name = inflow_file_name,
-                                 outflow_file_name = outflow_file_name,
-                                 glm_output_vars = glm_output_vars,
-                                 diagnostics_names = config$diagnostics_names,
-                                 npars,
-                                 num_wq_vars,
-                                 snow_ice_thickness_start = snow_ice_thickness[, i-1, m ],
-                                 avg_surf_temp_start = avg_surf_temp[i-1, m],
-                                 salt_start = salt[i-1, , m],
-                                 nstates,
-                                 state_names = states_config$state_names,
-                                 include_wq = config$include_wq)
+                                m,
+                                mixing_vars_start = mixing_vars[,i-1 , m],
+                                curr_start,
+                                curr_stop,
+                                par_names,
+                                curr_pars = curr_pars_ens,
+                                working_directory = file.path(working_directory, ens_dir_index),
+                                par_nml,
+                                num_phytos,
+                                glm_depths_start = model_internal_depths[i-1, ,m ],
+                                lake_depth_start = lake_depth[i-1, m],
+                                x_start = x[i-1, m, ],
+                                full_time,
+                                wq_start = states_config$wq_start,
+                                wq_end = states_config$wq_end,
+                                management = management,
+                                hist_days,
+                                modeled_depths = config$modeled_depths,
+                                ndepths_modeled,
+                                curr_met_file,
+                                inflow_file_name = inflow_file_name,
+                                outflow_file_name = outflow_file_name,
+                                glm_output_vars = glm_output_vars,
+                                diagnostics_names = config$diagnostics_names,
+                                npars,
+                                num_wq_vars,
+                                snow_ice_thickness_start = snow_ice_thickness[, i-1, m ],
+                                avg_surf_temp_start = avg_surf_temp[i-1, m],
+                                salt_start = salt[i-1, , m],
+                                nstates,
+                                state_names = states_config$state_names,
+                                include_wq = config$include_wq)
 
       })
       #}
@@ -539,6 +540,8 @@ run_da_forecast <- function(states_init,
         diagnostics[, i, , m] <- out[[m]]$diagnostics_end
         model_internal_depths[i, ,m] <- out[[m]]$model_internal_depths
         salt[i, , m]  <- out[[m]]$salt_end
+        curr_pars[m, ] <- out[[m]]$curr_pars
+
 
         #Add process noise
         q_v[] <- NA
@@ -569,7 +572,7 @@ run_da_forecast <- function(states_init,
       }
 
       if(npars > 0){
-        pars_corr <- x[i - 1, , (nstates + 1):(nstates+ npars)]
+        pars_corr <- curr_pars
         if(npars == 1){
           pars_corr <- matrix(pars_corr,nrow = length(pars_corr),ncol = 1)
         }
@@ -580,7 +583,7 @@ run_da_forecast <- function(states_init,
       x_star <- x[i, ,1:nstates]
       x_corr <- x_star
       if(npars > 0){
-        pars_corr <- x[i, , (nstates + 1):(nstates+ npars)]
+        pars_corr <- curr_pars
         if(npars == 1){
           pars_corr <- matrix(pars_corr,nrow = length(pars_corr),ncol = 1)
         }
@@ -779,7 +782,7 @@ run_da_forecast <- function(states_init,
         sample <- sample.int(nmembers, replace = TRUE, prob = exp(LL))
 
         if(npars > 0){
-          x[i, , ] <- cbind(x_corr, pars_star)[sample, ]
+        x[i, , ] <- cbind(x_corr, pars_star)[sample, ]
         }else{
           x[i, , ] <- cbind(x_corr)[sample, ]
         }
