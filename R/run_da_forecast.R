@@ -483,6 +483,8 @@ run_da_forecast <- function(states_init,
             message("parameter fitting method not supported.  inflate or perturb are supported. only inflate is supported for enkf")
 
           }
+        }else{
+          curr_pars_ens <- NULL
         }
 
         if(!is.null(ncol(inflow_file_names))){
@@ -659,39 +661,39 @@ run_da_forecast <- function(states_init,
       }
       zt <- zt[which(!is.na(zt))]
 
-      if(da_method == "enkf"){
+      #Assign which states have obs in the time step
+      h <- matrix(0, nrow = length(obs_sd) * ndepths_modeled, ncol = nstates)
 
-        #Assign which states have obs in the time step
-        h <- matrix(0, nrow = length(obs_sd) * ndepths_modeled, ncol = nstates)
-
-        index <- 0
-        for(k in 1:((nstates/ndepths_modeled))){
-          for(j in 1:ndepths_modeled){
-            index <- index + 1
-            if(!is.na(dplyr::first(states_config$states_to_obs[[k]]))){
-              for(jj in 1:length(states_config$states_to_obs[[k]])){
-                if(!is.na((obs[states_config$states_to_obs[[k]][jj], i, j]))){
-                  states_to_obs_index <- states_config$states_to_obs[[k]][jj]
-                  index2 <- (states_to_obs_index - 1) * ndepths_modeled + j
-                  h[index2,index] <- states_config$states_to_obs_mapping[[k]][jj]
-                }
+      index <- 0
+      for(k in 1:((nstates/ndepths_modeled))){
+        for(j in 1:ndepths_modeled){
+          index <- index + 1
+          if(!is.na(dplyr::first(states_config$states_to_obs[[k]]))){
+            for(jj in 1:length(states_config$states_to_obs[[k]])){
+              if(!is.na((obs[states_config$states_to_obs[[k]][jj], i, j]))){
+                states_to_obs_index <- states_config$states_to_obs[[k]][jj]
+                index2 <- (states_to_obs_index - 1) * ndepths_modeled + j
+                h[index2,index] <- states_config$states_to_obs_mapping[[k]][jj]
               }
             }
           }
         }
+      }
 
-        z_index <- c()
-        for(j in 1:nrow(h)){
-          if(sum(h[j, ]) > 0){
-            z_index <- c(z_index, j)
-          }
+      z_index <- c()
+      for(j in 1:nrow(h)){
+        if(sum(h[j, ]) > 0){
+          z_index <- c(z_index, j)
         }
+      }
 
-        h <- h[z_index, ]
+      h <- h[z_index, ]
 
-        if(!is.matrix(h)){
-          h <- t(as.matrix(h))
-        }
+      if(!is.matrix(h)){
+        h <- t(as.matrix(h))
+      }
+
+      if(da_method == "enkf"){
 
         #Extract the data uncertainity for the data
         #types present during the time-step
@@ -774,9 +776,11 @@ run_da_forecast <- function(states_init,
 
       }else if(da_method == "pf"){
 
+        obs_states <- t(h %*% t(x_corr))
+
         LL <- rep(NA, length(nmembers))
         for(m in 1:nmembers){
-          LL[m] <- sum(dnorm(zt, mean = x_corr[m,z_index], sd = psi[z_index], log = TRUE))
+          LL[m] <- sum(dnorm(zt, mean = obs_states[m, ], sd = psi[z_index], log = TRUE))
         }
 
         sample <- sample.int(nmembers, replace = TRUE, prob = exp(LL))
