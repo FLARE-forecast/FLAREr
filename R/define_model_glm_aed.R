@@ -139,21 +139,21 @@ run_model <- function(i,
     if(simulate_sss){
       if(is.na(management$specified_sss_inflow_file)){
         FLAREr:::create_sss_input_output(x = x_start,
-                                        i,
-                                        m,
-                                        full_time,
-                                        working_directory,
-                                        wq_start,
-                                        management$management_input,
-                                        hist_days,
-                                        management$forecast_sss_on,
-                                        management$sss_depth,
-                                        management$use_specified_sss,
-                                        state_names,
-                                        modeled_depths = modeled_depths,
-                                        forecast_sss_flow = management$forecast_sss_flow,
-                                        forecast_sss_oxy = management$forecast_sss_oxy,
-                                        salt = salt_start)
+                                         i,
+                                         m,
+                                         full_time,
+                                         working_directory,
+                                         wq_start,
+                                         management$management_input,
+                                         hist_days,
+                                         management$forecast_sss_on,
+                                         management$sss_depth,
+                                         management$use_specified_sss,
+                                         state_names,
+                                         modeled_depths = modeled_depths,
+                                         forecast_sss_flow = management$forecast_sss_flow,
+                                         forecast_sss_oxy = management$forecast_sss_oxy,
+                                         salt = salt_start)
       }else{
         file.copy(file.path(working_directory, management$specified_sss_inflow_file), paste0(working_directory,"/sss_inflow.csv"))
         if(!is.na(management$specified_sss_outflow_file)){
@@ -230,22 +230,22 @@ run_model <- function(i,
 
 
   FLAREr:::update_nml(var_list = update_glm_nml_list,
-                     var_name_list = update_glm_nml_names,
-                     working_directory,
-                     nml = "glm3.nml")
+                      var_name_list = update_glm_nml_names,
+                      working_directory,
+                      nml = "glm3.nml")
 
   if(list_index_aed > 1){
     FLAREr:::update_nml(update_aed_nml_list,
-                       update_aed_nml_names,
-                       working_directory,
-                       "aed2.nml")
+                        update_aed_nml_names,
+                        working_directory,
+                        "aed2.nml")
   }
 
   if(list_index_phyto > 1){
     FLAREr:::update_nml(update_phyto_nml_list,
-                       update_phyto_nml_names,
-                       working_directory,
-                       "aed2_phyto_pars.nml")
+                        update_phyto_nml_names,
+                        working_directory,
+                        "aed2_phyto_pars.nml")
   }
 
   #if(ncol(as.matrix(inflow_file_names)) == 2){
@@ -266,7 +266,7 @@ run_model <- function(i,
   pass <- FALSE
   num_reruns <- 0
 
-  if(i == 2 & m == 1){
+  if(i == 2 & m == 1 & debug){
     file.copy(from = paste0(working_directory, "/", "glm3.nml"), #GLM SPECIFIC
               to = paste0(working_directory, "/", "glm3_initial.nml"),
               overwrite = TRUE) #GLM SPECIFIC
@@ -278,36 +278,46 @@ run_model <- function(i,
     if(machine %in% c("unix", "mac", "windows")){
       GLM3r::run_glm(sim_folder = working_directory, verbose = FALSE)
     }else{
-      print("Machine not identified")
+      message("Machine not identified")
       stop()
     }
 
-    nc <- tryCatch(ncdf4::nc_open(paste0(working_directory, "/output.nc")),
-                   error = function(e){
-                     warning(paste(e$message, "error in output.nc regenration"),
-                             call. = FALSE)
-                     return(NULL)
-                   },
-                   finally = NULL)
+    if(file.exists(paste0(working_directory, "/output.nc"))){
 
-    if(!is.null(nc)){
-      tallest_layer <- ncdf4::ncvar_get(nc, "NS")[1]
-      if(!is.na(tallest_layer)){
-      if(tallest_layer > 1) {
-        success <- TRUE
-      } else {
-        # Catch for if the output has more than one layer
-        message("'output.nc' file generated but has one layer in the file. Re-running simulation...")
+      nc <- tryCatch(ncdf4::nc_open(paste0(working_directory, "/output.nc")),
+                     error = function(e){
+                       warning(paste(e$message, "error in output.nc regenration"),
+                               call. = FALSE)
+                       return(NULL)
+                     },
+                     finally = NULL)
+
+      if(!is.null(nc)){
+        tallest_layer <- ncdf4::ncvar_get(nc, "NS")[1]
+        ncdf4::nc_close(nc)
+        if(!is.na(tallest_layer)){
+          if(tallest_layer > 1) {
+            success <- TRUE
+          } else {
+            # Catch for if the output has more than one layer
+            message("'output.nc' file generated but has one layer in the file. Re-running simulation...")
+            success <- FALSE
+          }
+        }else{
+          message("'output.nc' file generated but has NA for the layer in the file. Re-running simulation...")
+
+          success <- FALSE
+        }
+      }else{
+        message("'output.nc' file generated but has NA for the layer in the file. Re-running simulation...")
         success <- FALSE
       }
     }else{
-      success <- FALSE
-    }
-    }else{
+      message("'output.nc' file not generated. Re-running simulation...")
       success <- FALSE
     }
 
-    ncdf4::nc_close(nc)
+
 
     if(success){
 
@@ -315,11 +325,11 @@ run_model <- function(i,
       output_vars_no_depth <- NA
 
       GLM_temp_wq_out <-  FLAREr:::get_glm_nc_var_all_wq(ncFile = "/output.nc",
-                                                        working_dir = working_directory,
-                                                        z_out = modeled_depths,
-                                                        vars_depth = output_vars_multi_depth,
-                                                        vars_no_depth = output_vars_no_depth,
-                                                        diagnostic_vars = diagnostics_names)
+                                                         working_dir = working_directory,
+                                                         z_out = modeled_depths,
+                                                         vars_depth = output_vars_multi_depth,
+                                                         vars_no_depth = output_vars_no_depth,
+                                                         diagnostic_vars = diagnostics_names)
 
       if(!debug){
         unlink(paste0(working_directory, "/output.nc"))
@@ -332,7 +342,6 @@ run_model <- function(i,
       glm_depths_tmp <- c(GLM_temp_wq_out$depths_enkf,GLM_temp_wq_out$lake_depth)
 
       glm_depths_mid <- glm_depths_tmp[1:(length(glm_depths_tmp)-1)] + diff(glm_depths_tmp)/2
-
 
       x_star_end[1:ndepths_modeled] <- approx(glm_depths_mid,glm_temps, modeled_depths, rule = 2)$y
 
@@ -361,7 +370,7 @@ run_model <- function(i,
     }
     num_reruns <- num_reruns + 1
     if(num_reruns > 1000){
-      stop(paste0("Too many re-runs (> 1000) due to NaN values in output"))
+      stop(paste0("Too many re-runs (> 1000) due to issues generating output"))
     }
 
   }

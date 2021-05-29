@@ -455,8 +455,8 @@ run_da_forecast <- function(states_init,
     if(i > 1){
 
       #for(m in 1:nmembers){
-      out <- parallel::parLapply(cl, 1:nmembers, function(m) {
-      #out <- lapply(1:nmembers, function(m) { # Commented out for debugging
+      #out <- parallel::parLapply(cl, 1:nmembers, function(m) {
+      out <- lapply(1:nmembers, function(m) { # Commented out for debugging
 
         if(config$ncore == 1){
           ens_dir_index <- 1
@@ -776,7 +776,9 @@ run_da_forecast <- function(states_init,
 
       }else if(da_method == "pf"){
 
+
         obs_states <- t(h %*% t(x_corr))
+
 
         LL <- rep(NA, length(nmembers))
         for(m in 1:nmembers){
