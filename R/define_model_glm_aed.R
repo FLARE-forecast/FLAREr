@@ -265,6 +265,7 @@ run_model <- function(i,
   #Necessary due to random Nan in AED output
   pass <- FALSE
   num_reruns <- 0
+  verbose <- FALSE
 
   if(i == 2 & m == 1 & debug){
     file.copy(from = paste0(working_directory, "/", "glm3.nml"), #GLM SPECIFIC
@@ -276,7 +277,7 @@ run_model <- function(i,
     unlink(paste0(working_directory, "/output.nc"))
 
     if(machine %in% c("unix", "mac", "windows")){
-      GLM3r::run_glm(sim_folder = working_directory, verbose = FALSE)
+      GLM3r::run_glm(sim_folder = working_directory, verbose = verbose)
     }else{
       message("Machine not identified")
       stop()
@@ -302,19 +303,22 @@ run_model <- function(i,
             # Catch for if the output has more than one layer
             message("'output.nc' file generated but has one layer in the file. Re-running simulation...")
             success <- FALSE
+            verbose <- TRUE
           }
         }else{
           message("'output.nc' file generated but has NA for the layer in the file. Re-running simulation...")
-
           success <- FALSE
+          verbose <- TRUE
         }
       }else{
         message("'output.nc' file generated but has NA for the layer in the file. Re-running simulation...")
         success <- FALSE
+        verbose <- TRUE
       }
     }else{
       message("'output.nc' file not generated. Re-running simulation...")
       success <- FALSE
+      verbose <- TRUE
     }
 
 
