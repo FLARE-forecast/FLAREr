@@ -99,11 +99,11 @@ plotting_general <- function(file_name,
     }
 
     curr_tibble <- tibble::tibble(date = lubridate::as_datetime(date),
-                                  forecast_mean = c(mean_var),
-                                  forecast_sd = c(sd_var),
-                                  forecast_upper_95 = c(upper_var),
-                                  forecast_lower_95 = c(lower_var),
-                                  observed = obs_curr,
+                                  forecast_mean = round(c(mean_var),4),
+                                  forecast_sd = round(c(sd_var),4),
+                                  forecast_upper_95 = round(c(upper_var),4),
+                                  forecast_lower_95 = tound(c(lower_var),4),
+                                  observed = round(obs_curr,4),
                                   depth = rep(depths, length(full_time)),
                                   state = state_names[i],
                                   forecast_start_day = forecast_start_day) %>%
