@@ -40,10 +40,10 @@ create_obs_matrix <- function(cleaned_observations_file_long,
          Windows = { machine <- "windows"})
     if(machine == "windows") {
       cl <- parallel::makeCluster(config$ncore, setup_strategy = "sequential")
-      parallel::clusterEvalQ(cl, library("tidyverse"))
+      parallel::clusterEvalQ(cl,library(magrittr))
     } else {
       cl <- parallel::makeCluster(config$ncore, setup_strategy = "sequential")
-      parallel::clusterEvalQ(cl, library("tidyverse"))
+      parallel::clusterEvalQ(cl,library(magrittr))
     }
     # Close parallel sockets on exit even if function is crashed or canceled
     on.exit({

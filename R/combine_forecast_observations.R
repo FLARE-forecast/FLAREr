@@ -154,10 +154,10 @@ combine_forecast_observations <- function(file_name, qaqc_location,  extra_histo
          Windows = { machine <- "windows"})
   if(machine == "windows") {
     cl <- parallel::makeCluster(ncore, setup_strategy = "sequential")
-    parallel::clusterEvalQ(cl, library("tidyverse"))
+    parallel::clusterEvalQ(cl,library(magrittr))
   } else {
     cl <- parallel::makeCluster(ncore, setup_strategy = "sequential")
-    parallel::clusterEvalQ(cl, library("tidyverse"))
+    parallel::clusterEvalQ(cl,library(magrittr))
   }
   # Close parallel sockets on exit even if function is crashed or cancelled
   on.exit({
