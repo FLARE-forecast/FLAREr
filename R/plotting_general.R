@@ -68,9 +68,11 @@ plotting_general <- function(file_name,
     mean_var <- array(NA, dim = c(length(depths), length(full_time)))
     upper_var <- array(NA, dim = c(length(depths), length(full_time)))
     lower_var <- array(NA,dim = c(length(depths), length(full_time)))
+    sd_var <- array(NA,dim = c(length(depths), length(full_time)))
     for(j in 1:length(full_time)){
       for(ii in 1:length(depths)){
         mean_var[ii, j] <- mean(curr_var[j,ii , ], na.rm = TRUE)
+        sd_var[ii, j] <- sd(curr_var[j,ii , ], na.rm = TRUE)
         upper_var[ii, j] <- quantile(curr_var[j,ii , ], 0.1, na.rm = TRUE)
         lower_var[ii, j] <- quantile(curr_var[j,ii , ], 0.9, na.rm = TRUE)
       }
@@ -98,6 +100,7 @@ plotting_general <- function(file_name,
 
     curr_tibble <- tibble::tibble(date = lubridate::as_datetime(date),
                                   forecast_mean = c(mean_var),
+                                  forecast_sd = c(sd_var),
                                   forecast_upper_95 = c(upper_var),
                                   forecast_lower_95 = c(lower_var),
                                   observed = obs_curr,
