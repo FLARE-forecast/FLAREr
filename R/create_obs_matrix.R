@@ -33,7 +33,30 @@ create_obs_matrix <- function(cleaned_observations_file_long,
                                                                                variable = readr::col_character()))
 
   obs_list <- list()
-  for(i in 1:length(obs_config$state_names_obs)){
+
+  switch(Sys.info() [["sysname"]],
+         Linux = { machine <- "unix" },
+         Darwin = { machine <- "mac" },
+         Windows = { machine <- "windows"})
+    if(machine == "windows") {
+      cl <- parallel::makeCluster(config$ncore, setup_strategy = "sequential")
+      parallel::clusterEvalQ(cl, library("tidyverse"))
+    } else {
+      cl <- parallel::makeCluster(config$ncore, setup_strategy = "sequential")
+      parallel::clusterEvalQ(cl, library("tidyverse"))
+    }
+    # Close parallel sockets on exit even if function is crashed or canceled
+    on.exit({
+      tryCatch({parallel::stopCluster(cl)},
+               error = function(e) {
+                 return(NA)
+               })
+    })
+
+    parallel::clusterExport(cl, varlist = list("obs_config", "full_time", "config", "d"),
+                            envir = environment())
+
+  obs_list <- parallel::parLapply(cl, 1:length(obs_config$state_names_obs), function(i) {
     message("Extracting ",obs_config$target_variable[i])
 
     obs_tmp <- array(NA,dim = c(length(full_time),length(config$modeled_depths)))
@@ -65,9 +88,11 @@ create_obs_matrix <- function(cleaned_observations_file_long,
         }
         if(nrow(d1) >= 1){
           if(nrow(d1) > 1){
-            warning("There are multiple observations for ", obs_config$target_variable[i], "\nUsing the first observation")
+            warning("There are multiple observations for ", obs_config$target_variable[i], " at depth ",config$modeled_depths[j],"\nUsing the mean")
+            obs_tmp[k,j] <- mean(d1$value, na.rm = TRUE)
+          }else{
+          obs_tmp[k,j] <- d1$value
           }
-          obs_tmp[k,j] <- d1$value[1]
         }
       }
     }
@@ -77,8 +102,8 @@ create_obs_matrix <- function(cleaned_observations_file_long,
       warning("All values are NA for ", obs_config$target_variable[i])
     }
 
-    obs_list[[i]] <- obs_tmp
-  }
+    return(obs_tmp)
+  })
 
   ####################################################
   #### STEP 7: CREATE THE Z ARRAY (OBSERVATIONS x TIME)

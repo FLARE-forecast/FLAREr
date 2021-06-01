@@ -12,13 +12,16 @@
 ##'
 
 plotting_general <- function(file_name,
-                             qaqc_location){
+                             qaqc_location,
+                             ncore = 1,
+                             plot_profile = TRUE){
 
   pdf_file_name <- paste0(tools::file_path_sans_ext(file_name),".pdf")
 
   output <- FLAREr::combine_forecast_observations(file_name,
                                 qaqc_location,
-                                extra_historical_days = 0)
+                                extra_historical_days = 0,
+                                ncore = ncore)
   obs <- output$obs
   full_time_extended <- output$full_time_extended
   diagnostic_list <- output$diagnostic_list
@@ -110,6 +113,8 @@ plotting_general <- function(file_name,
       ggplot2::theme(axis.text.x = ggplot2::element_text(angle = 90, size = 10))
     print(p)
 
+    if(plot_profile){
+
     p <- ggplot2::ggplot(curr_tibble, ggplot2::aes(y = depth, x = curr_var)) +
       ggplot2::facet_wrap(~factor(date)) +
       ggplot2::geom_ribbon(ggplot2::aes(xmin = upper_var, xmax = lower_var),
@@ -121,6 +126,7 @@ plotting_general <- function(file_name,
       ggplot2::theme_light() +
       ggplot2::labs(y = "Depth(m)", x = state_names[i], title = state_names[i])
     print(p)
+    }
   }
 
   if(length(par_names) > 0){
@@ -176,9 +182,6 @@ plotting_general <- function(file_name,
     for(i in 1:length(diagnostics_names)){
       print(diagnostics_names[i])
       curr_var <- diagnostic_list[[i]]
-
-
-
 
       mean_var <- array(NA, dim = c(length(depths), length(full_time)))
       upper_var <- array(NA, dim = c(length(depths), length(full_time)))

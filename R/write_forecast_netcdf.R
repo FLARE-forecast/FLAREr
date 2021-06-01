@@ -105,7 +105,7 @@ write_forecast_netcdf <- function(enkf_output,
               long_name4 <- states_config$states_to_obs_mapping[[j]][k]
             }else{
               long_name3 <- paste(long_name3, states_config$state_names[[j]],sep="-")
-              long_name4 <- paste(long_name4, states_config$states_to_obs_mapping[[j]][k],sep="-")
+              long_name4 <- paste(long_name4, format(states_config$states_to_obs_mapping[[j]][k], scientific = FALSE),sep="-")
             }
           }
         }
