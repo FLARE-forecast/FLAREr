@@ -31,9 +31,9 @@ generate_states_to_obs_mapping <- function(states_config, obs_config){
     }
     states_to_obs[[i]] <- values1
     states_to_obs_mapping[[i]] <- values2
-    if(!identical(sort(values2), values2)){
-      stop("order of states_to_obs_mapping is not correct. Be sure that the order in the 1, 2, and 3 columns are in same the order of states in the rows (e.g., if NIT_tot is higher tha PHS_tot in the row order it needs to be before in the mapping columns)")
-    }
+    #if(!identical(sort(values2), values2)){
+     # stop("order of states_to_obs_mapping is not correct. Be sure that the order in the 1, 2, and 3 columns are in same the order of states in the rows (e.g., if NIT_tot is higher tha PHS_tot in the row order it needs to be before in the mapping columns)")
+    #}
   }
 
   states_config$states_to_obs_mapping <- states_to_obs_mapping
