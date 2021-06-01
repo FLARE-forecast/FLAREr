@@ -14,14 +14,17 @@
 plotting_general <- function(file_name,
                              qaqc_location,
                              ncore = 1,
-                             plot_profile = TRUE){
+                             plot_profile = TRUE,
+                             obs_csv = TRUE){
 
   pdf_file_name <- paste0(tools::file_path_sans_ext(file_name),".pdf")
+  csv_file_name <- paste0(tools::file_path_sans_ext(file_name),".csv")
+
 
   output <- FLAREr::combine_forecast_observations(file_name,
-                                qaqc_location,
-                                extra_historical_days = 0,
-                                ncore = ncore)
+                                                  qaqc_location,
+                                                  extra_historical_days = 0,
+                                                  ncore = ncore)
   obs <- output$obs
   full_time_extended <- output$full_time_extended
   diagnostic_list <- output$diagnostic_list
@@ -54,6 +57,8 @@ plotting_general <- function(file_name,
   }
   pdf(pdf_file_name,width = 11, height = plot_height)
 
+  evaluation_df <- NULL
+
   for(i in 1:length(state_names)){
 
     curr_var <- state_list[[i]]
@@ -83,14 +88,6 @@ plotting_general <- function(file_name,
       obs_curr <- as.numeric(rep(NA, length(date)))
     }
 
-    curr_tibble <- tibble::tibble(date = lubridate::as_datetime(date),
-                                  curr_var = c(mean_var),
-                                  upper_var = c(upper_var),
-                                  lower_var = c(lower_var),
-                                  observed = obs_curr,
-                                  depth = rep(depths, length(full_time))) %>%
-      dplyr::filter(depth %in% focal_depths_plotting)
-
     if(forecast_index > 0){
       forecast_start_day <- full_time[forecast_index-1]
       forecast_start_day_alpha <- 1.0
@@ -99,12 +96,30 @@ plotting_general <- function(file_name,
       forecast_start_day_alpha <- 0.0
     }
 
+    curr_tibble <- tibble::tibble(date = lubridate::as_datetime(date),
+                                  forecast_mean = c(mean_var),
+                                  forecast_upper_95 = c(upper_var),
+                                  forecast_lower_95 = c(lower_var),
+                                  observed = obs_curr,
+                                  depth = rep(depths, length(full_time)),
+                                  state = state_names[i],
+                                  forecast_start_day = forecast_start_day) %>%
+      dplyr::filter(depth %in% focal_depths_plotting)
+
+
+    if(obs_csv){
+      only_with_obs <-  curr_tibble %>%
+        dplyr::filter(!is.na(observed))
+
+      evaluation_df <- dplyr::bind_rows(evaluation_df, only_with_obs)
+    }
+
     p <- ggplot2::ggplot(curr_tibble, ggplot2::aes(x = date)) +
       ggplot2::facet_wrap(~depth) +
-      ggplot2::geom_ribbon(ggplot2::aes(ymin = lower_var, ymax = upper_var),
+      ggplot2::geom_ribbon(ggplot2::aes(ymin = forecast_lower_95, ymax = forecast_upper_95),
                            alpha = 0.70,
                            fill = "gray") +
-      ggplot2::geom_line(ggplot2::aes(y = curr_var), size = 0.5) +
+      ggplot2::geom_line(ggplot2::aes(y = forecast_mean), size = 0.5) +
       ggplot2::geom_vline(xintercept = forecast_start_day,
                           alpha = forecast_start_day_alpha) +
       ggplot2::geom_point(ggplot2::aes(y = observed), size = 0.5, color = "red") +
@@ -115,18 +130,22 @@ plotting_general <- function(file_name,
 
     if(plot_profile){
 
-    p <- ggplot2::ggplot(curr_tibble, ggplot2::aes(y = depth, x = curr_var)) +
-      ggplot2::facet_wrap(~factor(date)) +
-      ggplot2::geom_ribbon(ggplot2::aes(xmin = upper_var, xmax = lower_var),
-                           alpha = 0.70,
-                           fill = "gray") +
-      ggplot2::geom_path() +
-      ggplot2::geom_point(ggplot2::aes(x = observed), size = 0.5, color = "red") +
-      ggplot2::scale_y_reverse() +
-      ggplot2::theme_light() +
-      ggplot2::labs(y = "Depth(m)", x = state_names[i], title = state_names[i])
-    print(p)
+      p <- ggplot2::ggplot(curr_tibble, ggplot2::aes(y = depth, x = forecast_mean)) +
+        ggplot2::facet_wrap(~factor(date)) +
+        ggplot2::geom_ribbon(ggplot2::aes(xmin = forecast_upper_95, xmax = forecast_lower_95),
+                             alpha = 0.70,
+                             fill = "gray") +
+        ggplot2::geom_path() +
+        ggplot2::geom_point(ggplot2::aes(x = observed), size = 0.5, color = "red") +
+        ggplot2::scale_y_reverse() +
+        ggplot2::theme_light() +
+        ggplot2::labs(y = "Depth(m)", x = state_names[i], title = state_names[i])
+      print(p)
     }
+  }
+
+  if(obs_csv){
+    readr::write_csv(evaluation_df, csv_file_name)
   }
 
   if(length(par_names) > 0){
