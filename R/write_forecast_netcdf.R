@@ -186,7 +186,7 @@ write_forecast_netcdf <- function(enkf_output,
   #Global file metadata
   ncdf4::ncatt_put(ncout,0,"title",enkf_output$config$metadata$forecast_title, prec =  "text")
   ncdf4::ncatt_put(ncout,0,"forecast_iteration_id",enkf_output$forecast_iteration_id, prec =  "text")
-  ncdf4::ncatt_put(ncout,0,"forecast_project_id",enkf_output$config$metadata$forecast_project_id, prec =  "text")
+  ncdf4::ncatt_put(ncout,0,"forecast_project_id",enkf_output$forecast_project_id, prec =  "text")
   ncdf4::ncatt_put(ncout,0,"forecast_model_id",enkf_output$config$metadata$model_description$forecast_model_id, prec =  "text")
   ncdf4::ncatt_put(ncout,0,"time_zone_of_simulation","UTC", prec =  "text")
 
