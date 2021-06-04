@@ -4,7 +4,12 @@
 \alias{combine_forecast_observations}
 \title{Title}
 \usage{
-combine_forecast_observations(file_name, qaqc_location, extra_historical_days)
+combine_forecast_observations(
+  file_name,
+  qaqc_location,
+  extra_historical_days,
+  ncore = 1
+)
 }
 \arguments{
 \item{extra_historical_days}{}

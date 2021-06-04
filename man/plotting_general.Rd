@@ -4,7 +4,13 @@
 \alias{plotting_general}
 \title{Plotting FLARE output}
 \usage{
-plotting_general(file_name, qaqc_location)
+plotting_general(
+  file_name,
+  qaqc_location,
+  ncore = 1,
+  plot_profile = TRUE,
+  obs_csv = TRUE
+)
 }
 \arguments{
 \item{file_name}{}
