@@ -1,0 +1,42 @@
+
+template_folder <- system.file("data", package= "FLAREr")
+temp_dir <- tempdir()
+# dir.create("example")
+file.copy(from = template_folder, to = temp_dir, recursive = TRUE)
+
+test_directory <- file.path(temp_dir, "data")
+# print(list.files(test_directory))
+# print(readLines(file.path(test_directory, "test_met_prep.R")))
+
+
+lake_directory <- test_directory
+configuration_directory <- file.path(lake_directory, "configuration")
+execute_directory <- file.path(test_directory, "flare_tempdir")
+qaqc_data_directory <- file.path(test_directory, "data_processed")
+forecast_input_directory <- file.path(test_directory, "forecasted_drivers")
+
+##### Read configuration files
+config <- yaml::read_yaml(file.path(configuration_directory, "flarer","configure_flare.yml"))
+run_config <- yaml::read_yaml(file.path(configuration_directory, "flarer","configure_run.yml"))
+
+config$run_config <- run_config
+config$run_config$lake_directory <- lake_directory
+config$run_config$execute_directory <- execute_directory
+
+if(!dir.exists(config$run_config$execute_directory)){
+  dir.create(config$run_config$execute_directory)
+}
+
+file.copy(file.path(configuration_directory, "forecast_model", "glm", "glm3.nml"), execute_directory)
+
+config$qaqc_data_directory <- qaqc_data_directory
+
+pars_config <- readr::read_csv(file.path(configuration_directory, "flarer", config$run_settings$par_config_file), col_types = readr::cols())
+obs_config <- readr::read_csv(file.path(configuration_directory, "flarer", config$run_settings$obs_config_file), col_types = readr::cols())
+states_config <- readr::read_csv(file.path(configuration_directory, "flarer", config$run_settings$states_config_file), col_types = readr::cols())
+
+#Download and process observations (already done)
+
+cleaned_observations_file_long <- file.path(config$qaqc_data_directory,"observations_postQAQC_long.csv")
+cleaned_inflow_file <- file.path(config$qaqc_data_directory, "/inflow_postQAQC.csv")
+observed_met_file <- file.path(config$qaqc_data_directory,"observed-met_fcre.nc")
