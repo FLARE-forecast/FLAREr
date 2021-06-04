@@ -1,10 +1,10 @@
 
-template_folder <- system.file("data", package= "FLAREr")
+template_folder <- system.file("example", package= "FLAREr")
 temp_dir <- tempdir()
 # dir.create("example")
 file.copy(from = template_folder, to = temp_dir, recursive = TRUE)
 
-test_directory <- file.path(temp_dir, "data")
+test_directory <- file.path(temp_dir, "example")
 # print(list.files(test_directory))
 # print(readLines(file.path(test_directory, "test_met_prep.R")))
 
@@ -23,6 +23,8 @@ config$run_config <- run_config
 config$run_config$lake_directory <- lake_directory
 config$run_config$execute_directory <- execute_directory
 config$file_path$noaa_directory <- file.path(forecast_input_directory, config$met$forecast_met_model)
+config$file_path$inflow_directory <- file.path(forecast_input_directory, config$inflow$forecast_inflow_model)
+config$file_path$configuration_directory<- configuration_directory
 
 if(!dir.exists(config$run_config$execute_directory)){
   dir.create(config$run_config$execute_directory)
