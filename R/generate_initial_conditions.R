@@ -21,18 +21,16 @@ generate_initial_conditions <- function(states_config,
                                         historical_met_error = FALSE){
 
   if(is.na(restart_file)){
+
     init <- list()
-
-    nmembers <- config$ensemble_size
-
     if(!is.null(pars_config)){
       npars <- nrow(pars_config)
     }else{
       npars <- 0
     }
 
-    ndepths_modeled <- length(config$modeled_depths)
-
+    ndepths_modeled <- length(config$run_settings$modeled_depths)
+    nmembers <- config$da_setup$ensemble_size
     nstates <- length(states_config$state_names)
 
     init$states <- array(NA, dim=c(nstates, ndepths_modeled, nmembers))
@@ -63,7 +61,7 @@ generate_initial_conditions <- function(states_config,
         }else if(length(which(!is.na(init_obs))) == 1){
           init_depth[i, ]  <- rep(init_obs[!is.na(init_obs)], ndepths_modeled)
         }else{
-          init_depth[i, ]  <- approx(x = config$modeled_depths[!is.na(init_obs)], y = init_obs[!is.na(init_obs)], xout = config$modeled_depths, rule=2)$y
+          init_depth[i, ]  <- approx(x = config$run_settings$modeled_depths[!is.na(init_obs)], y = init_obs[!is.na(init_obs)], xout = config$run_settings$modeled_depths, rule=2)$y
         }
       }else{
         init_depth[i, ]  <- rep(states_config$initial_conditions[i], ndepths_modeled)
@@ -84,7 +82,7 @@ generate_initial_conditions <- function(states_config,
           #q_v[kk] <- alpha_v * q_v[kk-1] + sqrt(1 - alpha_v^2) * states_config$initial_model_sd[jj] * w[kk]
         }
 
-        if(config$initial_condition_uncertainty == FALSE){
+        if(config$uncertainty$initial_condition_uncertainty == FALSE){
           init$states[jj, , m] <- init_depth[jj, ]
         }else{
           init$states[jj, , m] <- init_depth[jj, ] + q_v
@@ -101,17 +99,17 @@ generate_initial_conditions <- function(states_config,
       }
     }
 
-    init$lake_depth[] <- round(config$lake_depth_init, 3)
+    init$lake_depth[] <- round(config$default_init$lake_depth, 3)
     #Matrix to store snow and ice heights
-    init$snow_ice_thickness[1, ] <- config$default_snow_thickness_init
-    init$snow_ice_thickness[2, ] <- config$default_white_ice_thickness_init
-    init$snow_ice_thickness[3, ] <- config$default_blue_ice_thickness_init
+    init$snow_ice_thickness[1, ] <- config$default_init$snow_thickness
+    init$snow_ice_thickness[2, ] <- config$default_init$white_ice_thickness
+    init$snow_ice_thickness[3, ] <- config$default_init$blue_ice_thickness
     init$avg_surf_temp[] <- init$states[1 , 1, ]
     init$mixing_vars[, ] <- 0.0
-    init$salt[, ] <- config$the_sals_init
+    init$salt[, ] <- config$default_init$salinity
 
     for(m in 1:nmembers){
-      init$model_internal_depths[1:ndepths_modeled, m] <- config$modeled_depths
+      init$model_internal_depths[1:ndepths_modeled, m] <- config$run_settings$modeled_depths
     }
 
     aux_states_init <- list()
