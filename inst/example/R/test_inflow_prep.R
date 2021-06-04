@@ -3,44 +3,36 @@ temp_dir <- tempdir()
 # dir.create("example")
 file.copy(from = template_folder, to = temp_dir, recursive = TRUE)
 
-test_location <- file.path(temp_dir, "data")
-forecast_location <- test_location
-execute_location <- file.path(test_location, "output")
-data_location <- file.path(test_location, "input_data")
-qaqc_data_location <- file.path(test_location, "input_data")
+lake_directory <- test_directory
+configuration_directory <- file.path(lake_directory, "configuration")
+execute_directory <- file.path(test_directory, "flare_tempdir")
+qaqc_data_directory <- file.path(test_directory, "data_processed")
+forecast_input_directory <- file.path(test_directory, "forecasted_drivers")
 
 ##### Read configuration files
-config <- yaml::read_yaml(file.path(forecast_location,"configure_flare.yml"))
-run_config <- yaml::read_yaml(file.path(forecast_location,"run_configuration.yml"))
+config <- yaml::read_yaml(file.path(configuration_directory, "flarer","configure_flare.yml"))
+run_config <- yaml::read_yaml(file.path(configuration_directory, "flarer","configure_run.yml"))
 
 config$run_config <- run_config
-config$run_config$forecast_location <- forecast_location
-config$run_config$execute_location <- execute_location
+config$run_config$lake_directory <- lake_directory
+config$run_config$execute_directory <- execute_directory
+config$file_path$noaa_directory <- file.path(forecast_input_directory, config$met$forecast_met_model)
+config$file_path$inflow_directory <- file.path(forecast_input_directory, config$inflow$forecast_inflow_model)
 
-if(!dir.exists(config$run_config$execute_location)){
-  dir.create(config$run_config$execute_location)
+if(!dir.exists(config$run_config$execute_directory)){
+  dir.create(config$run_config$execute_directory)
 }
 
-file.copy(file.path(forecast_location, "glm3.nml"), execute_location)
+file.copy(file.path(configuration_directory, "forecast_model", "glm", "glm3.nml"), execute_directory)
 
-config$data_location <- data_location
-config$qaqc_data_location <- qaqc_data_location
+config$qaqc_data_directory <- qaqc_data_directory
 
-pars_config <- readr::read_csv(file.path(config$run_config$forecast_location, config$par_file), col_types = readr::cols())
-obs_config <- readr::read_csv(file.path(config$run_config$forecast_location, config$obs_config_file), col_types = readr::cols())
-states_config <- readr::read_csv(file.path(config$run_config$forecast_location,config$states_config_file), col_types = readr::cols())
+pars_config <- readr::read_csv(file.path(configuration_directory, "flarer", config$run_settings$par_config_file), col_types = readr::cols())
+obs_config <- readr::read_csv(file.path(configuration_directory, "flarer", config$run_settings$obs_config_file), col_types = readr::cols())
+states_config <- readr::read_csv(file.path(configuration_directory, "flarer", config$run_settings$states_config_file), col_types = readr::cols())
 
 #Download and process observations (already done)
 
-cleaned_observations_file_long <- file.path(config$qaqc_data_location,"observations_postQAQC_long.csv")
-cleaned_inflow_file <- file.path(config$qaqc_data_location, "/inflow_postQAQC.csv")
-observed_met_file <- file.path(config$qaqc_data_location,"observed-met_fcre.nc")
-
-#Step up Drivers
-
-met_out <- FLAREr::generate_glm_met_files(obs_met_file = observed_met_file,
-                                         out_dir = config$run_config$execute_location,
-                                         forecast_dir = file.path(config$data_location, config$forecast_met_model),
-                                         config)
-
-historical_met_error <- met_out$historical_met_error
+cleaned_observations_file_long <- file.path(config$qaqc_data_directory,"observations_postQAQC_long.csv")
+cleaned_inflow_file <- file.path(config$qaqc_data_directory, "/inflow_postQAQC.csv")
+observed_met_file <- file.path(config$qaqc_data_directory,"observed-met_fcre.nc")

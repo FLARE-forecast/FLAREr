@@ -28,7 +28,7 @@ create_glm_inflow_outflow_files <- function(inflow_file_dir,
 
   obs_inflow <- readr::read_csv(inflow_obs, col_types = readr::cols())
 
-  if(config$use_future_inflow){
+  if(config$inflow$use_forecasted_inflow){
     obs_inflow <- obs_inflow %>%
       dplyr::filter(time >= lubridate::as_date(start_datetime) & time <= lubridate::as_date(forecast_start_datetime)) %>%
       dplyr::mutate(inflow_num = 1)
@@ -91,7 +91,7 @@ create_glm_inflow_outflow_files <- function(inflow_file_dir,
 
         inflow_file_names[i, j] <- inflow_file_name
 
-        if(config$use_future_inflow){
+        if(config$inflow$use_forecasted_inflow){
           readr::write_csv(x = inflow,
                            file = inflow_file_name,
                            quote_escape = "none")
@@ -150,7 +150,7 @@ create_glm_inflow_outflow_files <- function(inflow_file_dir,
 
         outflow_file_names[i, j]  <- outflow_file_name
 
-        if(config$use_future_inflow){
+        if(config$inflow$use_forecasted_inflow){
           readr::write_csv(x = outflow,
                            file = outflow_file_name,
                            quote_escape = "none")
