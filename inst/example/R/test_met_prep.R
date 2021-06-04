@@ -22,6 +22,7 @@ run_config <- yaml::read_yaml(file.path(configuration_directory, "flarer","confi
 config$run_config <- run_config
 config$run_config$lake_directory <- lake_directory
 config$run_config$execute_directory <- execute_directory
+config$file_path$noaa_directory <- file.path(forecast_input_directory, config$met$forecast_met_model)
 
 if(!dir.exists(config$run_config$execute_directory)){
   dir.create(config$run_config$execute_directory)
