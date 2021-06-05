@@ -34,9 +34,9 @@ da_setup:
     localization_distance: .na #distance in meters were covariances in the model error are used
     no_negative_states: TRUE
     assimilate_first_step: FALSE
-run_settings:
+model_settings:
    ncore: 2
-   model_name: glm_aed #other is "null"
+   model_name: GLM #other is "null"
    base_GLM_nml: glm3.nml
    modeled_depths: [0.10, 0.33, 0.67,
                     1.00, 1.33, 1.67,

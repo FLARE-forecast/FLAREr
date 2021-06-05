@@ -29,7 +29,7 @@ generate_initial_conditions <- function(states_config,
       npars <- 0
     }
 
-    ndepths_modeled <- length(config$run_settings$modeled_depths)
+    ndepths_modeled <- length(config$model_settings$modeled_depths)
     nmembers <- config$da_setup$ensemble_size
     nstates <- length(states_config$state_names)
 
@@ -61,7 +61,7 @@ generate_initial_conditions <- function(states_config,
         }else if(length(which(!is.na(init_obs))) == 1){
           init_depth[i, ]  <- rep(init_obs[!is.na(init_obs)], ndepths_modeled)
         }else{
-          init_depth[i, ]  <- approx(x = config$run_settings$modeled_depths[!is.na(init_obs)], y = init_obs[!is.na(init_obs)], xout = config$run_settings$modeled_depths, rule=2)$y
+          init_depth[i, ]  <- approx(x = config$model_settings$modeled_depths[!is.na(init_obs)], y = init_obs[!is.na(init_obs)], xout = config$model_settings$modeled_depths, rule=2)$y
         }
       }else{
         init_depth[i, ]  <- rep(states_config$initial_conditions[i], ndepths_modeled)
@@ -109,7 +109,7 @@ generate_initial_conditions <- function(states_config,
     init$salt[, ] <- config$default_init$salinity
 
     for(m in 1:nmembers){
-      init$model_internal_depths[1:ndepths_modeled, m] <- config$run_settings$modeled_depths
+      init$model_internal_depths[1:ndepths_modeled, m] <- config$model_settings$modeled_depths
     }
 
     aux_states_init <- list()
