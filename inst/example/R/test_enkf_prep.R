@@ -32,17 +32,15 @@ if(!dir.exists(config$run_config$execute_directory)){
 
 file.copy(file.path(configuration_directory, "forecast_model", "glm", "glm3.nml"), execute_directory)
 
-config$qaqc_data_directory <- qaqc_data_directory
-
 pars_config <- readr::read_csv(file.path(configuration_directory, "flarer", config$model_settings$par_config_file), col_types = readr::cols())
 obs_config <- readr::read_csv(file.path(configuration_directory, "flarer", config$model_settings$obs_config_file), col_types = readr::cols())
 states_config <- readr::read_csv(file.path(configuration_directory, "flarer", config$model_settings$states_config_file), col_types = readr::cols())
 
 #Download and process observations (already done)
 
-cleaned_observations_file_long <- file.path(config$qaqc_data_directory,"observations_postQAQC_long.csv")
-cleaned_inflow_file <- file.path(config$qaqc_data_directory, "/inflow_postQAQC.csv")
-observed_met_file <- file.path(config$qaqc_data_directory,"observed-met_fcre.nc")
+cleaned_observations_file_long <- file.path(config$file_path$qaqc_data_directory,"observations_postQAQC_long.csv")
+cleaned_inflow_file <- file.path(config$file_path$qaqc_data_directory, "/inflow_postQAQC.csv")
+observed_met_file <- file.path(config$file_path$qaqc_data_directory,"observed-met_fcre.nc")
 
 #Step up Drivers
 met_out <- FLAREr::generate_glm_met_files(obs_met_file = observed_met_file,
