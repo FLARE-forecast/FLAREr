@@ -385,7 +385,7 @@ run_da_forecast <- function(states_init,
                           format="%Y-%m-%d %H:%M",
                           tz = "UTC")
 
-    message(paste0("Running time step ", i-1, "/", nsteps, " : ",
+    message(paste0("Running time step ", i-1, "/", (nsteps - 1), " : ",
                    curr_start, " - ",
                    curr_stop, " [", Sys.time(), "]"))
 
