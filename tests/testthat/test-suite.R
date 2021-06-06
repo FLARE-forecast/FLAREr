@@ -48,10 +48,10 @@ test_that("observation matrix is generated and correct", {
   # dir.create("example")
   file.copy(from = template_folder, to = temp_dir, recursive = TRUE)
 
-  # test_location <- "C:\\Users\\mooret\\Desktop\\FLARE\\flare-1\\inst\\data"
-  test_location <- file.path(temp_dir, "example")
+  # test_directory <- "C:\\Users\\mooret\\Desktop\\FLARE\\flare-1\\inst\\data"
+  test_directory <- file.path(temp_dir, "example")
 
-  source(file.path(test_location, "R/test_met_prep.R"))
+  source(file.path(test_directory, "R/test_met_prep.R"))
 
   obs <- FLAREr::create_obs_matrix(cleaned_observations_file_long,
                                   obs_config,
@@ -71,10 +71,10 @@ test_that("generate states to obs mapping", {
   # dir.create("example")
   file.copy(from = template_folder, to = temp_dir, recursive = TRUE)
 
-  # test_location <- "C:\\Users\\mooret\\Desktop\\FLARE\\flare-1\\inst\\data"
-  test_location <- file.path(temp_dir, "example")
+  # test_directory <- "C:\\Users\\mooret\\Desktop\\FLARE\\flare-1\\inst\\data"
+  test_directory <- file.path(temp_dir, "example")
 
-  source(file.path(test_location, "R/test_met_prep.R"))
+  source(file.path(test_directory, "R/test_met_prep.R"))
 
   states_config <- FLAREr::generate_states_to_obs_mapping(states_config, obs_config)
   testthat::expect_true(is.data.frame(states_config))
@@ -89,14 +89,14 @@ test_that("initial model error is generated", {
   # dir.create("example")
   file.copy(from = template_folder, to = temp_dir, recursive = TRUE)
 
-  # test_location <- "C:\\Users\\mooret\\Desktop\\FLARE\\flare-1\\inst\\data"
-  test_location <- file.path(temp_dir, "example")
+  # test_directory <- "C:\\Users\\mooret\\Desktop\\FLARE\\flare-1\\inst\\data"
+  test_directory <- file.path(temp_dir, "example")
 
-  source(file.path(test_location, "R/test_met_prep.R"))
+  source(file.path(test_directory, "R/test_met_prep.R"))
 
-  config_file_location <- file.path(config$file_path$configuration_directory, "flarer")
+  config_file_directory <- file.path(config$file_path$configuration_directory, "flarer")
 
-  model_sd <- FLAREr::initiate_model_error(config, states_config, config_file_location)
+  model_sd <- FLAREr::initiate_model_error(config, states_config, config_file_directory)
   testthat::expect_true(is.array(model_sd))
   testthat::expect_true(any(!is.na(model_sd)))
 })
@@ -110,10 +110,10 @@ test_that("initial conditions are generated", {
   # dir.create("example")
   file.copy(from = template_folder, to = temp_dir, recursive = TRUE)
 
-  # test_location <- "C:\\Users\\mooret\\Desktop\\FLARE\\flare-1\\inst\\data"
-  test_location <- file.path(temp_dir, "example")
+  # test_directory <- "C:\\Users\\mooret\\Desktop\\FLARE\\flare-1\\inst\\data"
+  test_directory <- file.path(temp_dir, "example")
 
-  source(file.path(test_location, "R/test_met_prep.R"))
+  source(file.path(test_directory, "R/test_met_prep.R"))
 
   obs <- FLAREr::create_obs_matrix(cleaned_observations_file_long,
                                   obs_config,
@@ -137,10 +137,10 @@ test_that("EnKF can be run", {
   # dir.create("example")
   file.copy(from = template_folder, to = temp_dir, recursive = TRUE)
 
-  # test_location <- "C:\\Users\\mooret\\Desktop\\FLARE\\flare-1\\inst\\data"
-  test_location <- file.path(temp_dir, "example")
+  # test_directory <- "C:\\Users\\mooret\\Desktop\\FLARE\\flare-1\\inst\\data"
+  test_directory <- file.path(temp_dir, "example")
 
-  source(file.path(test_location, "R/test_enkf_prep.R"))
+  source(file.path(test_directory, "R/test_enkf_prep.R"))
 
   obs <- FLAREr::create_obs_matrix(cleaned_observations_file_long,
                                   obs_config,
@@ -188,7 +188,7 @@ test_that("EnKF can be run", {
   )
 
   #Load in pre-prepared output
-  samp_enkf_output <- readRDS(file.path(test_location, "benchmark_data/enkf_output.RDS"))
+  samp_enkf_output <- readRDS(file.path(test_directory, "benchmark_data/enkf_output.RDS"))
 
   testthat::expect_true(is.list(enkf_output))
   chk <- lapply(1:length(enkf_output), function(x) {
@@ -224,10 +224,10 @@ test_that("particle filter can be run", {
   # dir.create("example")
   file.copy(from = template_folder, to = temp_dir, recursive = TRUE)
 
-  # test_location <- "C:\\Users\\mooret\\Desktop\\FLARE\\flare-1\\inst\\data"
-  test_location <- file.path(temp_dir, "example")
+  # test_directory <- "C:\\Users\\mooret\\Desktop\\FLARE\\flare-1\\inst\\data"
+  test_directory <- file.path(temp_dir, "example")
 
-  source(file.path(test_location, "R/test_enkf_prep.R"))
+  source(file.path(test_directory, "R/test_enkf_prep.R"))
 
   obs <- FLAREr::create_obs_matrix(cleaned_observations_file_long,
                                   obs_config,
@@ -276,7 +276,7 @@ test_that("particle filter can be run", {
   )
 
   #Load in pre-prepared output
-  samp_enkf_output <- readRDS(file.path(test_location, "benchmark_data/enkf_output.RDS"))
+  samp_enkf_output <- readRDS(file.path(test_directory, "benchmark_data/enkf_output.RDS"))
 
   testthat::expect_true(is.list(enkf_output))
   chk <- lapply(1:length(enkf_output), function(x) {
@@ -311,10 +311,10 @@ test_that("EnKF can be run with NO inflows/outflows", {
   # dir.create("example")
   file.copy(from = template_folder, to = temp_dir, recursive = TRUE)
 
-  # test_location <- "C:\\Users\\mooret\\Desktop\\FLARE\\flare-1\\inst\\data"
-  test_location <- file.path(temp_dir, "example")
+  # test_directory <- "C:\\Users\\mooret\\Desktop\\FLARE\\flare-1\\inst\\data"
+  test_directory <- file.path(temp_dir, "example")
 
-  source(file.path(test_location, "R/test_enkf_prep.R"))
+  source(file.path(test_directory, "R/test_enkf_prep.R"))
 
   obs <- FLAREr::create_obs_matrix(cleaned_observations_file_long,
                                    obs_config,
@@ -344,7 +344,7 @@ test_that("EnKF can be run with NO inflows/outflows", {
   )
 
   #Load in pre-prepared output
-  samp_enkf_output <- readRDS(file.path(test_location, "benchmark_data/enkf_output.RDS"))
+  samp_enkf_output <- readRDS(file.path(test_directory, "benchmark_data/enkf_output.RDS"))
 
   testthat::expect_true(is.list(enkf_output))
   chk <- lapply(1:length(enkf_output), function(x) {

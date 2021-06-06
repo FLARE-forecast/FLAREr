@@ -23,8 +23,8 @@ config$file_path$noaa_directory <- file.path(forecast_input_directory, config$me
 config$file_path$inflow_directory <- file.path(forecast_input_directory, config$inflow$forecast_inflow_model)
 config$file_path$configuration_directory<- configuration_directory
 config$file_path$execute_directory <- file.path(lake_directory, "flare_tempdir")
-config$run_config$forecast_output_directory <- file.path(test_location, "forecast_output")
-config$file_path$qaqc_data_directory <- file.path(test_location, "data_processed")
+config$run_config$forecast_output_directory <- file.path(test_directory, "forecast_output")
+config$file_path$qaqc_data_directory <- file.path(test_directory, "data_processed")
 
 if(!dir.exists(config$run_config$execute_directory)){
   dir.create(config$run_config$execute_directory)
