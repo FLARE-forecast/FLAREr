@@ -34,9 +34,9 @@ file.copy(file.path(configuration_directory, "forecast_model", "glm", "glm3.nml"
 
 config$qaqc_data_directory <- qaqc_data_directory
 
-pars_config <- readr::read_csv(file.path(configuration_directory, "flarer", config$run_settings$par_config_file), col_types = readr::cols())
-obs_config <- readr::read_csv(file.path(configuration_directory, "flarer", config$run_settings$obs_config_file), col_types = readr::cols())
-states_config <- readr::read_csv(file.path(configuration_directory, "flarer", config$run_settings$states_config_file), col_types = readr::cols())
+pars_config <- readr::read_csv(file.path(configuration_directory, "flarer", config$model_settings$par_config_file), col_types = readr::cols())
+obs_config <- readr::read_csv(file.path(configuration_directory, "flarer", config$model_settings$obs_config_file), col_types = readr::cols())
+states_config <- readr::read_csv(file.path(configuration_directory, "flarer", config$model_settings$states_config_file), col_types = readr::cols())
 
 #Download and process observations (already done)
 

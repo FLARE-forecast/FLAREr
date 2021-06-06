@@ -51,7 +51,7 @@ write_forecast_netcdf <- function(enkf_output,
   ncfname <- paste0(forecast_location,"/",enkf_output$save_file_name,".nc")
   #Set dimensionsenkf_output
   ens <- seq(1,dim(x)[2],1)
-  depths <- config$modeled_depths
+  depths <- config$model_settings$modeled_depths
   t <- as.numeric(as.POSIXct(lubridate::with_tz(full_time),origin = '1970-01-01 00:00.00 UTC'))
   states <- seq(1,nstates,1)
   #obs_states <- seq(1,dim(obs)[3],1)
@@ -134,9 +134,9 @@ write_forecast_netcdf <- function(enkf_output,
     }
   }
 
-  if(length(config$diagnostics_names) > 0){
-    for(s in 1:length(config$diagnostics_names)){
-      def_list[[index+npars+length(states_config$state_names)-1 + s]]<- ncdf4::ncvar_def(config$diagnostics_names[s],"-",list(timedim,depthdim, ensdim),fillvalue,paste0("diagnostic:",config$diagnostics_names[s]),prec="single")
+  if(length(config$output_settings$diagnostics_names) > 0){
+    for(s in 1:length(config$output_settings$diagnostics_names)){
+      def_list[[index+npars+length(states_config$state_names)-1 + s]]<- ncdf4::ncvar_def(config$output_settings$diagnostics_names[s],"-",list(timedim,depthdim, ensdim),fillvalue,paste0("diagnostic:",config$output_settings$diagnostics_names[s]),prec="single")
     }
   }
 
@@ -175,8 +175,8 @@ write_forecast_netcdf <- function(enkf_output,
 
   }
 
-  if(length(config$diagnostics_names) > 0){
-    for(s in 1:length(config$diagnostics_names)){
+  if(length(config$output_settings$diagnostics_names) > 0){
+    for(s in 1:length(config$output_settings$diagnostics_names)){
       ncdf4::ncvar_put(ncout, def_list[[index+npars+length(states_config$state_names) - 1 + s]],diagnostics_efi[s, , ,])
     }
   }
@@ -184,10 +184,10 @@ write_forecast_netcdf <- function(enkf_output,
   time_of_forecast <- lubridate::with_tz(enkf_output$time_of_forecast, tzone = "UTC")
 
   #Global file metadata
-  ncdf4::ncatt_put(ncout,0,"title",enkf_output$config$metadata$forecast_title, prec =  "text")
-  ncdf4::ncatt_put(ncout,0,"forecast_iteration_id",enkf_output$forecast_iteration_id, prec =  "text")
-  ncdf4::ncatt_put(ncout,0,"forecast_project_id",enkf_output$config$metadata$forecast_project_id, prec =  "text")
-  ncdf4::ncatt_put(ncout,0,"forecast_model_id",enkf_output$config$metadata$model_description$forecast_model_id, prec =  "text")
+  ncdf4::ncatt_put(ncout,0,"title", config$metadata$forecast_title, prec =  "text")
+  ncdf4::ncatt_put(ncout,0,"forecast_iteration_id" ,enkf_output$forecast_iteration_id, prec =  "text")
+  ncdf4::ncatt_put(ncout,0,"forecast_project_id", config$metadata$forecast_project_id, prec =  "text")
+  ncdf4::ncatt_put(ncout,0,"forecast_model_id", config$metadata$model_description$forecast_model_id, prec =  "text")
   ncdf4::ncatt_put(ncout,0,"time_zone_of_simulation","UTC", prec =  "text")
 
   ncdf4::nc_close(ncout)

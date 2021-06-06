@@ -385,7 +385,7 @@ run_da_forecast <- function(states_init,
                           format="%Y-%m-%d %H:%M",
                           tz = "UTC")
 
-    message(paste0("Running time step ", i-1, " : ",
+    message(paste0("Running time step ", i-1, "/", nsteps, " : ",
                    curr_start, " - ",
                    curr_stop, " [", Sys.time(), "]"))
 
@@ -624,13 +624,13 @@ run_da_forecast <- function(states_init,
 
         x[i, , ] <- cbind(x_corr, pars_star)
 
-        if(config$process_uncertainty == FALSE & i > (hist_days + 1)){
+        if(config$uncertainty$process_uncertainty == FALSE & i > (hist_days + 1)){
           #don't add process noise if process uncertainty is false (x_star doesn't have noise)
           #don't add the noise to parameters in future forecast mode ()
           x[i, , ] <- cbind(x_star, pars_star)
         }
 
-        if(i == (hist_days + 1) & config$initial_condition_uncertainty == FALSE){
+        if(i == (hist_days + 1) & config$uncertainty$initial_condition_uncertainty == FALSE){
           for(m in 1:nmembers){
             x[i, m, ] <- c(colMeans(x_star), pars_star[m, ])
           }
@@ -639,7 +639,7 @@ run_da_forecast <- function(states_init,
       }else{
         x[i, , ] <- cbind(x_corr)
 
-        if(config$process_uncertainty == FALSE & i > (hist_days + 1)){
+        if(config$uncertainty$process_uncertainty == FALSE & i > (hist_days + 1)){
           x[i, , ] <- x_star
         }
 
@@ -827,7 +827,7 @@ run_da_forecast <- function(states_init,
     ##################
 
     #Correct any negative water quality states
-    if(config$include_wq & config$no_negative_states){
+    if(config$include_wq & config$da_setup$no_negative_states){
       for(m in 1:nmembers){
         index <- which(x[i,m,] < 0.0)
         x[i, m, index[which(index <= states_config$wq_end[num_wq_vars + 1] & index >= states_config$wq_start[2])]] <- 0.0
