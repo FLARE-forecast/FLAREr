@@ -14,6 +14,9 @@
 write_forecast_netcdf <- function(enkf_output,
                                   forecast_location){
 
+  if(!dir.exists(forecast_location)) {
+    dir.create(forecast_location, recursive = TRUE)
+  }
 
   x <- enkf_output$x
   lake_depth <- enkf_output$lake_depth
@@ -48,7 +51,7 @@ write_forecast_netcdf <- function(enkf_output,
   x_efi <- aperm(x, c(1,3,2))
   diagnostics_efi <- diagnostics
 
-  ncfname <- paste0(forecast_location,"/",enkf_output$save_file_name,".nc")
+  ncfname <- file.path(forecast_location, paste0(enkf_output$save_file_name,".nc"))
   #Set dimensionsenkf_output
   ens <- seq(1,dim(x)[2],1)
   depths <- config$model_settings$modeled_depths
@@ -194,10 +197,7 @@ write_forecast_netcdf <- function(enkf_output,
 
   invisible(ncfname)
 
-
 }
-
-
 
 
 
