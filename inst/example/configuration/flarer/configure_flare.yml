@@ -36,7 +36,7 @@ da_setup:
     assimilate_first_step: FALSE
 model_settings:
    ncore: 2
-   model_name: GLM #other is "null"
+   model_name: glm #other is "null"
    base_GLM_nml: glm3.nml
    modeled_depths: [0.10, 0.33, 0.67,
                     1.00, 1.33, 1.67,
