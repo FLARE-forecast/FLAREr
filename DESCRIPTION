@@ -1,6 +1,6 @@
 Package: FLAREr
 Title: Forecasting Lake and Reservoir Ecosystems
-Version: 2.0.1
+Version: 2.1.0
 Authors@R: 
     c(person(given = "R. Quinn",
            family = "Thomas",
