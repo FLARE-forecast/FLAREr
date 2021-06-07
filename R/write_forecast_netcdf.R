@@ -198,8 +198,3 @@ write_forecast_netcdf <- function(enkf_output,
   invisible(ncfname)
 
 }
-
-
-
-
-
