@@ -69,6 +69,7 @@ jobs:
           remotes::install_github("FLARE-forecast/GLM3r")
           remotes::install_deps(dependencies = TRUE)
           remotes::install_cran("rcmdcheck")
+          remotes::install_cran("knitr")
           install.packages(".", repos = NULL, type = "source")  ## needed by parallel workers
         shell: Rscript {0}
 
