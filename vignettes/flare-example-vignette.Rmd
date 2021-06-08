@@ -316,7 +316,7 @@ enkf_output <- FLAREr::run_da_forecast(states_init = init$states,
 ```{r}
 # Save forecast
 saved_file <- FLAREr::write_forecast_netcdf(enkf_output,
-                                             forecast_location = config$file_path$forecast_output_directory)
+                                            forecast_location = config$file_path$forecast_output_directory)
 ```
 
 

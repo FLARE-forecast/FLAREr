@@ -241,7 +241,7 @@ create_flare_metadata <- function(file_name,
 
   EFIstandards::forecast_validator(my_eml)
 
-  eml_file_name <- file.path(enkf_output$config$forecast_output_directory, paste0(tools::file_path_sans_ext(basename(file_name)),"-eml.xml"))
+  eml_file_name <- file.path(enkf_output$config$file_path$forecast_output_directory, paste0(tools::file_path_sans_ext(basename(file_name)),"-eml.xml"))
 
   EML::write_eml(my_eml, eml_file_name)
   invisible(eml_file_name)
