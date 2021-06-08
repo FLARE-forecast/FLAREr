@@ -199,7 +199,7 @@ test_that("EnKF can be run", {
 
   # Save forecast
   saved_file <- FLAREr::write_forecast_netcdf(enkf_output,
-                                             forecast_location = config$forecast_output_directory)
+                                             forecast_location = config$file_path$forecast_output_directory)
   testthat::expect_true(file.exists(saved_file))
 
   #Create EML Metadata
@@ -287,7 +287,7 @@ test_that("particle filter can be run", {
 
   # Save forecast
   saved_file <- FLAREr::write_forecast_netcdf(enkf_output,
-                                             forecast_location = config$forecast_output_directory)
+                                             forecast_location = config$file_path$forecast_output_directory)
   testthat::expect_true(file.exists(saved_file))
 
   #Create EML Metadata
@@ -355,7 +355,7 @@ test_that("EnKF can be run with NO inflows/outflows", {
 
   # Save forecast
   saved_file <- FLAREr::write_forecast_netcdf(enkf_output,
-                                              forecast_location = config$forecast_output_directory)
+                                              forecast_location = config$file_path$forecast_output_directory)
   testthat::expect_true(file.exists(saved_file))
 
   #Create EML Metadata
