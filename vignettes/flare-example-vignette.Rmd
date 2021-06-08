@@ -279,7 +279,7 @@ states_config <- FLAREr::generate_states_to_obs_mapping(states_config, obs_confi
 Initialize the model error vector
 
 ```{r}
-model_sd <- FLAREr::initiate_model_error(config, states_config, file.path(config$file_path$configuration_directory, "flarer"))
+model_sd <- FLAREr::initiate_model_error(config, states_config)
 
 ```
 
