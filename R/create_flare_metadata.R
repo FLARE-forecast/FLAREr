@@ -118,7 +118,7 @@ create_flare_metadata <- function(file_name,
     coverage = coverage
   )
 
-  if(enkf_output$config$uncertainty$initial_condition_uncertainty){
+  if(enkf_output$config$uncertainty$initial_condition){
     initial_conditions = list(
       # Possible values: no, contains, data_driven, propagates, assimilates
       status = "assimilates",
@@ -143,7 +143,7 @@ create_flare_metadata <- function(file_name,
     )
   }
 
-  if(enkf_output$config$uncertainty$parameter_uncertainty & npars > 0){
+  if(enkf_output$config$uncertainty$parameter & npars > 0){
     parameters = list(
       status = "assimilates",
       complexity = npars,
@@ -164,7 +164,7 @@ create_flare_metadata <- function(file_name,
     )
   }
 
-  if(enkf_output$config$uncertainty$process_uncertainty){
+  if(enkf_output$config$uncertainty$process){
     process_error = list(
       status = "propagates",
       propagation = list(
@@ -182,7 +182,7 @@ create_flare_metadata <- function(file_name,
     )
   }
 
-  if(enkf_output$config$uncertainty$weather_uncertainty | enkf_output$config$uncertainty$met_downscale_uncertainty){
+  if(enkf_output$config$uncertainty$weather | enkf_output$config$uncertainty$met_downscale){
     drivers = list(
       status = "propagates",
       complexity = length(unique(enkf_output$met_file_names)),
@@ -241,7 +241,7 @@ create_flare_metadata <- function(file_name,
 
   EFIstandards::forecast_validator(my_eml)
 
-  eml_file_name <- file.path(enkf_output$config$run_config$forecast_output_directory, paste0(tools::file_path_sans_ext(basename(file_name)),"-eml.xml"))
+  eml_file_name <- file.path(enkf_output$config$forecast_output_directory, paste0(tools::file_path_sans_ext(basename(file_name)),"-eml.xml"))
 
   EML::write_eml(my_eml, eml_file_name)
   invisible(eml_file_name)

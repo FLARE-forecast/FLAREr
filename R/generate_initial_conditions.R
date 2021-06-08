@@ -82,7 +82,7 @@ generate_initial_conditions <- function(states_config,
           #q_v[kk] <- alpha_v * q_v[kk-1] + sqrt(1 - alpha_v^2) * states_config$initial_model_sd[jj] * w[kk]
         }
 
-        if(config$uncertainty$initial_condition_uncertainty == FALSE){
+        if(config$uncertainty$initial_condition == FALSE){
           init$states[jj, , m] <- init_depth[jj, ]
         }else{
           init$states[jj, , m] <- init_depth[jj, ] + q_v

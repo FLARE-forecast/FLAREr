@@ -79,13 +79,13 @@
 #'  - `base_AED_phyto_pars_nml`:
 #'  - `base_AED_zoop_pars_nml`:
 #'  - `use_obs_constraint`:
-#'  - `observation_uncertainty`:
-#'  - `process_uncertainty`:
-#'  - `weather_uncertainty`:
-#'  - `initial_condition_uncertainty`:
-#'  - `parameter_uncertainty`:
-#'  - `met_downscale_uncertainty`:
-#'  - `inflow_process_uncertainty`:
+#'  - `observation`:
+#'  - `process`:
+#'  - `weather`:
+#'  - `initial_condition`:
+#'  - `parameter`:
+#'  - `met_downscale`:
+#'  - `inflow_process`:
 #'  - `modeled_depths:`
 #'  - `ensemble_size`:
 #'  - `localization_distance`:
@@ -604,13 +604,13 @@ run_da_forecast <- function(states_init,
 
     #if no observations at a time step then just propogate model uncertainity
 
-    if(length(z_index) == 0 | da_method == "none"){
+    if(length(z_index) == 0 | config$da_setup$da_method == "none"){
 
       if(i > (hist_days + 1)){
         data_assimilation_flag[i] <- 0
         forecast_flag[i] <- 1
         da_qc_flag[i] <- 0
-      }else if(i <= (hist_days + 1) & config$use_obs_constraint){
+      }else if(i <= (hist_days + 1) & config$da_setup$use_obs_constraint){
         data_assimilation_flag[i] <- 1
         forecast_flag[i] <- 0
         da_qc_flag[i] <- 1
@@ -624,13 +624,13 @@ run_da_forecast <- function(states_init,
 
         x[i, , ] <- cbind(x_corr, pars_star)
 
-        if(config$uncertainty$process_uncertainty == FALSE & i > (hist_days + 1)){
+        if(config$uncertainty$process == FALSE & i > (hist_days + 1)){
           #don't add process noise if process uncertainty is false (x_star doesn't have noise)
           #don't add the noise to parameters in future forecast mode ()
           x[i, , ] <- cbind(x_star, pars_star)
         }
 
-        if(i == (hist_days + 1) & config$uncertainty$initial_condition_uncertainty == FALSE){
+        if(i == (hist_days + 1) & config$uncertainty$initial_condition == FALSE){
           for(m in 1:nmembers){
             x[i, m, ] <- c(colMeans(x_star), pars_star[m, ])
           }
@@ -639,7 +639,7 @@ run_da_forecast <- function(states_init,
       }else{
         x[i, , ] <- cbind(x_corr)
 
-        if(config$uncertainty$process_uncertainty == FALSE & i > (hist_days + 1)){
+        if(config$uncertainty$process == FALSE & i > (hist_days + 1)){
           x[i, , ] <- x_star
         }
 
@@ -806,14 +806,14 @@ run_da_forecast <- function(states_init,
     #AT THE INITIATION OF ThE FUTURE FORECAST
     if(i == (hist_days + 1)){
 
-      if(config$uncertainty$initial_condition_uncertainty == FALSE){
+      if(config$uncertainty$initial_condition == FALSE){
         state_means <- colMeans(x[i, ,1:nstates])
         for(m in 1:nmembers){
           x[i, m, 1:nstates]  <- state_means
         }
       }
       if(npars > 0){
-        if(config$uncertainty$parameter_uncertainty == FALSE){
+        if(config$uncertainty$parameter == FALSE){
           par_means <- colMeans(x[i, ,(nstates + 1):(nstates + npars)])
           for(m in 1:nmembers){
             x[i, m, (nstates + 1):(nstates + npars)] <- par_means
