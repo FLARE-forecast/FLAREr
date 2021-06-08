@@ -4,7 +4,7 @@
 \alias{initiate_model_error}
 \title{Initiate model error from configuration files}
 \usage{
-initiate_model_error(config, states_config, config_file_location)
+initiate_model_error(config, states_config)
 }
 \arguments{
 \item{config}{list from reading in configuration yaml}

@@ -67,9 +67,8 @@ obs <- FLAREr::create_obs_matrix(cleaned_observations_file_long,
                                 config)
 
 states_config <- FLAREr::generate_states_to_obs_mapping(states_config, obs_config)
-config_file_location <- file.path(config$file_path$configuration_directory, "flarer")
 
-model_sd <- FLAREr::initiate_model_error(config, states_config, config_file_location)
+model_sd <- FLAREr::initiate_model_error(config, states_config)
 init <- FLAREr::generate_initial_conditions(states_config,
                                            obs_config,
                                            pars_config,

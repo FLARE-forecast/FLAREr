@@ -84,7 +84,7 @@ test_that("generate states to obs mapping", {
 # Initial model error ----
 test_that("initial model error is generated", {
 
-  template_folder <- system.file("example", package= "FLAREr")
+  template_folder <- system.file("example", package = "FLAREr")
   temp_dir <- tempdir()
   # dir.create("example")
   file.copy(from = template_folder, to = temp_dir, recursive = TRUE)
@@ -96,7 +96,7 @@ test_that("initial model error is generated", {
 
   config_file_directory <- file.path(config$file_path$configuration_directory, "flarer")
 
-  model_sd <- FLAREr::initiate_model_error(config, states_config, config_file_directory)
+  model_sd <- FLAREr::initiate_model_error(config, states_config)
   testthat::expect_true(is.array(model_sd))
   testthat::expect_true(any(!is.na(model_sd)))
 })
