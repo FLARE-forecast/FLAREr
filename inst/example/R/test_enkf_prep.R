@@ -17,8 +17,6 @@ config <- yaml::read_yaml(file.path(configuration_directory, "flarer","configure
 run_config <- yaml::read_yaml(file.path(configuration_directory, "flarer","configure_run.yml"))
 
 config$run_config <- run_config
-config$run_config$lake_directory <- lake_directory
-config$run_config$execute_directory <- execute_directory
 config$file_path$noaa_directory <- file.path(forecast_input_directory, config$met$forecast_met_model)
 config$file_path$inflow_directory <- file.path(forecast_input_directory, config$inflow$forecast_inflow_model)
 config$file_path$configuration_directory<- configuration_directory
@@ -44,7 +42,7 @@ observed_met_file <- file.path(config$file_path$qaqc_data_directory,"observed-me
 
 #Step up Drivers
 met_out <- FLAREr::generate_glm_met_files(obs_met_file = observed_met_file,
-                                          out_dir = config$run_config$execute_directory,
+                                          out_dir = config$file_path$execute_directory,
                                           forecast_dir = config$file_path$noaa_directory,
                                           config)
 met_file_names <- met_out$filenames
@@ -55,7 +53,7 @@ inflow_forecast_path <- config$file_path$inflow_directory
 
 inflow_outflow_files <- FLAREr::create_glm_inflow_outflow_files(inflow_file_dir = inflow_forecast_path,
                                                                 inflow_obs = cleaned_inflow_file,
-                                                                working_directory = config$run_config$execute_directory,
+                                                                working_directory = config$file_path$execute_directory,
                                                                 config,
                                                                 state_names = NULL)
 

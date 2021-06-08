@@ -1,12 +1,12 @@
 # Met files ----
 test_that("met files are generated", {
 
-  template_folder <- system.file("example", package= "FLAREr")
+  template_folder <- system.file("example", package = "FLAREr")
 
   source(file.path(template_folder, "R/test_met_prep.R"))
 
   met_out <- FLAREr::generate_glm_met_files(obs_met_file = observed_met_file,
-                                           out_dir = config$run_config$execute_directory,
+                                           out_dir = config$file_path$execute_directory,
                                            forecast_dir = config$file_path$noaa_directory,
                                            config)
   met_file_names <- met_out$filenames
@@ -17,7 +17,7 @@ test_that("met files are generated", {
 # Inflow Drivers (already done) ----
 test_that("inflow & outflow files are generated", {
 
-  template_folder <- system.file("example", package= "FLAREr")
+  template_folder <- system.file("example", package = "FLAREr")
 
   source(file.path(template_folder, "R/test_inflow_prep.R"))
 
@@ -27,7 +27,7 @@ test_that("inflow & outflow files are generated", {
   #### NEED A TEST HERE TO CHECK THAT INFLOW FILES ARE GENERATED AND CORRECT
   inflow_outflow_files <- FLAREr::create_glm_inflow_outflow_files(inflow_file_dir = inflow_forecast_path,
                                                                  inflow_obs = cleaned_inflow_file,
-                                                                 working_directory = config$run_config$execute_directory,
+                                                                 working_directory = config$file_path$execute_directory,
                                                                  config,
                                                                  state_names = NULL)
 
@@ -66,7 +66,7 @@ test_that("observation matrix is generated and correct", {
 # State to obs mapping ----
 test_that("generate states to obs mapping", {
 
-  template_folder <- system.file("example", package= "FLAREr")
+  template_folder <- system.file("example", package = "FLAREr")
   temp_dir <- tempdir()
   # dir.create("example")
   file.copy(from = template_folder, to = temp_dir, recursive = TRUE)
@@ -105,7 +105,7 @@ test_that("initial model error is generated", {
 # Set initial conditions ----
 test_that("initial conditions are generated", {
 
-  template_folder <- system.file("example", package= "FLAREr")
+  template_folder <- system.file("example", package = "FLAREr")
   temp_dir <- tempdir()
   # dir.create("example")
   file.copy(from = template_folder, to = temp_dir, recursive = TRUE)
@@ -245,7 +245,7 @@ test_that("particle filter can be run", {
   # obs = obs
   # obs_sd = obs_config$obs_sd
   # model_sd = model_sd
-  # working_directory = config$run_config$execute_location
+  # working_directory = config$file_path$execute_location
   # met_file_names = (met_file_names)
   # inflow_file_names = (inflow_file_names)
   # outflow_file_names = (outflow_file_names)
