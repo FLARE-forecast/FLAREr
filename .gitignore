@@ -44,3 +44,4 @@ exec/.DS_Store
 inst/.DS_Store
 notebook/.DS_Store
 inst/doc
+inst/example/flare_tempdir

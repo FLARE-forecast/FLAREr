@@ -18,7 +18,7 @@
 #' - `initial_conditions`: the default initial condition for the state if an observation is lacking. Used in `generate_initial_conditions()`.  Note:
 #' the `config` list should have a variables called `default_temp_init` and `default_temp_init_depths` that allow for depth variation in the initial
 #' conditions for temperature.
-#' - `model_sd`: the standard deviation of the model error for the state.  Matrix with dimensions rows = length(states_names), columns = length(config$modeled_depths)
+#' - `model_sd`: the standard deviation of the model error for the state.  Matrix with dimensions rows = length(states_names), columns = length(config$model_settings$modeled_depths)
 #' - `initial_model_sd`: the standard deviation of the initial conditions for the state. Used in `generate_initial_conditions()`
 #' - `states_to_obs1`: the name of the observation that matches the model state
 #' - `states_to_obs_mapping_1`: the multipler that converts the state to the observation (1 will be the most common)
@@ -270,7 +270,7 @@ run_da_forecast <- function(states_init,
   nsteps <- length(full_time)
   nmembers <- dim(x_init)[1]
   n_met_members <- length(met_file_names)
-  ndepths_modeled <- length(config$modeled_depths)
+  ndepths_modeled <- length(config$model_settings$modeled_depths)
 
   data_assimilation_flag <- rep(NA, nsteps)
   forecast_flag <- rep(NA, nsteps)
@@ -296,8 +296,8 @@ run_da_forecast <- function(states_init,
     num_wq_vars <- 0
   }
 
-  if(length(config$diagnostics_names) > 0){
-    diagnostics <- array(NA, dim=c(length(config$diagnostics_names), nsteps, ndepths_modeled, nmembers))
+  if(length(config$output_settings$diagnostics_names) > 0){
+    diagnostics <- array(NA, dim=c(length(config$output_settings$diagnostics_names), nsteps, ndepths_modeled, nmembers))
   }else{
     diagnostics <- NA
   }
@@ -318,11 +318,11 @@ run_da_forecast <- function(states_init,
     outflow_file_names <- NULL
   }
 
-  config$ncore <- min(c(config$ncore, parallel::detectCores()))
-  if(config$ncore == 1){
-    if(!dir.exists(file.path(working_directory, "1"))){
+  config$model_settings$ncore <- min(c(config$model_settings$ncore, parallel::detectCores()))
+  if(config$model_settings$ncore == 1) {
+    if(!dir.exists(file.path(working_directory, "1"))) {
       dir.create(file.path(working_directory, "1"), showWarnings = FALSE)
-    }else{
+    } else {
       unlink(file.path(working_directory, "1"), recursive = TRUE)
       dir.create(file.path(working_directory, "1"), showWarnings = FALSE)
     }
@@ -331,16 +331,16 @@ run_da_forecast <- function(states_init,
                          state_names = states_config$state_names,
                          inflow_file_names = inflow_file_names,
                          outflow_file_names = outflow_file_names)
-  }else{
+  } else {
     lapply(1:nmembers, function(m){
-      if(!dir.exists(file.path(working_directory, m))){
+      if(!dir.exists(file.path(working_directory, m))) {
         dir.create(file.path(working_directory, m), showWarnings = FALSE)
-      }else{
+      } else {
         unlink(file.path(working_directory, m), recursive = TRUE)
         dir.create(file.path(working_directory, m), showWarnings = FALSE)
       }
       FLAREr:::set_up_model(config,
-                           ens_working_directory = file.path(working_directory,m),
+                           ens_working_directory = file.path(working_directory, m),
                            state_names = states_config$state_names,
                            inflow_file_names = inflow_file_names,
                            outflow_file_names = outflow_file_names)
@@ -362,7 +362,7 @@ run_da_forecast <- function(states_init,
   avg_surf_temp[1, ] <- aux_states_init$avg_surf_temp
   salt[1, , ] <- aux_states_init$salt
 
-  if(config$assimilate_first_step){
+  if(config$da_setup$assimilate_first_step){
     start_step <- 1
   }else{
     start_step <- 2
@@ -372,7 +372,7 @@ run_da_forecast <- function(states_init,
   glm_v <- GLM3r::glm_version()
   glm_v <- substr(glm_v[3], 35, 58)
   message("Using GLM ", glm_v)
-  config$model_name <- glm_v
+  config$metadata$model_description$version <- substr(glm_v, 9, 16)
 
   ###START EnKF
 
@@ -385,7 +385,7 @@ run_da_forecast <- function(states_init,
                           format="%Y-%m-%d %H:%M",
                           tz = "UTC")
 
-    message(paste0("Running time step ", i-1, " : ",
+    message(paste0("Running time step ", i-1, "/", (nsteps - 1), " : ",
                    curr_start, " - ",
                    curr_stop, " [", Sys.time(), "]"))
 
@@ -419,10 +419,10 @@ run_da_forecast <- function(states_init,
            Windows = { machine <- "windows"})
     if(i == start_step) {
       if(machine == "windows") {
-        cl <- parallel::makeCluster(config$ncore, setup_strategy = "sequential")
+        cl <- parallel::makeCluster(config$model_settings$ncore, setup_strategy = "sequential")
         parallel::clusterEvalQ(cl, library(FLAREr))
       } else {
-        cl <- parallel::makeCluster(config$ncore, setup_strategy = "sequential")
+        cl <- parallel::makeCluster(config$model_settings$ncore, setup_strategy = "sequential")
       }
       # Close parallel sockets on exit even if function is crashed or cancelled
       on.exit({
@@ -457,7 +457,7 @@ run_da_forecast <- function(states_init,
       out <- parallel::parLapply(cl, 1:nmembers, function(m) {
       #out <- lapply(1:nmembers, function(m) { # Commented out for debugging
 
-        if(config$ncore == 1){
+        if(config$model_settings$ncore == 1){
           ens_dir_index <- 1
         }else{
           ens_dir_index <- m
@@ -512,13 +512,13 @@ run_da_forecast <- function(states_init,
                                 wq_end = states_config$wq_end,
                                 management = management,
                                 hist_days,
-                                modeled_depths = config$modeled_depths,
+                                modeled_depths = config$model_settings$modeled_depths,
                                 ndepths_modeled,
                                 curr_met_file,
                                 inflow_file_name = inflow_file_name,
                                 outflow_file_name = outflow_file_name,
                                 glm_output_vars = glm_output_vars,
-                                diagnostics_names = config$diagnostics_names,
+                                diagnostics_names = config$output_settings$diagnostics_names,
                                 npars,
                                 num_wq_vars,
                                 snow_ice_thickness_start = snow_ice_thickness[, i-1, m ],
@@ -527,7 +527,6 @@ run_da_forecast <- function(states_init,
                                 nstates,
                                 state_names = states_config$state_names,
                                 include_wq = config$include_wq)
-
       })
 
       # Loop through output and assign to matrix
@@ -564,7 +563,7 @@ run_da_forecast <- function(states_init,
       } # END ENSEMBLE LOOP
 
       #Correct any negative water quality states
-      if(config$include_wq & config$no_negative_states){
+      if(config$include_wq & config$da_setup$no_negative_states){
         for(m in 1:nmembers){
           index <- which(x_corr[m,] < 0.0)
           x_corr[m, index[which(index <= states_config$wq_end[num_wq_vars + 1] & index >= states_config$wq_start[2])]] <- 0.0
@@ -625,13 +624,13 @@ run_da_forecast <- function(states_init,
 
         x[i, , ] <- cbind(x_corr, pars_star)
 
-        if(config$process_uncertainty == FALSE & i > (hist_days + 1)){
+        if(config$uncertainty$process_uncertainty == FALSE & i > (hist_days + 1)){
           #don't add process noise if process uncertainty is false (x_star doesn't have noise)
           #don't add the noise to parameters in future forecast mode ()
           x[i, , ] <- cbind(x_star, pars_star)
         }
 
-        if(i == (hist_days + 1) & config$initial_condition_uncertainty == FALSE){
+        if(i == (hist_days + 1) & config$uncertainty$initial_condition_uncertainty == FALSE){
           for(m in 1:nmembers){
             x[i, m, ] <- c(colMeans(x_star), pars_star[m, ])
           }
@@ -640,7 +639,7 @@ run_da_forecast <- function(states_init,
       }else{
         x[i, , ] <- cbind(x_corr)
 
-        if(config$process_uncertainty == FALSE & i > (hist_days + 1)){
+        if(config$uncertainty$process_uncertainty == FALSE & i > (hist_days + 1)){
           x[i, , ] <- x_star
         }
 
@@ -709,7 +708,7 @@ run_da_forecast <- function(states_init,
         d_mat <- t(mvtnorm::rmvnorm(n = nmembers, mean = zt, sigma=as.matrix(psi_t)))
 
         #Set any negative observations of water quality variables to zero
-        d_mat[which(z_index > length(config$modeled_depths) & d_mat < 0.0)] <- 0.0
+        d_mat[which(z_index > length(config$model_settings$modeled_depths) & d_mat < 0.0)] <- 0.0
 
         #Ensemble mean
         ens_mean <- apply(x_corr[,], 2, mean)
@@ -751,11 +750,11 @@ run_da_forecast <- function(states_init,
           p_t_pars <- p_it_pars / (nmembers - 1)
         }
 
-        if(!is.na(config$localization_distance)){
+        if(!is.na(config$da_setup$localization_distance)){
           p_t <- localization(p_t,
                               nstates,
-                              modeled_depths = config$modeled_depths,
-                              localization_distance = config$localization_distance)
+                              modeled_depths = config$model_settings$modeled_depths,
+                              localization_distance = config$da_setup$localization_distance)
         }
         #Kalman gain
         k_t <- p_t %*% t(h) %*% solve(h %*% p_t %*% t(h) + psi_t, tol = 1e-17)
@@ -807,14 +806,14 @@ run_da_forecast <- function(states_init,
     #AT THE INITIATION OF ThE FUTURE FORECAST
     if(i == (hist_days + 1)){
 
-      if(config$initial_condition_uncertainty == FALSE){
+      if(config$uncertainty$initial_condition_uncertainty == FALSE){
         state_means <- colMeans(x[i, ,1:nstates])
         for(m in 1:nmembers){
           x[i, m, 1:nstates]  <- state_means
         }
       }
       if(npars > 0){
-        if(config$parameter_uncertainty == FALSE){
+        if(config$uncertainty$parameter_uncertainty == FALSE){
           par_means <- colMeans(x[i, ,(nstates + 1):(nstates + npars)])
           for(m in 1:nmembers){
             x[i, m, (nstates + 1):(nstates + npars)] <- par_means
@@ -828,7 +827,7 @@ run_da_forecast <- function(states_init,
     ##################
 
     #Correct any negative water quality states
-    if(config$include_wq & config$no_negative_states){
+    if(config$include_wq & config$da_setup$no_negative_states){
       for(m in 1:nmembers){
         index <- which(x[i,m,] < 0.0)
         x[i, m, index[which(index <= states_config$wq_end[num_wq_vars + 1] & index >= states_config$wq_start[2])]] <- 0.0

@@ -174,7 +174,7 @@ combine_forecast_observations <- function(file_name, qaqc_location,  extra_histo
 
     #obs_list <- lapply(1:length(obs_names), function(i) {
 
-    print(paste0("Extracting ",target_variable[i]))
+    message(paste0("Extracting ",target_variable[i]))
 
     obs_tmp <- array(NA,dim = c(length(full_time_extended),length(depths)))
 

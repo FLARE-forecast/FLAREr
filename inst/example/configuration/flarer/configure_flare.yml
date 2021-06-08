@@ -1,0 +1,91 @@
+file_path:
+   qaqc_data_directory: inst/example/data_processed/
+   noaa_directory: inst/example/forecasted_drivers/
+   inflow_directory: inst/example/forecasted_drivers/
+   configuration_directory: inst/example/configuration/
+   execute_directory: inst/example/flare_tempdir
+   run_config: inst/example/configuration/flarer/configure_run.yml
+location:
+   site_id: fcre
+   name: Falling Creek Reservoir
+   latitude: 37.307   #Degrees North
+   longitude: 79.837  #Degrees West
+metadata:
+   generate_eml: TRUE
+   forecast_project_id: test
+   abstract: "This is where a longer description of the forest can be added"
+   forecast_title: FLARE
+   intellectualRights: insert license
+   model_description:
+      forecast_model_id: https://github.com/rqthomas/flare/commit/d1ddcb07b9d28863890597503fc4aa4a4496de56
+      name: General Lake Model
+      type: process-based
+      repository: https://github.com/AquaticEcoDynamics/GLM/releases/tag/v3.1.0
+   me:
+      individualName:
+         givenName: "Quinn"
+         surName: "Thomas"
+      electronicMailAddress:  "INSERT"
+      id: INSERT ORCID
+da_setup:
+    da_method: enkf
+    par_fit_method: inflate
+    ensemble_size:  100
+    localization_distance: .na #distance in meters were covariances in the model error are used
+    no_negative_states: TRUE
+    assimilate_first_step: FALSE
+model_settings:
+   ncore: 2
+   model_name: glm #other is "null"
+   base_GLM_nml: glm3.nml
+   modeled_depths: [0.10, 0.33, 0.67,
+                    1.00, 1.33, 1.67,
+                    2.00, 2.33, 2.67,
+                    3.00, 3.33, 3.67,
+                    4.00, 4.33, 4.67,
+                    5.00, 5.33, 5.67,
+                    6.00, 6.33, 6.67,
+                    7.00, 7.33, 7.67,
+                    8.00, 8.33, 8.67,
+                    9.00]
+   par_config_file: parameter_calibration_config.csv
+   obs_config_file: observations_config.csv
+   states_config_file: states_config.csv
+   depth_model_sd_config_file: depth_model_sd.csv
+default_init:
+   lake_depth: 9.4  #not a modeled state
+   temp: [25.667, 24.9101, 23.067, 21.8815, 19.6658, 16.5739, 12.9292, 12.8456, 12.8127, 12.8079, 12.778]
+   temp_depths: [0.127, 1.004, 2.005, 3.021, 4.002, 5.004, 6.004, 7.01, 8.001, 9.015, 9.518]
+   salinity: 0.0
+   snow_thickness: 0.0
+   white_ice_thickness: 0.0
+   blue_ice_thickness: 0.0
+inflow:
+   use_forecasted_inflow: TRUE
+   forecast_inflow_model: FLOWS-NOAAGEFS-AR1
+met:
+   use_forecasted_met: TRUE
+   forecast_met_model: NOAAGEFS_1hr-debias
+uncertainty:
+   use_obs_constraint: TRUE
+   observation_uncertainty: TRUE
+   process_uncertainty: TRUE
+   weather_uncertainty: TRUE
+   initial_condition_uncertainty: TRUE
+   parameter_uncertainty: TRUE
+   met_downscale_uncertainty: TRUE
+   inflow_process_uncertainty: TRUE
+output_settings:
+   diagnostics_names:  [extc_coef]
+management:
+   simulate_sss: TRUE
+   sss_depth: 8.0
+   use_specified_sss: TRUE
+   specified_sss_inflow_file: .na
+   specified_sss_outflow_file: .na
+   forecast_sss_flow: 1000
+   forecast_sss_oxy: 500
+   #umol/m3  of oxygen if SSS turned on in forecast
+   sss_fname: manual-data/FCR_SSS_inflow_2013_2020.csv
+   sss_inflow_factor: 0.25
+

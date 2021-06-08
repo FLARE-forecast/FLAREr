@@ -1,25 +1,3 @@
----
-title: "Example Workflow"
-output: rmarkdown::html_vignette
-vignette: >
-  %\VignetteIndexEntry{Example Workflow}
-  %\VignetteEngine{knitr::rmarkdown}
-  %\VignetteEncoding{UTF-8}
----
-
-```{r, include = FALSE}
-knitr::opts_chunk$set(
-  collapse = TRUE,
-  comment = "#>"
-)
-```
-
-
-## Workflow
-
-Here is a workflow example that combines all the functions in FLAREr to generate a forecast.  See the FLARE example vignette for more details
-
-```{r eval = FALSE}
 
 template_folder <- system.file("example", package= "FLAREr")
 temp_dir <- tempdir()
@@ -54,17 +32,15 @@ if(!dir.exists(config$run_config$execute_directory)){
 
 file.copy(file.path(configuration_directory, "forecast_model", "glm", "glm3.nml"), execute_directory)
 
-config$qaqc_data_directory <- qaqc_data_directory
-
 pars_config <- readr::read_csv(file.path(configuration_directory, "flarer", config$model_settings$par_config_file), col_types = readr::cols())
 obs_config <- readr::read_csv(file.path(configuration_directory, "flarer", config$model_settings$obs_config_file), col_types = readr::cols())
 states_config <- readr::read_csv(file.path(configuration_directory, "flarer", config$model_settings$states_config_file), col_types = readr::cols())
 
 #Download and process observations (already done)
 
-cleaned_observations_file_long <- file.path(config$qaqc_data_directory,"observations_postQAQC_long.csv")
-cleaned_inflow_file <- file.path(config$qaqc_data_directory, "/inflow_postQAQC.csv")
-observed_met_file <- file.path(config$qaqc_data_directory,"observed-met_fcre.nc")
+cleaned_observations_file_long <- file.path(config$file_path$qaqc_data_directory,"observations_postQAQC_long.csv")
+cleaned_inflow_file <- file.path(config$file_path$qaqc_data_directory, "/inflow_postQAQC.csv")
+observed_met_file <- file.path(config$file_path$qaqc_data_directory,"observed-met_fcre.nc")
 
 #Step up Drivers
 met_out <- FLAREr::generate_glm_met_files(obs_met_file = observed_met_file,
@@ -94,41 +70,8 @@ states_config <- FLAREr::generate_states_to_obs_mapping(states_config, obs_confi
 config_file_location <- file.path(config$file_path$configuration_directory, "flarer")
 
 model_sd <- FLAREr::initiate_model_error(config, states_config, config_file_location)
-
 init <- FLAREr::generate_initial_conditions(states_config,
                                            obs_config,
                                            pars_config,
                                            obs,
                                            config)
-
-
-#Run EnKF
-enkf_output <- FLAREr::run_da_forecast(states_init = init$states,
-                                        pars_init = init$pars,
-                                        aux_states_init = init$aux_states_init,
-                                        obs = obs,
-                                        obs_sd = obs_config$obs_sd,
-                                        model_sd = model_sd,
-                                        working_directory = config$file_path$execute_directory,
-                                        met_file_names = met_file_names,
-                                        inflow_file_names = inflow_file_names,
-                                        outflow_file_names = outflow_file_names,
-                                        config = config,
-                                        pars_config = pars_config,
-                                        states_config = states_config,
-                                        obs_config = obs_config
-)
-
-# Save forecast
-saved_file <- FLAREr::write_forecast_netcdf(enkf_output,
-                                           forecast_location = config$run_config$forecast_output_directory)
-
-#Create EML Metadata
-FLAREr::create_flare_metadata(file_name = saved_file,
-                        enkf_output)
-
-FLAREr::plotting_general(file_name = saved_file,
-                        qaqc_location = config$file_path$qaqc_data_directory)
-
-
-```

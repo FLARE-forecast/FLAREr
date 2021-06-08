@@ -60,8 +60,16 @@ remotes::install_github("flare-forecast/FLAREr")
 Second, create a directory that will be your working directory for your FLARE run
 
 ```{r}
-forecast_location <-  tempdir()
-#forecast_location <- "/Users/quinn/Dropbox/Research/SSC_forecasting/flare_users_guide_v2/forecast_location"
+lake_directory <-  tempdir()
+dir.create(file.path(lake_directory, "configuration/flarer"), recursive = TRUE)
+dir.create(file.path(lake_directory, "configuration/forecast_model/glm"), recursive = TRUE)
+dir.create(file.path(lake_directory, "data_processed")) # For QAQC data
+dir.create(file.path(lake_directory, "data_raw")) # For raw data
+dir.create(file.path(lake_directory, "flare_tempdir")) # For running the forecasts
+dir.create(file.path(lake_directory, "forecast_output")) # For forecast output
+dir.create(file.path(lake_directory, "forecasted_drivers")) # Weather and inflow forecasts
+dir.create(file.path(lake_directory, "R")) # For supplementary R scripts
+
 ```
 
 ## 2: Configuration files
@@ -69,23 +77,23 @@ forecast_location <-  tempdir()
 First, `FLAREr` requires two configuration yaml files.  The code below copies examples from the `FLAREr` package.
 
 ```{r}
-file.copy(system.file("data", "configure_flare.yml", package="FLAREr"), forecast_location)
-file.copy(system.file("data", "run_configuration.yml", package="FLAREr"), forecast_location)
+file.copy(system.file("example", "configuration", "flarer", "configure_flare.yml", package = "FLAREr"), file.path(lake_directory, "configuration", "flarer", "configure_flare.yml"))
+file.copy(system.file("example", "configuration", "flarer", "configure_run.yml", package = "FLAREr"), file.path(lake_directory, "configuration", "flarer", "configure_run.yml"))
 ```
 
 Second, `FLAREr` requires a set of configuration CSV files.  The CSV files are used to define the states that are simulated and the parameters that are calibrated. The code below copies examples from the `FLAREr` package
 
 ```{r}
-file.copy(system.file("data", "parameter_calibration_config.csv", package="FLAREr"), forecast_location)
-file.copy(system.file("data", "states_config.csv", package="FLAREr"), forecast_location)
-file.copy(system.file("data", "states_process_error.csv", package="FLAREr"), forecast_location)
-file.copy(system.file("data", "observations_config.csv", package="FLAREr"), forecast_location)
+file.copy(system.file("example", "configuration", "flarer", "parameter_calibration_config.csv", package = "FLAREr"), file.path(lake_directory, "configuration", "flarer", "parameter_calibration_config.csv"))
+file.copy(system.file("example", "configuration", "flarer", "states_config.csv", package = "FLAREr"), file.path(lake_directory, "configuration", "flarer", "states_config.csv"))
+file.copy(system.file("example", "configuration", "flarer", "depth_model_sd.csv", package = "FLAREr"), file.path(lake_directory, "configuration", "flarer", "depth_model_sd.csv"))
+file.copy(system.file("example", "configuration", "flarer", "observations_config.csv", package = "FLAREr"), file.path(lake_directory, "configuration", "flarer", "observations_config.csv"))
 ```
 
 Third, FLAREr requires GLM specific configurations files.  For applications that require on water temperature, only the GLM namelist file is needed.  Applications that require other water quality variables will require additional namelist files that are associated with the AED model.
 
 ```{r}
-file.copy(system.file("data", "glm3.nml", package="FLAREr"), forecast_location)
+file.copy(system.file("example", "configuration", "forecast_model", "glm", "glm3.nml", package = "FLAREr"), file.path(lake_directory, "configuration", "forecast_model", "glm", "glm3.nml"))
 ```
 
 ## 3: Observation and driver files
@@ -93,30 +101,31 @@ file.copy(system.file("data", "glm3.nml", package="FLAREr"), forecast_location)
 Since the FLAREr package for general application, scripts to download and process observation and drivers are not included in the package.  Therefore the application of FLARE to a lake will require a set of additional scripts that are specific to the data formats for the lakes.  The example includes files for application to FCR.  
 
 ```{r}
-file.copy(from = system.file("data/input_data", package= "FLAREr"), to = forecast_location, recursive = TRUE)
+file.copy(from = system.file("example/data_processed", package = "FLAREr"), to = file.path(lake_directory), recursive = TRUE)
+file.copy(from = system.file("example/forecasted_drivers", package = "FLAREr"), to = file.path(lake_directory), recursive = TRUE)
 ```
 
 First, FLAREr requires the observation file to have a specific name (observations_postQAQC_long.csv) and format.
 
 ```{r}
-head(read_csv(file.path(forecast_location,"/input_data/observations_postQAQC_long.csv"), col_types = readr::cols()))
+head(read_csv(file.path(lake_directory,"/data_processed/observations_postQAQC_long.csv"), col_types = readr::cols()))
 ```
 
 Second, FLARE are requires the observed (historical) meteorology to be a specific name (observed-met_fcre.nc) and format. 
 
 ```{r}
-ncdf4::nc_open(file.path(forecast_location, "input_data/observed-met_fcre.nc"))
+ncdf4::nc_open(file.path(lake_directory, "data_processed/observed-met_fcre.nc"))
 ```
 Third, FLARE are requires the observed (historical) inflow and outflow to be a specific name (inflow_postQAQC.csv) and format. 
 
 ```{r}
-head(read_csv(file.path(forecast_location, "/input_data/inflow_postQAQC.csv"), col_types = readr::cols()))
+head(read_csv(file.path(lake_directory, "data_processed/inflow_postQAQC.csv"), col_types = readr::cols()))
 ```
 
 Finally, if using forecasted meteorology and inflows, FLAREr requires specific file formats and file names with specific characters (INFLOW or OUTFLOW). The follow set of files are the forecasted inflow files in the example. 
 
 ```{r}
-all_files <- list.files(file.path(forecast_location,"input_data/FLOWS-NOAAGEFS-AR1"), full.names = TRUE)
+all_files <- list.files(file.path(lake_directory,"forecasted_drivers/FLOWS-NOAAGEFS-AR1"), full.names = TRUE)
 basename(all_files[stringr::str_detect(all_files,"INFLOW")])
 ```
 
@@ -129,7 +138,7 @@ head(read_csv(all_files[stringr::str_detect(all_files,"INFLOW")][1], col_types =
 Similarly, the forecasted NOAA GEFS meteorology has a specific file formats and file names with specific characters (NOAAGEGS_1hr). The follow set of files are the forecasted meteorology files in the example.
 
 ```{r}
-all_files <- list.files(file.path(forecast_location, "input_data/NOAAGEFS_1hr-debias"), full.names = TRUE)
+all_files <- list.files(file.path(lake_directory, "forecasted_drivers/NOAAGEFS_1hr-debias"), full.names = TRUE)
 basename(all_files)
 ```
 
@@ -143,18 +152,16 @@ The configuration functions are spread across the files. These files are describ
 
  * `glm3.nml`
  * `configure_flare.yml`
- * `run_configuration.yml`
+ * `configure_run.yml`
  * `states_config.csv`
  * `observations_config.csv`
  * `parameter_calibration_config.csv`
- * `states_process_error.csv`
+ * `depth_model_sd.csv`
 
-### run_configuration.yml
+### configure_run.yml
 
 This file is the configuration file that define the specific timing of the run. 
 
-* `forecast_location`: This is the `flare_simulation` directory  (full path; you will need to change this to reflect the location of your directory)
-* `execute_location`: This is the same as `forecast_location` unless you are executing the simulation in a different directory. I use this to execute the code on a RAM disk to save read-writes to my hard disk. You don't need to do this in the tutorial
 * `restart_file`: This is the full path to the file that you want to use as initial conditions for the simulation. You will set this to `NA` if the simulation is not a continuation of a previous simulation.
 * `sim_name`: a string with the name of your simulation. This will appear in your output file names
 * `forecast_days`: This is your forecast horizon. The max is `16` days. Set to `0`if only doing data assimilation with observed drivers.
@@ -176,71 +183,83 @@ This file is the configuration file that define the specific timing of the run.
 
 ### states_config.csv
 
-Needs to be in your `forecast_location`
+Needs to be in `configuration/flarer`
 
 ### observations_config.csv
 
-Needs to be in your `forecast_location`
+Needs to be in your `configuration/flarer`
 
-### observations_config.csv
+### parameter_calibration_config.csv
 
-Needs to be in your `forecast_location`
+Needs to be in your `configuration/flarer`
+
+Set your directories
+
+```{r}
+configuration_directory <- file.path(lake_directory, "configuration")
+execute_directory <- file.path(lake_directory, "flare_tempdir")
+qaqc_data_directory <- file.path(lake_directory, "data_processed")
+forecast_input_directory <- file.path(lake_directory, "forecasted_drivers")
+```
+
 
 ## 3: Run your GLM example simulation
 
 Read configuration files
 
-The following reads in the configuration files and overwrites the directory locations based on the forecast_location and working_directory provided above.  In practice you will specific these directories in the configurate file and not overwrite them.
+The following reads in the configuration files and overwrites the directory locations based on the lake_directory and directories provided above.  In practice you will specific these directories in the configure file and not overwrite them.
 
 ```{r}
-config <- yaml::read_yaml(file.path(forecast_location,"configure_flare.yml"))
-run_config <- yaml::read_yaml(file.path(forecast_location,"run_configuration.yml"))
+
+
+config <- yaml::read_yaml(file.path(configuration_directory, "flarer","configure_flare.yml"))
+run_config <- yaml::read_yaml(file.path(configuration_directory, "flarer","configure_run.yml"))
 
 config$run_config <- run_config
-config$run_config$forecast_location <- file.path(forecast_location)
-config$run_config$execute_location <- file.path(forecast_location, "working_directory")
+config$run_config$lake_directory <- lake_directory
+config$run_config$execute_directory <- execute_directory
+config$file_path$noaa_directory <- file.path(forecast_input_directory, config$met$forecast_met_model)
+config$file_path$inflow_directory <- file.path(forecast_input_directory, config$inflow$forecast_inflow_model)
+config$file_path$configuration_directory<- configuration_directory
+config$file_path$execute_directory <- file.path(lake_directory, "flare_tempdir")
+config$run_config$forecast_output_directory <- file.path(lake_directory, "forecast_output")
+config$file_path$qaqc_data_directory <- file.path(lake_directory, "data_processed")
 
-config$data_location <- file.path(forecast_location, "input_data")
-config$qaqc_data_location <- file.path(forecast_location, "input_data")
-
-if(!dir.exists(config$run_config$execute_location)){
-  dir.create(config$run_config$execute_location)
-}
 ```
 
 Read in configuration CSV files
 
 ```{r}
-pars_config <- readr::read_csv(file.path(config$run_config$forecast_location, config$par_file), col_types = readr::cols())
-obs_config <- readr::read_csv(file.path(config$run_config$forecast_location, config$obs_config_file), col_types = readr::cols())
-states_config <- readr::read_csv(file.path(config$run_config$forecast_location,config$states_config_file), col_types = readr::cols())
+pars_config <- readr::read_csv(file.path(configuration_directory, "flarer", config$model_settings$par_config_file), col_types = readr::cols())
+obs_config <- readr::read_csv(file.path(configuration_directory, "flarer", config$model_settings$obs_config_file), col_types = readr::cols())
+states_config <- readr::read_csv(file.path(configuration_directory, "flarer", config$model_settings$states_config_file), col_types = readr::cols())
 ```
 
 Download and process observations (already done)
 
 ```{r}
-cleaned_observations_file_long <- file.path(config$qaqc_data_location,"observations_postQAQC_long.csv")
-cleaned_inflow_file <- file.path(config$qaqc_data_location, "/inflow_postQAQC.csv")
-observed_met_file <- file.path(config$qaqc_data_location,"observed-met_fcre.nc")
+cleaned_observations_file_long <- file.path(config$file_path$qaqc_data_directory,"observations_postQAQC_long.csv")
+cleaned_inflow_file <- file.path(config$file_path$qaqc_data_directory, "/inflow_postQAQC.csv")
+observed_met_file <- file.path(config$file_path$qaqc_data_directory,"observed-met_fcre.nc")
 ```
 
 Set up weather drivers in GLM format
 
 ```{r}
 met_out <- FLAREr::generate_glm_met_files(obs_met_file = observed_met_file,
-                                         out_dir = config$run_config$execute_location,
-                                         forecast_dir = file.path(config$data_location, config$forecast_met_model),
-                                         config)
+                                          out_dir = config$run_config$execute_directory,
+                                          forecast_dir = config$file_path$noaa_directory,
+                                          config)
 ```
 
 Set up inflow and outflow drivers in GLM format
 
 ```{r}
-inflow_outflow_files <- FLAREr::create_glm_inflow_outflow_files(inflow_file_dir = file.path(config$data_location, config$forecast_inflow_model),
-                                                               inflow_obs = cleaned_inflow_file,
-                                                               working_directory = config$run_config$execute_location,
-                                                               config,
-                                                               state_names = NULL)
+inflow_outflow_files <- FLAREr::create_glm_inflow_outflow_files(inflow_file_dir = config$file_path$inflow_directory,
+                                                                inflow_obs = cleaned_inflow_file,
+                                                                working_directory = config$run_config$execute_directory,
+                                                                config,
+                                                                state_names = NULL)
 ```
 
 Create observation matrix.  The rows of the matrix are observation type (i.e. temperature) x number of depths model.  The columns are the number of days simulated.
@@ -260,61 +279,59 @@ states_config <- FLAREr::generate_states_to_obs_mapping(states_config, obs_confi
 Initialize the model error vector
 
 ```{r}
-model_sd <- FLAREr::initiate_model_error(config, states_config, config_file_location = config$run_config$forecast_location)
+model_sd <- FLAREr::initiate_model_error(config, states_config, file.path(config$file_path$configuration_directory, "flarer"))
+
 ```
 
 Set initial conditions
 
 ```{r}
 init <- FLAREr::generate_initial_conditions(states_config,
-                                             obs_config,
-                                             pars_config,
-                                             obs,
-                                             config,
-                                             restart_file = run_config$restart_file,
-                                             historical_met_error = met_out$historical_met_error)
+                                           obs_config,
+                                           pars_config,
+                                           obs,
+                                           config)
 ```
 
 #Run EnKF
 
 ```{r}
 enkf_output <- FLAREr::run_da_forecast(states_init = init$states,
-                                       pars_init = init$pars,
-                                       aux_states_init = init$aux_states_init,
-                                       obs = obs,
-                                       obs_sd = obs_config$obs_sd,
-                                       model_sd = model_sd,
-                                       working_directory = config$run_config$execute_location,
-                                       met_file_names = met_out$filenames,
-                                       inflow_file_names = inflow_outflow_files$inflow_file_name,
-                                       outflow_file_names = inflow_outflow_files$outflow_file_name,
-                                       config = config,
-                                       pars_config = pars_config,
-                                       states_config = states_config,
-                                       obs_config = obs_config,
-                                       da_method = config$da_method,
-                                       par_fit_method = config$par_fit_method)
+                                          pars_init = init$pars,
+                                          aux_states_init = init$aux_states_init,
+                                          obs = obs,
+                                          obs_sd = obs_config$obs_sd,
+                                          model_sd = model_sd,
+                                          working_directory = config$file_path$execute_directory,
+                                          met_file_names = met_out$filenames,
+                                          inflow_file_names = inflow_outflow_files$inflow_file_name,
+                                          outflow_file_names = inflow_outflow_files$outflow_file_name,
+                                          config = config,
+                                          pars_config = pars_config,
+                                          states_config = states_config,
+                                          obs_config = obs_config
+  )
 ```
 
 ```{r}
 # Save forecast
 saved_file <- FLAREr::write_forecast_netcdf(enkf_output,
-                                           forecast_location = config$run_config$forecast_location)
+                                             forecast_location = config$run_config$forecast_output_directory)
 ```
 
 
 ```{r}
 #Create EML Metadata
 FLAREr::create_flare_metadata(file_name = saved_file,
-                        enkf_output)
+                          enkf_output)
 ```
 
 ```{r}
 FLAREr::plotting_general(file_name = saved_file,
-                        qaqc_location = config$qaqc_data_location)
+                          qaqc_location = config$file_path$qaqc_data_directory)
 ```
 
-Once the simulation is complete you will find a PDF, a netcdf (.nc) file, and an xml in `forecast_location` directory. The PDF is the plotted output, the netcdf file is the FLARE output, and the xml is the metadata.
+Once the simulation is complete you will find a PDF, a netcdf (.nc) file, and an xml in `lake_directory` directory. The PDF is the plotted output, the netcdf file is the FLARE output, and the xml is the metadata.
 
 ## 6: Modifying FLARE
 
