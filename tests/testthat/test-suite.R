@@ -205,12 +205,12 @@ test_that("EnKF can be run", {
   #Create EML Metadata
   FLAREr::create_flare_metadata(file_name = saved_file,
                           enkf_output)
-  file_chk <- list.files(config$forecast_output_directory, pattern = ".xml")
+  file_chk <- list.files(config$file_path$forecast_output_directory, pattern = ".xml")
   testthat::expect_true(length(file_chk) > 0)
 
   FLAREr::plotting_general(file_name = saved_file,
                           qaqc_location = config$file_path$qaqc_data_directory)
-  file_chk <- list.files(config$forecast_output_directory, pattern = ".pdf")
+  file_chk <- list.files(config$file_path$forecast_output_directory, pattern = ".pdf")
   testthat::expect_true(length(file_chk) > 0)
 
 
@@ -293,12 +293,12 @@ test_that("particle filter can be run", {
   #Create EML Metadata
   FLAREr::create_flare_metadata(file_name = saved_file,
                                 enkf_output)
-  file_chk <- list.files(config$forecast_output_directory, pattern = ".xml")
+  file_chk <- list.files(config$file_path$forecast_output_directory, pattern = ".xml")
   testthat::expect_true(length(file_chk) > 0)
 
   FLAREr::plotting_general(file_name = saved_file,
                           qaqc_location = config$file_path$qaqc_data_directory)
-  file_chk <- list.files(config$forecast_output_directory, pattern = ".pdf")
+  file_chk <- list.files(config$file_path$forecast_output_directory, pattern = ".pdf")
   testthat::expect_true(length(file_chk) > 0)
 
 })
@@ -361,12 +361,12 @@ test_that("EnKF can be run with NO inflows/outflows", {
   #Create EML Metadata
   FLAREr::create_flare_metadata(file_name = saved_file,
                                 enkf_output)
-  file_chk <- list.files(config$forecast_output_directory, pattern = ".xml")
+  file_chk <- list.files(config$file_path$forecast_output_directory, pattern = ".xml")
   testthat::expect_true(length(file_chk) > 0)
 
   FLAREr::plotting_general(file_name = saved_file,
                            qaqc_location = config$file_path$qaqc_data_directory)
-  file_chk <- list.files(config$forecast_output_directory, pattern = ".pdf")
+  file_chk <- list.files(config$file_path$forecast_output_directory, pattern = ".pdf")
   testthat::expect_true(length(file_chk) > 0)
 
 })
