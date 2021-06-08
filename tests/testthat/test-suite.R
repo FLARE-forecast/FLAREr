@@ -199,18 +199,18 @@ test_that("EnKF can be run", {
 
   # Save forecast
   saved_file <- FLAREr::write_forecast_netcdf(enkf_output,
-                                             forecast_location = config$run_config$forecast_output_directory)
+                                             forecast_location = config$forecast_output_directory)
   testthat::expect_true(file.exists(saved_file))
 
   #Create EML Metadata
   FLAREr::create_flare_metadata(file_name = saved_file,
                           enkf_output)
-  file_chk <- list.files(config$run_config$forecast_output_directory, pattern = ".xml")
+  file_chk <- list.files(config$forecast_output_directory, pattern = ".xml")
   testthat::expect_true(length(file_chk) > 0)
 
   FLAREr::plotting_general(file_name = saved_file,
                           qaqc_location = config$file_path$qaqc_data_directory)
-  file_chk <- list.files(config$run_config$forecast_output_directory, pattern = ".pdf")
+  file_chk <- list.files(config$forecast_output_directory, pattern = ".pdf")
   testthat::expect_true(length(file_chk) > 0)
 
 
@@ -287,18 +287,18 @@ test_that("particle filter can be run", {
 
   # Save forecast
   saved_file <- FLAREr::write_forecast_netcdf(enkf_output,
-                                             forecast_location = config$run_config$forecast_output_directory)
+                                             forecast_location = config$forecast_output_directory)
   testthat::expect_true(file.exists(saved_file))
 
   #Create EML Metadata
   FLAREr::create_flare_metadata(file_name = saved_file,
-                          enkf_output)
-  file_chk <- list.files(config$run_config$forecast_output_directory, pattern = ".xml")
+                                enkf_output)
+  file_chk <- list.files(config$forecast_output_directory, pattern = ".xml")
   testthat::expect_true(length(file_chk) > 0)
 
   FLAREr::plotting_general(file_name = saved_file,
                           qaqc_location = config$file_path$qaqc_data_directory)
-  file_chk <- list.files(config$run_config$forecast_output_directory, pattern = ".pdf")
+  file_chk <- list.files(config$forecast_output_directory, pattern = ".pdf")
   testthat::expect_true(length(file_chk) > 0)
 
 })
@@ -355,18 +355,18 @@ test_that("EnKF can be run with NO inflows/outflows", {
 
   # Save forecast
   saved_file <- FLAREr::write_forecast_netcdf(enkf_output,
-                                              forecast_location = config$run_config$forecast_output_directory)
+                                              forecast_location = config$forecast_output_directory)
   testthat::expect_true(file.exists(saved_file))
 
   #Create EML Metadata
   FLAREr::create_flare_metadata(file_name = saved_file,
                                 enkf_output)
-  file_chk <- list.files(config$run_config$forecast_output_directory, pattern = ".xml")
+  file_chk <- list.files(config$forecast_output_directory, pattern = ".xml")
   testthat::expect_true(length(file_chk) > 0)
 
   FLAREr::plotting_general(file_name = saved_file,
                            qaqc_location = config$file_path$qaqc_data_directory)
-  file_chk <- list.files(config$run_config$forecast_output_directory, pattern = ".pdf")
+  file_chk <- list.files(config$forecast_output_directory, pattern = ".pdf")
   testthat::expect_true(length(file_chk) > 0)
 
 })

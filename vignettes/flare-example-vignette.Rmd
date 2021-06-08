@@ -222,7 +222,7 @@ config$file_path$noaa_directory <- file.path(forecast_input_directory, config$me
 config$file_path$inflow_directory <- file.path(forecast_input_directory, config$inflow$forecast_inflow_model)
 config$file_path$configuration_directory<- configuration_directory
 config$file_path$execute_directory <- file.path(lake_directory, "flare_tempdir")
-config$run_config$forecast_output_directory <- file.path(lake_directory, "forecast_output")
+config$file_path$forecast_output_directory <- file.path(lake_directory, "forecast_output")
 config$file_path$qaqc_data_directory <- file.path(lake_directory, "data_processed")
 
 ```
@@ -316,19 +316,19 @@ enkf_output <- FLAREr::run_da_forecast(states_init = init$states,
 ```{r}
 # Save forecast
 saved_file <- FLAREr::write_forecast_netcdf(enkf_output,
-                                             forecast_location = config$run_config$forecast_output_directory)
+                                             forecast_location = config$file_path$forecast_output_directory)
 ```
 
 
 ```{r}
 #Create EML Metadata
 FLAREr::create_flare_metadata(file_name = saved_file,
-                          enkf_output)
+                              enkf_output)
 ```
 
 ```{r}
 FLAREr::plotting_general(file_name = saved_file,
-                          qaqc_location = config$file_path$qaqc_data_directory)
+                         qaqc_location = config$file_path$qaqc_data_directory)
 ```
 
 Once the simulation is complete you will find a PDF, a netcdf (.nc) file, and an xml in `lake_directory` directory. The PDF is the plotted output, the netcdf file is the FLARE output, and the xml is the metadata.
