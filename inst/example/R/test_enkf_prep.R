@@ -17,17 +17,15 @@ config <- yaml::read_yaml(file.path(configuration_directory, "flarer","configure
 run_config <- yaml::read_yaml(file.path(configuration_directory, "flarer","configure_run.yml"))
 
 config$run_config <- run_config
-config$run_config$lake_directory <- lake_directory
-config$run_config$execute_directory <- execute_directory
 config$file_path$noaa_directory <- file.path(forecast_input_directory, config$met$forecast_met_model)
 config$file_path$inflow_directory <- file.path(forecast_input_directory, config$inflow$forecast_inflow_model)
 config$file_path$configuration_directory<- configuration_directory
 config$file_path$execute_directory <- file.path(lake_directory, "flare_tempdir")
-config$run_config$forecast_output_directory <- file.path(test_directory, "forecast_output")
+config$file_path$forecast_output_directory <- file.path(test_directory, "forecast_output")
 config$file_path$qaqc_data_directory <- file.path(test_directory, "data_processed")
 
-if(!dir.exists(config$run_config$execute_directory)){
-  dir.create(config$run_config$execute_directory)
+if(!dir.exists(config$file_path$execute_directory)){
+  dir.create(config$file_path$execute_directory)
 }
 
 file.copy(file.path(configuration_directory, "forecast_model", "glm", "glm3.nml"), execute_directory)
@@ -44,7 +42,7 @@ observed_met_file <- file.path(config$file_path$qaqc_data_directory,"observed-me
 
 #Step up Drivers
 met_out <- FLAREr::generate_glm_met_files(obs_met_file = observed_met_file,
-                                          out_dir = config$run_config$execute_directory,
+                                          out_dir = config$file_path$execute_directory,
                                           forecast_dir = config$file_path$noaa_directory,
                                           config)
 met_file_names <- met_out$filenames
@@ -55,7 +53,7 @@ inflow_forecast_path <- config$file_path$inflow_directory
 
 inflow_outflow_files <- FLAREr::create_glm_inflow_outflow_files(inflow_file_dir = inflow_forecast_path,
                                                                 inflow_obs = cleaned_inflow_file,
-                                                                working_directory = config$run_config$execute_directory,
+                                                                working_directory = config$file_path$execute_directory,
                                                                 config,
                                                                 state_names = NULL)
 
@@ -67,9 +65,8 @@ obs <- FLAREr::create_obs_matrix(cleaned_observations_file_long,
                                 config)
 
 states_config <- FLAREr::generate_states_to_obs_mapping(states_config, obs_config)
-config_file_location <- file.path(config$file_path$configuration_directory, "flarer")
 
-model_sd <- FLAREr::initiate_model_error(config, states_config, config_file_location)
+model_sd <- FLAREr::initiate_model_error(config, states_config)
 init <- FLAREr::generate_initial_conditions(states_config,
                                            obs_config,
                                            pars_config,

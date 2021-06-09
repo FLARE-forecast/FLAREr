@@ -1,12 +1,12 @@
 # Met files ----
 test_that("met files are generated", {
 
-  template_folder <- system.file("example", package= "FLAREr")
+  template_folder <- system.file("example", package = "FLAREr")
 
   source(file.path(template_folder, "R/test_met_prep.R"))
 
   met_out <- FLAREr::generate_glm_met_files(obs_met_file = observed_met_file,
-                                           out_dir = config$run_config$execute_directory,
+                                           out_dir = config$file_path$execute_directory,
                                            forecast_dir = config$file_path$noaa_directory,
                                            config)
   met_file_names <- met_out$filenames
@@ -17,7 +17,7 @@ test_that("met files are generated", {
 # Inflow Drivers (already done) ----
 test_that("inflow & outflow files are generated", {
 
-  template_folder <- system.file("example", package= "FLAREr")
+  template_folder <- system.file("example", package = "FLAREr")
 
   source(file.path(template_folder, "R/test_inflow_prep.R"))
 
@@ -27,7 +27,7 @@ test_that("inflow & outflow files are generated", {
   #### NEED A TEST HERE TO CHECK THAT INFLOW FILES ARE GENERATED AND CORRECT
   inflow_outflow_files <- FLAREr::create_glm_inflow_outflow_files(inflow_file_dir = inflow_forecast_path,
                                                                  inflow_obs = cleaned_inflow_file,
-                                                                 working_directory = config$run_config$execute_directory,
+                                                                 working_directory = config$file_path$execute_directory,
                                                                  config,
                                                                  state_names = NULL)
 
@@ -66,7 +66,7 @@ test_that("observation matrix is generated and correct", {
 # State to obs mapping ----
 test_that("generate states to obs mapping", {
 
-  template_folder <- system.file("example", package= "FLAREr")
+  template_folder <- system.file("example", package = "FLAREr")
   temp_dir <- tempdir()
   # dir.create("example")
   file.copy(from = template_folder, to = temp_dir, recursive = TRUE)
@@ -84,7 +84,7 @@ test_that("generate states to obs mapping", {
 # Initial model error ----
 test_that("initial model error is generated", {
 
-  template_folder <- system.file("example", package= "FLAREr")
+  template_folder <- system.file("example", package = "FLAREr")
   temp_dir <- tempdir()
   # dir.create("example")
   file.copy(from = template_folder, to = temp_dir, recursive = TRUE)
@@ -96,7 +96,7 @@ test_that("initial model error is generated", {
 
   config_file_directory <- file.path(config$file_path$configuration_directory, "flarer")
 
-  model_sd <- FLAREr::initiate_model_error(config, states_config, config_file_directory)
+  model_sd <- FLAREr::initiate_model_error(config, states_config)
   testthat::expect_true(is.array(model_sd))
   testthat::expect_true(any(!is.na(model_sd)))
 })
@@ -105,7 +105,7 @@ test_that("initial model error is generated", {
 # Set initial conditions ----
 test_that("initial conditions are generated", {
 
-  template_folder <- system.file("example", package= "FLAREr")
+  template_folder <- system.file("example", package = "FLAREr")
   temp_dir <- tempdir()
   # dir.create("example")
   file.copy(from = template_folder, to = temp_dir, recursive = TRUE)
@@ -199,18 +199,18 @@ test_that("EnKF can be run", {
 
   # Save forecast
   saved_file <- FLAREr::write_forecast_netcdf(enkf_output,
-                                             forecast_location = config$run_config$forecast_output_directory)
+                                             forecast_location = config$file_path$forecast_output_directory)
   testthat::expect_true(file.exists(saved_file))
 
   #Create EML Metadata
   FLAREr::create_flare_metadata(file_name = saved_file,
                           enkf_output)
-  file_chk <- list.files(config$run_config$forecast_output_directory, pattern = ".xml")
+  file_chk <- list.files(config$file_path$forecast_output_directory, pattern = ".xml")
   testthat::expect_true(length(file_chk) > 0)
 
   FLAREr::plotting_general(file_name = saved_file,
                           qaqc_location = config$file_path$qaqc_data_directory)
-  file_chk <- list.files(config$run_config$forecast_output_directory, pattern = ".pdf")
+  file_chk <- list.files(config$file_path$forecast_output_directory, pattern = ".pdf")
   testthat::expect_true(length(file_chk) > 0)
 
 
@@ -245,7 +245,7 @@ test_that("particle filter can be run", {
   # obs = obs
   # obs_sd = obs_config$obs_sd
   # model_sd = model_sd
-  # working_directory = config$run_config$execute_location
+  # working_directory = config$file_path$execute_location
   # met_file_names = (met_file_names)
   # inflow_file_names = (inflow_file_names)
   # outflow_file_names = (outflow_file_names)
@@ -287,18 +287,18 @@ test_that("particle filter can be run", {
 
   # Save forecast
   saved_file <- FLAREr::write_forecast_netcdf(enkf_output,
-                                             forecast_location = config$run_config$forecast_output_directory)
+                                             forecast_location = config$file_path$forecast_output_directory)
   testthat::expect_true(file.exists(saved_file))
 
   #Create EML Metadata
   FLAREr::create_flare_metadata(file_name = saved_file,
-                          enkf_output)
-  file_chk <- list.files(config$run_config$forecast_output_directory, pattern = ".xml")
+                                enkf_output)
+  file_chk <- list.files(config$file_path$forecast_output_directory, pattern = ".xml")
   testthat::expect_true(length(file_chk) > 0)
 
   FLAREr::plotting_general(file_name = saved_file,
                           qaqc_location = config$file_path$qaqc_data_directory)
-  file_chk <- list.files(config$run_config$forecast_output_directory, pattern = ".pdf")
+  file_chk <- list.files(config$file_path$forecast_output_directory, pattern = ".pdf")
   testthat::expect_true(length(file_chk) > 0)
 
 })
@@ -355,18 +355,18 @@ test_that("EnKF can be run with NO inflows/outflows", {
 
   # Save forecast
   saved_file <- FLAREr::write_forecast_netcdf(enkf_output,
-                                              forecast_location = config$run_config$forecast_output_directory)
+                                              forecast_location = config$file_path$forecast_output_directory)
   testthat::expect_true(file.exists(saved_file))
 
   #Create EML Metadata
   FLAREr::create_flare_metadata(file_name = saved_file,
                                 enkf_output)
-  file_chk <- list.files(config$run_config$forecast_output_directory, pattern = ".xml")
+  file_chk <- list.files(config$file_path$forecast_output_directory, pattern = ".xml")
   testthat::expect_true(length(file_chk) > 0)
 
   FLAREr::plotting_general(file_name = saved_file,
                            qaqc_location = config$file_path$qaqc_data_directory)
-  file_chk <- list.files(config$run_config$forecast_output_directory, pattern = ".pdf")
+  file_chk <- list.files(config$file_path$forecast_output_directory, pattern = ".pdf")
   testthat::expect_true(length(file_chk) > 0)
 
 })

@@ -20,14 +20,15 @@ config <- yaml::read_yaml(file.path(configuration_directory, "flarer","configure
 run_config <- yaml::read_yaml(file.path(configuration_directory, "flarer","configure_run.yml"))
 
 config$run_config <- run_config
-config$run_config$lake_directory <- lake_directory
-config$run_config$execute_directory <- execute_directory
 config$file_path$noaa_directory <- file.path(forecast_input_directory, config$met$forecast_met_model)
 config$file_path$inflow_directory <- file.path(forecast_input_directory, config$inflow$forecast_inflow_model)
 config$file_path$configuration_directory<- configuration_directory
+config$file_path$execute_directory <- file.path(lake_directory, "flare_tempdir")
+config$file_path$forecast_output_directory <- file.path(test_directory, "forecast_output")
+config$file_path$qaqc_data_directory <- file.path(test_directory, "data_processed")
 
-if(!dir.exists(config$run_config$execute_directory)){
-  dir.create(config$run_config$execute_directory)
+if(!dir.exists(config$file_path$execute_directory)){
+  dir.create(config$file_path$execute_directory)
 }
 
 file.copy(file.path(configuration_directory, "forecast_model", "glm", "glm3.nml"), execute_directory)

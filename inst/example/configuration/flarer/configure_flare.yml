@@ -4,6 +4,7 @@ file_path:
    inflow_directory: inst/example/forecasted_drivers/
    configuration_directory: inst/example/configuration/
    execute_directory: inst/example/flare_tempdir
+   forecast_output_directory: inst/example/forecast_output
    run_config: inst/example/configuration/flarer/configure_run.yml
 location:
    site_id: fcre
@@ -34,6 +35,7 @@ da_setup:
     localization_distance: .na #distance in meters were covariances in the model error are used
     no_negative_states: TRUE
     assimilate_first_step: FALSE
+    use_obs_constraint: TRUE
 model_settings:
    ncore: 2
    model_name: glm #other is "null"
@@ -67,14 +69,13 @@ met:
    use_forecasted_met: TRUE
    forecast_met_model: NOAAGEFS_1hr-debias
 uncertainty:
-   use_obs_constraint: TRUE
-   observation_uncertainty: TRUE
-   process_uncertainty: TRUE
-   weather_uncertainty: TRUE
-   initial_condition_uncertainty: TRUE
-   parameter_uncertainty: TRUE
-   met_downscale_uncertainty: TRUE
-   inflow_process_uncertainty: TRUE
+   observation: TRUE
+   process: TRUE
+   weather: TRUE
+   initial_condition: TRUE
+   parameter: TRUE
+   met_downscale: TRUE
+   inflow_process: TRUE
 output_settings:
    diagnostics_names:  [extc_coef]
 management:

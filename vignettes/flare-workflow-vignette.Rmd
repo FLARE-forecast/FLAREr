@@ -39,17 +39,15 @@ config <- yaml::read_yaml(file.path(configuration_directory, "flarer","configure
 run_config <- yaml::read_yaml(file.path(configuration_directory, "flarer","configure_run.yml"))
 
 config$run_config <- run_config
-config$run_config$lake_directory <- lake_directory
-config$run_config$execute_directory <- execute_directory
 config$file_path$noaa_directory <- file.path(forecast_input_directory, config$met$forecast_met_model)
 config$file_path$inflow_directory <- file.path(forecast_input_directory, config$inflow$forecast_inflow_model)
 config$file_path$configuration_directory<- configuration_directory
 config$file_path$execute_directory <- file.path(lake_directory, "flare_tempdir")
-config$run_config$forecast_output_directory <- file.path(test_directory, "forecast_output")
+config$file_path$forecast_output_directory <- file.path(test_directory, "forecast_output")
 config$file_path$qaqc_data_directory <- file.path(test_directory, "data_processed")
 
-if(!dir.exists(config$run_config$execute_directory)){
-  dir.create(config$run_config$execute_directory)
+if(!dir.exists(config$file_path$execute_directory)){
+  dir.create(config$file_path$execute_directory)
 }
 
 file.copy(file.path(configuration_directory, "forecast_model", "glm", "glm3.nml"), execute_directory)
@@ -68,7 +66,7 @@ observed_met_file <- file.path(config$qaqc_data_directory,"observed-met_fcre.nc"
 
 #Step up Drivers
 met_out <- FLAREr::generate_glm_met_files(obs_met_file = observed_met_file,
-                                          out_dir = config$run_config$execute_directory,
+                                          out_dir = config$file_path$execute_directory,
                                           forecast_dir = config$file_path$noaa_directory,
                                           config)
 met_file_names <- met_out$filenames
@@ -79,7 +77,7 @@ inflow_forecast_path <- config$file_path$inflow_directory
 
 inflow_outflow_files <- FLAREr::create_glm_inflow_outflow_files(inflow_file_dir = inflow_forecast_path,
                                                                 inflow_obs = cleaned_inflow_file,
-                                                                working_directory = config$run_config$execute_directory,
+                                                                working_directory = config$file_path$execute_directory,
                                                                 config,
                                                                 state_names = NULL)
 
@@ -121,7 +119,7 @@ enkf_output <- FLAREr::run_da_forecast(states_init = init$states,
 
 # Save forecast
 saved_file <- FLAREr::write_forecast_netcdf(enkf_output,
-                                           forecast_location = config$run_config$forecast_output_directory)
+                                           forecast_location = config$file_path$forecast_output_directory)
 
 #Create EML Metadata
 FLAREr::create_flare_metadata(file_name = saved_file,

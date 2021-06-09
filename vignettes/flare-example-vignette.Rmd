@@ -216,13 +216,11 @@ config <- yaml::read_yaml(file.path(configuration_directory, "flarer","configure
 run_config <- yaml::read_yaml(file.path(configuration_directory, "flarer","configure_run.yml"))
 
 config$run_config <- run_config
-config$run_config$lake_directory <- lake_directory
-config$run_config$execute_directory <- execute_directory
 config$file_path$noaa_directory <- file.path(forecast_input_directory, config$met$forecast_met_model)
 config$file_path$inflow_directory <- file.path(forecast_input_directory, config$inflow$forecast_inflow_model)
 config$file_path$configuration_directory<- configuration_directory
 config$file_path$execute_directory <- file.path(lake_directory, "flare_tempdir")
-config$run_config$forecast_output_directory <- file.path(lake_directory, "forecast_output")
+config$file_path$forecast_output_directory <- file.path(lake_directory, "forecast_output")
 config$file_path$qaqc_data_directory <- file.path(lake_directory, "data_processed")
 
 ```
@@ -247,7 +245,7 @@ Set up weather drivers in GLM format
 
 ```{r}
 met_out <- FLAREr::generate_glm_met_files(obs_met_file = observed_met_file,
-                                          out_dir = config$run_config$execute_directory,
+                                          out_dir = config$file_path$execute_directory,
                                           forecast_dir = config$file_path$noaa_directory,
                                           config)
 ```
@@ -257,7 +255,7 @@ Set up inflow and outflow drivers in GLM format
 ```{r}
 inflow_outflow_files <- FLAREr::create_glm_inflow_outflow_files(inflow_file_dir = config$file_path$inflow_directory,
                                                                 inflow_obs = cleaned_inflow_file,
-                                                                working_directory = config$run_config$execute_directory,
+                                                                working_directory = config$file_path$execute_directory,
                                                                 config,
                                                                 state_names = NULL)
 ```
@@ -279,7 +277,7 @@ states_config <- FLAREr::generate_states_to_obs_mapping(states_config, obs_confi
 Initialize the model error vector
 
 ```{r}
-model_sd <- FLAREr::initiate_model_error(config, states_config, file.path(config$file_path$configuration_directory, "flarer"))
+model_sd <- FLAREr::initiate_model_error(config, states_config)
 
 ```
 
@@ -316,19 +314,19 @@ enkf_output <- FLAREr::run_da_forecast(states_init = init$states,
 ```{r}
 # Save forecast
 saved_file <- FLAREr::write_forecast_netcdf(enkf_output,
-                                             forecast_location = config$run_config$forecast_output_directory)
+                                            forecast_location = config$file_path$forecast_output_directory)
 ```
 
 
 ```{r}
 #Create EML Metadata
 FLAREr::create_flare_metadata(file_name = saved_file,
-                          enkf_output)
+                              enkf_output)
 ```
 
 ```{r}
 FLAREr::plotting_general(file_name = saved_file,
-                          qaqc_location = config$file_path$qaqc_data_directory)
+                         qaqc_location = config$file_path$qaqc_data_directory)
 ```
 
 Once the simulation is complete you will find a PDF, a netcdf (.nc) file, and an xml in `lake_directory` directory. The PDF is the plotted output, the netcdf file is the FLARE output, and the xml is the metadata.
