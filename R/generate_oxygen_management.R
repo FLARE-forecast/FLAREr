@@ -13,7 +13,7 @@ generate_oxygen_management <- function(config){
 
 
 
-  d <- readr::read_csv(file.path(config$data_location, config$sss_fname), col_type = readr::cols(
+  d <- readr::read_csv(file.path(config$file_path$qaqc_data_directory, config$management$sss_fname), col_type = readr::cols(
     time = readr::col_date(format = ""),
     FLOW = readr::col_double(),
     OXY_oxy = readr::col_double())
@@ -47,14 +47,14 @@ generate_oxygen_management <- function(config){
 
   management <- list()
   management$management_input <- management_input
-  management$simulate_sss <- config$simulate_sss
+  management$simulate_sss <- config$management$simulate_sss
   management$forecast_sss_on <- config$run_config$forecast_sss_on
-  management$sss_depth <- config$sss_depth
-  management$use_specified_sss <- config$use_specified_sss
-  management$specified_sss_inflow_file <- config$specified_sss_inflow_file
-  management$specified_sss_outflow_file <- config$specified_sss_outflow_file
-  management$forecast_sss_flow <- config$forecast_sss_flow
-  management$forecast_sss_oxy <- config$forecast_sss_oxy
+  management$sss_depth <- config$management$sss_depth
+  management$use_specified_sss <- config$management$use_specified_sss
+  management$specified_sss_inflow_file <- config$management$specified_sss_inflow_file
+  management$specified_sss_outflow_file <- config$management$specified_sss_outflow_file
+  management$forecast_sss_flow <- config$management$forecast_sss_flow
+  management$forecast_sss_oxy <- config$management$forecast_sss_oxy
 
   return(management)
 }
