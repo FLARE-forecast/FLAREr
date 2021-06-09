@@ -56,8 +56,9 @@ create_obs_matrix <- function(cleaned_observations_file_long,
   parallel::clusterExport(cl, varlist = list("obs_config", "full_time", "config", "d"),
                             envir = environment())
 
-  obs_list <- parallel::parLapply(cl, list(1:length(obs_config$state_names_obs)), function(i) {
-    message("Extracting ", obs_config$target_variable[i])
+  obs_list <- parallel::parLapply(cl, 1:length(obs_config$state_names_obs), function(i) {
+
+        message("Extracting ", obs_config$target_variable[i])
 
     obs_tmp <- array(NA,dim = c(length(full_time), length(config$model_settings$modeled_depths)))
 
@@ -79,6 +80,7 @@ create_obs_matrix <- function(cleaned_observations_file_long,
           warning("No observations for ", obs_config$target_variable[i], " on ", lubridate::as_date(full_time[k]),
                " at ", lubridate::hour(full_time[k]), ":00:00")
         }
+
         d1 <- d1 %>%
           dplyr::filter(abs(d1$depth-config$model_settings$modeled_depths[j]) < obs_config$distance_threshold[i])
         if(nrow(d1) == 0){
@@ -101,14 +103,13 @@ create_obs_matrix <- function(cleaned_observations_file_long,
     if(sum(is.na(obs_tmp)) == (dim(obs_tmp)[1] * dim(obs_tmp)[2]) ) {
       warning("All values are NA for ", obs_config$target_variable[i])
     }
-
     return(obs_tmp)
   })
 
   obs <- array(NA, dim = c(length(obs_config$state_names_obs), length(full_time), length(config$model_settings$modeled_depths)))
   for(i in 1:nrow(obs_config)) {
     obs[i , , ] <-  obs_list[[i]]
-    }
+  }
 
   full_time_forecast <- seq(start_datetime, end_datetime, by = "1 day")
   obs[ , which(full_time_forecast > forecast_start_datetime), ] <- NA
