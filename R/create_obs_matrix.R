@@ -1,15 +1,21 @@
+##' @title Create matrix of observations in the format required by run_da_forecast
+##' @details
 ##' @param cleaned_observations_file_long
-##'
 ##' @param obs_config
 ##' @param config
-##'
-##' @title Create matrix of observations in the format required by run_ENKF
-##'
 ##' @export
-##'
+##' @return matrix
+##' @export
+##' @import readr
+##' @import parallel
+##' @import magrittr
+##' @importFrom lubridate as_datetime as_date hour days
+##' @importFrom dplyr filter
 ##' @author Quinn Thomas
-##'
-##'
+##' @example
+##' \dontrun{
+##' obs <- create_obs_matrix(cleaned_observations_file_long, obs_config, config)
+##' }
 
 create_obs_matrix <- function(cleaned_observations_file_long,
                               obs_config,
