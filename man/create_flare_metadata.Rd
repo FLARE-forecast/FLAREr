@@ -2,20 +2,18 @@
 % Please edit documentation in R/create_flare_metadata.R
 \name{create_flare_metadata}
 \alias{create_flare_metadata}
-\title{Generate metadata (EML) using the Ecological Forecasting Initiatve Standards}
+\title{Generate metadata (EML) using the Ecological Forecasting Initiative Standards}
 \usage{
-create_flare_metadata(file_name, enkf_output)
+create_flare_metadata(file_name, da_forecast_output)
 }
 \arguments{
-\item{file_name}{}
-
-\item{enkf_output}{}
+\item{da_forecast_output}{}
 }
 \value{
 None
 }
 \description{
-Generate metadata (EML) using the Ecological Forecasting Initiatve Standards
+Generate metadata (EML) using the Ecological Forecasting Initiative Standards
 }
 \author{
 Quinn Thomas

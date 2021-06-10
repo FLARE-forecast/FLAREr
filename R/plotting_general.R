@@ -1,18 +1,27 @@
-##' @param file_name
-##'
-##' @param qaqc_location
-##'
-##' @title Plotting FLARE output
+##' @title Generate diagnostic plot of FLARE output with observations
+##' @details Function combines the netcdf output with the long-format observation file to produce a set of plots for each state variable, calibrated parameter, and diagnostic variable
+##' @param file_name string; full path to output file produced by write_forecast_netcdf()
+##' @param qaqc_data_directory string; full path to processed long-format observation file
+##' @param ncore integer; number of computer cores for parallel processing
+##' @param plot_profile boolean; include profile plots in PDF
+##' @param obs_csv boolean; generate csv with the observed and predicted values for model states
 ##' @return None
-##'
 ##' @export
-##'
+##' @import dplyr
+##' @import ggplot2
+##' @importFrom tools file_path_sans_ext
+##' @importFrom tibble tibble
+##' @importFrom lubridate as_datetime
+##' @importFrom readr write_csv
+##' @importFrom patchwork wrap_plots
 ##' @author Quinn Thomas
-##'
-##'
+##' @example
+##' \dontrun{
+##' plotting_general(file_name = saved_file, qaqc_data_directory = config$file_path$qaqc_data_directory, ncore = config$model_settings$ncore, plot_profile = TRUE, obs_csv)
+##' }
 
 plotting_general <- function(file_name,
-                             qaqc_location,
+                             qaqc_data_directory,
                              ncore = 1,
                              plot_profile = TRUE,
                              obs_csv = TRUE){
@@ -22,7 +31,7 @@ plotting_general <- function(file_name,
 
 
   output <- FLAREr::combine_forecast_observations(file_name,
-                                                  qaqc_location,
+                                                  qaqc_location = qaqc_data_directory,
                                                   extra_historical_days = 0,
                                                   ncore = ncore)
   obs <- output$obs

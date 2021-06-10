@@ -4,12 +4,10 @@
 \alias{write_forecast_netcdf}
 \title{Write netcdf output file from object created by run_ENKF}
 \usage{
-write_forecast_netcdf(enkf_output, forecast_location)
+write_forecast_netcdf(da_forecast_output, forecast_output_directory)
 }
 \arguments{
-\item{enkf_output}{}
-
-\item{forecast_location}{}
+\item{forecast_output_directory}{}
 }
 \value{
 None

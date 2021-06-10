@@ -209,7 +209,7 @@ test_that("EnKF can be run", {
   testthat::expect_true(length(file_chk) > 0)
 
   FLAREr::plotting_general(file_name = saved_file,
-                          qaqc_location = config$file_path$qaqc_data_directory)
+                          qaqc_data_directory = config$file_path$qaqc_data_directory)
   file_chk <- list.files(config$file_path$forecast_output_directory, pattern = ".pdf")
   testthat::expect_true(length(file_chk) > 0)
 
@@ -297,7 +297,7 @@ test_that("particle filter can be run", {
   testthat::expect_true(length(file_chk) > 0)
 
   FLAREr::plotting_general(file_name = saved_file,
-                          qaqc_location = config$file_path$qaqc_data_directory)
+                          qaqc_data_directory = config$file_path$qaqc_data_directory)
   file_chk <- list.files(config$file_path$forecast_output_directory, pattern = ".pdf")
   testthat::expect_true(length(file_chk) > 0)
 
@@ -365,7 +365,7 @@ test_that("EnKF can be run with NO inflows/outflows", {
   testthat::expect_true(length(file_chk) > 0)
 
   FLAREr::plotting_general(file_name = saved_file,
-                           qaqc_location = config$file_path$qaqc_data_directory)
+                           qaqc_data_directory = config$file_path$qaqc_data_directory)
   file_chk <- list.files(config$file_path$forecast_output_directory, pattern = ".pdf")
   testthat::expect_true(length(file_chk) > 0)
 

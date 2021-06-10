@@ -1,8 +1,8 @@
+#' @title Generate metadata (EML) using the Ecological Forecasting Initiative Standards
 #' @param file_name
+#' @param da_forecast_output
 #'
-#' @param enkf_output
-#'
-#' @title Generate metadata (EML) using the Ecological Forecasting Initiatve Standards
+
 #' @return None
 #'
 #' @export
@@ -12,7 +12,7 @@
 #'
 
 create_flare_metadata <- function(file_name,
-                             enkf_output){
+                                  da_forecast_output){
 
   emld::eml_version("eml-2.2.0")
 
@@ -33,12 +33,12 @@ create_flare_metadata <- function(file_name,
   forecast_iteration_id <- ncdf4::ncatt_get(nc, varid = 0)$forecast_iteration_id
   forecast_project_id <- ncdf4::ncatt_get(nc, varid = 0)$forecast_project_id
 
-  if(!is.null(enkf_output$pars_config)){
-    npars <- nrow(enkf_output$pars_config)
+  if(!is.null(da_forecast_output$pars_config)){
+    npars <- nrow(da_forecast_output$pars_config)
   }else{
     npars <- 0
   }
-  nstates <- dim(enkf_output$x)[3] - npars
+  nstates <- dim(da_forecast_output$x)[3] - npars
 
   nmembers <- length(ncdf4::ncvar_get(nc, "ensemble"))
 
@@ -91,9 +91,9 @@ create_flare_metadata <- function(file_name,
   coverage <- EML::set_coverage(begin = lubridate::as_date(dplyr::first(full_time)),
                  end = lubridate::as_date(dplyr::last(full_time)),
                  #sci_names = "NA",
-                 geographicDescription = enkf_output$config$location$name,
-                 west = enkf_output$config$location$longitude, east = enkf_output$config$location$longitude,
-                 north = enkf_output$config$location$latitude, south = enkf_output$config$location$latitude)
+                 geographicDescription = da_forecast_output$config$location$name,
+                 west = da_forecast_output$config$location$longitude, east = da_forecast_output$config$location$longitude,
+                 north = da_forecast_output$config$location$latitude, south = da_forecast_output$config$location$latitude)
 
 
   keywordSet <- list(
@@ -104,21 +104,21 @@ create_flare_metadata <- function(file_name,
                      "timeseries")
     ))
 
-  abstract <- enkf_output$config$metadata$abstract #system.file("extdata", "abstract.md", package="EFIstandards", mustWork = TRUE)
+  abstract <- da_forecast_output$config$metadata$abstract #system.file("extdata", "abstract.md", package="EFIstandards", mustWork = TRUE)
 
   dataset = EML::eml$dataset(
-    title = enkf_output$config$metadata$forecast_title,
-    creator = enkf_output$config$metadata$me,
-    contact = list(references = enkf_output$config$metadata$me$id),
+    title = da_forecast_output$config$metadata$forecast_title,
+    creator = da_forecast_output$config$metadata$me,
+    contact = list(references = da_forecast_output$config$metadata$me$id),
     pubDate = lubridate::as_date(lubridate::as_datetime(forecast_issue_time)),
-    intellectualRights = enkf_output$config$metadata$intellectualRights,
+    intellectualRights = da_forecast_output$config$metadata$intellectualRights,
     abstract =  abstract,
     dataTable = dataTable,
     keywordSet = keywordSet,
     coverage = coverage
   )
 
-  if(enkf_output$config$uncertainty$initial_condition){
+  if(da_forecast_output$config$uncertainty$initial_condition){
     initial_conditions = list(
       # Possible values: no, contains, data_driven, propagates, assimilates
       status = "assimilates",
@@ -143,7 +143,7 @@ create_flare_metadata <- function(file_name,
     )
   }
 
-  if(enkf_output$config$uncertainty$parameter & npars > 0){
+  if(da_forecast_output$config$uncertainty$parameter & npars > 0){
     parameters = list(
       status = "assimilates",
       complexity = npars,
@@ -164,7 +164,7 @@ create_flare_metadata <- function(file_name,
     )
   }
 
-  if(enkf_output$config$uncertainty$process){
+  if(da_forecast_output$config$uncertainty$process){
     process_error = list(
       status = "propagates",
       propagation = list(
@@ -182,13 +182,13 @@ create_flare_metadata <- function(file_name,
     )
   }
 
-  if(enkf_output$config$uncertainty$weather | enkf_output$config$uncertainty$met_downscale){
+  if(da_forecast_output$config$uncertainty$weather | da_forecast_output$config$uncertainty$met_downscale){
     drivers = list(
       status = "propagates",
-      complexity = length(unique(enkf_output$met_file_names)),
+      complexity = length(unique(da_forecast_output$met_file_names)),
       propagation = list(
         type = "ensemble", # ensemble vs analytic
-        size = length(unique(enkf_output$met_file_names)))
+        size = length(unique(da_forecast_output$met_file_names)))
     )
 
   }else{
@@ -214,7 +214,7 @@ create_flare_metadata <- function(file_name,
         forecast_iteration_id = forecast_iteration_id,
         forecast_project_id = forecast_project_id,
         metadata_standard_version = "0.2",
-        model_description = enkf_output$config$metadata$model_description,
+        model_description = da_forecast_output$config$metadata$model_description,
         ## UNCERTAINTY CLASSES
         initial_conditions = initial_conditions,
         parameters = parameters,
@@ -241,7 +241,7 @@ create_flare_metadata <- function(file_name,
 
   EFIstandards::forecast_validator(my_eml)
 
-  eml_file_name <- file.path(enkf_output$config$file_path$forecast_output_directory, paste0(tools::file_path_sans_ext(basename(file_name)),"-eml.xml"))
+  eml_file_name <- file.path(da_forecast_output$config$file_path$forecast_output_directory, paste0(tools::file_path_sans_ext(basename(file_name)),"-eml.xml"))
 
   EML::write_eml(my_eml, eml_file_name)
   invisible(eml_file_name)

@@ -1,6 +1,5 @@
-##' @param enkf_output
-##'
-##' @param forecast_location
+##' @param da_forecast_output
+##' @param forecast_output_directory
 ##'
 ##' @title Write netcdf output file from object created by run_ENKF
 ##' @return None
@@ -11,32 +10,32 @@
 ##'
 ##'
 
-write_forecast_netcdf <- function(enkf_output,
-                                  forecast_location){
+write_forecast_netcdf <- function(da_forecast_output,
+                                  forecast_output_directory){
 
-  if(!dir.exists(forecast_location)) {
-    dir.create(forecast_location, recursive = TRUE)
+  if(!dir.exists(forecast_output_directory)) {
+    dir.create(forecast_output_directory, recursive = TRUE)
   }
 
-  x <- enkf_output$x
-  lake_depth <- enkf_output$lake_depth
-  snow_ice_thickness <- enkf_output$snow_ice_thickness
-  data_assimilation_flag = enkf_output$data_assimilation_flag
-  forecast_flag = enkf_output$forecast_flag
-  da_qc_flag = enkf_output$da_qc_flag
-  full_time <- enkf_output$full_time
-  forecast_start_datetime <- enkf_output$forecast_start_datetime
-  avg_surf_temp <- enkf_output$avg_surf_temp
-  mixing_vars <- enkf_output$mixing_vars
-  model_internal_depths <- enkf_output$model_internal_depths
-  salt <- enkf_output$salt
-  config <- enkf_output$config
-  states_config <- enkf_output$states_config
-  obs_config <- enkf_output$obs_config
-  pars_config <- enkf_output$pars_config
-  obs <- enkf_output$obs
+  x <- da_forecast_output$x
+  lake_depth <- da_forecast_output$lake_depth
+  snow_ice_thickness <- da_forecast_output$snow_ice_thickness
+  data_assimilation_flag <- da_forecast_output$data_assimilation_flag
+  forecast_flag <- da_forecast_output$forecast_flag
+  da_qc_flag <- da_forecast_output$da_qc_flag
+  full_time <- da_forecast_output$full_time
+  forecast_start_datetime <- da_forecast_output$forecast_start_datetime
+  avg_surf_temp <- da_forecast_output$avg_surf_temp
+  mixing_vars <- da_forecast_output$mixing_vars
+  model_internal_depths <- da_forecast_output$model_internal_depths
+  salt <- da_forecast_output$salt
+  config <- da_forecast_output$config
+  states_config <- da_forecast_output$states_config
+  obs_config <- da_forecast_output$obs_config
+  pars_config <- da_forecast_output$pars_config
+  obs <- da_forecast_output$obs
 
-  diagnostics <- enkf_output$diagnostics
+  diagnostics <- da_forecast_output$diagnostics
 
   hist_days <- as.numeric(forecast_start_datetime - full_time[1])
   start_forecast_step <- 1 + hist_days
@@ -46,13 +45,13 @@ write_forecast_netcdf <- function(enkf_output,
   }else{
     npars <- 0
   }
-  nstates <- dim(enkf_output$x)[3] - npars
+  nstates <- dim(da_forecast_output$x)[3] - npars
 
   x_efi <- aperm(x, c(1,3,2))
   diagnostics_efi <- diagnostics
 
-  ncfname <- file.path(forecast_location, paste0(enkf_output$save_file_name,".nc"))
-  #Set dimensionsenkf_output
+  ncfname <- file.path(forecast_output_directory, paste0(da_forecast_output$save_file_name,".nc"))
+  #Set dimensionsda_forecast_output
   ens <- seq(1,dim(x)[2],1)
   depths <- config$model_settings$modeled_depths
   t <- as.numeric(as.POSIXct(lubridate::with_tz(full_time),origin = '1970-01-01 00:00.00 UTC'))
@@ -184,11 +183,11 @@ write_forecast_netcdf <- function(enkf_output,
     }
   }
 
-  time_of_forecast <- lubridate::with_tz(enkf_output$time_of_forecast, tzone = "UTC")
+  time_of_forecast <- lubridate::with_tz(da_forecast_output$time_of_forecast, tzone = "UTC")
 
   #Global file metadata
   ncdf4::ncatt_put(ncout,0,"title", config$metadata$forecast_title, prec =  "text")
-  ncdf4::ncatt_put(ncout,0,"forecast_iteration_id" ,enkf_output$forecast_iteration_id, prec =  "text")
+  ncdf4::ncatt_put(ncout,0,"forecast_iteration_id" ,da_forecast_output$forecast_iteration_id, prec =  "text")
   ncdf4::ncatt_put(ncout,0,"forecast_project_id", config$metadata$forecast_project_id, prec =  "text")
   ncdf4::ncatt_put(ncout,0,"forecast_model_id", config$metadata$model_description$forecast_model_id, prec =  "text")
   ncdf4::ncatt_put(ncout,0,"time_zone_of_simulation","UTC", prec =  "text")

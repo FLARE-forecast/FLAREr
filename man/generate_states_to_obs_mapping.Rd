@@ -2,16 +2,21 @@
 % Please edit documentation in R/generate_states_to_obs_mapping.R
 \name{generate_states_to_obs_mapping}
 \alias{generate_states_to_obs_mapping}
-\title{Convert columns the map states to observations to a single vector}
+\title{}
 \usage{
 generate_states_to_obs_mapping(states_config, obs_config)
 }
 \arguments{
-\item{obs_config}{}
+\item{states_config}{list of state configurations}
+
+\item{obs_config}{list of observation configurations}
 }
 \value{
 
 }
 \description{
+
+}
+\details{
 Convert columns the map states to observations to a single vector
 }

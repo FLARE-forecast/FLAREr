@@ -1,11 +1,13 @@
-#' Convert columns the map states to observations to a single vector
+#' @title
 #'
-#' @param states_config
-#' @param obs_config
+#' @details Convert columns the map states to observations to a single vector
+#'
+#' @param states_config list of state configurations
+#' @param obs_config list of observation configurations
 #'
 #' @return
 #' @export
-#'
+#' @importFrom stringr str_detect
 #' @examples
 
 generate_states_to_obs_mapping <- function(states_config, obs_config){
