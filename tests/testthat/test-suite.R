@@ -198,13 +198,13 @@ test_that("EnKF can be run", {
   testthat::expect_true(any(unlist(chk)))
 
   # Save forecast
-  saved_file <- FLAREr::write_forecast_netcdf(enkf_output,
-                                             forecast_location = config$file_path$forecast_output_directory)
+  saved_file <- FLAREr::write_forecast_netcdf(da_forecast_output = enkf_output,
+                                             forecast_output_directory = config$file_path$forecast_output_directory)
   testthat::expect_true(file.exists(saved_file))
 
   #Create EML Metadata
   FLAREr::create_flare_metadata(file_name = saved_file,
-                          enkf_output)
+                          da_forecast_output = enkf_output)
   file_chk <- list.files(config$file_path$forecast_output_directory, pattern = ".xml")
   testthat::expect_true(length(file_chk) > 0)
 
@@ -286,13 +286,13 @@ test_that("particle filter can be run", {
   testthat::expect_true(any(unlist(chk)))
 
   # Save forecast
-  saved_file <- FLAREr::write_forecast_netcdf(enkf_output,
-                                             forecast_location = config$file_path$forecast_output_directory)
+  saved_file <- FLAREr::write_forecast_netcdf(da_forecast_output = enkf_output,
+                                              forecast_output_directory = config$file_path$forecast_output_directory)
   testthat::expect_true(file.exists(saved_file))
 
   #Create EML Metadata
   FLAREr::create_flare_metadata(file_name = saved_file,
-                                enkf_output)
+                                da_forecast_output = enkf_output)
   file_chk <- list.files(config$file_path$forecast_output_directory, pattern = ".xml")
   testthat::expect_true(length(file_chk) > 0)
 
@@ -354,13 +354,13 @@ test_that("EnKF can be run with NO inflows/outflows", {
   testthat::expect_true(any(unlist(chk)))
 
   # Save forecast
-  saved_file <- FLAREr::write_forecast_netcdf(enkf_output,
-                                              forecast_location = config$file_path$forecast_output_directory)
+  saved_file <- FLAREr::write_forecast_netcdf(da_forecast_output = enkf_output,
+                                              forecast_output_directory = config$file_path$forecast_output_directory)
   testthat::expect_true(file.exists(saved_file))
 
   #Create EML Metadata
   FLAREr::create_flare_metadata(file_name = saved_file,
-                                enkf_output)
+                                da_forecast_output = enkf_output)
   file_chk <- list.files(config$file_path$forecast_output_directory, pattern = ".xml")
   testthat::expect_true(length(file_chk) > 0)
 
