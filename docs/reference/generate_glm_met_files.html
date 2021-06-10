@@ -6,7 +6,7 @@
 <meta http-equiv="X-UA-Compatible" content="IE=edge">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-<title>Convert NOAA forecasts to GLM format — generate_glm_met_files • FLAREr</title>
+<title>Convert historical meteorology and NOAA forecasts to GLM format — generate_glm_met_files • FLAREr</title>
 
 
 <!-- jquery -->
@@ -39,8 +39,8 @@
 
 
 
-<meta property="og:title" content="Convert NOAA forecasts to GLM format — generate_glm_met_files" />
-<meta property="og:description" content="Convert NOAA forecasts to GLM format" />
+<meta property="og:title" content="Convert historical meteorology and NOAA forecasts to GLM format — generate_glm_met_files" />
+<meta property="og:description" content="Convert historical meteorology and NOAA forecasts to GLM format" />
 
 
 
@@ -72,7 +72,7 @@
       </button>
       <span class="navbar-brand">
         <a class="navbar-link" href="../index.html">FLAREr</a>
-        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="Released version">2.0.1</span>
+        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="Released version">2.1.0</span>
       </span>
     </div>
 
@@ -121,38 +121,54 @@
 <div class="row">
   <div class="col-md-9 contents">
     <div class="page-header">
-    <h1>Convert NOAA forecasts to GLM format</h1>
+    <h1>Convert historical meteorology and NOAA forecasts to GLM format</h1>
     
     <div class="hidden name"><code>generate_glm_met_files.Rd</code></div>
     </div>
 
     <div class="ref-description">
-    <p>Convert NOAA forecasts to GLM format</p>
+    <p>Convert historical meteorology and NOAA forecasts to GLM format</p>
     </div>
 
     <pre class="usage"><span class='fu'>generate_glm_met_files</span><span class='op'>(</span>
   obs_met_file <span class='op'>=</span> <span class='cn'>NULL</span>,
   <span class='va'>out_dir</span>,
   forecast_dir <span class='op'>=</span> <span class='cn'>NULL</span>,
-  <span class='va'>config</span>,
-  <span class='va'>use_forecasted_met</span>
+  <span class='va'>config</span>
 <span class='op'>)</span></pre>
 
     <h2 class="hasAnchor" id="arguments"><a class="anchor" href="#arguments"></a>Arguments</h2>
     <table class="ref-arguments">
     <colgroup><col class="name" /><col class="desc" /></colgroup>
     <tr>
-      <th>config</th>
-      <td></td>
+      <th>obs_met_file</th>
+      <td><p>string; full path to netcdf that is observed historical meteorology</p></td>
+    </tr>
+    <tr>
+      <th>out_dir</th>
+      <td><p>string; full path to directory where the converted files will be saved</p></td>
+    </tr>
+    <tr>
+      <th>forecast_dir</th>
+      <td><p>string; full path to directory with the NOAA forecast netcdf files</p></td>
     </tr>
     </table>
 
     <h2 class="hasAnchor" id="value"><a class="anchor" href="#value"></a>Value</h2>
 
-    
+    <p>list; vector of full path for the converted files and boolean flag if issues with historical meteorology files</p>
+    <h2 class="hasAnchor" id="details"><a class="anchor" href="#details"></a>Details</h2>
 
+    <p>Function combines historical meteorology and NOAA forecasts to create meteorology input files in the GLM format.  A file is generated for each ensemble member.</p>
+    <h2 class="hasAnchor" id="author"><a class="anchor" href="#author"></a>Author</h2>
 
+    <p>Quinn Thomas</p>
 
+    <h2 class="hasAnchor" id="examples"><a class="anchor" href="#examples"></a>Examples</h2>
+    <pre class="examples"><div class='input'><span class='kw'>if</span> <span class='op'>(</span><span class='cn'>FALSE</span><span class='op'>)</span> <span class='op'>{</span>
+<span class='va'>met_out</span> <span class='op'>&lt;-</span> <span class='fu'>FLAREr</span><span class='fu'>::</span><span class='fu'>generate_glm_met_files</span><span class='op'>(</span>obs_met_file <span class='op'>=</span> <span class='va'>observed_met_file</span>, out_dir <span class='op'>=</span> <span class='va'>config</span><span class='op'>$</span><span class='va'>file_path</span><span class='op'>$</span><span class='va'>execute_directory</span>, forecast_dir <span class='op'>=</span> <span class='va'>config</span><span class='op'>$</span><span class='va'>file_path</span><span class='op'>$</span><span class='va'>noaa_directory</span>, <span class='va'>config</span><span class='op'>)</span>
+<span class='op'>}</span>
+</div></pre>
   </div>
   <div class="col-md-3 hidden-xs hidden-sm" id="pkgdown-sidebar">
     <nav id="toc" data-toggle="toc" class="sticky-top">

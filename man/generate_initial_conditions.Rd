@@ -2,7 +2,7 @@
 % Please edit documentation in R/generate_initial_conditions.R
 \name{generate_initial_conditions}
 \alias{generate_initial_conditions}
-\title{Generate initial conditions from observations and default values}
+\title{Generate initial conditions for FLARE}
 \usage{
 generate_initial_conditions(
   states_config,
@@ -15,11 +15,34 @@ generate_initial_conditions(
 )
 }
 \arguments{
-\item{historical_met_error}{}
+\item{states_config}{list; list of state configurations}
+
+\item{obs_config}{list; list of observation configurations}
+
+\item{pars_config}{list; list of parameter configurations  (Default = NULL)}
+
+\item{obs}{array; array of the observations. Required dimensions are \verb{[nobs, time, depth]}}
+
+\item{config}{list; list of configurations}
+
+\item{restart_file}{string; netcdf file with full path from FLARE output that is used as initial conditions}
+
+\item{historical_met_error}{boolean; producted by generate_glm_met_files()}
 }
 \value{
-
+list; list contains the initial conditions objects required by run_da_forecast()
 }
 \description{
-Generate initial conditions from observations and default values
+Generate initial conditions for FLARE
+}
+\details{
+Function to generate initial conditions from either default values in the states_config, observations (if available), or a previous run using the output as a restart file.
+}
+\examples{
+\dontrun{
+  init <- generate_initial_conditions(states_config, obs_config, pars_config, obs, config, restart_file = config$run_config$restart_file, historical_met_error = met_out$historical_met_error)
+  }
+}
+\author{
+Quinn Thomas
 }

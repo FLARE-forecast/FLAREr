@@ -6,7 +6,7 @@
 <meta http-equiv="X-UA-Compatible" content="IE=edge">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-<title>Create matrix of observations in the format required by run_ENKF — create_obs_matrix • FLAREr</title>
+<title>Create matrix of observations in the format required by run_da_forecast — create_obs_matrix • FLAREr</title>
 
 
 <!-- jquery -->
@@ -39,8 +39,8 @@
 
 
 
-<meta property="og:title" content="Create matrix of observations in the format required by run_ENKF — create_obs_matrix" />
-<meta property="og:description" content="Create matrix of observations in the format required by run_ENKF" />
+<meta property="og:title" content="Create matrix of observations in the format required by run_da_forecast — create_obs_matrix" />
+<meta property="og:description" content="Create matrix of observations in the format required by run_da_forecast" />
 
 
 
@@ -72,7 +72,7 @@
       </button>
       <span class="navbar-brand">
         <a class="navbar-link" href="../index.html">FLAREr</a>
-        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="Released version">2.0.1</span>
+        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="Released version">2.1.0</span>
       </span>
     </div>
 
@@ -121,13 +121,13 @@
 <div class="row">
   <div class="col-md-9 contents">
     <div class="page-header">
-    <h1>Create matrix of observations in the format required by run_ENKF</h1>
+    <h1>Create matrix of observations in the format required by run_da_forecast</h1>
     
     <div class="hidden name"><code>create_obs_matrix.Rd</code></div>
     </div>
 
     <div class="ref-description">
-    <p>Create matrix of observations in the format required by run_ENKF</p>
+    <p>Create matrix of observations in the format required by run_da_forecast</p>
     </div>
 
     <pre class="usage"><span class='fu'>create_obs_matrix</span><span class='op'>(</span><span class='va'>cleaned_observations_file_long</span>, <span class='va'>obs_config</span>, <span class='va'>config</span><span class='op'>)</span></pre>
@@ -137,18 +137,33 @@
     <colgroup><col class="name" /><col class="desc" /></colgroup>
     <tr>
       <th>cleaned_observations_file_long</th>
-      <td></td>
+      <td><p>string; file name (with full path) of the long-format observation file</p></td>
+    </tr>
+    <tr>
+      <th>obs_config</th>
+      <td><p>list; observations configuration list</p></td>
     </tr>
     <tr>
       <th>config</th>
-      <td></td>
+      <td><p>list; flare configuration list</p></td>
     </tr>
     </table>
 
+    <h2 class="hasAnchor" id="value"><a class="anchor" href="#value"></a>Value</h2>
+
+    <p>matrix</p>
+    <h2 class="hasAnchor" id="details"><a class="anchor" href="#details"></a>Details</h2>
+
+    <p>Creates a matrix of observations that maps the modeled states to the observed states. The function uses information from columns the obs_config file.</p>
     <h2 class="hasAnchor" id="author"><a class="anchor" href="#author"></a>Author</h2>
 
     <p>Quinn Thomas</p>
 
+    <h2 class="hasAnchor" id="examples"><a class="anchor" href="#examples"></a>Examples</h2>
+    <pre class="examples"><div class='input'><span class='kw'>if</span> <span class='op'>(</span><span class='cn'>FALSE</span><span class='op'>)</span> <span class='op'>{</span>
+<span class='va'>obs</span> <span class='op'>&lt;-</span> <span class='fu'>create_obs_matrix</span><span class='op'>(</span><span class='va'>cleaned_observations_file_long</span>, <span class='va'>obs_config</span>, <span class='va'>config</span><span class='op'>)</span>
+<span class='op'>}</span>
+</div></pre>
   </div>
   <div class="col-md-3 hidden-xs hidden-sm" id="pkgdown-sidebar">
     <nav id="toc" data-toggle="toc" class="sticky-top">

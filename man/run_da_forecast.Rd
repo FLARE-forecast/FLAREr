@@ -2,8 +2,7 @@
 % Please edit documentation in R/run_da_forecast.R
 \name{run_da_forecast}
 \alias{run_da_forecast}
-\title{Run ensemble Kalman filter to assimilate observations and/or produce
-forecasts}
+\title{Run ensemble data assimilation and/or produce forecasts}
 \usage{
 run_da_forecast(
   states_init,
@@ -34,157 +33,54 @@ run_da_forecast(
 are require for restarting the model but are not included in data assimilation.  These are states that are not associated
 with a value in \code{model_sd}.}
 
-\item{obs}{array of the observaitons. Required dimensions are \verb{[nobs, time, depth]}}
+\item{obs}{array; array of the observations. Required dimensions are \verb{[nobs, time, depth]}}
 
-\item{model_sd}{vector of standard deviations describing the model error for each state}
+\item{obs_sd}{vector; vector of standard deviation for observation}
 
-\item{working_directory}{directory model executes}
+\item{model_sd}{vector vector of standard deviations describing the model error for each state}
 
-\item{met_file_names}{vector of meterology file names}
+\item{working_directory}{string; full path to directory where model executes}
 
-\item{inflow_file_names}{vector of inflow file names}
+\item{met_file_names}{vector; vector of full path meteorology file names}
 
-\item{outflow_file_names}{vector of outflow file names}
+\item{inflow_file_names}{vector or matrix;; vector of inflow file names}
 
-\item{config}{list of configurations}
+\item{outflow_file_names}{vector or matrix; vector of outflow file names}
 
-\item{pars_config}{list of parameter configurations  (Default = NULL)}
+\item{config}{list; list of configurations}
 
-\item{states_config}{list of state configurations}
+\item{pars_config}{list; list of parameter configurations  (Default = NULL)}
 
-\item{obs_config}{list of observation configurations}
+\item{states_config}{list; list of state configurations}
 
-\item{management}{list of management inputs and configuration  (Default = NULL)}
+\item{obs_config}{list; list of observation configurations}
 
-\item{da_method}{data assimilation method (enkf or pf; Default = enkf)}
+\item{management}{list; list of management inputs and configuration  (Default = NULL)}
+
+\item{da_method}{string; data assimilation method (enkf or pf; Default = enkf)}
+
+\item{par_fit_method}{string; method for adding noise to parameters during calibration}
 }
 \value{
-enkf_output a list is passed to \code{write_forecast_netcdf()} to write the
+a list is passed to \code{write_forecast_netcdf()} to write the
 netcdf output and \code{create_flare_eml()} to generate the EML metadata
 }
 \description{
-Run ensemble Kalman filter to assimilate observations and/or produce
-forecasts
+Run ensemble data assimilation and/or produce forecasts
 }
 \details{
-Uses the ensemble Kalman filter to predict water quality for a lake
-or reservior.  The function requires the initial conditions (\code{states_init}) for each
+Uses the ensemble data assimilation to predict water quality for a lake
+or reservoir.  The function requires the initial conditions (\code{states_init}) for each
 state and ensemble member using an array with the following dimension order:
 states, depth, ensembles member.  If you are fitting parameters, it also requires
 initial conditions for each parameter and ensemble member using an array (\code{par_init}) with the
 following dimension order: parameters, ensemble member.  The arrays for states_init
 and pars_init can be created using the \code{generate_initial_conditions()} function, if
 starting from initial conditions in the  \code{states_config} data frame or from observations
-in first time column of the \code{obs} array.  The arrays for \code{states_init} and \code{par_init}
-can be created from the output from a previous run using the \code{generate_restart_initial_conditions()}
-array.
-
-The required columns the \code{states_config} data frame with the following columns:
-\itemize{
-\item \code{state_names}: the name in the GLM model for the state
-\item \code{initial_conditions}: the default initial condition for the state if an observation is lacking. Used in \code{generate_initial_conditions()}.  Note:
-the \code{config} list should have a variables called \code{default_temp_init} and \code{default_temp_init_depths} that allow for depth variation in the initial
-conditions for temperature.
-\item \code{model_sd}: the standard deviation of the model error for the state.  Matrix with dimensions rows = length(states_names), columns = length(config$model_settings$modeled_depths)
-\item \code{initial_model_sd}: the standard deviation of the initial conditions for the state. Used in \code{generate_initial_conditions()}
-\item \code{states_to_obs1}: the name of the observation that matches the model state
-\item \code{states_to_obs_mapping_1}: the multipler that converts the state to the observation (1 will be the most common)
-\item \code{init_obs_name}: the name of the observations that is used to generate \code{states_init}.  Used in \code{generate_initial_conditions()}
-\item \code{init_obs_mapping}: the multipler that converts the state to the observation (1 will be the most common). Used in \code{generate_initial_conditions()}
+in first time column of the \code{obs} array.
 }
-
-The required columns in the \code{pars_config} are:
-\itemize{
-\item \code{par_names}:  the name of the parameter in the GLM nml file
-\item \code{par_names_save}: the name of the parameter that will  be written in the output file.  This is different that
-\code{par_names} because a single parameter can have multiple zones.  Therefore, \code{par_names} will be the same but
-\code{par_names_save} will be different so that you know which zone they are associated with
-\item \code{par_nml}: GLM namelist that the \code{par_name} can be found: \code{glm.nml}, \code{aed2.nml},\code{aed2_phyto_pars.nml},\code{aed2_zoop_pars.nml}
-\item \code{par_init}:  Initial value for the parameter
-\item \code{par_init_lowerbound}: Lower bound when initilizing with a uniform distribution
-\item \code{par_init_upperbound}: Upper bound when initilizing with a uniform distribution
-\item \code{par_lowerbound}: Lower bound that the parameter can physically have
-\item \code{par_upperbound}: Upper bound that the parameter can physically have
-\item \code{inflat_pars}: Variance inflation factor for parameters (values are >= 1)
-\item \code{par_units}: Units of parameter
-}
-
-The required columns in the \code{obs_config} are:
-\itemize{
-\item \code{states_names_obs}: the name of the model state that the obervation represents
-\item \code{obs_units}: unit of the observations
-\item \code{obs_sd}:  the standard deviation of the normal distribution describing the
-uncertainty in the observation.
-\item \code{target_variable}: the name of the observation in the in long format observation
-file.  Used by \code{create_obs_matrix()}
-\item \code{distance_threshold}: the distance in meters that an observation is associated
-with a particular depth
-}
-
-The required variables in the \code{config} list are:
-\itemize{
-\item \code{lake_name_code}:
-\item \code{lake_name}:
-\item \code{lake_latitude}:
-\item \code{lake_longitude}:
-\item \code{local_tzone}:
-\item \code{metadata}:
-\itemize{
-\item \code{generate_eml}:
-\item \code{abstract}:
-\item \code{forecast_title}:
-\item \code{intellectualRights}:
-\item \code{model_description}:
-\itemize{
-\item \code{name}:
-\item \code{type}:
-\item \code{repository}:
-}
-\item \code{me}:
-\itemize{
-\item \code{individualName}:
-\itemize{
-\item \code{givenName}:
-\item \code{surName}:
-}
-\item \code{electronicMailAddress}:
-\item \code{id}:
-}
-\item \code{forecast_project_id}
-}
-\item \code{model_name}:
-\item \code{base_GLM_nml}:
-\item \code{base_AED_nml}:
-\item \code{base_AED_phyto_pars_nml}:
-\item \code{base_AED_zoop_pars_nml}:
-\item \code{use_obs_constraint}:
-\item \code{observation}:
-\item \code{process}:
-\item \code{weather}:
-\item \code{initial_condition}:
-\item \code{parameter}:
-\item \code{met_downscale}:
-\item \code{inflow_process}:
-\item \verb{modeled_depths:}
-\item \code{ensemble_size}:
-\item \code{localization_distance}:
-\item \code{vert_decorr_length}:
-\item \code{no_negative_states}:
-\item \code{diagnostics_names}:
-}
-
-The \code{management} list is used to define the Side Stream Saturation oxygen system.  It is
-not required (defaults to \code{NULL}).  If included it requires:
-\itemize{
-\item \code{management_input}: A two column data frame: FLOW, OXY_oxy
-\item \code{simulate_sss}: logical whether to simulate the sss
-\item \code{forecast_sss_on}: logical whether to have sss on in forecast
-\item \code{sss_depth}: Depth (m) of the SSS inflow and outflow
-\item \code{use_specified_sss}: logical whether to use the data from \code{management_input}
-or from \code{forecast_sss_flow} and \code{forecast_sss_oxy} when forecasting with sss on
-\item \code{specified_sss_inflow_file}: file path of the inflow sss file is supplied rather than interally generated
-\item \code{specified_sss_outflow_file}: file path of the outflow sss file is supplied rather than interally generated
-\item \code{forecast_sss_flow}: m3/day of water entering via sss
-\item \code{forecast_sss_oxy}: oxygen concentration (mmmol/m3) entered in the sss
+\examples{
+\dontrun{
+da_forecast_output <- FLAREr::run_da_forecast(states_init = init$states, pars_init = init$pars, aux_states_init = init$aux_states_init, obs = obs, obs_sd = obs_config$obs_sd, model_sd = model_sd, working_directory = config$file_path$execute_directory, met_file_names = met_file_names, inflow_file_names = inflow_file_names, outflow_file_names = outflow_file_names, config = config, pars_config = pars_config, states_config = states_config, obs_config = obs_config)
 }
 }

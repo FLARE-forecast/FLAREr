@@ -1,5 +1,5 @@
 ##' @title Convert historical meteorology and NOAA forecasts to GLM format
-##'
+##' @details Function combines historical meteorology and NOAA forecasts to create meteorology input files in the GLM format.  A file is generated for each ensemble member.
 ##' @param obs_met_file string; full path to netcdf that is observed historical meteorology
 ##' @param out_dir string; full path to directory where the converted files will be saved
 ##' @param forecast_dir string; full path to directory with the NOAA forecast netcdf files
@@ -11,7 +11,7 @@
 ##' @importFrom tibble tibble
 ##' @importFrom lubridate as_datetime days hours ymd_hm
 ##' @author Quinn Thomas
-##' @example
+##' @examples
 ##' \dontrun{
 ##' met_out <- FLAREr::generate_glm_met_files(obs_met_file = observed_met_file, out_dir = config$file_path$execute_directory, forecast_dir = config$file_path$noaa_directory, config)
 ##' }

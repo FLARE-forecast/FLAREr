@@ -15,7 +15,7 @@
 ##' @importFrom readr write_csv
 ##' @importFrom patchwork wrap_plots
 ##' @author Quinn Thomas
-##' @example
+##' @examples
 ##' \dontrun{
 ##' plotting_general(file_name = saved_file, qaqc_data_directory = config$file_path$qaqc_data_directory, ncore = config$model_settings$ncore, plot_profile = TRUE, obs_csv)
 ##' }
@@ -31,7 +31,7 @@ plotting_general <- function(file_name,
 
 
   output <- FLAREr::combine_forecast_observations(file_name,
-                                                  qaqc_location = qaqc_data_directory,
+                                                  qaqc_data_directory = qaqc_data_directory,
                                                   extra_historical_days = 0,
                                                   ncore = ncore)
   obs <- output$obs

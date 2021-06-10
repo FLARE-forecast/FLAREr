@@ -6,7 +6,7 @@
 <meta http-equiv="X-UA-Compatible" content="IE=edge">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-<title>Plotting FLARE output — plotting_general • FLAREr</title>
+<title>Generate diagnostic plot of FLARE output with observations — plotting_general • FLAREr</title>
 
 
 <!-- jquery -->
@@ -39,8 +39,8 @@
 
 
 
-<meta property="og:title" content="Plotting FLARE output — plotting_general" />
-<meta property="og:description" content="Plotting FLARE output" />
+<meta property="og:title" content="Generate diagnostic plot of FLARE output with observations — plotting_general" />
+<meta property="og:description" content="Generate diagnostic plot of FLARE output with observations" />
 
 
 
@@ -72,7 +72,7 @@
       </button>
       <span class="navbar-brand">
         <a class="navbar-link" href="../index.html">FLAREr</a>
-        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="Released version">2.0.1</span>
+        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="Released version">2.1.0</span>
       </span>
     </div>
 
@@ -121,37 +121,63 @@
 <div class="row">
   <div class="col-md-9 contents">
     <div class="page-header">
-    <h1>Plotting FLARE output</h1>
+    <h1>Generate diagnostic plot of FLARE output with observations</h1>
     
     <div class="hidden name"><code>plotting_general.Rd</code></div>
     </div>
 
     <div class="ref-description">
-    <p>Plotting FLARE output</p>
+    <p>Generate diagnostic plot of FLARE output with observations</p>
     </div>
 
-    <pre class="usage"><span class='fu'>plotting_general</span><span class='op'>(</span><span class='va'>file_name</span>, <span class='va'>qaqc_location</span><span class='op'>)</span></pre>
+    <pre class="usage"><span class='fu'>plotting_general</span><span class='op'>(</span>
+  <span class='va'>file_name</span>,
+  <span class='va'>qaqc_data_directory</span>,
+  ncore <span class='op'>=</span> <span class='fl'>1</span>,
+  plot_profile <span class='op'>=</span> <span class='cn'>TRUE</span>,
+  obs_csv <span class='op'>=</span> <span class='cn'>TRUE</span>
+<span class='op'>)</span></pre>
 
     <h2 class="hasAnchor" id="arguments"><a class="anchor" href="#arguments"></a>Arguments</h2>
     <table class="ref-arguments">
     <colgroup><col class="name" /><col class="desc" /></colgroup>
     <tr>
       <th>file_name</th>
-      <td></td>
+      <td><p>string; full path to output file produced by write_forecast_netcdf()</p></td>
     </tr>
     <tr>
-      <th>qaqc_location</th>
-      <td></td>
+      <th>qaqc_data_directory</th>
+      <td><p>string; full path to processed long-format observation file</p></td>
+    </tr>
+    <tr>
+      <th>ncore</th>
+      <td><p>integer; number of computer cores for parallel processing</p></td>
+    </tr>
+    <tr>
+      <th>plot_profile</th>
+      <td><p>boolean; include profile plots in PDF</p></td>
+    </tr>
+    <tr>
+      <th>obs_csv</th>
+      <td><p>boolean; generate csv with the observed and predicted values for model states</p></td>
     </tr>
     </table>
 
     <h2 class="hasAnchor" id="value"><a class="anchor" href="#value"></a>Value</h2>
 
     <p>None</p>
+    <h2 class="hasAnchor" id="details"><a class="anchor" href="#details"></a>Details</h2>
+
+    <p>Function combines the netcdf output with the long-format observation file to produce a set of plots for each state variable, calibrated parameter, and diagnostic variable</p>
     <h2 class="hasAnchor" id="author"><a class="anchor" href="#author"></a>Author</h2>
 
     <p>Quinn Thomas</p>
 
+    <h2 class="hasAnchor" id="examples"><a class="anchor" href="#examples"></a>Examples</h2>
+    <pre class="examples"><div class='input'><span class='kw'>if</span> <span class='op'>(</span><span class='cn'>FALSE</span><span class='op'>)</span> <span class='op'>{</span>
+<span class='fu'>plotting_general</span><span class='op'>(</span>file_name <span class='op'>=</span> <span class='va'>saved_file</span>, qaqc_data_directory <span class='op'>=</span> <span class='va'>config</span><span class='op'>$</span><span class='va'>file_path</span><span class='op'>$</span><span class='va'>qaqc_data_directory</span>, ncore <span class='op'>=</span> <span class='va'>config</span><span class='op'>$</span><span class='va'>model_settings</span><span class='op'>$</span><span class='va'>ncore</span>, plot_profile <span class='op'>=</span> <span class='cn'>TRUE</span>, <span class='va'>obs_csv</span><span class='op'>)</span>
+<span class='op'>}</span>
+</div></pre>
   </div>
   <div class="col-md-3 hidden-xs hidden-sm" id="pkgdown-sidebar">
     <nav id="toc" data-toggle="toc" class="sticky-top">

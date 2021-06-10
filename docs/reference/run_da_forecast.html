@@ -6,8 +6,7 @@
 <meta http-equiv="X-UA-Compatible" content="IE=edge">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-<title>Run ensemble Kalman filter to assimilate observations and/or produce
-forecasts — run_da_forecast • FLAREr</title>
+<title>Run ensemble data assimilation and/or produce forecasts — run_da_forecast • FLAREr</title>
 
 
 <!-- jquery -->
@@ -40,10 +39,8 @@ forecasts — run_da_forecast • FLAREr</title>
 
 
 
-<meta property="og:title" content="Run ensemble Kalman filter to assimilate observations and/or produce
-forecasts — run_da_forecast" />
-<meta property="og:description" content="Run ensemble Kalman filter to assimilate observations and/or produce
-forecasts" />
+<meta property="og:title" content="Run ensemble data assimilation and/or produce forecasts — run_da_forecast" />
+<meta property="og:description" content="Run ensemble data assimilation and/or produce forecasts" />
 
 
 
@@ -75,7 +72,7 @@ forecasts" />
       </button>
       <span class="navbar-brand">
         <a class="navbar-link" href="../index.html">FLAREr</a>
-        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="Released version">2.0.1</span>
+        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="Released version">2.1.0</span>
       </span>
     </div>
 
@@ -124,15 +121,13 @@ forecasts" />
 <div class="row">
   <div class="col-md-9 contents">
     <div class="page-header">
-    <h1>Run ensemble Kalman filter to assimilate observations and/or produce
-forecasts</h1>
+    <h1>Run ensemble data assimilation and/or produce forecasts</h1>
     
     <div class="hidden name"><code>run_da_forecast.Rd</code></div>
     </div>
 
     <div class="ref-description">
-    <p>Run ensemble Kalman filter to assimilate observations and/or produce
-forecasts</p>
+    <p>Run ensemble data assimilation and/or produce forecasts</p>
     </div>
 
     <pre class="usage"><span class='fu'>run_da_forecast</span><span class='op'>(</span>
@@ -174,172 +169,83 @@ with a value in <code>model_sd</code>.</p></td>
     </tr>
     <tr>
       <th>obs</th>
-      <td><p>array of the observaitons. Required dimensions are <code>[nobs, time, depth]</code></p></td>
+      <td><p>array; array of the observations. Required dimensions are <code>[nobs, time, depth]</code></p></td>
+    </tr>
+    <tr>
+      <th>obs_sd</th>
+      <td><p>vector; vector of standard deviation for observation</p></td>
     </tr>
     <tr>
       <th>model_sd</th>
-      <td><p>vector of standard deviations describing the model error for each state</p></td>
+      <td><p>vector vector of standard deviations describing the model error for each state</p></td>
     </tr>
     <tr>
       <th>working_directory</th>
-      <td><p>directory model executes</p></td>
+      <td><p>string; full path to directory where model executes</p></td>
     </tr>
     <tr>
       <th>met_file_names</th>
-      <td><p>vector of meterology file names</p></td>
+      <td><p>vector; vector of full path meteorology file names</p></td>
     </tr>
     <tr>
       <th>inflow_file_names</th>
-      <td><p>vector of inflow file names</p></td>
+      <td><p>vector or matrix;; vector of inflow file names</p></td>
     </tr>
     <tr>
       <th>outflow_file_names</th>
-      <td><p>vector of outflow file names</p></td>
+      <td><p>vector or matrix; vector of outflow file names</p></td>
     </tr>
     <tr>
       <th>config</th>
-      <td><p>list of configurations</p></td>
+      <td><p>list; list of configurations</p></td>
     </tr>
     <tr>
       <th>pars_config</th>
-      <td><p>list of parameter configurations  (Default = NULL)</p></td>
+      <td><p>list; list of parameter configurations  (Default = NULL)</p></td>
     </tr>
     <tr>
       <th>states_config</th>
-      <td><p>list of state configurations</p></td>
+      <td><p>list; list of state configurations</p></td>
     </tr>
     <tr>
       <th>obs_config</th>
-      <td><p>list of observation configurations</p></td>
+      <td><p>list; list of observation configurations</p></td>
     </tr>
     <tr>
       <th>management</th>
-      <td><p>list of management inputs and configuration  (Default = NULL)</p></td>
+      <td><p>list; list of management inputs and configuration  (Default = NULL)</p></td>
     </tr>
     <tr>
       <th>da_method</th>
-      <td><p>data assimilation method (enkf or pf; Default = enkf)</p></td>
+      <td><p>string; data assimilation method (enkf or pf; Default = enkf)</p></td>
+    </tr>
+    <tr>
+      <th>par_fit_method</th>
+      <td><p>string; method for adding noise to parameters during calibration</p></td>
     </tr>
     </table>
 
     <h2 class="hasAnchor" id="value"><a class="anchor" href="#value"></a>Value</h2>
 
-    <p>enkf_output a list is passed to <code><a href='write_forecast_netcdf.html'>write_forecast_netcdf()</a></code> to write the
+    <p>a list is passed to <code><a href='write_forecast_netcdf.html'>write_forecast_netcdf()</a></code> to write the
 netcdf output and <code>create_flare_eml()</code> to generate the EML metadata</p>
     <h2 class="hasAnchor" id="details"><a class="anchor" href="#details"></a>Details</h2>
 
-    <p>Uses the ensemble Kalman filter to predict water quality for a lake
-or reservior.  The function requires the initial conditions (<code>states_init</code>) for each
+    <p>Uses the ensemble data assimilation to predict water quality for a lake
+or reservoir.  The function requires the initial conditions (<code>states_init</code>) for each
 state and ensemble member using an array with the following dimension order:
 states, depth, ensembles member.  If you are fitting parameters, it also requires
 initial conditions for each parameter and ensemble member using an array (<code>par_init</code>) with the
 following dimension order: parameters, ensemble member.  The arrays for states_init
 and pars_init can be created using the <code><a href='generate_initial_conditions.html'>generate_initial_conditions()</a></code> function, if
 starting from initial conditions in the  <code>states_config</code> data frame or from observations
-in first time column of the <code>obs</code> array.  The arrays for <code>states_init</code> and <code>par_init</code>
-can be created from the output from a previous run using the <code>generate_restart_initial_conditions()</code>
-array.</p>
-<p>The required columns the <code>states_config</code> data frame with the following columns:</p><ul>
-<li><p><code>state_names</code>: the name in the GLM model for the state</p></li>
-<li><p><code>initial_conditions</code>: the default initial condition for the state if an observation is lacking. Used in <code><a href='generate_initial_conditions.html'>generate_initial_conditions()</a></code>.  Note:
-the <code>config</code> list should have a variables called <code>default_temp_init</code> and <code>default_temp_init_depths</code> that allow for depth variation in the initial
-conditions for temperature.</p></li>
-<li><p><code>model_sd</code>: the standard deviation of the model error for the state.  Matrix with dimensions rows = length(states_names), columns = length(config$modeled_depths)</p></li>
-<li><p><code>initial_model_sd</code>: the standard deviation of the initial conditions for the state. Used in <code><a href='generate_initial_conditions.html'>generate_initial_conditions()</a></code></p></li>
-<li><p><code>states_to_obs1</code>: the name of the observation that matches the model state</p></li>
-<li><p><code>states_to_obs_mapping_1</code>: the multipler that converts the state to the observation (1 will be the most common)</p></li>
-<li><p><code>init_obs_name</code>: the name of the observations that is used to generate <code>states_init</code>.  Used in <code><a href='generate_initial_conditions.html'>generate_initial_conditions()</a></code></p></li>
-<li><p><code>init_obs_mapping</code>: the multipler that converts the state to the observation (1 will be the most common). Used in <code><a href='generate_initial_conditions.html'>generate_initial_conditions()</a></code></p></li>
-</ul>
+in first time column of the <code>obs</code> array.</p>
 
-<p>The required columns in the <code>pars_config</code> are:</p><ul>
-<li><p><code>par_names</code>:  the name of the parameter in the GLM nml file</p></li>
-<li><p><code>par_names_save</code>: the name of the parameter that will  be written in the output file.  This is different that
-<code>par_names</code> because a single parameter can have multiple zones.  Therefore, <code>par_names</code> will be the same but
-<code>par_names_save</code> will be different so that you know which zone they are associated with</p></li>
-<li><p><code>par_nml</code>: GLM namelist that the <code>par_name</code> can be found: <code>glm.nml</code>, <code>aed2.nml</code>,<code>aed2_phyto_pars.nml</code>,<code>aed2_zoop_pars.nml</code></p></li>
-<li><p><code>par_init</code>:  Initial value for the parameter</p></li>
-<li><p><code>par_init_lowerbound</code>: Lower bound when initilizing with a uniform distribution</p></li>
-<li><p><code>par_init_upperbound</code>: Upper bound when initilizing with a uniform distribution</p></li>
-<li><p><code>par_lowerbound</code>: Lower bound that the parameter can physically have</p></li>
-<li><p><code>par_upperbound</code>: Upper bound that the parameter can physically have</p></li>
-<li><p><code>inflat_pars</code>: Variance inflation factor for parameters (values are &gt;= 1)</p></li>
-<li><p><code>par_units</code>: Units of parameter</p></li>
-</ul>
-
-<p>The required columns in the <code>obs_config</code> are:</p><ul>
-<li><p><code>states_names_obs</code>: the name of the model state that the obervation represents</p></li>
-<li><p><code>obs_units</code>: unit of the observations</p></li>
-<li><p><code>obs_sd</code>:  the standard deviation of the normal distribution describing the
-uncertainty in the observation.</p></li>
-<li><p><code>target_variable</code>: the name of the observation in the in long format observation
-file.  Used by <code><a href='create_obs_matrix.html'>create_obs_matrix()</a></code></p></li>
-<li><p><code>distance_threshold</code>: the distance in meters that an observation is associated
-with a particular depth</p></li>
-</ul>
-
-<p>The required variables in the <code>config</code> list are:</p><ul>
-<li><p><code>lake_name_code</code>:</p></li>
-<li><p><code>lake_name</code>:</p></li>
-<li><p><code>lake_latitude</code>:</p></li>
-<li><p><code>lake_longitude</code>:</p></li>
-<li><p><code>local_tzone</code>:</p></li>
-<li><p><code>metadata</code>:</p><ul>
-<li><p><code>generate_eml</code>:</p></li>
-<li><p><code>abstract</code>:</p></li>
-<li><p><code>forecast_title</code>:</p></li>
-<li><p><code>intellectualRights</code>:</p></li>
-<li><p><code>model_description</code>:</p><ul>
-<li><p><code>name</code>:</p></li>
-<li><p><code>type</code>:</p></li>
-<li><p><code>repository</code>:</p></li>
-</ul></li>
-<li><p><code>me</code>:</p><ul>
-<li><p><code>individualName</code>:</p><ul>
-<li><p><code>givenName</code>:</p></li>
-<li><p><code>surName</code>:</p></li>
-</ul></li>
-<li><p><code>electronicMailAddress</code>:</p></li>
-<li><p><code>id</code>:</p></li>
-</ul></li>
-<li><p><code>forecast_project_id</code></p></li>
-</ul></li>
-<li><p><code>model_name</code>:</p></li>
-<li><p><code>base_GLM_nml</code>:</p></li>
-<li><p><code>base_AED_nml</code>:</p></li>
-<li><p><code>base_AED_phyto_pars_nml</code>:</p></li>
-<li><p><code>base_AED_zoop_pars_nml</code>:</p></li>
-<li><p><code>use_obs_constraint</code>:</p></li>
-<li><p><code>observation_uncertainty</code>:</p></li>
-<li><p><code>process_uncertainty</code>:</p></li>
-<li><p><code>weather_uncertainty</code>:</p></li>
-<li><p><code>initial_condition_uncertainty</code>:</p></li>
-<li><p><code>parameter_uncertainty</code>:</p></li>
-<li><p><code>met_downscale_uncertainty</code>:</p></li>
-<li><p><code>inflow_process_uncertainty</code>:</p></li>
-<li><p><code>modeled_depths:</code></p></li>
-<li><p><code>ensemble_size</code>:</p></li>
-<li><p><code>localization_distance</code>:</p></li>
-<li><p><code>vert_decorr_length</code>:</p></li>
-<li><p><code>no_negative_states</code>:</p></li>
-<li><p><code>diagnostics_names</code>:</p></li>
-</ul>
-
-<p>The <code>management</code> list is used to define the Side Stream Saturation oxygen system.  It is
-not required (defaults to <code>NULL</code>).  If included it requires:</p><ul>
-<li><p><code>management_input</code>: A two column data frame: FLOW, OXY_oxy</p></li>
-<li><p><code>simulate_sss</code>: logical whether to simulate the sss</p></li>
-<li><p><code>forecast_sss_on</code>: logical whether to have sss on in forecast</p></li>
-<li><p><code>sss_depth</code>: Depth (m) of the SSS inflow and outflow</p></li>
-<li><p><code>use_specified_sss</code>: logical whether to use the data from <code>management_input</code>
-or from <code>forecast_sss_flow</code> and <code>forecast_sss_oxy</code> when forecasting with sss on</p></li>
-<li><p><code>specified_sss_inflow_file</code>: file path of the inflow sss file is supplied rather than interally generated</p></li>
-<li><p><code>specified_sss_outflow_file</code>: file path of the outflow sss file is supplied rather than interally generated</p></li>
-<li><p><code>forecast_sss_flow</code>: m3/day of water entering via sss</p></li>
-<li><p><code>forecast_sss_oxy</code>: oxygen concentration (mmmol/m3) entered in the sss</p></li>
-</ul>
-
-
+    <h2 class="hasAnchor" id="examples"><a class="anchor" href="#examples"></a>Examples</h2>
+    <pre class="examples"><div class='input'><span class='kw'>if</span> <span class='op'>(</span><span class='cn'>FALSE</span><span class='op'>)</span> <span class='op'>{</span>
+<span class='va'>da_forecast_output</span> <span class='op'>&lt;-</span> <span class='fu'>FLAREr</span><span class='fu'>::</span><span class='fu'>run_da_forecast</span><span class='op'>(</span>states_init <span class='op'>=</span> <span class='va'>init</span><span class='op'>$</span><span class='va'>states</span>, pars_init <span class='op'>=</span> <span class='va'>init</span><span class='op'>$</span><span class='va'>pars</span>, aux_states_init <span class='op'>=</span> <span class='va'>init</span><span class='op'>$</span><span class='va'>aux_states_init</span>, obs <span class='op'>=</span> <span class='va'>obs</span>, obs_sd <span class='op'>=</span> <span class='va'>obs_config</span><span class='op'>$</span><span class='va'>obs_sd</span>, model_sd <span class='op'>=</span> <span class='va'>model_sd</span>, working_directory <span class='op'>=</span> <span class='va'>config</span><span class='op'>$</span><span class='va'>file_path</span><span class='op'>$</span><span class='va'>execute_directory</span>, met_file_names <span class='op'>=</span> <span class='va'>met_file_names</span>, inflow_file_names <span class='op'>=</span> <span class='va'>inflow_file_names</span>, outflow_file_names <span class='op'>=</span> <span class='va'>outflow_file_names</span>, config <span class='op'>=</span> <span class='va'>config</span>, pars_config <span class='op'>=</span> <span class='va'>pars_config</span>, states_config <span class='op'>=</span> <span class='va'>states_config</span>, obs_config <span class='op'>=</span> <span class='va'>obs_config</span><span class='op'>)</span>
+<span class='op'>}</span>
+</div></pre>
   </div>
   <div class="col-md-3 hidden-xs hidden-sm" id="pkgdown-sidebar">
     <nav id="toc" data-toggle="toc" class="sticky-top">

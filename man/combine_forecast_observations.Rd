@@ -2,21 +2,35 @@
 % Please edit documentation in R/combine_forecast_observations.R
 \name{combine_forecast_observations}
 \alias{combine_forecast_observations}
-\title{Title}
+\title{Combine forecast output with observations}
 \usage{
 combine_forecast_observations(
   file_name,
-  qaqc_location,
+  qaqc_data_directory,
   extra_historical_days,
   ncore = 1
 )
 }
 \arguments{
-\item{extra_historical_days}{}
+\item{file_name}{string; full path to output file produced by write_forecast_netcdf()}
+
+\item{qaqc_data_directory}{string; full path to processed long-format observation file}
+
+\item{extra_historical_days}{integer; number of days prior to the days in the file_name file to include in the plot}
+
+\item{ncore}{integer; number of computer cores for parallel processing}
 }
 \value{
-
+list
 }
 \description{
-Title
+Combine forecast output with observations
+}
+\details{
+Combines forecast output with observations
+}
+\examples{
+\dontrun{
+ output <- FLAREr::combine_forecast_observations(file_name, qaqc_data_directory = qaqc_data_directory, extra_historical_days = 0, ncore = ncore)
+}
 }

@@ -7,13 +7,25 @@
 create_obs_matrix(cleaned_observations_file_long, obs_config, config)
 }
 \arguments{
-\item{cleaned_observations_file_long}{file name (with full path)}
+\item{cleaned_observations_file_long}{string; file name (with full path) of the long-format observation file}
+
+\item{obs_config}{list; observations configuration list}
+
+\item{config}{list; flare configuration list}
 }
 \value{
 matrix
 }
 \description{
 Create matrix of observations in the format required by run_da_forecast
+}
+\details{
+Creates a matrix of observations that maps the modeled states to the observed states. The function uses information from columns the obs_config file.
+}
+\examples{
+\dontrun{
+obs <- create_obs_matrix(cleaned_observations_file_long, obs_config, config)
+}
 }
 \author{
 Quinn Thomas

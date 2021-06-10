@@ -13,7 +13,7 @@
 ##' @import EFIstandards
 ##' @importFrom tools file_path_sans_ext
 ##' @author Quinn Thomas
-##' @example
+##' @examples
 ##' \dontrun{
 ##'create_flare_metadata(file_name = saved_file, da_forecast_output = da_forecast_output)
 ##'}

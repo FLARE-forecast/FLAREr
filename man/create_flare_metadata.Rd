@@ -20,6 +20,11 @@ Generate metadata (EML) using the Ecological Forecasting Initiative Standards
 \details{
 Generates metadata describing the FLARE simulation following the Ecological Forecasting Initiative recommended standards. Uses the information from the simulation, including the configuration set up, to automating adjust the metadata to match the specifications of the simulation.
 }
+\examples{
+\dontrun{
+create_flare_metadata(file_name = saved_file, da_forecast_output = da_forecast_output)
+}
+}
 \author{
 Quinn Thomas
 }

@@ -8,10 +8,11 @@
 ##' @import ggplot2
 ##' @importFrom lubridate with_tz
 ##' @author Quinn Thomas
-##' @example
+##' @examples
 ##' \dontrun{
 ##' write_forecast_netcdf(da_forecast_output = da_forecast_output, forecast_output_directory = config$file_path$forecast_output_directory)
 ##' }
+##'
 
 write_forecast_netcdf <- function(da_forecast_output,
                                   forecast_output_directory){

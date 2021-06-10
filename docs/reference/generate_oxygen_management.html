@@ -6,7 +6,7 @@
 <meta http-equiv="X-UA-Compatible" content="IE=edge">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-<title>Generate management list required to simulate oxygen inputs — generate_oxygen_management • FLAREr</title>
+<title>Generate diagnostic plot of FLARE output with observations — generate_oxygen_management • FLAREr</title>
 
 
 <!-- jquery -->
@@ -39,8 +39,8 @@
 
 
 
-<meta property="og:title" content="Generate management list required to simulate oxygen inputs — generate_oxygen_management" />
-<meta property="og:description" content="Generate management list required to simulate oxygen inputs" />
+<meta property="og:title" content="Generate diagnostic plot of FLARE output with observations — generate_oxygen_management" />
+<meta property="og:description" content="Generate diagnostic plot of FLARE output with observations" />
 
 
 
@@ -72,7 +72,7 @@
       </button>
       <span class="navbar-brand">
         <a class="navbar-link" href="../index.html">FLAREr</a>
-        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="Released version">2.0.1</span>
+        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="Released version">2.1.0</span>
       </span>
     </div>
 
@@ -121,37 +121,41 @@
 <div class="row">
   <div class="col-md-9 contents">
     <div class="page-header">
-    <h1>Generate management list required to simulate oxygen inputs</h1>
+    <h1>Generate diagnostic plot of FLARE output with observations</h1>
     
     <div class="hidden name"><code>generate_oxygen_management.Rd</code></div>
     </div>
 
     <div class="ref-description">
-    <p>Generate management list required to simulate oxygen inputs</p>
+    <p>Generate diagnostic plot of FLARE output with observations</p>
     </div>
 
-    <pre class="usage"><span class='fu'>generate_oxygen_management</span><span class='op'>(</span>
-  <span class='va'>config</span>,
-  <span class='va'>run_config</span>,
-  <span class='va'>start_datetime_local</span>,
-  <span class='va'>end_datetime_local</span>
-<span class='op'>)</span></pre>
+    <pre class="usage"><span class='fu'>generate_oxygen_management</span><span class='op'>(</span><span class='va'>config</span><span class='op'>)</span></pre>
 
     <h2 class="hasAnchor" id="arguments"><a class="anchor" href="#arguments"></a>Arguments</h2>
     <table class="ref-arguments">
     <colgroup><col class="name" /><col class="desc" /></colgroup>
     <tr>
-      <th>end_datetime_local</th>
-      <td></td>
+      <th>config</th>
+      <td><p>list; list from reading in configuration yaml</p></td>
     </tr>
     </table>
 
     <h2 class="hasAnchor" id="value"><a class="anchor" href="#value"></a>Value</h2>
 
-    
+    <p>list of variables necessary for running oxygen management in the GLM AED</p>
+    <h2 class="hasAnchor" id="details"><a class="anchor" href="#details"></a>Details</h2>
 
+    <p>Function combines the netcdf output with the long-format observation file to produce a set of plots for each state variable, calibrated parameter, and diagnostic variable</p>
+    <h2 class="hasAnchor" id="author"><a class="anchor" href="#author"></a>Author</h2>
 
+    <p>Quinn Thomas</p>
 
+    <h2 class="hasAnchor" id="examples"><a class="anchor" href="#examples"></a>Examples</h2>
+    <pre class="examples"><div class='input'><span class='kw'>if</span> <span class='op'>(</span><span class='cn'>FALSE</span><span class='op'>)</span> <span class='op'>{</span>
+<span class='va'>management</span> <span class='op'>&lt;-</span> <span class='fu'>generate_oxygen_management</span><span class='op'>(</span>config <span class='op'>=</span> <span class='va'>config</span><span class='op'>)</span>
+<span class='op'>}</span>
+</div></pre>
   </div>
   <div class="col-md-3 hidden-xs hidden-sm" id="pkgdown-sidebar">
     <nav id="toc" data-toggle="toc" class="sticky-top">

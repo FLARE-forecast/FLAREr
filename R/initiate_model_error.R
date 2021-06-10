@@ -5,7 +5,7 @@
 #' @return matrix
 #' @export
 #' @importFrom readr read_csv cols
-##' @example
+##' @examples
 ##' \dontrun{
 ##' model_sd <- initiate_model_error(config, states_config)
 ##' }

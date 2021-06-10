@@ -20,3 +20,8 @@ Generate model error matrix from configuration files
 \details{
 Function uses the configuration files to generate the matrix that run_da_forecast use to add normally distributed random noise to model predictions
 }
+\examples{
+\dontrun{
+model_sd <- initiate_model_error(config, states_config)
+}
+}

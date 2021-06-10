@@ -6,7 +6,7 @@
 <meta http-equiv="X-UA-Compatible" content="IE=edge">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-<title>Title — combine_forecast_observations • FLAREr</title>
+<title>Combine forecast output with observations — combine_forecast_observations • FLAREr</title>
 
 
 <!-- jquery -->
@@ -39,8 +39,8 @@
 
 
 
-<meta property="og:title" content="Title — combine_forecast_observations" />
-<meta property="og:description" content="Title" />
+<meta property="og:title" content="Combine forecast output with observations — combine_forecast_observations" />
+<meta property="og:description" content="Combine forecast output with observations" />
 
 
 
@@ -72,7 +72,7 @@
       </button>
       <span class="navbar-brand">
         <a class="navbar-link" href="../index.html">FLAREr</a>
-        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="Released version">2.0.1</span>
+        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="Released version">2.1.0</span>
       </span>
     </div>
 
@@ -121,32 +121,55 @@
 <div class="row">
   <div class="col-md-9 contents">
     <div class="page-header">
-    <h1>Title</h1>
+    <h1>Combine forecast output with observations</h1>
     
     <div class="hidden name"><code>combine_forecast_observations.Rd</code></div>
     </div>
 
     <div class="ref-description">
-    <p>Title</p>
+    <p>Combine forecast output with observations</p>
     </div>
 
-    <pre class="usage"><span class='fu'>combine_forecast_observations</span><span class='op'>(</span><span class='va'>file_name</span>, <span class='va'>qaqc_location</span>, <span class='va'>extra_historical_days</span><span class='op'>)</span></pre>
+    <pre class="usage"><span class='fu'>combine_forecast_observations</span><span class='op'>(</span>
+  <span class='va'>file_name</span>,
+  <span class='va'>qaqc_data_directory</span>,
+  <span class='va'>extra_historical_days</span>,
+  ncore <span class='op'>=</span> <span class='fl'>1</span>
+<span class='op'>)</span></pre>
 
     <h2 class="hasAnchor" id="arguments"><a class="anchor" href="#arguments"></a>Arguments</h2>
     <table class="ref-arguments">
     <colgroup><col class="name" /><col class="desc" /></colgroup>
     <tr>
+      <th>file_name</th>
+      <td><p>string; full path to output file produced by write_forecast_netcdf()</p></td>
+    </tr>
+    <tr>
+      <th>qaqc_data_directory</th>
+      <td><p>string; full path to processed long-format observation file</p></td>
+    </tr>
+    <tr>
       <th>extra_historical_days</th>
-      <td></td>
+      <td><p>integer; number of days prior to the days in the file_name file to include in the plot</p></td>
+    </tr>
+    <tr>
+      <th>ncore</th>
+      <td><p>integer; number of computer cores for parallel processing</p></td>
     </tr>
     </table>
 
     <h2 class="hasAnchor" id="value"><a class="anchor" href="#value"></a>Value</h2>
 
-    
+    <p>list</p>
+    <h2 class="hasAnchor" id="details"><a class="anchor" href="#details"></a>Details</h2>
 
+    <p>Combines forecast output with observations</p>
 
-
+    <h2 class="hasAnchor" id="examples"><a class="anchor" href="#examples"></a>Examples</h2>
+    <pre class="examples"><div class='input'><span class='kw'>if</span> <span class='op'>(</span><span class='cn'>FALSE</span><span class='op'>)</span> <span class='op'>{</span>
+ <span class='va'>output</span> <span class='op'>&lt;-</span> <span class='fu'>FLAREr</span><span class='fu'>::</span><span class='fu'>combine_forecast_observations</span><span class='op'>(</span><span class='va'>file_name</span>, qaqc_data_directory <span class='op'>=</span> <span class='va'>qaqc_data_directory</span>, extra_historical_days <span class='op'>=</span> <span class='fl'>0</span>, ncore <span class='op'>=</span> <span class='va'>ncore</span><span class='op'>)</span>
+<span class='op'>}</span>
+</div></pre>
   </div>
   <div class="col-md-3 hidden-xs hidden-sm" id="pkgdown-sidebar">
     <nav id="toc" data-toggle="toc" class="sticky-top">

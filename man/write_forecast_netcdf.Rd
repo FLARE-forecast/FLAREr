@@ -20,6 +20,12 @@ Generate netcdf output file
 \details{
 Function generates a netcdf file from the object that is returned by run_da_forecast()
 }
+\examples{
+\dontrun{
+write_forecast_netcdf(da_forecast_output = da_forecast_output, forecast_output_directory = config$file_path$forecast_output_directory)
+}
+
+}
 \author{
 Quinn Thomas
 }

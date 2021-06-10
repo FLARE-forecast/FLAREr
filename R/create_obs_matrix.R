@@ -1,15 +1,15 @@
 ##' @title Create matrix of observations in the format required by run_da_forecast
-##' @details
-##' @param cleaned_observations_file_long file name (with full path)
-##' @param obs_config
-##' @param config
+##' @details Creates a matrix of observations that maps the modeled states to the observed states. The function uses information from columns the obs_config file.
+##' @param cleaned_observations_file_long string; file name (with full path) of the long-format observation file
+##' @param obs_config list; observations configuration list
+##' @param config list; flare configuration list
 ##' @return matrix
 ##' @export
 ##' @import readr
 ##' @importFrom lubridate as_datetime as_date hour days
 ##' @importFrom dplyr filter
 ##' @author Quinn Thomas
-##' @example
+##' @examples
 ##' \dontrun{
 ##' obs <- create_obs_matrix(cleaned_observations_file_long, obs_config, config)
 ##' }

@@ -1,14 +1,21 @@
-#' Title
-#'
-#' @param file_name
-#' @param qaqc_location
-#' @param extra_historical_days
-#'
-#' @return
-#' @export
-#'
-#' @examples
-combine_forecast_observations <- function(file_name, qaqc_location,  extra_historical_days, ncore = 1){
+##' @title Combine forecast output with observations
+##' @details Combines forecast output with observations
+##' @param file_name string; full path to output file produced by write_forecast_netcdf()
+##' @param qaqc_data_directory string; full path to processed long-format observation file
+##' @param extra_historical_days integer; number of days prior to the days in the file_name file to include in the plot
+##' @param ncore integer; number of computer cores for parallel processing
+##' @export
+##' @return list
+##' @import ncdf4
+##' @import lubridate
+##' @import parallel
+##' @import readr
+##' @importFrom stringr str_split str_detect
+##'@examples
+##'\dontrun{
+##'  output <- FLAREr::combine_forecast_observations(file_name, qaqc_data_directory = qaqc_data_directory, extra_historical_days = 0, ncore = ncore)
+##'}
+combine_forecast_observations <- function(file_name, qaqc_data_directory,  extra_historical_days, ncore = 1){
 
   nc <- ncdf4::nc_open(file_name)
   t <- ncdf4::ncvar_get(nc,'time')
@@ -138,7 +145,7 @@ combine_forecast_observations <- function(file_name, qaqc_location,  extra_histo
 
   #PROCESS TEMPERATURE OBSERVATIONS
 
-  cleaned_observations_file_long <- paste0(qaqc_location,
+  cleaned_observations_file_long <- paste0(qaqc_data_directory,
                                            "/observations_postQAQC_long.csv")
   d <- readr::read_csv(cleaned_observations_file_long,
                        col_types = readr::cols())

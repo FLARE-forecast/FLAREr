@@ -2,16 +2,27 @@
 % Please edit documentation in R/generate_oxygen_management.R
 \name{generate_oxygen_management}
 \alias{generate_oxygen_management}
-\title{Generate management list required to simulate oxygen inputs}
+\title{Generate diagnostic plot of FLARE output with observations}
 \usage{
 generate_oxygen_management(config)
 }
 \arguments{
-\item{end_datetime}{}
+\item{config}{list; list from reading in configuration yaml}
 }
 \value{
-
+list of variables necessary for running oxygen management in the GLM AED
 }
 \description{
-Generate management list required to simulate oxygen inputs
+Generate diagnostic plot of FLARE output with observations
+}
+\details{
+Function combines the netcdf output with the long-format observation file to produce a set of plots for each state variable, calibrated parameter, and diagnostic variable
+}
+\examples{
+\dontrun{
+management <- generate_oxygen_management(config = config)
+}
+}
+\author{
+Quinn Thomas
 }

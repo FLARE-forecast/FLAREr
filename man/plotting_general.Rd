@@ -32,6 +32,11 @@ Generate diagnostic plot of FLARE output with observations
 \details{
 Function combines the netcdf output with the long-format observation file to produce a set of plots for each state variable, calibrated parameter, and diagnostic variable
 }
+\examples{
+\dontrun{
+plotting_general(file_name = saved_file, qaqc_data_directory = config$file_path$qaqc_data_directory, ncore = config$model_settings$ncore, plot_profile = TRUE, obs_csv)
+}
+}
 \author{
 Quinn Thomas
 }

@@ -31,7 +31,7 @@
       </button>
       <span class="navbar-brand">
         <a class="navbar-link" href="../index.html">FLAREr</a>
-        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="Released version">2.0.1</span>
+        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="Released version">2.1.0</span>
       </span>
     </div>
 
@@ -128,31 +128,38 @@
 <code class="sourceCode R"><span class="fu">remotes</span><span class="fu">::</span><span class="fu"><a href="https://remotes.r-lib.org/reference/install_github.html">install_github</a></span><span class="op">(</span><span class="st">"flare-forecast/FLAREr"</span><span class="op">)</span></code></pre></div>
 <p>Second, create a directory that will be your working directory for your FLARE run</p>
 <div class="sourceCode" id="cb2"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span class="va">forecast_location</span> <span class="op">&lt;-</span>  <span class="fu"><a href="https://rdrr.io/r/base/tempfile.html">tempdir</a></span><span class="op">(</span><span class="op">)</span>
-<span class="co">#forecast_location &lt;- "/Users/quinn/Dropbox/Research/SSC_forecasting/flare_users_guide_v2/forecast_location"</span></code></pre></div>
+<code class="sourceCode R"><span class="va">lake_directory</span> <span class="op">&lt;-</span>  <span class="fu"><a href="https://rdrr.io/r/base/tempfile.html">tempdir</a></span><span class="op">(</span><span class="op">)</span>
+<span class="fu"><a href="https://rdrr.io/r/base/files2.html">dir.create</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/file.path.html">file.path</a></span><span class="op">(</span><span class="va">lake_directory</span>, <span class="st">"configuration/flarer"</span><span class="op">)</span>, recursive <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span>
+<span class="fu"><a href="https://rdrr.io/r/base/files2.html">dir.create</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/file.path.html">file.path</a></span><span class="op">(</span><span class="va">lake_directory</span>, <span class="st">"configuration/forecast_model/glm"</span><span class="op">)</span>, recursive <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span>
+<span class="fu"><a href="https://rdrr.io/r/base/files2.html">dir.create</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/file.path.html">file.path</a></span><span class="op">(</span><span class="va">lake_directory</span>, <span class="st">"data_processed"</span><span class="op">)</span><span class="op">)</span> <span class="co"># For QAQC data</span>
+<span class="fu"><a href="https://rdrr.io/r/base/files2.html">dir.create</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/file.path.html">file.path</a></span><span class="op">(</span><span class="va">lake_directory</span>, <span class="st">"data_raw"</span><span class="op">)</span><span class="op">)</span> <span class="co"># For raw data</span>
+<span class="fu"><a href="https://rdrr.io/r/base/files2.html">dir.create</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/file.path.html">file.path</a></span><span class="op">(</span><span class="va">lake_directory</span>, <span class="st">"flare_tempdir"</span><span class="op">)</span><span class="op">)</span> <span class="co"># For running the forecasts</span>
+<span class="fu"><a href="https://rdrr.io/r/base/files2.html">dir.create</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/file.path.html">file.path</a></span><span class="op">(</span><span class="va">lake_directory</span>, <span class="st">"forecast_output"</span><span class="op">)</span><span class="op">)</span> <span class="co"># For forecast output</span>
+<span class="fu"><a href="https://rdrr.io/r/base/files2.html">dir.create</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/file.path.html">file.path</a></span><span class="op">(</span><span class="va">lake_directory</span>, <span class="st">"forecasted_drivers"</span><span class="op">)</span><span class="op">)</span> <span class="co"># Weather and inflow forecasts</span>
+<span class="fu"><a href="https://rdrr.io/r/base/files2.html">dir.create</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/file.path.html">file.path</a></span><span class="op">(</span><span class="va">lake_directory</span>, <span class="st">"R"</span><span class="op">)</span><span class="op">)</span> <span class="co"># For supplementary R scripts</span></code></pre></div>
 </div>
 <div id="configuration-files" class="section level2">
 <h2 class="hasAnchor">
 <a href="#configuration-files" class="anchor"></a>2: Configuration files</h2>
 <p>First, <code>FLAREr</code> requires two configuration yaml files. The code below copies examples from the <code>FLAREr</code> package.</p>
 <div class="sourceCode" id="cb3"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span class="fu"><a href="https://rdrr.io/r/base/files.html">file.copy</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/system.file.html">system.file</a></span><span class="op">(</span><span class="st">"data"</span>, <span class="st">"configure_flare.yml"</span>, package<span class="op">=</span><span class="st">"FLAREr"</span><span class="op">)</span>, <span class="va">forecast_location</span><span class="op">)</span>
+<code class="sourceCode R"><span class="fu"><a href="https://rdrr.io/r/base/files.html">file.copy</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/system.file.html">system.file</a></span><span class="op">(</span><span class="st">"example"</span>, <span class="st">"configuration"</span>, <span class="st">"flarer"</span>, <span class="st">"configure_flare.yml"</span>, package <span class="op">=</span> <span class="st">"FLAREr"</span><span class="op">)</span>, <span class="fu"><a href="https://rdrr.io/r/base/file.path.html">file.path</a></span><span class="op">(</span><span class="va">lake_directory</span>, <span class="st">"configuration"</span>, <span class="st">"flarer"</span>, <span class="st">"configure_flare.yml"</span><span class="op">)</span><span class="op">)</span>
 <span class="co">#&gt; [1] TRUE</span>
-<span class="fu"><a href="https://rdrr.io/r/base/files.html">file.copy</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/system.file.html">system.file</a></span><span class="op">(</span><span class="st">"data"</span>, <span class="st">"run_configuration.yml"</span>, package<span class="op">=</span><span class="st">"FLAREr"</span><span class="op">)</span>, <span class="va">forecast_location</span><span class="op">)</span>
+<span class="fu"><a href="https://rdrr.io/r/base/files.html">file.copy</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/system.file.html">system.file</a></span><span class="op">(</span><span class="st">"example"</span>, <span class="st">"configuration"</span>, <span class="st">"flarer"</span>, <span class="st">"configure_run.yml"</span>, package <span class="op">=</span> <span class="st">"FLAREr"</span><span class="op">)</span>, <span class="fu"><a href="https://rdrr.io/r/base/file.path.html">file.path</a></span><span class="op">(</span><span class="va">lake_directory</span>, <span class="st">"configuration"</span>, <span class="st">"flarer"</span>, <span class="st">"configure_run.yml"</span><span class="op">)</span><span class="op">)</span>
 <span class="co">#&gt; [1] TRUE</span></code></pre></div>
 <p>Second, <code>FLAREr</code> requires a set of configuration CSV files. The CSV files are used to define the states that are simulated and the parameters that are calibrated. The code below copies examples from the <code>FLAREr</code> package</p>
 <div class="sourceCode" id="cb4"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span class="fu"><a href="https://rdrr.io/r/base/files.html">file.copy</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/system.file.html">system.file</a></span><span class="op">(</span><span class="st">"data"</span>, <span class="st">"parameter_calibration_config.csv"</span>, package<span class="op">=</span><span class="st">"FLAREr"</span><span class="op">)</span>, <span class="va">forecast_location</span><span class="op">)</span>
+<code class="sourceCode R"><span class="fu"><a href="https://rdrr.io/r/base/files.html">file.copy</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/system.file.html">system.file</a></span><span class="op">(</span><span class="st">"example"</span>, <span class="st">"configuration"</span>, <span class="st">"flarer"</span>, <span class="st">"parameter_calibration_config.csv"</span>, package <span class="op">=</span> <span class="st">"FLAREr"</span><span class="op">)</span>, <span class="fu"><a href="https://rdrr.io/r/base/file.path.html">file.path</a></span><span class="op">(</span><span class="va">lake_directory</span>, <span class="st">"configuration"</span>, <span class="st">"flarer"</span>, <span class="st">"parameter_calibration_config.csv"</span><span class="op">)</span><span class="op">)</span>
 <span class="co">#&gt; [1] TRUE</span>
-<span class="fu"><a href="https://rdrr.io/r/base/files.html">file.copy</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/system.file.html">system.file</a></span><span class="op">(</span><span class="st">"data"</span>, <span class="st">"states_config.csv"</span>, package<span class="op">=</span><span class="st">"FLAREr"</span><span class="op">)</span>, <span class="va">forecast_location</span><span class="op">)</span>
+<span class="fu"><a href="https://rdrr.io/r/base/files.html">file.copy</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/system.file.html">system.file</a></span><span class="op">(</span><span class="st">"example"</span>, <span class="st">"configuration"</span>, <span class="st">"flarer"</span>, <span class="st">"states_config.csv"</span>, package <span class="op">=</span> <span class="st">"FLAREr"</span><span class="op">)</span>, <span class="fu"><a href="https://rdrr.io/r/base/file.path.html">file.path</a></span><span class="op">(</span><span class="va">lake_directory</span>, <span class="st">"configuration"</span>, <span class="st">"flarer"</span>, <span class="st">"states_config.csv"</span><span class="op">)</span><span class="op">)</span>
 <span class="co">#&gt; [1] TRUE</span>
-<span class="fu"><a href="https://rdrr.io/r/base/files.html">file.copy</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/system.file.html">system.file</a></span><span class="op">(</span><span class="st">"data"</span>, <span class="st">"states_process_error.csv"</span>, package<span class="op">=</span><span class="st">"FLAREr"</span><span class="op">)</span>, <span class="va">forecast_location</span><span class="op">)</span>
+<span class="fu"><a href="https://rdrr.io/r/base/files.html">file.copy</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/system.file.html">system.file</a></span><span class="op">(</span><span class="st">"example"</span>, <span class="st">"configuration"</span>, <span class="st">"flarer"</span>, <span class="st">"depth_model_sd.csv"</span>, package <span class="op">=</span> <span class="st">"FLAREr"</span><span class="op">)</span>, <span class="fu"><a href="https://rdrr.io/r/base/file.path.html">file.path</a></span><span class="op">(</span><span class="va">lake_directory</span>, <span class="st">"configuration"</span>, <span class="st">"flarer"</span>, <span class="st">"depth_model_sd.csv"</span><span class="op">)</span><span class="op">)</span>
 <span class="co">#&gt; [1] TRUE</span>
-<span class="fu"><a href="https://rdrr.io/r/base/files.html">file.copy</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/system.file.html">system.file</a></span><span class="op">(</span><span class="st">"data"</span>, <span class="st">"observations_config.csv"</span>, package<span class="op">=</span><span class="st">"FLAREr"</span><span class="op">)</span>, <span class="va">forecast_location</span><span class="op">)</span>
+<span class="fu"><a href="https://rdrr.io/r/base/files.html">file.copy</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/system.file.html">system.file</a></span><span class="op">(</span><span class="st">"example"</span>, <span class="st">"configuration"</span>, <span class="st">"flarer"</span>, <span class="st">"observations_config.csv"</span>, package <span class="op">=</span> <span class="st">"FLAREr"</span><span class="op">)</span>, <span class="fu"><a href="https://rdrr.io/r/base/file.path.html">file.path</a></span><span class="op">(</span><span class="va">lake_directory</span>, <span class="st">"configuration"</span>, <span class="st">"flarer"</span>, <span class="st">"observations_config.csv"</span><span class="op">)</span><span class="op">)</span>
 <span class="co">#&gt; [1] TRUE</span></code></pre></div>
 <p>Third, FLAREr requires GLM specific configurations files. For applications that require on water temperature, only the GLM namelist file is needed. Applications that require other water quality variables will require additional namelist files that are associated with the AED model.</p>
 <div class="sourceCode" id="cb5"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span class="fu"><a href="https://rdrr.io/r/base/files.html">file.copy</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/system.file.html">system.file</a></span><span class="op">(</span><span class="st">"data"</span>, <span class="st">"glm3.nml"</span>, package<span class="op">=</span><span class="st">"FLAREr"</span><span class="op">)</span>, <span class="va">forecast_location</span><span class="op">)</span>
+<code class="sourceCode R"><span class="fu"><a href="https://rdrr.io/r/base/files.html">file.copy</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/system.file.html">system.file</a></span><span class="op">(</span><span class="st">"example"</span>, <span class="st">"configuration"</span>, <span class="st">"forecast_model"</span>, <span class="st">"glm"</span>, <span class="st">"glm3.nml"</span>, package <span class="op">=</span> <span class="st">"FLAREr"</span><span class="op">)</span>, <span class="fu"><a href="https://rdrr.io/r/base/file.path.html">file.path</a></span><span class="op">(</span><span class="va">lake_directory</span>, <span class="st">"configuration"</span>, <span class="st">"forecast_model"</span>, <span class="st">"glm"</span>, <span class="st">"glm3.nml"</span><span class="op">)</span><span class="op">)</span>
 <span class="co">#&gt; [1] TRUE</span></code></pre></div>
 </div>
 <div id="observation-and-driver-files" class="section level2">
@@ -160,11 +167,13 @@
 <a href="#observation-and-driver-files" class="anchor"></a>3: Observation and driver files</h2>
 <p>Since the FLAREr package for general application, scripts to download and process observation and drivers are not included in the package. Therefore the application of FLARE to a lake will require a set of additional scripts that are specific to the data formats for the lakes. The example includes files for application to FCR.</p>
 <div class="sourceCode" id="cb6"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span class="fu"><a href="https://rdrr.io/r/base/files.html">file.copy</a></span><span class="op">(</span>from <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/system.file.html">system.file</a></span><span class="op">(</span><span class="st">"data/input_data"</span>, package<span class="op">=</span> <span class="st">"FLAREr"</span><span class="op">)</span>, to <span class="op">=</span> <span class="va">forecast_location</span>, recursive <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span>
+<code class="sourceCode R"><span class="fu"><a href="https://rdrr.io/r/base/files.html">file.copy</a></span><span class="op">(</span>from <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/system.file.html">system.file</a></span><span class="op">(</span><span class="st">"example/data_processed"</span>, package <span class="op">=</span> <span class="st">"FLAREr"</span><span class="op">)</span>, to <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/file.path.html">file.path</a></span><span class="op">(</span><span class="va">lake_directory</span><span class="op">)</span>, recursive <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span>
+<span class="co">#&gt; [1] TRUE</span>
+<span class="fu"><a href="https://rdrr.io/r/base/files.html">file.copy</a></span><span class="op">(</span>from <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/system.file.html">system.file</a></span><span class="op">(</span><span class="st">"example/forecasted_drivers"</span>, package <span class="op">=</span> <span class="st">"FLAREr"</span><span class="op">)</span>, to <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/file.path.html">file.path</a></span><span class="op">(</span><span class="va">lake_directory</span><span class="op">)</span>, recursive <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span>
 <span class="co">#&gt; [1] TRUE</span></code></pre></div>
 <p>First, FLAREr requires the observation file to have a specific name (observations_postQAQC_long.csv) and format.</p>
 <div class="sourceCode" id="cb7"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span class="fu"><a href="https://rdrr.io/r/utils/head.html">head</a></span><span class="op">(</span><span class="fu">read_csv</span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/file.path.html">file.path</a></span><span class="op">(</span><span class="va">forecast_location</span>,<span class="st">"/input_data/observations_postQAQC_long.csv"</span><span class="op">)</span>, col_types <span class="op">=</span> <span class="fu">readr</span><span class="fu">::</span><span class="fu"><a href="https://readr.tidyverse.org/reference/cols.html">cols</a></span><span class="op">(</span><span class="op">)</span><span class="op">)</span><span class="op">)</span>
+<code class="sourceCode R"><span class="fu"><a href="https://rdrr.io/r/utils/head.html">head</a></span><span class="op">(</span><span class="fu">read_csv</span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/file.path.html">file.path</a></span><span class="op">(</span><span class="va">lake_directory</span>,<span class="st">"/data_processed/observations_postQAQC_long.csv"</span><span class="op">)</span>, col_types <span class="op">=</span> <span class="fu">readr</span><span class="fu">::</span><span class="fu"><a href="https://readr.tidyverse.org/reference/cols.html">cols</a></span><span class="op">(</span><span class="op">)</span><span class="op">)</span><span class="op">)</span>
 <span class="co">#&gt; # A tibble: 6 x 5</span>
 <span class="co">#&gt;   date        hour depth value variable   </span>
 <span class="co">#&gt;   &lt;date&gt;     &lt;dbl&gt; &lt;dbl&gt; &lt;dbl&gt; &lt;chr&gt;      </span>
@@ -176,8 +185,8 @@
 <span class="co">#&gt; 6 2018-07-06     0     5  11.2 temperature</span></code></pre></div>
 <p>Second, FLARE are requires the observed (historical) meteorology to be a specific name (observed-met_fcre.nc) and format.</p>
 <div class="sourceCode" id="cb8"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span class="fu">ncdf4</span><span class="fu">::</span><span class="fu"><a href="https://rdrr.io/pkg/ncdf4/man/nc_open.html">nc_open</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/file.path.html">file.path</a></span><span class="op">(</span><span class="va">forecast_location</span>, <span class="st">"input_data/observed-met_fcre.nc"</span><span class="op">)</span><span class="op">)</span>
-<span class="co">#&gt; File /var/folders/ms/kf9vk0w17p18pvs8k_23t5y80000gq/T//Rtmp1br3RJ/input_data/observed-met_fcre.nc (NC_FORMAT_CLASSIC):</span>
+<code class="sourceCode R"><span class="fu">ncdf4</span><span class="fu">::</span><span class="fu"><a href="https://rdrr.io/pkg/ncdf4/man/nc_open.html">nc_open</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/file.path.html">file.path</a></span><span class="op">(</span><span class="va">lake_directory</span>, <span class="st">"data_processed/observed-met_fcre.nc"</span><span class="op">)</span><span class="op">)</span>
+<span class="co">#&gt; File /var/folders/ms/kf9vk0w17p18pvs8k_23t5y80000gq/T//RtmpaMmnQR/data_processed/observed-met_fcre.nc (NC_FORMAT_CLASSIC):</span>
 <span class="co">#&gt; </span>
 <span class="co">#&gt;      8 variables (excluding dimension variables):</span>
 <span class="co">#&gt;         float air_temperature[time,latitude,longitude]   </span>
@@ -217,7 +226,7 @@
 <span class="co">#&gt;             long_name: longitude</span></code></pre></div>
 <p>Third, FLARE are requires the observed (historical) inflow and outflow to be a specific name (inflow_postQAQC.csv) and format.</p>
 <div class="sourceCode" id="cb9"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span class="fu"><a href="https://rdrr.io/r/utils/head.html">head</a></span><span class="op">(</span><span class="fu">read_csv</span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/file.path.html">file.path</a></span><span class="op">(</span><span class="va">forecast_location</span>, <span class="st">"/input_data/inflow_postQAQC.csv"</span><span class="op">)</span>, col_types <span class="op">=</span> <span class="fu">readr</span><span class="fu">::</span><span class="fu"><a href="https://readr.tidyverse.org/reference/cols.html">cols</a></span><span class="op">(</span><span class="op">)</span><span class="op">)</span><span class="op">)</span>
+<code class="sourceCode R"><span class="fu"><a href="https://rdrr.io/r/utils/head.html">head</a></span><span class="op">(</span><span class="fu">read_csv</span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/file.path.html">file.path</a></span><span class="op">(</span><span class="va">lake_directory</span>, <span class="st">"data_processed/inflow_postQAQC.csv"</span><span class="op">)</span>, col_types <span class="op">=</span> <span class="fu">readr</span><span class="fu">::</span><span class="fu"><a href="https://readr.tidyverse.org/reference/cols.html">cols</a></span><span class="op">(</span><span class="op">)</span><span class="op">)</span><span class="op">)</span>
 <span class="co">#&gt; # A tibble: 6 x 4</span>
 <span class="co">#&gt;   time         FLOW  TEMP  SALT</span>
 <span class="co">#&gt;   &lt;date&gt;      &lt;dbl&gt; &lt;dbl&gt; &lt;dbl&gt;</span>
@@ -229,7 +238,7 @@
 <span class="co">#&gt; 6 2013-05-20 0.0385  14.4     0</span></code></pre></div>
 <p>Finally, if using forecasted meteorology and inflows, FLAREr requires specific file formats and file names with specific characters (INFLOW or OUTFLOW). The follow set of files are the forecasted inflow files in the example.</p>
 <div class="sourceCode" id="cb10"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span class="va">all_files</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/list.files.html">list.files</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/file.path.html">file.path</a></span><span class="op">(</span><span class="va">forecast_location</span>,<span class="st">"input_data/FLOWS-NOAAGEFS-AR1"</span><span class="op">)</span>, full.names <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span>
+<code class="sourceCode R"><span class="va">all_files</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/list.files.html">list.files</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/file.path.html">file.path</a></span><span class="op">(</span><span class="va">lake_directory</span>,<span class="st">"forecasted_drivers/FLOWS-NOAAGEFS-AR1"</span><span class="op">)</span>, full.names <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span>
 <span class="fu"><a href="https://rdrr.io/r/base/basename.html">basename</a></span><span class="op">(</span><span class="va">all_files</span><span class="op">[</span><span class="fu">stringr</span><span class="fu">::</span><span class="fu"><a href="https://stringr.tidyverse.org/reference/str_detect.html">str_detect</a></span><span class="op">(</span><span class="va">all_files</span>,<span class="st">"INFLOW"</span><span class="op">)</span><span class="op">]</span><span class="op">)</span>
 <span class="co">#&gt;  [1] "INFLOW-FLOWS-NOAAGEFS-AR1_fcre_2018-10-05_2018-10-20_ens01.csv"</span>
 <span class="co">#&gt;  [2] "INFLOW-FLOWS-NOAAGEFS-AR1_fcre_2018-10-05_2018-10-20_ens02.csv"</span>
@@ -266,7 +275,7 @@
 <span class="co">#&gt; 6 2018-10-10 0.0132  19.0     0    20.6 0.00117  inflow          1</span></code></pre></div>
 <p>Similarly, the forecasted NOAA GEFS meteorology has a specific file formats and file names with specific characters (NOAAGEGS_1hr). The follow set of files are the forecasted meteorology files in the example.</p>
 <div class="sourceCode" id="cb12"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span class="va">all_files</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/list.files.html">list.files</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/file.path.html">file.path</a></span><span class="op">(</span><span class="va">forecast_location</span>, <span class="st">"input_data/NOAAGEFS_1hr-debias"</span><span class="op">)</span>, full.names <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span>
+<code class="sourceCode R"><span class="va">all_files</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/list.files.html">list.files</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/file.path.html">file.path</a></span><span class="op">(</span><span class="va">lake_directory</span>, <span class="st">"forecasted_drivers/NOAAGEFS_1hr-debias"</span><span class="op">)</span>, full.names <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span>
 <span class="fu"><a href="https://rdrr.io/r/base/basename.html">basename</a></span><span class="op">(</span><span class="va">all_files</span><span class="op">)</span>
 <span class="co">#&gt;  [1] "NOAAGEFS_1hr-debias_fcre_2018-10-05T00_2018-10-21T00_ens01.nc"</span>
 <span class="co">#&gt;  [2] "NOAAGEFS_1hr-debias_fcre_2018-10-05T00_2018-10-21T00_ens02.nc"</span>
@@ -291,7 +300,7 @@
 <span class="co">#&gt; [21] "NOAAGEFS_1hr-debias_fcre_2018-10-05T00_2018-10-21T00_ens21.nc"</span></code></pre></div>
 <div class="sourceCode" id="cb13"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span class="fu">ncdf4</span><span class="fu">::</span><span class="fu"><a href="https://rdrr.io/pkg/ncdf4/man/nc_open.html">nc_open</a></span><span class="op">(</span><span class="va">all_files</span><span class="op">[</span><span class="fl">1</span><span class="op">]</span><span class="op">)</span>
-<span class="co">#&gt; File /var/folders/ms/kf9vk0w17p18pvs8k_23t5y80000gq/T//Rtmp1br3RJ/input_data/NOAAGEFS_1hr-debias/NOAAGEFS_1hr-debias_fcre_2018-10-05T00_2018-10-21T00_ens01.nc (NC_FORMAT_CLASSIC):</span>
+<span class="co">#&gt; File /var/folders/ms/kf9vk0w17p18pvs8k_23t5y80000gq/T//RtmpaMmnQR/forecasted_drivers/NOAAGEFS_1hr-debias/NOAAGEFS_1hr-debias_fcre_2018-10-05T00_2018-10-21T00_ens01.nc (NC_FORMAT_CLASSIC):</span>
 <span class="co">#&gt; </span>
 <span class="co">#&gt;      6 variables (excluding dimension variables):</span>
 <span class="co">#&gt;         float air_temperature[time,latitude,longitude]   </span>
@@ -331,21 +340,17 @@
 <ul>
 <li><code>glm3.nml</code></li>
 <li><code>configure_flare.yml</code></li>
-<li><code>run_configuration.yml</code></li>
+<li><code>configure_run.yml</code></li>
 <li><code>states_config.csv</code></li>
 <li><code>observations_config.csv</code></li>
 <li><code>parameter_calibration_config.csv</code></li>
-<li><code>states_process_error.csv</code></li>
+<li><code>depth_model_sd.csv</code></li>
 </ul>
-<div id="run_configuration-yml" class="section level3">
+<div id="configure_run-yml" class="section level3">
 <h3 class="hasAnchor">
-<a href="#run_configuration-yml" class="anchor"></a>run_configuration.yml</h3>
+<a href="#configure_run-yml" class="anchor"></a>configure_run.yml</h3>
 <p>This file is the configuration file that define the specific timing of the run.</p>
 <ul>
-<li>
-<code>forecast_location</code>: This is the <code>flare_simulation</code> directory (full path; you will need to change this to reflect the location of your directory)</li>
-<li>
-<code>execute_location</code>: This is the same as <code>forecast_location</code> unless you are executing the simulation in a different directory. I use this to execute the code on a RAM disk to save read-writes to my hard disk. You don’t need to do this in the tutorial</li>
 <li>
 <code>restart_file</code>: This is the full path to the file that you want to use as initial conditions for the simulation. You will set this to <code>NA</code> if the simulation is not a continuation of a previous simulation.</li>
 <li>
@@ -380,133 +385,134 @@
 <div id="states_config-csv" class="section level3">
 <h3 class="hasAnchor">
 <a href="#states_config-csv" class="anchor"></a>states_config.csv</h3>
-<p>Needs to be in your <code>forecast_location</code></p>
+<p>Needs to be in <code>configuration/flarer</code></p>
 </div>
 <div id="observations_config-csv" class="section level3">
 <h3 class="hasAnchor">
 <a href="#observations_config-csv" class="anchor"></a>observations_config.csv</h3>
-<p>Needs to be in your <code>forecast_location</code></p>
+<p>Needs to be in your <code>configuration/flarer</code></p>
 </div>
-<div id="observations_config-csv-1" class="section level3">
+<div id="parameter_calibration_config-csv" class="section level3">
 <h3 class="hasAnchor">
-<a href="#observations_config-csv-1" class="anchor"></a>observations_config.csv</h3>
-<p>Needs to be in your <code>forecast_location</code></p>
+<a href="#parameter_calibration_config-csv" class="anchor"></a>parameter_calibration_config.csv</h3>
+<p>Needs to be in your <code>configuration/flarer</code></p>
+<p>Set your directories</p>
+<div class="sourceCode" id="cb14"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span class="va">configuration_directory</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/file.path.html">file.path</a></span><span class="op">(</span><span class="va">lake_directory</span>, <span class="st">"configuration"</span><span class="op">)</span>
+<span class="va">execute_directory</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/file.path.html">file.path</a></span><span class="op">(</span><span class="va">lake_directory</span>, <span class="st">"flare_tempdir"</span><span class="op">)</span>
+<span class="va">qaqc_data_directory</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/file.path.html">file.path</a></span><span class="op">(</span><span class="va">lake_directory</span>, <span class="st">"data_processed"</span><span class="op">)</span>
+<span class="va">forecast_input_directory</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/file.path.html">file.path</a></span><span class="op">(</span><span class="va">lake_directory</span>, <span class="st">"forecasted_drivers"</span><span class="op">)</span></code></pre></div>
 </div>
 </div>
 <div id="run-your-glm-example-simulation" class="section level2">
 <h2 class="hasAnchor">
 <a href="#run-your-glm-example-simulation" class="anchor"></a>3: Run your GLM example simulation</h2>
 <p>Read configuration files</p>
-<p>The following reads in the configuration files and overwrites the directory locations based on the forecast_location and working_directory provided above. In practice you will specific these directories in the configurate file and not overwrite them.</p>
-<div class="sourceCode" id="cb14"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span class="va">config</span> <span class="op">&lt;-</span> <span class="fu">yaml</span><span class="fu">::</span><span class="fu"><a href="https://rdrr.io/pkg/yaml/man/read_yaml.html">read_yaml</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/file.path.html">file.path</a></span><span class="op">(</span><span class="va">forecast_location</span>,<span class="st">"configure_flare.yml"</span><span class="op">)</span><span class="op">)</span>
-<span class="va">run_config</span> <span class="op">&lt;-</span> <span class="fu">yaml</span><span class="fu">::</span><span class="fu"><a href="https://rdrr.io/pkg/yaml/man/read_yaml.html">read_yaml</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/file.path.html">file.path</a></span><span class="op">(</span><span class="va">forecast_location</span>,<span class="st">"run_configuration.yml"</span><span class="op">)</span><span class="op">)</span>
+<p>The following reads in the configuration files and overwrites the directory locations based on the lake_directory and directories provided above. In practice you will specific these directories in the configure file and not overwrite them.</p>
+<div class="sourceCode" id="cb15"><pre class="downlit sourceCode r">
+<code class="sourceCode R">
+
+<span class="va">config</span> <span class="op">&lt;-</span> <span class="fu">yaml</span><span class="fu">::</span><span class="fu"><a href="https://rdrr.io/pkg/yaml/man/read_yaml.html">read_yaml</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/file.path.html">file.path</a></span><span class="op">(</span><span class="va">configuration_directory</span>, <span class="st">"flarer"</span>,<span class="st">"configure_flare.yml"</span><span class="op">)</span><span class="op">)</span>
+<span class="va">run_config</span> <span class="op">&lt;-</span> <span class="fu">yaml</span><span class="fu">::</span><span class="fu"><a href="https://rdrr.io/pkg/yaml/man/read_yaml.html">read_yaml</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/file.path.html">file.path</a></span><span class="op">(</span><span class="va">configuration_directory</span>, <span class="st">"flarer"</span>,<span class="st">"configure_run.yml"</span><span class="op">)</span><span class="op">)</span>
 
 <span class="va">config</span><span class="op">$</span><span class="va">run_config</span> <span class="op">&lt;-</span> <span class="va">run_config</span>
-<span class="va">config</span><span class="op">$</span><span class="va">run_config</span><span class="op">$</span><span class="va">forecast_location</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/file.path.html">file.path</a></span><span class="op">(</span><span class="va">forecast_location</span><span class="op">)</span>
-<span class="va">config</span><span class="op">$</span><span class="va">run_config</span><span class="op">$</span><span class="va">execute_location</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/file.path.html">file.path</a></span><span class="op">(</span><span class="va">forecast_location</span>, <span class="st">"working_directory"</span><span class="op">)</span>
-
-<span class="va">config</span><span class="op">$</span><span class="va">data_location</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/file.path.html">file.path</a></span><span class="op">(</span><span class="va">forecast_location</span>, <span class="st">"input_data"</span><span class="op">)</span>
-<span class="va">config</span><span class="op">$</span><span class="va">qaqc_data_location</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/file.path.html">file.path</a></span><span class="op">(</span><span class="va">forecast_location</span>, <span class="st">"input_data"</span><span class="op">)</span>
-
-<span class="kw">if</span><span class="op">(</span><span class="op">!</span><span class="fu"><a href="https://rdrr.io/r/base/files2.html">dir.exists</a></span><span class="op">(</span><span class="va">config</span><span class="op">$</span><span class="va">run_config</span><span class="op">$</span><span class="va">execute_location</span><span class="op">)</span><span class="op">)</span><span class="op">{</span>
-  <span class="fu"><a href="https://rdrr.io/r/base/files2.html">dir.create</a></span><span class="op">(</span><span class="va">config</span><span class="op">$</span><span class="va">run_config</span><span class="op">$</span><span class="va">execute_location</span><span class="op">)</span>
-<span class="op">}</span></code></pre></div>
+<span class="va">config</span><span class="op">$</span><span class="va">file_path</span><span class="op">$</span><span class="va">noaa_directory</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/file.path.html">file.path</a></span><span class="op">(</span><span class="va">forecast_input_directory</span>, <span class="va">config</span><span class="op">$</span><span class="va">met</span><span class="op">$</span><span class="va">forecast_met_model</span><span class="op">)</span>
+<span class="va">config</span><span class="op">$</span><span class="va">file_path</span><span class="op">$</span><span class="va">inflow_directory</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/file.path.html">file.path</a></span><span class="op">(</span><span class="va">forecast_input_directory</span>, <span class="va">config</span><span class="op">$</span><span class="va">inflow</span><span class="op">$</span><span class="va">forecast_inflow_model</span><span class="op">)</span>
+<span class="va">config</span><span class="op">$</span><span class="va">file_path</span><span class="op">$</span><span class="va">configuration_directory</span><span class="op">&lt;-</span> <span class="va">configuration_directory</span>
+<span class="va">config</span><span class="op">$</span><span class="va">file_path</span><span class="op">$</span><span class="va">execute_directory</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/file.path.html">file.path</a></span><span class="op">(</span><span class="va">lake_directory</span>, <span class="st">"flare_tempdir"</span><span class="op">)</span>
+<span class="va">config</span><span class="op">$</span><span class="va">file_path</span><span class="op">$</span><span class="va">forecast_output_directory</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/file.path.html">file.path</a></span><span class="op">(</span><span class="va">lake_directory</span>, <span class="st">"forecast_output"</span><span class="op">)</span>
+<span class="va">config</span><span class="op">$</span><span class="va">file_path</span><span class="op">$</span><span class="va">qaqc_data_directory</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/file.path.html">file.path</a></span><span class="op">(</span><span class="va">lake_directory</span>, <span class="st">"data_processed"</span><span class="op">)</span></code></pre></div>
 <p>Read in configuration CSV files</p>
-<div class="sourceCode" id="cb15"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span class="va">pars_config</span> <span class="op">&lt;-</span> <span class="fu">readr</span><span class="fu">::</span><span class="fu"><a href="https://readr.tidyverse.org/reference/read_delim.html">read_csv</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/file.path.html">file.path</a></span><span class="op">(</span><span class="va">config</span><span class="op">$</span><span class="va">run_config</span><span class="op">$</span><span class="va">forecast_location</span>, <span class="va">config</span><span class="op">$</span><span class="va">par_file</span><span class="op">)</span>, col_types <span class="op">=</span> <span class="fu">readr</span><span class="fu">::</span><span class="fu"><a href="https://readr.tidyverse.org/reference/cols.html">cols</a></span><span class="op">(</span><span class="op">)</span><span class="op">)</span>
-<span class="va">obs_config</span> <span class="op">&lt;-</span> <span class="fu">readr</span><span class="fu">::</span><span class="fu"><a href="https://readr.tidyverse.org/reference/read_delim.html">read_csv</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/file.path.html">file.path</a></span><span class="op">(</span><span class="va">config</span><span class="op">$</span><span class="va">run_config</span><span class="op">$</span><span class="va">forecast_location</span>, <span class="va">config</span><span class="op">$</span><span class="va">obs_config_file</span><span class="op">)</span>, col_types <span class="op">=</span> <span class="fu">readr</span><span class="fu">::</span><span class="fu"><a href="https://readr.tidyverse.org/reference/cols.html">cols</a></span><span class="op">(</span><span class="op">)</span><span class="op">)</span>
-<span class="va">states_config</span> <span class="op">&lt;-</span> <span class="fu">readr</span><span class="fu">::</span><span class="fu"><a href="https://readr.tidyverse.org/reference/read_delim.html">read_csv</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/file.path.html">file.path</a></span><span class="op">(</span><span class="va">config</span><span class="op">$</span><span class="va">run_config</span><span class="op">$</span><span class="va">forecast_location</span>,<span class="va">config</span><span class="op">$</span><span class="va">states_config_file</span><span class="op">)</span>, col_types <span class="op">=</span> <span class="fu">readr</span><span class="fu">::</span><span class="fu"><a href="https://readr.tidyverse.org/reference/cols.html">cols</a></span><span class="op">(</span><span class="op">)</span><span class="op">)</span></code></pre></div>
-<p>Download and process observations (already done)</p>
 <div class="sourceCode" id="cb16"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span class="va">cleaned_observations_file_long</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/file.path.html">file.path</a></span><span class="op">(</span><span class="va">config</span><span class="op">$</span><span class="va">qaqc_data_location</span>,<span class="st">"observations_postQAQC_long.csv"</span><span class="op">)</span>
-<span class="va">cleaned_inflow_file</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/file.path.html">file.path</a></span><span class="op">(</span><span class="va">config</span><span class="op">$</span><span class="va">qaqc_data_location</span>, <span class="st">"/inflow_postQAQC.csv"</span><span class="op">)</span>
-<span class="va">observed_met_file</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/file.path.html">file.path</a></span><span class="op">(</span><span class="va">config</span><span class="op">$</span><span class="va">qaqc_data_location</span>,<span class="st">"observed-met_fcre.nc"</span><span class="op">)</span></code></pre></div>
-<p>Set up weather drivers in GLM format</p>
+<code class="sourceCode R"><span class="va">pars_config</span> <span class="op">&lt;-</span> <span class="fu">readr</span><span class="fu">::</span><span class="fu"><a href="https://readr.tidyverse.org/reference/read_delim.html">read_csv</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/file.path.html">file.path</a></span><span class="op">(</span><span class="va">configuration_directory</span>, <span class="st">"flarer"</span>, <span class="va">config</span><span class="op">$</span><span class="va">model_settings</span><span class="op">$</span><span class="va">par_config_file</span><span class="op">)</span>, col_types <span class="op">=</span> <span class="fu">readr</span><span class="fu">::</span><span class="fu"><a href="https://readr.tidyverse.org/reference/cols.html">cols</a></span><span class="op">(</span><span class="op">)</span><span class="op">)</span>
+<span class="va">obs_config</span> <span class="op">&lt;-</span> <span class="fu">readr</span><span class="fu">::</span><span class="fu"><a href="https://readr.tidyverse.org/reference/read_delim.html">read_csv</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/file.path.html">file.path</a></span><span class="op">(</span><span class="va">configuration_directory</span>, <span class="st">"flarer"</span>, <span class="va">config</span><span class="op">$</span><span class="va">model_settings</span><span class="op">$</span><span class="va">obs_config_file</span><span class="op">)</span>, col_types <span class="op">=</span> <span class="fu">readr</span><span class="fu">::</span><span class="fu"><a href="https://readr.tidyverse.org/reference/cols.html">cols</a></span><span class="op">(</span><span class="op">)</span><span class="op">)</span>
+<span class="va">states_config</span> <span class="op">&lt;-</span> <span class="fu">readr</span><span class="fu">::</span><span class="fu"><a href="https://readr.tidyverse.org/reference/read_delim.html">read_csv</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/file.path.html">file.path</a></span><span class="op">(</span><span class="va">configuration_directory</span>, <span class="st">"flarer"</span>, <span class="va">config</span><span class="op">$</span><span class="va">model_settings</span><span class="op">$</span><span class="va">states_config_file</span><span class="op">)</span>, col_types <span class="op">=</span> <span class="fu">readr</span><span class="fu">::</span><span class="fu"><a href="https://readr.tidyverse.org/reference/cols.html">cols</a></span><span class="op">(</span><span class="op">)</span><span class="op">)</span></code></pre></div>
+<p>Download and process observations (already done)</p>
 <div class="sourceCode" id="cb17"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span class="va">met_out</span> <span class="op">&lt;-</span> <span class="fu">FLAREr</span><span class="fu">::</span><span class="fu"><a href="../reference/generate_glm_met_files.html">generate_glm_met_files</a></span><span class="op">(</span>obs_met_file <span class="op">=</span> <span class="va">observed_met_file</span>,
-                                         out_dir <span class="op">=</span> <span class="va">config</span><span class="op">$</span><span class="va">run_config</span><span class="op">$</span><span class="va">execute_location</span>,
-                                         forecast_dir <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/file.path.html">file.path</a></span><span class="op">(</span><span class="va">config</span><span class="op">$</span><span class="va">data_location</span>, <span class="va">config</span><span class="op">$</span><span class="va">forecast_met_model</span><span class="op">)</span>,
-                                         <span class="va">config</span><span class="op">)</span></code></pre></div>
-<p>Set up inflow and outflow drivers in GLM format</p>
+<code class="sourceCode R"><span class="va">cleaned_observations_file_long</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/file.path.html">file.path</a></span><span class="op">(</span><span class="va">config</span><span class="op">$</span><span class="va">file_path</span><span class="op">$</span><span class="va">qaqc_data_directory</span>,<span class="st">"observations_postQAQC_long.csv"</span><span class="op">)</span>
+<span class="va">cleaned_inflow_file</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/file.path.html">file.path</a></span><span class="op">(</span><span class="va">config</span><span class="op">$</span><span class="va">file_path</span><span class="op">$</span><span class="va">qaqc_data_directory</span>, <span class="st">"/inflow_postQAQC.csv"</span><span class="op">)</span>
+<span class="va">observed_met_file</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/file.path.html">file.path</a></span><span class="op">(</span><span class="va">config</span><span class="op">$</span><span class="va">file_path</span><span class="op">$</span><span class="va">qaqc_data_directory</span>,<span class="st">"observed-met_fcre.nc"</span><span class="op">)</span></code></pre></div>
+<p>Set up weather drivers in GLM format</p>
 <div class="sourceCode" id="cb18"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span class="va">inflow_outflow_files</span> <span class="op">&lt;-</span> <span class="fu">FLAREr</span><span class="fu">::</span><span class="fu"><a href="../reference/create_glm_inflow_outflow_files.html">create_glm_inflow_outflow_files</a></span><span class="op">(</span>inflow_file_dir <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/file.path.html">file.path</a></span><span class="op">(</span><span class="va">config</span><span class="op">$</span><span class="va">data_location</span>, <span class="va">config</span><span class="op">$</span><span class="va">forecast_inflow_model</span><span class="op">)</span>,
-                                                               inflow_obs <span class="op">=</span> <span class="va">cleaned_inflow_file</span>,
-                                                               working_directory <span class="op">=</span> <span class="va">config</span><span class="op">$</span><span class="va">run_config</span><span class="op">$</span><span class="va">execute_location</span>,
-                                                               <span class="va">config</span>,
-                                                               state_names <span class="op">=</span> <span class="cn">NULL</span><span class="op">)</span></code></pre></div>
-<p>Create observation matrix. The rows of the matrix are observation type (i.e. temperature) x number of depths model. The columns are the number of days simulated.</p>
+<code class="sourceCode R"><span class="va">met_out</span> <span class="op">&lt;-</span> <span class="fu">FLAREr</span><span class="fu">::</span><span class="fu"><a href="../reference/generate_glm_met_files.html">generate_glm_met_files</a></span><span class="op">(</span>obs_met_file <span class="op">=</span> <span class="va">observed_met_file</span>,
+                                          out_dir <span class="op">=</span> <span class="va">config</span><span class="op">$</span><span class="va">file_path</span><span class="op">$</span><span class="va">execute_directory</span>,
+                                          forecast_dir <span class="op">=</span> <span class="va">config</span><span class="op">$</span><span class="va">file_path</span><span class="op">$</span><span class="va">noaa_directory</span>,
+                                          <span class="va">config</span><span class="op">)</span></code></pre></div>
+<p>Set up inflow and outflow drivers in GLM format</p>
 <div class="sourceCode" id="cb19"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span class="va">inflow_outflow_files</span> <span class="op">&lt;-</span> <span class="fu">FLAREr</span><span class="fu">::</span><span class="fu"><a href="../reference/create_glm_inflow_outflow_files.html">create_glm_inflow_outflow_files</a></span><span class="op">(</span>inflow_file_dir <span class="op">=</span> <span class="va">config</span><span class="op">$</span><span class="va">file_path</span><span class="op">$</span><span class="va">inflow_directory</span>,
+                                                                inflow_obs <span class="op">=</span> <span class="va">cleaned_inflow_file</span>,
+                                                                working_directory <span class="op">=</span> <span class="va">config</span><span class="op">$</span><span class="va">file_path</span><span class="op">$</span><span class="va">execute_directory</span>,
+                                                                <span class="va">config</span>,
+                                                                state_names <span class="op">=</span> <span class="cn">NULL</span><span class="op">)</span></code></pre></div>
+<p>Create observation matrix. The rows of the matrix are observation type (i.e. temperature) x number of depths model. The columns are the number of days simulated.</p>
+<div class="sourceCode" id="cb20"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span class="va">obs</span> <span class="op">&lt;-</span> <span class="fu">FLAREr</span><span class="fu">::</span><span class="fu"><a href="../reference/create_obs_matrix.html">create_obs_matrix</a></span><span class="op">(</span><span class="va">cleaned_observations_file_long</span>,
                                 <span class="va">obs_config</span>,
-                                <span class="va">config</span><span class="op">)</span>
-<span class="co">#&gt; Extracting temperature</span></code></pre></div>
+                                <span class="va">config</span><span class="op">)</span></code></pre></div>
 <p>Map the states to the observations matrix</p>
-<div class="sourceCode" id="cb20"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb21"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span class="va">states_config</span> <span class="op">&lt;-</span> <span class="fu">FLAREr</span><span class="fu">::</span><span class="fu"><a href="../reference/generate_states_to_obs_mapping.html">generate_states_to_obs_mapping</a></span><span class="op">(</span><span class="va">states_config</span>, <span class="va">obs_config</span><span class="op">)</span></code></pre></div>
 <p>Initialize the model error vector</p>
-<div class="sourceCode" id="cb21"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span class="va">model_sd</span> <span class="op">&lt;-</span> <span class="fu">FLAREr</span><span class="fu">::</span><span class="fu"><a href="../reference/initiate_model_error.html">initiate_model_error</a></span><span class="op">(</span><span class="va">config</span>, <span class="va">states_config</span>, config_file_location <span class="op">=</span> <span class="va">config</span><span class="op">$</span><span class="va">run_config</span><span class="op">$</span><span class="va">forecast_location</span><span class="op">)</span></code></pre></div>
-<p>Set initial conditions</p>
 <div class="sourceCode" id="cb22"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span class="va">init</span> <span class="op">&lt;-</span> <span class="fu">FLAREr</span><span class="fu">::</span><span class="fu"><a href="../reference/generate_initial_conditions.html">generate_initial_conditions</a></span><span class="op">(</span><span class="va">states_config</span>,
-                                             <span class="va">obs_config</span>,
-                                             <span class="va">pars_config</span>,
-                                             <span class="va">obs</span>,
-                                             <span class="va">config</span>,
-                                             restart_file <span class="op">=</span> <span class="va">run_config</span><span class="op">$</span><span class="va">restart_file</span>,
-                                             historical_met_error <span class="op">=</span> <span class="va">met_out</span><span class="op">$</span><span class="va">historical_met_error</span><span class="op">)</span></code></pre></div>
-<p>#Run EnKF</p>
+<code class="sourceCode R"><span class="va">model_sd</span> <span class="op">&lt;-</span> <span class="fu">FLAREr</span><span class="fu">::</span><span class="fu"><a href="../reference/initiate_model_error.html">initiate_model_error</a></span><span class="op">(</span><span class="va">config</span>, <span class="va">states_config</span><span class="op">)</span></code></pre></div>
+<p>Set initial conditions</p>
 <div class="sourceCode" id="cb23"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span class="va">enkf_output</span> <span class="op">&lt;-</span> <span class="fu">FLAREr</span><span class="fu">::</span><span class="fu"><a href="../reference/run_da_forecast.html">run_da_forecast</a></span><span class="op">(</span>states_init <span class="op">=</span> <span class="va">init</span><span class="op">$</span><span class="va">states</span>,
-                                       pars_init <span class="op">=</span> <span class="va">init</span><span class="op">$</span><span class="va">pars</span>,
-                                       aux_states_init <span class="op">=</span> <span class="va">init</span><span class="op">$</span><span class="va">aux_states_init</span>,
-                                       obs <span class="op">=</span> <span class="va">obs</span>,
-                                       obs_sd <span class="op">=</span> <span class="va">obs_config</span><span class="op">$</span><span class="va">obs_sd</span>,
-                                       model_sd <span class="op">=</span> <span class="va">model_sd</span>,
-                                       working_directory <span class="op">=</span> <span class="va">config</span><span class="op">$</span><span class="va">run_config</span><span class="op">$</span><span class="va">execute_location</span>,
-                                       met_file_names <span class="op">=</span> <span class="va">met_out</span><span class="op">$</span><span class="va">filenames</span>,
-                                       inflow_file_names <span class="op">=</span> <span class="va">inflow_outflow_files</span><span class="op">$</span><span class="va">inflow_file_name</span>,
-                                       outflow_file_names <span class="op">=</span> <span class="va">inflow_outflow_files</span><span class="op">$</span><span class="va">outflow_file_name</span>,
-                                       config <span class="op">=</span> <span class="va">config</span>,
-                                       pars_config <span class="op">=</span> <span class="va">pars_config</span>,
-                                       states_config <span class="op">=</span> <span class="va">states_config</span>,
-                                       obs_config <span class="op">=</span> <span class="va">obs_config</span>,
-                                       da_method <span class="op">=</span> <span class="va">config</span><span class="op">$</span><span class="va">da_method</span>,
-                                       par_fit_method <span class="op">=</span> <span class="va">config</span><span class="op">$</span><span class="va">par_fit_method</span><span class="op">)</span>
-<span class="co">#&gt; Using GLM Version 3.2.0a1</span>
-<span class="co">#&gt; Running time step 1 : 2018-10-02 00:00 - 2018-10-03 00:00 [2021-05-21 06:56:28]</span>
+<code class="sourceCode R"><span class="va">init</span> <span class="op">&lt;-</span> <span class="fu">FLAREr</span><span class="fu">::</span><span class="fu"><a href="../reference/generate_initial_conditions.html">generate_initial_conditions</a></span><span class="op">(</span><span class="va">states_config</span>,
+                                           <span class="va">obs_config</span>,
+                                           <span class="va">pars_config</span>,
+                                           <span class="va">obs</span>,
+                                           <span class="va">config</span><span class="op">)</span></code></pre></div>
+<p>#Run EnKF</p>
+<div class="sourceCode" id="cb24"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span class="va">da_forecast_output</span> <span class="op">&lt;-</span> <span class="fu">FLAREr</span><span class="fu">::</span><span class="fu"><a href="../reference/run_da_forecast.html">run_da_forecast</a></span><span class="op">(</span>states_init <span class="op">=</span> <span class="va">init</span><span class="op">$</span><span class="va">states</span>,
+                                          pars_init <span class="op">=</span> <span class="va">init</span><span class="op">$</span><span class="va">pars</span>,
+                                          aux_states_init <span class="op">=</span> <span class="va">init</span><span class="op">$</span><span class="va">aux_states_init</span>,
+                                          obs <span class="op">=</span> <span class="va">obs</span>,
+                                          obs_sd <span class="op">=</span> <span class="va">obs_config</span><span class="op">$</span><span class="va">obs_sd</span>,
+                                          model_sd <span class="op">=</span> <span class="va">model_sd</span>,
+                                          working_directory <span class="op">=</span> <span class="va">config</span><span class="op">$</span><span class="va">file_path</span><span class="op">$</span><span class="va">execute_directory</span>,
+                                          met_file_names <span class="op">=</span> <span class="va">met_out</span><span class="op">$</span><span class="va">filenames</span>,
+                                          inflow_file_names <span class="op">=</span> <span class="va">inflow_outflow_files</span><span class="op">$</span><span class="va">inflow_file_name</span>,
+                                          outflow_file_names <span class="op">=</span> <span class="va">inflow_outflow_files</span><span class="op">$</span><span class="va">outflow_file_name</span>,
+                                          config <span class="op">=</span> <span class="va">config</span>,
+                                          pars_config <span class="op">=</span> <span class="va">pars_config</span>,
+                                          states_config <span class="op">=</span> <span class="va">states_config</span>,
+                                          obs_config <span class="op">=</span> <span class="va">obs_config</span>
+  <span class="op">)</span>
+<span class="co">#&gt; Using GLM Version 3.2.0a6</span>
+<span class="co">#&gt; Running time step 1/6 : 2018-10-02 00:00 - 2018-10-03 00:00 [2021-06-10 16:14:55]</span>
 <span class="co">#&gt; zone1temp: mean 10.1073 sd 3.0197</span>
 <span class="co">#&gt; zone2temp: mean 15.3774 sd 2.8364</span>
 <span class="co">#&gt; sw_factor: mean 0.986 sd 0.2961</span>
-<span class="co">#&gt; Running time step 2 : 2018-10-03 00:00 - 2018-10-04 00:00 [2021-05-21 06:56:32]</span>
+<span class="co">#&gt; Running time step 2/6 : 2018-10-03 00:00 - 2018-10-04 00:00 [2021-06-10 16:15:00]</span>
 <span class="co">#&gt; zone1temp: mean 10.8451 sd 1.8984</span>
 <span class="co">#&gt; zone2temp: mean 14.9783 sd 2.9112</span>
 <span class="co">#&gt; sw_factor: mean 0.6882 sd 0.1963</span>
-<span class="co">#&gt; Running time step 3 : 2018-10-04 00:00 - 2018-10-05 00:00 [2021-05-21 06:56:35]</span>
+<span class="co">#&gt; Running time step 3/6 : 2018-10-04 00:00 - 2018-10-05 00:00 [2021-06-10 16:15:04]</span>
 <span class="co">#&gt; zone1temp: mean 12.0036 sd 1.3582</span>
 <span class="co">#&gt; zone2temp: mean 14.6547 sd 2.726</span>
 <span class="co">#&gt; sw_factor: mean 0.6772 sd 0.1153</span>
-<span class="co">#&gt; Running time step 4 : 2018-10-05 00:00 - 2018-10-06 00:00 [2021-05-21 06:56:38]</span>
+<span class="co">#&gt; Running time step 4/6 : 2018-10-05 00:00 - 2018-10-06 00:00 [2021-06-10 16:15:07]</span>
 <span class="co">#&gt; zone1temp: mean 12.3964 sd 0.8849</span>
 <span class="co">#&gt; zone2temp: mean 14.5902 sd 2.5966</span>
 <span class="co">#&gt; sw_factor: mean 0.6829 sd 0.0912</span>
-<span class="co">#&gt; Running time step 5 : 2018-10-06 00:00 - 2018-10-07 00:00 [2021-05-21 06:56:41]</span>
+<span class="co">#&gt; Running time step 5/6 : 2018-10-06 00:00 - 2018-10-07 00:00 [2021-06-10 16:15:10]</span>
 <span class="co">#&gt; zone1temp: mean 12.3964 sd 0.8849</span>
 <span class="co">#&gt; zone2temp: mean 14.5902 sd 2.5966</span>
 <span class="co">#&gt; sw_factor: mean 0.6829 sd 0.0912</span>
-<span class="co">#&gt; Running time step 6 : 2018-10-07 00:00 - 2018-10-08 00:00 [2021-05-21 06:56:44]</span>
+<span class="co">#&gt; Running time step 6/6 : 2018-10-07 00:00 - 2018-10-08 00:00 [2021-06-10 16:15:13]</span>
 <span class="co">#&gt; zone1temp: mean 12.3964 sd 0.8849</span>
 <span class="co">#&gt; zone2temp: mean 14.5902 sd 2.5966</span>
 <span class="co">#&gt; sw_factor: mean 0.6829 sd 0.0912</span></code></pre></div>
-<div class="sourceCode" id="cb24"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span class="co"># Save forecast</span>
-<span class="va">saved_file</span> <span class="op">&lt;-</span> <span class="fu">FLAREr</span><span class="fu">::</span><span class="fu"><a href="../reference/write_forecast_netcdf.html">write_forecast_netcdf</a></span><span class="op">(</span><span class="va">enkf_output</span>,
-                                           forecast_location <span class="op">=</span> <span class="va">config</span><span class="op">$</span><span class="va">run_config</span><span class="op">$</span><span class="va">forecast_location</span><span class="op">)</span></code></pre></div>
 <div class="sourceCode" id="cb25"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span class="co"># Save forecast</span>
+<span class="va">saved_file</span> <span class="op">&lt;-</span> <span class="fu">FLAREr</span><span class="fu">::</span><span class="fu"><a href="../reference/write_forecast_netcdf.html">write_forecast_netcdf</a></span><span class="op">(</span>da_forecast_output <span class="op">=</span> <span class="va">da_forecast_output</span>,
+                                            forecast_output_directory <span class="op">=</span> <span class="va">config</span><span class="op">$</span><span class="va">file_path</span><span class="op">$</span><span class="va">forecast_output_directory</span><span class="op">)</span></code></pre></div>
+<div class="sourceCode" id="cb26"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span class="co">#Create EML Metadata</span>
 <span class="fu">FLAREr</span><span class="fu">::</span><span class="fu"><a href="../reference/create_flare_metadata.html">create_flare_metadata</a></span><span class="op">(</span>file_name <span class="op">=</span> <span class="va">saved_file</span>,
-                        <span class="va">enkf_output</span><span class="op">)</span>
+                              da_forecast_output <span class="op">=</span> <span class="va">da_forecast_output</span><span class="op">)</span>
 <span class="co">#&gt; • Checking Validity of EML file...</span>
 <span class="co">#&gt; ✓ EML is valid</span>
 <span class="co">#&gt; ✓ additionalMetadata found</span>
@@ -561,22 +567,27 @@
 <span class="co">#&gt; ✓ obs_error found</span>
 <span class="co">#&gt; ✓ status found</span>
 <span class="co">#&gt; ✓ obs_error status/uncertainty class valid: data_driven</span></code></pre></div>
-<div class="sourceCode" id="cb26"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb27"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span class="fu">FLAREr</span><span class="fu">::</span><span class="fu"><a href="../reference/plotting_general.html">plotting_general</a></span><span class="op">(</span>file_name <span class="op">=</span> <span class="va">saved_file</span>,
-                        qaqc_location <span class="op">=</span> <span class="va">config</span><span class="op">$</span><span class="va">qaqc_data_location</span><span class="op">)</span>
-<span class="co">#&gt; [1] "Extracting temperature"</span>
-<span class="co">#&gt; [1] "temp"</span>
+                         qaqc_data_directory <span class="op">=</span> <span class="va">config</span><span class="op">$</span><span class="va">file_path</span><span class="op">$</span><span class="va">qaqc_data_directory</span>,
+                         ncore <span class="op">=</span> <span class="va">config</span><span class="op">$</span><span class="va">model_settings</span><span class="op">$</span><span class="va">ncore</span>,
+                         plot_profile <span class="op">=</span> <span class="cn">TRUE</span>,
+                         obs_csv <span class="op">=</span> <span class="cn">FALSE</span><span class="op">)</span>
+<span class="co">#&gt; temp</span>
 <span class="co">#&gt; Warning: Removed 119 rows containing missing values (geom_point).</span>
 
 <span class="co">#&gt; Warning: Removed 119 rows containing missing values (geom_point).</span>
-<span class="co">#&gt; [1] "zone1temp"</span>
-<span class="co">#&gt; [1] "zone2temp"</span>
-<span class="co">#&gt; [1] "sw_factor"</span>
-<span class="co">#&gt; [1] "extc_coef"</span>
+<span class="co">#&gt; zone1temp</span>
+<span class="co">#&gt; zone2temp</span>
+<span class="co">#&gt; sw_factor</span>
+<span class="co">#&gt; extc_coef</span>
 <span class="co">#&gt; Warning: Removed 1 row(s) containing missing values (geom_path).</span>
+<span class="co">#&gt; secchi</span>
+<span class="co">#&gt; Warning: Removed 1 row(s) containing missing values (geom_path).</span>
+<span class="co">#&gt; Warning: Removed 6 rows containing missing values (geom_point).</span>
 <span class="co">#&gt; agg_png </span>
 <span class="co">#&gt;       2</span></code></pre></div>
-<p>Once the simulation is complete you will find a PDF, a netcdf (.nc) file, and an xml in <code>forecast_location</code> directory. The PDF is the plotted output, the netcdf file is the FLARE output, and the xml is the metadata.</p>
+<p>Once the simulation is complete you will find a PDF, a netcdf (.nc) file, and an xml in <code>lake_directory</code> directory. The PDF is the plotted output, the netcdf file is the FLARE output, and the xml is the metadata.</p>
 </div>
 <div id="modifying-flare" class="section level2">
 <h2 class="hasAnchor">

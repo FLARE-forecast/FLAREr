@@ -1,17 +1,20 @@
-#' Generate initial conditions from observations and default values
-#'
-#' @param states_config
-#' @param obs_config
-#' @param pars_config
-#' @param obs
-#' @param config
-#' @param restart_file
-#' @param historical_met_error
-#'
-#' @return
+#' @title Generate initial conditions for FLARE
+#' @details Function to generate initial conditions from either default values in the states_config, observations (if available), or a previous run using the output as a restart file.
+#' @param states_config list; list of state configurations
+#' @param obs_config list; list of observation configurations
+#' @param pars_config list; list of parameter configurations  (Default = NULL)
+#' @param obs array; array of the observations. Required dimensions are `[nobs, time, depth]`
+#' @param config list; list of configurations
+#' @param restart_file string; netcdf file with full path from FLARE output that is used as initial conditions
+#' @param historical_met_error boolean; producted by generate_glm_met_files()
+#' @import ncdf4
+#' @return list; list contains the initial conditions objects required by run_da_forecast()
 #' @export
-#'
+#' @author Quinn Thomas
 #' @examples
+#' \dontrun{
+#'   init <- generate_initial_conditions(states_config, obs_config, pars_config, obs, config, restart_file = config$run_config$restart_file, historical_met_error = met_out$historical_met_error)
+#'   }
 generate_initial_conditions <- function(states_config,
                                         obs_config,
                                         pars_config = NULL,
