@@ -1,14 +1,17 @@
-##' @param da_forecast_output
-##' @param forecast_output_directory
-##'
-##' @title Write netcdf output file from object created by run_ENKF
+##' @title Generate netcdf output file
+##' @details Function generates a netcdf file from the object that is returned by run_da_forecast()
+##' @param da_forecast_output list; object that is returned by run_da_forecast()
+##' @param forecast_output_directory string; full path of directory where the netcdf file will be written
 ##' @return None
-##'
 ##' @export
-##'
+##' @import ncdf4
+##' @import ggplot2
+##' @importFrom lubridate with_tz
 ##' @author Quinn Thomas
-##'
-##'
+##' @example
+##' \dontrun{
+##' write_forecast_netcdf(da_forecast_output = da_forecast_output, forecast_output_directory = config$file_path$forecast_output_directory)
+##' }
 
 write_forecast_netcdf <- function(da_forecast_output,
                                   forecast_output_directory){

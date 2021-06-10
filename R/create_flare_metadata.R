@@ -11,7 +11,7 @@
 ##' @import EML
 ##' @importFrom dplyr first last
 ##' @import EFIstandards
-##' @importFrom tools file_path_sans_ex
+##' @importFrom tools file_path_sans_ext
 ##' @author Quinn Thomas
 ##' @example
 ##' \dontrun{

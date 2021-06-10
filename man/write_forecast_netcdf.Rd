@@ -2,18 +2,23 @@
 % Please edit documentation in R/write_forecast_netcdf.R
 \name{write_forecast_netcdf}
 \alias{write_forecast_netcdf}
-\title{Write netcdf output file from object created by run_ENKF}
+\title{Generate netcdf output file}
 \usage{
 write_forecast_netcdf(da_forecast_output, forecast_output_directory)
 }
 \arguments{
-\item{forecast_output_directory}{}
+\item{da_forecast_output}{list; object that is returned by run_da_forecast()}
+
+\item{forecast_output_directory}{string; full path of directory where the netcdf file will be written}
 }
 \value{
 None
 }
 \description{
-Write netcdf output file from object created by run_ENKF
+Generate netcdf output file
+}
+\details{
+Function generates a netcdf file from the object that is returned by run_da_forecast()
 }
 \author{
 Quinn Thomas
