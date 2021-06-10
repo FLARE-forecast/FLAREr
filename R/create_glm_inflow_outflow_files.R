@@ -6,8 +6,6 @@
 #' @param state_names
 #' @return
 #' @export
-#' @import
-#' @importFrom
 #' @example
 create_glm_inflow_outflow_files <- function(inflow_file_dir,
                                             inflow_obs,

@@ -4,7 +4,7 @@
 #' @param restart_file file name of FLARE output csv
 #' @param state_names names of states that are initialized
 #' @param par_names (optional) names of parameters that are initialized
-#' @param restart_index (optional) time index in restart file used for initalization
+#' @param restart_index (optional) time index in restart file used for initialization
 #' @noRd
 #' @return
 #'

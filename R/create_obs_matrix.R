@@ -7,8 +7,6 @@
 ##' @return matrix
 ##' @export
 ##' @import readr
-##' @import parallel
-##' @import magrittr
 ##' @importFrom lubridate as_datetime as_date hour days
 ##' @importFrom dplyr filter
 ##' @author Quinn Thomas
