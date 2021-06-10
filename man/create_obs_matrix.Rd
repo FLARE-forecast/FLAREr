@@ -6,6 +6,9 @@
 \usage{
 create_obs_matrix(cleaned_observations_file_long, obs_config, config)
 }
+\arguments{
+\item{cleaned_observations_file_long}{file name (with full path)}
+}
 \value{
 matrix
 }

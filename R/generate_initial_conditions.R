@@ -56,7 +56,7 @@ generate_initial_conditions <- function(states_config,
         if(length(which(!is.na(init_obs))) == 0){
           init_depth[i, ] <- rep(states_config$initial_conditions[i], ndepths_modeled)
           if(states_config$init_obs_name[i] == "temp"){
-            init_depth[i, ] <- approx(x = config$default_temp_init_depths, y = config$default_temp_init, xout = config$modeled_depths, rule=2)$y
+            init_depth[i, ] <- approx(x = config$default_init$temp_depths, y = config$default_init$temp, xout = config$model_settings$modeled_depths, rule=2)$y
           }
         }else if(length(which(!is.na(init_obs))) == 1){
           init_depth[i, ]  <- rep(init_obs[!is.na(init_obs)], ndepths_modeled)
@@ -157,6 +157,5 @@ generate_initial_conditions <- function(states_config,
                  aux_states_init = aux_states_init)
 
   }
-
   return(init)
 }

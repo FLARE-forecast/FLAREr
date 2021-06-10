@@ -2,7 +2,7 @@
 % Please edit documentation in R/create_glm_inflow_outflow_files.R
 \name{create_glm_inflow_outflow_files}
 \alias{create_glm_inflow_outflow_files}
-\title{Title}
+\title{}
 \usage{
 create_glm_inflow_outflow_files(
   inflow_file_dir,
@@ -12,12 +12,9 @@ create_glm_inflow_outflow_files(
   state_names
 )
 }
-\arguments{
-\item{state_names}{}
-}
 \value{
 
 }
 \description{
-Title
+
 }

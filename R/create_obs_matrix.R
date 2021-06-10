@@ -1,6 +1,6 @@
 ##' @title Create matrix of observations in the format required by run_da_forecast
 ##' @details
-##' @param cleaned_observations_file_long
+##' @param cleaned_observations_file_long file name (with full path)
 ##' @param obs_config
 ##' @param config
 ##' @export
