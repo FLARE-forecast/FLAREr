@@ -3,7 +3,6 @@
 ##' @param cleaned_observations_file_long file name (with full path)
 ##' @param obs_config
 ##' @param config
-##' @export
 ##' @return matrix
 ##' @export
 ##' @import readr
