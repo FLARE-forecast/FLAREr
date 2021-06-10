@@ -7,13 +7,18 @@
 create_flare_metadata(file_name, da_forecast_output)
 }
 \arguments{
-\item{da_forecast_output}{}
+\item{file_name}{string; full path to FLARE netcdf output file}
+
+\item{da_forecast_output}{list; variable name of object returned by run_da_forecast()}
 }
 \value{
 None
 }
 \description{
 Generate metadata (EML) using the Ecological Forecasting Initiative Standards
+}
+\details{
+Generates metadata describing the FLARE simulation following the Ecological Forecasting Initiative recommended standards. Uses the information from the simulation, including the configuration set up, to automating adjust the metadata to match the specifications of the simulation.
 }
 \author{
 Quinn Thomas

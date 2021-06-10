@@ -1,15 +1,22 @@
-#' @title Generate metadata (EML) using the Ecological Forecasting Initiative Standards
-#' @param file_name
-#' @param da_forecast_output
-#'
-
-#' @return None
-#'
-#' @export
-#'
-#' @author Quinn Thomas
-#'
-#'
+##' @title Generate metadata (EML) using the Ecological Forecasting Initiative Standards
+##' @details Generates metadata describing the FLARE simulation following the Ecological Forecasting Initiative recommended standards. Uses the information from the simulation, including the configuration set up, to automating adjust the metadata to match the specifications of the simulation.
+##' @param file_name string; full path to FLARE netcdf output file
+##' @param da_forecast_output list; variable name of object returned by run_da_forecast()
+##' @return None
+##' @export
+##' @import ncdf4
+##' @importFrom emld eml_version
+##' @importFrom lubridate as_date as_datetime
+##' @importFrom tibble tibble
+##' @import EML
+##' @importFrom dplyr first last
+##' @import EFIstandards
+##' @importFrom tools file_path_sans_ex
+##' @author Quinn Thomas
+##' @example
+##' \dontrun{
+##'create_flare_metadata(file_name = saved_file, da_forecast_output = da_forecast_output)
+##'}
 
 create_flare_metadata <- function(file_name,
                                   da_forecast_output){
