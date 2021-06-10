@@ -1,14 +1,15 @@
-#' @title
-#'
-#' @details Convert columns the map states to observations to a single vector
-#'
-#' @param states_config list of state configurations
-#' @param obs_config list of observation configurations
-#'
-#' @return
-#' @export
-#' @importFrom stringr str_detect
-#' @examples
+##' @title Map the states to the observations
+##' @details Convert columns the map states to observations to a single vector.  This is necessary because not all states have observations, multiple states can contribute to the same observation, and one observation can be associated with multiple states. Function must be assigned to the states_config object
+##' @param states_config list; list of state configurations
+##' @param obs_config list; list of observation configurations
+##' @return
+##' @export
+##' @importFrom stringr str_detect
+##' @author Quinn Thomas
+##' @examples
+##' \dontrun{
+##' states_config <- generate_states_to_obs_mapping(states_config, obs_config)
+##' }
 
 generate_states_to_obs_mapping <- function(states_config, obs_config){
 

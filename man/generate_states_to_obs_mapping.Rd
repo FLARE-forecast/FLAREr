@@ -2,21 +2,29 @@
 % Please edit documentation in R/generate_states_to_obs_mapping.R
 \name{generate_states_to_obs_mapping}
 \alias{generate_states_to_obs_mapping}
-\title{}
+\title{Map the states to the observations}
 \usage{
 generate_states_to_obs_mapping(states_config, obs_config)
 }
 \arguments{
-\item{states_config}{list of state configurations}
+\item{states_config}{list; list of state configurations}
 
-\item{obs_config}{list of observation configurations}
+\item{obs_config}{list; list of observation configurations}
 }
 \value{
 
 }
 \description{
-
+Map the states to the observations
 }
 \details{
-Convert columns the map states to observations to a single vector
+Convert columns the map states to observations to a single vector.  This is necessary because not all states have observations, multiple states can contribute to the same observation, and one observation can be associated with multiple states. Function must be assigned to the states_config object
+}
+\examples{
+\dontrun{
+states_config <- generate_states_to_obs_mapping(states_config, obs_config)
+}
+}
+\author{
+Quinn Thomas
 }
