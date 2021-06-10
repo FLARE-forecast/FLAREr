@@ -41,16 +41,16 @@ set_up_model <- function(config,
   }
 
 
-  if(config$include_wq){
+  if(config$model_settings$model_name == "glm_aed"){
 
-    file.copy(from =  file.path(config$run_config$forecast_location,config$base_AED_nml),
-              to = paste0(ens_working_directory, "/", "aed2.nml"), overwrite = TRUE)
+    file.copy(from = file.path(config$file_path$configuration_directory, "forecast_model", config$model_settings$model_name, config$model_settings$base_AED_nml),
+              to = file.path(ens_working_directory, "aed2.nml"), overwrite = TRUE)
 
-    file.copy(from =  file.path(config$run_config$forecast_location,config$base_AED_phyto_pars_nml),
-              to = paste0(ens_working_directory, "/", "aed2_phyto_pars.nml"), overwrite = TRUE)
+    file.copy(from = file.path(config$file_path$configuration_directory, "forecast_model", config$model_settings$model_name, config$model_settings$base_AED_phyto_pars_nml),
+              to = file.path(ens_working_directory, "aed2_phyto_pars.nml"), overwrite = TRUE)
 
-    file.copy(from =  file.path(config$run_config$forecast_location,config$base_AED_zoop_pars_nml),
-              to = paste0(ens_working_directory, "/", "aed2_zoop_pars.nml"), overwrite = TRUE)
+    file.copy(from = file.path(config$file_path$configuration_directory, "forecast_model", config$model_settings$model_name, config$model_settings$base_AED_zoop_pars_nml),
+              to = file.path(ens_working_directory, "aed2_zoop_pars.nml"), overwrite = TRUE)
 
   }
 
