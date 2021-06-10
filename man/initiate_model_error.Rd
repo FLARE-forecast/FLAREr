@@ -2,18 +2,21 @@
 % Please edit documentation in R/initiate_model_error.R
 \name{initiate_model_error}
 \alias{initiate_model_error}
-\title{Initiate model error from configuration files}
+\title{Generate model error matrix from configuration files}
 \usage{
 initiate_model_error(config, states_config)
 }
 \arguments{
-\item{config}{list from reading in configuration yaml}
+\item{config}{list; list from reading in configuration yaml}
 
-\item{states_config}{list from reading in states configuration csv}
+\item{states_config}{list; list from reading in states configuration csv}
 }
 \value{
-
+matrix
 }
 \description{
-Initiate model error from configuration files
+Generate model error matrix from configuration files
+}
+\details{
+Function uses the configuration files to generate the matrix that run_da_forecast use to add normally distributed random noise to model predictions
 }

@@ -2,22 +2,28 @@
 % Please edit documentation in R/generate_glm_met_files.R
 \name{generate_glm_met_files}
 \alias{generate_glm_met_files}
-\title{Convert NOAA forecasts to GLM format}
+\title{Convert historical meteorology and NOAA forecasts to GLM format}
 \usage{
 generate_glm_met_files(
   obs_met_file = NULL,
   out_dir,
   forecast_dir = NULL,
-  config,
-  use_forecasted_met
+  config
 )
 }
 \arguments{
-\item{config}{}
+\item{obs_met_file}{string; full path to netcdf that is observed historical meteorology}
+
+\item{out_dir}{string; full path to directory where the converted files will be saved}
+
+\item{forecast_dir}{string; full path to directory with the NOAA forecast netcdf files}
 }
 \value{
-
+list; vector of full path for the converted files and boolean flag if issues with historical meteorology files
 }
 \description{
-Convert NOAA forecasts to GLM format
+Convert historical meteorology and NOAA forecasts to GLM format
+}
+\author{
+Quinn Thomas
 }

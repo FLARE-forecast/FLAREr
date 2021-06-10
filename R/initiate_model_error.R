@@ -1,13 +1,14 @@
-
-#' Initiate model error from configuration files
-#'
-#' @param config list from reading in configuration yaml
-#' @param states_config list from reading in states configuration csv
-#'
-#' @return
+#' @title Generate model error matrix from configuration files
+#' @details Function uses the configuration files to generate the matrix that run_da_forecast use to add normally distributed random noise to model predictions
+#' @param config list; list from reading in configuration yaml
+#' @param states_config list; list from reading in states configuration csv
+#' @return matrix
 #' @export
-#'
-#' @examples
+#' @importFrom readr read_csv cols
+##' @example
+##' \dontrun{
+##' model_sd <- initiate_model_error(config, states_config)
+##' }
 initiate_model_error <- function(config, states_config){
   if(!is.null(config$model_settings$depth_model_sd_config_file)){
     model_sd <- array(NA, dim = c(nrow(states_config),length(config$model_settings$modeled_depths)))

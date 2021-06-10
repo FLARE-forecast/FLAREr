@@ -1,19 +1,24 @@
-#' Convert NOAA forecasts to GLM format
-#'
-#' @param obs_met_file
-#' @param out_dir
-#' @param forecast_dir
-#' @param config
-#'
-#' @return
-#' @export
-#'
-#' @examples
+##' @title Convert historical meteorology and NOAA forecasts to GLM format
+##'
+##' @param obs_met_file string; full path to netcdf that is observed historical meteorology
+##' @param out_dir string; full path to directory where the converted files will be saved
+##' @param forecast_dir string; full path to directory with the NOAA forecast netcdf files
+##' @return list; vector of full path for the converted files and boolean flag if issues with historical meteorology files
+##' @export
+##' @import dplyr
+##' @import ncdf4
+##' @importFrom stringr str_sub str_split str_detect
+##' @importFrom tibble tibble
+##' @importFrom lubridate as_datetime days hours ymd_hm
+##' @author Quinn Thomas
+##' @example
+##' \dontrun{
+##' met_out <- FLAREr::generate_glm_met_files(obs_met_file = observed_met_file, out_dir = config$file_path$execute_directory, forecast_dir = config$file_path$noaa_directory, config)
+##' }
 generate_glm_met_files <- function(obs_met_file = NULL,
                                    out_dir,
                                    forecast_dir = NULL,
-                                   config,
-                                   use_forecasted_met){
+                                   config){
 
   if(is.null(obs_met_file) & is.null(forecast_dir)){
     stop("missing files to convert")
