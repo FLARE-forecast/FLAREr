@@ -1,21 +1,12 @@
-#' @title Download and Downscale NOAA GEFS for a single site
-#' @return None
+#' Apply localization to a matrix based on distance
 #'
-#' @param site_index, index of site_list, lat_list, lon_list to be downloaded
-#' @param lat_list, vector of latitudes that correspond to site codes
-#' @param lon_list, vector of longitudes that correspond to site codes
-#' @param site_list, vector of site codes, used in directory and file name generation
-#' @param downscale, logical specifying whether to downscale from 6-hr to 1-hr
-#' @param overwrite, logical stating to overwrite any existing output_file
-#' @param model_name, directory name for the 6-hr forecast, this will be used in directory and file name generation
-#' @param model_name_ds, directory name for the 1-hr forecast, this will be used in directory and file name generation
-#' @param output_directory, directory where the model output will be save
+#' @param mat matrix that the location is applied to
+#' @param nstates number of states
+#' @param modeled_depths vector of depths that are modeled
+#' @param localization_distance distance scalar for the strenght of the locational
+#'
+#' @return matrix with localization applied
 #' @noRd
-#'
-#' @author Quinn Thomas
-#'
-#'
-
 localization <- function(mat,nstates,modeled_depths, localization_distance){
 
   distance_matrix <- matrix(NA,nrow = nstates, ncol = nstates)

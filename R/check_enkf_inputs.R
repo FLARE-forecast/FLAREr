@@ -1,20 +1,18 @@
-#' @title Download and Downscale NOAA GEFS for a single site
-#' @return None
+#' Check that inputs for run_da_forecast are correct
 #'
-#' @param site_index, index of site_list, lat_list, lon_list to be downloaded
-#' @param lat_list, vector of latitudes that correspond to site codes
-#' @param lon_list, vector of longitudes that correspond to site codes
-#' @param site_list, vector of site codes, used in directory and file name generation
-#' @param downscale, logical specifying whether to downscale from 6-hr to 1-hr
-#' @param overwrite, logical stating to overwrite any existing output_file
-#' @param model_name, directory name for the 6-hr forecast, this will be used in directory and file name generation
-#' @param model_name_ds, directory name for the 1-hr forecast, this will be used in directory and file name generation
-#' @param output_directory, directory where the model output will be save
+#' @param states_init initial state vector
+#' @param pars_init initial parameter vector
+#' @param obs observation matrix
+#' @param psi observation standard deviation matrix
+#' @param model_sd vector of model standard deviations
+#' @param config list of flare configurations
+#' @param pars_config list of parameter configurations
+#' @param states_config list of state configurations
+#' @param obs_config list of observation configurations
+#'
+#' @return
 #' @noRd
 #'
-#' @author Quinn Thomas
-#'
-
 check_enkf_inputs <- function(states_init,
                               pars_init,
                               obs,

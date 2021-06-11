@@ -1,20 +1,13 @@
-#' @title Download and Downscale NOAA GEFS for a single site
-#' @return None
+#' Set of model for FLARE simulation
 #'
-#' @param site_index, index of site_list, lat_list, lon_list to be downloaded
-#' @param lat_list, vector of latitudes that correspond to site codes
-#' @param lon_list, vector of longitudes that correspond to site codes
-#' @param site_list, vector of site codes, used in directory and file name generation
-#' @param downscale, logical specifying whether to downscale from 6-hr to 1-hr
-#' @param overwrite, logical stating to overwrite any existing output_file
-#' @param model_name, directory name for the 6-hr forecast, this will be used in directory and file name generation
-#' @param model_name_ds, directory name for the 1-hr forecast, this will be used in directory and file name generation
-#' @param output_directory, directory where the model output will be save
+#' @param config list of configurations
+#' @param ens_working_directory full path of directory where ensemble member is executed
+#' @param state_names vector of state names
+#' @param inflow_file_names matrix or vector of inflow file names
+#' @param outflow_file_names matrix or vector of outflow file names
+#'
+#' @return
 #' @noRd
-#'
-#' @author Quinn Thomas
-#'
-
 set_up_model <- function(config,
                          ens_working_directory,
                          state_names,

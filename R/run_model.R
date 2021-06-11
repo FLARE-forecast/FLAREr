@@ -1,22 +1,43 @@
-#' @title Download and Downscale NOAA GEFS for a single site
-#' @return None
+
+#' Run GLM
+#' @param i time step index
+#' @param m ensemble index
+#' @param mixing_vars_start vector; mixing variables vector
+#' @param curr_start datetime of current time step
+#' @param curr_stop datetime of end of run
+#' @param par_names names of parameters that are being calibrated
+#' @param curr_pars value for the parameters
+#' @param working_directory full path to the directory where the model is executed
+#' @param par_nml vector of namelist names associated with each parameter being calibrated
+#' @param num_phytos number of phytoplankton groups
+#' @param glm_depths_start depth from the last GLM run
+#' @param lake_depth_start depth of lake
+#' @param x_start state vector
+#' @param full_time vector of time step for entire simulation
+#' @param wq_start starting index of each state in the x_start
+#' @param wq_end ending index of each state in the x_start
+#' @param management management list
+#' @param hist_days number of historical simulations before forecasting
+#' @param modeled_depths depths that are include in the state vector
+#' @param ndepths_modeled number of depths in modeled_depths
+#' @param curr_met_file met file associated with the ensemble member
+#' @param inflow_file_name inflow file associated with the ensemble member
+#' @param outflow_file_name outflow file associated with the ensemble member
+#' @param glm_output_vars vector of output variable names
+#' @param diagnostics_names vector of output diagnmostic names
+#' @param npars number of parameters calibrated
+#' @param num_wq_vars number of water quality variables
+#' @param snow_ice_thickness_start vector of snow and ice states
+#' @param avg_surf_temp_start average surface temperature
+#' @param salt_start salt
+#' @param nstates number of nstates simulated
+#' @param state_names state names
+#' @param include_wq boolean; TRUE = use water quality model
+#' @param debug boolen; TRUE = turn on more messages for debugging
 #'
-#' @param site_index, index of site_list, lat_list, lon_list to be downloaded
-#' @param lat_list, vector of latitudes that correspond to site codes
-#' @param lon_list, vector of longitudes that correspond to site codes
-#' @param site_list, vector of site codes, used in directory and file name generation
-#' @param downscale, logical specifying whether to downscale from 6-hr to 1-hr
-#' @param overwrite, logical stating to overwrite any existing output_file
-#' @param model_name, directory name for the 6-hr forecast, this will be used in directory and file name generation
-#' @param model_name_ds, directory name for the 1-hr forecast, this will be used in directory and file name generation
-#' @param output_directory, directory where the model output will be save
+#' @return list of output variables
+#' @export
 #' @noRd
-#'
-#' @importFrom GLM3r run_glm
-#' @noRd
-#'
-#' @author Quinn Thomas
-#'
 
 run_model <- function(i,
                       m,
