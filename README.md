@@ -44,11 +44,11 @@ User generated *in situ* observations, meteorology, and inflow/outflow in a spec
 
 ### Set up
 
-`create_glm_inflow_outflow_files()`:   
-`create_obs_matrix()`:    
-`generate_glm_met_files()`:   
-`generate_initial_conditions()`:    
-`initiate_model_error()`:    
+`create_glm_inflow_outflow_files()`: generates inflow and output files in GLM format.  
+`create_obs_matrix()`: generate the matrix of observations require in data assimilation.
+`generate_glm_met_files()`: generates meteorology inputs (both past and future) in the GLM format.   
+`generate_initial_conditions()`: generates initial condition for data assimilation and forecasting.   
+`initiate_model_error()`: generates the standard deviations for the model error.   
 
 ### Run
 
@@ -58,7 +58,7 @@ User generated *in situ* observations, meteorology, and inflow/outflow in a spec
 
 `write_forecast_netcdf()`: write output in Ecological Forecasting Initiative standards.     
 `create_flare_metadata()`: write metadata in Ecological Forecasting Initiative standards.     
-`plotting_general()`: generates a PDF with default visualizations. 
+`plotting_general()`: generates a PDF with default visualizations.  
  
 
  

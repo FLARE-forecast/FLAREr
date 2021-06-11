@@ -186,7 +186,7 @@
 <p>Second, FLARE are requires the observed (historical) meteorology to be a specific name (observed-met_fcre.nc) and format.</p>
 <div class="sourceCode" id="cb8"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span class="fu">ncdf4</span><span class="fu">::</span><span class="fu"><a href="https://rdrr.io/pkg/ncdf4/man/nc_open.html">nc_open</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/file.path.html">file.path</a></span><span class="op">(</span><span class="va">lake_directory</span>, <span class="st">"data_processed/observed-met_fcre.nc"</span><span class="op">)</span><span class="op">)</span>
-<span class="co">#&gt; File /var/folders/ms/kf9vk0w17p18pvs8k_23t5y80000gq/T//RtmpaMmnQR/data_processed/observed-met_fcre.nc (NC_FORMAT_CLASSIC):</span>
+<span class="co">#&gt; File /var/folders/ms/kf9vk0w17p18pvs8k_23t5y80000gq/T//RtmpA4y9z7/data_processed/observed-met_fcre.nc (NC_FORMAT_CLASSIC):</span>
 <span class="co">#&gt; </span>
 <span class="co">#&gt;      8 variables (excluding dimension variables):</span>
 <span class="co">#&gt;         float air_temperature[time,latitude,longitude]   </span>
@@ -300,7 +300,7 @@
 <span class="co">#&gt; [21] "NOAAGEFS_1hr-debias_fcre_2018-10-05T00_2018-10-21T00_ens21.nc"</span></code></pre></div>
 <div class="sourceCode" id="cb13"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span class="fu">ncdf4</span><span class="fu">::</span><span class="fu"><a href="https://rdrr.io/pkg/ncdf4/man/nc_open.html">nc_open</a></span><span class="op">(</span><span class="va">all_files</span><span class="op">[</span><span class="fl">1</span><span class="op">]</span><span class="op">)</span>
-<span class="co">#&gt; File /var/folders/ms/kf9vk0w17p18pvs8k_23t5y80000gq/T//RtmpaMmnQR/forecasted_drivers/NOAAGEFS_1hr-debias/NOAAGEFS_1hr-debias_fcre_2018-10-05T00_2018-10-21T00_ens01.nc (NC_FORMAT_CLASSIC):</span>
+<span class="co">#&gt; File /var/folders/ms/kf9vk0w17p18pvs8k_23t5y80000gq/T//RtmpA4y9z7/forecasted_drivers/NOAAGEFS_1hr-debias/NOAAGEFS_1hr-debias_fcre_2018-10-05T00_2018-10-21T00_ens01.nc (NC_FORMAT_CLASSIC):</span>
 <span class="co">#&gt; </span>
 <span class="co">#&gt;      6 variables (excluding dimension variables):</span>
 <span class="co">#&gt;         float air_temperature[time,latitude,longitude]   </span>
@@ -481,27 +481,27 @@
                                           obs_config <span class="op">=</span> <span class="va">obs_config</span>
   <span class="op">)</span>
 <span class="co">#&gt; Using GLM Version 3.2.0a6</span>
-<span class="co">#&gt; Running time step 1/6 : 2018-10-02 00:00 - 2018-10-03 00:00 [2021-06-10 16:14:55]</span>
+<span class="co">#&gt; Running time step 1/6 : 2018-10-02 00:00 - 2018-10-03 00:00 [2021-06-10 20:26:38]</span>
 <span class="co">#&gt; zone1temp: mean 10.1073 sd 3.0197</span>
 <span class="co">#&gt; zone2temp: mean 15.3774 sd 2.8364</span>
 <span class="co">#&gt; sw_factor: mean 0.986 sd 0.2961</span>
-<span class="co">#&gt; Running time step 2/6 : 2018-10-03 00:00 - 2018-10-04 00:00 [2021-06-10 16:15:00]</span>
+<span class="co">#&gt; Running time step 2/6 : 2018-10-03 00:00 - 2018-10-04 00:00 [2021-06-10 20:26:43]</span>
 <span class="co">#&gt; zone1temp: mean 10.8451 sd 1.8984</span>
 <span class="co">#&gt; zone2temp: mean 14.9783 sd 2.9112</span>
 <span class="co">#&gt; sw_factor: mean 0.6882 sd 0.1963</span>
-<span class="co">#&gt; Running time step 3/6 : 2018-10-04 00:00 - 2018-10-05 00:00 [2021-06-10 16:15:04]</span>
+<span class="co">#&gt; Running time step 3/6 : 2018-10-04 00:00 - 2018-10-05 00:00 [2021-06-10 20:26:46]</span>
 <span class="co">#&gt; zone1temp: mean 12.0036 sd 1.3582</span>
 <span class="co">#&gt; zone2temp: mean 14.6547 sd 2.726</span>
 <span class="co">#&gt; sw_factor: mean 0.6772 sd 0.1153</span>
-<span class="co">#&gt; Running time step 4/6 : 2018-10-05 00:00 - 2018-10-06 00:00 [2021-06-10 16:15:07]</span>
+<span class="co">#&gt; Running time step 4/6 : 2018-10-05 00:00 - 2018-10-06 00:00 [2021-06-10 20:26:49]</span>
 <span class="co">#&gt; zone1temp: mean 12.3964 sd 0.8849</span>
 <span class="co">#&gt; zone2temp: mean 14.5902 sd 2.5966</span>
 <span class="co">#&gt; sw_factor: mean 0.6829 sd 0.0912</span>
-<span class="co">#&gt; Running time step 5/6 : 2018-10-06 00:00 - 2018-10-07 00:00 [2021-06-10 16:15:10]</span>
+<span class="co">#&gt; Running time step 5/6 : 2018-10-06 00:00 - 2018-10-07 00:00 [2021-06-10 20:26:52]</span>
 <span class="co">#&gt; zone1temp: mean 12.3964 sd 0.8849</span>
 <span class="co">#&gt; zone2temp: mean 14.5902 sd 2.5966</span>
 <span class="co">#&gt; sw_factor: mean 0.6829 sd 0.0912</span>
-<span class="co">#&gt; Running time step 6/6 : 2018-10-07 00:00 - 2018-10-08 00:00 [2021-06-10 16:15:13]</span>
+<span class="co">#&gt; Running time step 6/6 : 2018-10-07 00:00 - 2018-10-08 00:00 [2021-06-10 20:26:55]</span>
 <span class="co">#&gt; zone1temp: mean 12.3964 sd 0.8849</span>
 <span class="co">#&gt; zone2temp: mean 14.5902 sd 2.5966</span>
 <span class="co">#&gt; sw_factor: mean 0.6829 sd 0.0912</span></code></pre></div>
