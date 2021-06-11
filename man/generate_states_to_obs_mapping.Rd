@@ -12,7 +12,7 @@ generate_states_to_obs_mapping(states_config, obs_config)
 \item{obs_config}{list; list of observation configurations}
 }
 \value{
-
+updated states_config list
 }
 \description{
 Map the states to the observations

@@ -1,21 +1,24 @@
-#' @title Download and Downscale NOAA GEFS for a single site
-#' @return None
+
+#' Generate output SSS file for time step
 #'
-#' @param site_index, index of site_list, lat_list, lon_list to be downloaded
-#' @param lat_list, vector of latitudes that correspond to site codes
-#' @param lon_list, vector of longitudes that correspond to site codes
-#' @param site_list, vector of site codes, used in directory and file name generation
-#' @param downscale, logical specifying whether to downscale from 6-hr to 1-hr
-#' @param overwrite, logical stating to overwrite any existing output_file
-#' @param model_name, directory name for the 6-hr forecast, this will be used in directory and file name generation
-#' @param model_name_ds, directory name for the 1-hr forecast, this will be used in directory and file name generation
-#' @param output_directory, directory where the model output will be save
+#' @param x state vector
+#' @param i time step index
+#' @param m ensemble index
+#' @param full_time full vector of time step dates
+#' @param working_directory full path to directory where ensemble is executed
+#' @param wq_start index of state in state vector
+#' @param management_input management list
+#' @param hist_days number of historical days before forecasting starts
+#' @param forecast_sss_on boolen; whether forecasts of the SSS are used
+#' @param sss_depth depth of the SSS system
+#' @param use_specified_sss booel, whether to use a pre-made sss file
+#' @param state_names vector of state names
+#' @param modeled_depths vector of modeled depths
+#' @param forecast_sss_flow flow rate of SSS for forecasts
+#' @param forecast_sss_oxy oxygen concentration of SSS for forecasts
+#' @param salt salt concentration
+#'
 #' @noRd
-#'
-#' @author Quinn Thomas
-#'
-#'
-#'
 create_sss_input_output <- function(x,
                                     i,
                                     m,

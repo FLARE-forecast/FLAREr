@@ -3,7 +3,7 @@
 ##' @param cleaned_observations_file_long string; file name (with full path) of the long-format observation file
 ##' @param obs_config list; observations configuration list
 ##' @param config list; flare configuration list
-##' @return matrix
+##' @return matrix that is based to generate_initial_conditions() and run_da_forecast()
 ##' @export
 ##' @import readr
 ##' @importFrom lubridate as_datetime as_date hour days

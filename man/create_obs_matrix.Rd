@@ -14,7 +14,7 @@ create_obs_matrix(cleaned_observations_file_long, obs_config, config)
 \item{config}{list; flare configuration list}
 }
 \value{
-matrix
+matrix that is based to generate_initial_conditions() and run_da_forecast()
 }
 \description{
 Create matrix of observations in the format required by run_da_forecast
