@@ -55,7 +55,8 @@ run_da_forecast <- function(states_init,
                               obs_config,
                               management = NULL,
                               da_method = "enkf",
-                              par_fit_method = "inflate"){
+                              par_fit_method = "inflate",
+                              debug = FALSE){
 
   if(length(states_config$state_names) > 1){
     config$include_wq <- TRUE
@@ -407,7 +408,8 @@ run_da_forecast <- function(states_init,
                                 salt_start = salt[i-1, , m],
                                 nstates,
                                 state_names = states_config$state_names,
-                                include_wq = config$include_wq)
+                                include_wq = config$include_wq,
+                                debug = debug)
       })
 
       # Loop through output and assign to matrix
@@ -791,9 +793,9 @@ run_da_forecast <- function(states_init,
                            forecast_days,"_",
                            forecast_iteration_id)
 
-  for(m in 1:nmembers){
-    unlink(file.path(working_directory, m), recursive = TRUE)
-  }
+  #for(m in 1:nmembers){
+  #  unlink(file.path(working_directory, m), recursive = TRUE)
+  #}
 
 
   return(list(full_time = full_time,

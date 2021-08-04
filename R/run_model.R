@@ -388,11 +388,12 @@ run_model <- function(i,
       if(length(which(is.na(x_star_end))) == 0){
         pass = TRUE
       }else{
+        message("NA or NaN in output file'. Re-running simulation...")
         num_reruns <- num_reruns + 1
       }
     }
     num_reruns <- num_reruns + 1
-    if(num_reruns > 1000){
+    if(num_reruns > 100){
       stop(paste0("Too many re-runs (> 1000) due to issues generating output"))
     }
 
