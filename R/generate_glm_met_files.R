@@ -151,11 +151,12 @@ generate_glm_met_files <- function(obs_met_file = NULL,
       dplyr::mutate(Snow = 0.0)
 
     combined_met <- combined_met %>%
-      dplyr::mutate_at(dplyr::vars(all_of(glm_met_vars)), list(~round(., 4)))
+      dplyr::mutate_at(dplyr::vars(all_of(c("AirTemp", "ShortWave","LongWave","RelHum","WindSpeed"))), list(~round(., 2))) %>%
+      dplyr::mutate(Rain = round(Rain, 5))
 
     combined_met$time <- strftime(combined_met$time, format="%Y-%m-%d %H:%M", tz = "UTC")
 
-    readr::write_csv(combined_met,file = paste0(out_dir, "/", current_filename), quote_escape = "none")
+    readr::write_csv(combined_met,file = paste0(out_dir, "/", current_filename), escape = "none")
 
     filenames[j] <- paste0(out_dir, "/", current_filename)
   }
