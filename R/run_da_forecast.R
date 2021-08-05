@@ -29,6 +29,7 @@
 #' @param management list; list of management inputs and configuration  (Default = NULL)
 #' @param da_method string; data assimilation method (enkf or pf; Default = enkf)
 #' @param par_fit_method string; method for adding noise to parameters during calibration
+#' @param debug boolean; add extra diagnostics for debugging (Default = FALSE)
 #' @return a list is passed to `write_forecast_netcdf()` to write the
 #' netcdf output and `create_flare_eml()` to generate the EML metadata
 #' @export

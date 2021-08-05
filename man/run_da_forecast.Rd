@@ -21,7 +21,8 @@ run_da_forecast(
   obs_config,
   management = NULL,
   da_method = "enkf",
-  par_fit_method = "inflate"
+  par_fit_method = "inflate",
+  debug = FALSE
 )
 }
 \arguments{
