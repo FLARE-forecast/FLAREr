@@ -322,22 +322,30 @@ run_model <- function(i,
             # Catch for if the output has more than one layer
             message("'output.nc' file generated but has one layer in the file. Re-running simulation...")
             success <- FALSE
-            verbose <- TRUE
+            if(debug){
+              verbose <- TRUE
+            }
           }
         }else{
           message("'output.nc' file generated but has NA for the layer in the file. Re-running simulation...")
           success <- FALSE
-          verbose <- TRUE
+          if(debug){
+            verbose <- TRUE
+          }
         }
       }else{
         message("'output.nc' file generated but has NA for the layer in the file. Re-running simulation...")
         success <- FALSE
-        verbose <- TRUE
+        if(debug){
+          verbose <- TRUE
+        }
       }
     }else{
       message("'output.nc' file not generated. Re-running simulation...")
       success <- FALSE
+      if(debug){
       verbose <- TRUE
+      }
     }
 
 
