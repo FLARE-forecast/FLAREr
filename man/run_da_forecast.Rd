@@ -61,6 +61,8 @@ with a value in \code{model_sd}.}
 \item{da_method}{string; data assimilation method (enkf or pf; Default = enkf)}
 
 \item{par_fit_method}{string; method for adding noise to parameters during calibration}
+
+\item{debug}{boolean; add extra diagnostics for debugging (Default = FALSE)}
 }
 \value{
 a list is passed to \code{write_forecast_netcdf()} to write the
