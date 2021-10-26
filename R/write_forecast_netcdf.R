@@ -56,12 +56,7 @@ write_forecast_netcdf <- function(da_forecast_output,
   x_efi <- aperm(x, c(1,3,2))
   diagnostics_efi <- diagnostics
 
-  if(use_short_filename){
-    ncfname <- file.path(forecast_output_directory, paste0(da_forecast_output$save_file_name_short,".nc"))
-  }else{
-    ncfname <- file.path(forecast_output_directory, paste0(da_forecast_output$save_file_name,".nc"))
 
-  }
   #Set dimensionsda_forecast_output
   ens <- seq(1,dim(x)[2],1)
   depths <- config$model_settings$modeled_depths
@@ -72,6 +67,12 @@ write_forecast_netcdf <- function(da_forecast_output,
   #Set variable that states whether value is forecasted
   forecasted <- rep(1, length(t))
   forecasted[1:(hist_days + 1)] <- 0
+
+  if(!use_short_filename | is.na(save_file_name_short)){
+    ncfname <- file.path(forecast_output_directory, paste0(da_forecast_output$save_file_name,".nc"))
+  }else{
+    ncfname <- file.path(forecast_output_directory, paste0(da_forecast_output$save_file_name,".nc"))
+  }
 
   #Define dims
   ensdim <- ncdf4::ncdim_def("ensemble",units = "-",vals = ens, longname = 'ensemble member')
