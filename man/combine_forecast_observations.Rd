@@ -6,7 +6,7 @@
 \usage{
 combine_forecast_observations(
   file_name,
-  qaqc_data_directory,
+  target_file,
   extra_historical_days,
   ncore = 1
 )
@@ -14,11 +14,11 @@ combine_forecast_observations(
 \arguments{
 \item{file_name}{string; full path to output file produced by write_forecast_netcdf()}
 
-\item{qaqc_data_directory}{string; full path to processed long-format observation file}
-
 \item{extra_historical_days}{integer; number of days prior to the days in the file_name file to include in the plot}
 
 \item{ncore}{integer; number of computer cores for parallel processing}
+
+\item{qaqc_data_directory}{string; full path to processed long-format observation file}
 }
 \value{
 list

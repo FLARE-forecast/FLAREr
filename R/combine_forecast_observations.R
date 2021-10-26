@@ -15,7 +15,10 @@
 ##'\dontrun{
 ##'  output <- FLAREr::combine_forecast_observations(file_name, qaqc_data_directory = qaqc_data_directory, extra_historical_days = 0, ncore = ncore)
 ##'}
-combine_forecast_observations <- function(file_name, qaqc_data_directory,  extra_historical_days, ncore = 1){
+combine_forecast_observations <- function(file_name,
+                                          target_file,
+                                          extra_historical_days,
+                                          ncore = 1){
 
   nc <- ncdf4::nc_open(file_name)
   t <- ncdf4::ncvar_get(nc,'time')
@@ -145,9 +148,7 @@ combine_forecast_observations <- function(file_name, qaqc_data_directory,  extra
 
   #PROCESS TEMPERATURE OBSERVATIONS
 
-  cleaned_observations_file_long <- paste0(qaqc_data_directory,
-                                           "/observations_postQAQC_long.csv")
-  d <- readr::read_csv(cleaned_observations_file_long,
+  d <- readr::read_csv(target_file,
                        col_types = readr::cols())
 
   #####

@@ -794,6 +794,14 @@ run_da_forecast <- function(states_init,
                            forecast_days,"_",
                            forecast_iteration_id)
 
+  save_file_name_short <- paste0(config$location$site_id, "-",
+                           (lubridate::year(full_time[1])),"_",
+                           file_name_H_month,"_",
+                           file_name_H_day,"_",
+                           (lubridate::year(full_time[hist_days+1])),"-",
+                           file_name_F_month,"-",
+                           config$run_config$sim_name)
+
   #for(m in 1:nmembers){
   #  unlink(file.path(working_directory, m), recursive = TRUE)
   #}
@@ -804,6 +812,7 @@ run_da_forecast <- function(states_init,
               x = x,
               obs = obs,
               save_file_name = save_file_name,
+              save_file_name_short = save_file_name_short,
               forecast_iteration_id = forecast_iteration_id,
               forecast_project_id = config$run_config$sim_name,
               time_of_forecast = time_of_forecast,
