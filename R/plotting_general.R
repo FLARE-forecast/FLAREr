@@ -322,6 +322,8 @@ plotting_general <- function(file_name,
   }
 
   dev.off()
+  
+  invisible(pdf_file_name)
 
 }
 
