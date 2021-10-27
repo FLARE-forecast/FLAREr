@@ -2,6 +2,7 @@
 ##' @details Function generates a netcdf file from the object that is returned by run_da_forecast()
 ##' @param da_forecast_output list; object that is returned by run_da_forecast()
 ##' @param forecast_output_directory string; full path of directory where the netcdf file will be written
+##' @param use_short_filename use shortened file name; this results in less informatoin in the file name and potentially overwriting existing files
 ##' @return None
 ##' @export
 ##' @import ncdf4
@@ -10,12 +11,13 @@
 ##' @author Quinn Thomas
 ##' @examples
 ##' \dontrun{
-##' write_forecast_netcdf(da_forecast_output = da_forecast_output, forecast_output_directory = config$file_path$forecast_output_directory)
+##' write_forecast_netcdf(da_forecast_output = da_forecast_output, forecast_output_directory = config$file_path$forecast_output_directory, use_short_filename = TRUE)
 ##' }
 ##'
 
 write_forecast_netcdf <- function(da_forecast_output,
-                                  forecast_output_directory){
+                                  forecast_output_directory,
+                                  use_short_filename = TRUE){
 
   if(!dir.exists(forecast_output_directory)) {
     dir.create(forecast_output_directory, recursive = TRUE)
@@ -54,7 +56,7 @@ write_forecast_netcdf <- function(da_forecast_output,
   x_efi <- aperm(x, c(1,3,2))
   diagnostics_efi <- diagnostics
 
-  ncfname <- file.path(forecast_output_directory, paste0(da_forecast_output$save_file_name,".nc"))
+
   #Set dimensionsda_forecast_output
   ens <- seq(1,dim(x)[2],1)
   depths <- config$model_settings$modeled_depths
@@ -65,6 +67,12 @@ write_forecast_netcdf <- function(da_forecast_output,
   #Set variable that states whether value is forecasted
   forecasted <- rep(1, length(t))
   forecasted[1:(hist_days + 1)] <- 0
+
+  if(!use_short_filename | is.na(da_forecast_output$save_file_name_short)){
+    ncfname <- file.path(forecast_output_directory, paste0(da_forecast_output$save_file_name,".nc"))
+  }else{
+    ncfname <- file.path(forecast_output_directory, paste0(da_forecast_output$save_file_name_short,".nc"))
+  }
 
   #Define dims
   ensdim <- ncdf4::ncdim_def("ensemble",units = "-",vals = ens, longname = 'ensemble member')

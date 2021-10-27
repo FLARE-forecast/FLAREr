@@ -10,7 +10,7 @@
 ##' \dontrun{
 ##' inflow_outflow_files <- create_glm_inflow_outflow_files(inflow_file_dir = inflow_forecast_path, inflow_obs = cleaned_inflow_file, working_directory = config$file_path$execute_directory, config, state_names = NULL)
 ##' }
-create_glm_inflow_outflow_files <- function(inflow_file_dir,
+create_glm_inflow_outflow_files <- function(inflow_file_dir = NULL,
                                             inflow_obs,
                                             working_directory,
                                             config,
@@ -43,8 +43,13 @@ create_glm_inflow_outflow_files <- function(inflow_file_dir,
     dplyr::select(time, FLOW) %>%
     dplyr::mutate(outflow_num = 1)
 
+  all_files <- NULL
 
-  all_files <- list.files(inflow_file_dir, full.names = TRUE)
+  if(!is.null(inflow_file_dir)){
+    if(dir.exists(inflow_file_dir)){
+      all_files <- list.files(inflow_file_dir, full.names = TRUE)
+    }
+  }
 
   inflow_files <- all_files[stringr::str_detect(all_files,"INFLOW")]
   outflow_files <- all_files[stringr::str_detect(all_files,"OUTFLOW")]
@@ -70,7 +75,7 @@ create_glm_inflow_outflow_files <- function(inflow_file_dir,
 
       readr::write_csv(x = obs_inflow_tmp,
                        file = inflow_file_name,
-                       quote_escape = "none")
+                       quote = "none")
       inflow_file_names[, j] <- inflow_file_name
     }else{
 
@@ -95,11 +100,11 @@ create_glm_inflow_outflow_files <- function(inflow_file_dir,
         if(config$inflow$use_forecasted_inflow){
           readr::write_csv(x = inflow,
                            file = inflow_file_name,
-                           quote_escape = "none")
+                           quote = "none")
         }else{
           readr::write_csv(x = obs_inflow_tmp,
                            file = inflow_file_name,
-                           quote_escape = "none")
+                           quote = "none")
 
         }
       }
@@ -130,7 +135,7 @@ create_glm_inflow_outflow_files <- function(inflow_file_dir,
 
       readr::write_csv(x = obs_outflow_tmp,
                        file = outflow_file_name,
-                       quote_escape = "none")
+                       quote = "none")
       outflow_file_names[, j] <- outflow_file_name
     }else{
 
@@ -154,11 +159,11 @@ create_glm_inflow_outflow_files <- function(inflow_file_dir,
         if(config$inflow$use_forecasted_inflow){
           readr::write_csv(x = outflow,
                            file = outflow_file_name,
-                           quote_escape = "none")
+                           quote = "none")
         }else{
           readr::write_csv(x = obs_outflow_tmp,
                            file = outflow_file_name,
-                           quote_escape = "none")
+                           quote = "none")
         }
       }
     }

@@ -17,19 +17,17 @@
 ##' @author Quinn Thomas
 ##' @examples
 ##' \dontrun{
-##' plotting_general(file_name = saved_file, qaqc_data_directory = config$file_path$qaqc_data_directory, ncore = config$model_settings$ncore, plot_profile = TRUE, obs_csv)
+##' plotting_general_2(file_name = saved_file, target_file = target_file, ncore = config$model_settings$ncore, plot_profile = TRUE, obs_csv)
 ##' }
 
-plotting_general <- function(file_name,
-                             qaqc_data_directory,
+plotting_general_2 <- function(file_name,
+                             target_file,
                              ncore = 1,
-                             plot_profile = TRUE,
-                             obs_csv = TRUE){
+                             plot_profile = FALSE,
+                             obs_csv = FALSE){
 
   pdf_file_name <- paste0(tools::file_path_sans_ext(file_name),".pdf")
   csv_file_name <- paste0(tools::file_path_sans_ext(file_name),".csv")
-
-  target_file <- paste0(qaqc_data_directory,"/observations_postQAQC_long.csv")
 
 
   output <- FLAREr::combine_forecast_observations(file_name,
