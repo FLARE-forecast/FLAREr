@@ -10,7 +10,7 @@
 ##' \dontrun{
 ##' inflow_outflow_files <- create_glm_inflow_outflow_files(inflow_file_dir = inflow_forecast_path, inflow_obs = cleaned_inflow_file, working_directory = config$file_path$execute_directory, config, state_names = NULL)
 ##' }
-create_glm_inflow_outflow_files <- function(inflow_file_dir,
+create_glm_inflow_outflow_files <- function(inflow_file_dir = NULL,
                                             inflow_obs,
                                             working_directory,
                                             config,
@@ -43,27 +43,25 @@ create_glm_inflow_outflow_files <- function(inflow_file_dir,
     dplyr::select(time, FLOW) %>%
     dplyr::mutate(outflow_num = 1)
 
-  if(!is.null(inflow_file_dir)){
-    all_files <- list.files(inflow_file_dir, full.names = TRUE)
-    inflow_files <- all_files[stringr::str_detect(all_files,"INFLOW")]
-    outflow_files <- all_files[stringr::str_detect(all_files,"OUTFLOW")]
+  all_files <- NULL
 
-    if(length(inflow_files) > 0){
-      d <- readr::read_csv(inflow_files[1], col_types = readr::cols())
-      num_inflows <- max(c(d$inflow_num,obs_inflow$inflow_num))
-      inflow_file_names <- array(NA, dim = c(length(inflow_files), num_inflows))
-    }else{
-      num_inflows <- max(obs_inflow$inflow_num)
-      inflow_file_names <- array(NA, dim = c(1, num_inflows))
-      inflow_files <- NA
-      outflow_files <- NA
+  if(!is.null(inflow_file_dir)){
+    if(dir.exists(inflow_file_dir)){
+      all_files <- list.files(inflow_file_dir, full.names = TRUE)
     }
+  }
+
+  inflow_files <- all_files[stringr::str_detect(all_files,"INFLOW")]
+  outflow_files <- all_files[stringr::str_detect(all_files,"OUTFLOW")]
+
+  if(length(inflow_files) > 0){
+    d <- readr::read_csv(inflow_files[1], col_types = readr::cols())
+    num_inflows <- max(c(d$inflow_num,obs_inflow$inflow_num))
   }else{
     num_inflows <- max(obs_inflow$inflow_num)
-    inflow_file_names <- array(NA, dim = c(1, num_inflows))
-    inflow_files <- NA
-    outflow_files <- NA
   }
+
+  inflow_file_names <- array(NA, dim = c(length(inflow_files), num_inflows))
 
   for(j in 1:num_inflows){
 
@@ -114,14 +112,15 @@ create_glm_inflow_outflow_files <- function(inflow_file_dir,
   }
 
 
-  if(length(outflow_files) == 0 | end_datetime == forecast_start_datetime){
-    num_outflows <- max(obs_inflow$inflow_num)
-    outflow_file_names <- array(NA, dim = c(1,num_outflows))
-  }else{
+  if(length(outflow_files) > 0){
     d <- readr::read_csv(outflow_files[1], col_types = readr::cols())
     num_outflows <- max(c(d$outflow_num,obs_outflow$outflow_num))
-    outflow_file_names <- array(NA, dim = c(length(outflow_files),num_outflows))
+  }else{
+    num_outflows <- max(obs_inflow$inflow_num)
   }
+
+
+  outflow_file_names <- array(NA, dim = c(length(outflow_files),num_outflows))
 
 
   for(j in 1:num_outflows){
