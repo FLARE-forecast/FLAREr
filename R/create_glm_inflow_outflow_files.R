@@ -61,7 +61,7 @@ create_glm_inflow_outflow_files <- function(inflow_file_dir = NULL,
     num_inflows <- max(obs_inflow$inflow_num)
   }
 
-  inflow_file_names <- array(NA, dim = c(length(inflow_files), num_inflows))
+  inflow_file_names <- array(NA, dim = c(max(c(1, length(inflow_files))), num_inflows))
 
   for(j in 1:num_inflows){
 
@@ -120,7 +120,7 @@ create_glm_inflow_outflow_files <- function(inflow_file_dir = NULL,
   }
 
 
-  outflow_file_names <- array(NA, dim = c(length(outflow_files),num_outflows))
+  outflow_file_names <- array(NA, dim = c(max(c(1, length(outflow_files))),num_outflows))
 
 
   for(j in 1:num_outflows){

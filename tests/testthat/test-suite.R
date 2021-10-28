@@ -187,8 +187,6 @@ test_that("EnKF can be run", {
                                           obs_config = obs_config
   )
 
-  #saveRDS(enkf_output, file = "/home/rstudio/FLAREr/inst/example/benchmark_data/enkf_output.RDS")
-
   #Load in pre-prepared output
   samp_enkf_output <- readRDS(file.path(test_directory, "benchmark_data/enkf_output.RDS"))
 
