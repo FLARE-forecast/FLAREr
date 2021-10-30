@@ -38,7 +38,6 @@ Imports:
     GLM3r,
     patchwork,
     parallel,
-    EFIstandards,
     EML
 Suggests: 
     knitr,
