@@ -37,12 +37,13 @@ Imports:
     rMR,
     GLM3r,
     patchwork,
-    parallel
+    parallel,
+    EFIstandards,
+    EML
 Suggests: 
     knitr,
     rmarkdown,
     testthat (>= 3.0.0),
-    EFIstandards,
-    EML
+
 VignetteBuilder: rmarkdown
 Config/testthat/edition: 3
