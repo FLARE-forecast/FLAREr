@@ -10,7 +10,6 @@
 ##' @importFrom tibble tibble
 ##' @import EML
 ##' @importFrom dplyr first last
-##' @import EFIstandards
 ##' @importFrom tools file_path_sans_ext
 ##' @author Quinn Thomas
 ##' @examples
@@ -246,7 +245,7 @@ create_flare_metadata <- function(file_name,
 
   EML::eml_validate(my_eml)
 
-  EFIstandards::forecast_validator(my_eml)
+  #EFIstandards::forecast_validator(my_eml)
 
   eml_file_name <- file.path(da_forecast_output$config$file_path$forecast_output_directory, paste0(tools::file_path_sans_ext(basename(file_name)),".xml"))
 
