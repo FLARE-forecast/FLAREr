@@ -21,8 +21,6 @@ Roxygen: list(markdown = TRUE)
 RoxygenNote: 7.1.2
 Imports:
     ncdf4,
-    EFIstandards,
-    EML,
     magrittr,
     dplyr,
     lubridate,
@@ -43,6 +41,8 @@ Imports:
 Suggests: 
     knitr,
     rmarkdown,
-    testthat (>= 3.0.0)
+    testthat (>= 3.0.0),
+    EFIstandards,
+    EML
 VignetteBuilder: rmarkdown
 Config/testthat/edition: 3
