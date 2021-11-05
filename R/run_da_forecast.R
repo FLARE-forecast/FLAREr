@@ -792,21 +792,21 @@ run_da_forecast <- function(states_init,
                            forecast_days,"_",
                            forecast_iteration_id)
 
-  if(length(full_time) >= hist_days+2){
+  if(length(full_time) >= hist_days+1){
 
-    if(lubridate::day(full_time[hist_days+2]) < 10){
-      file_name_F_day <- paste0("0",lubridate::day(full_time[hist_days+2]))
+    if(lubridate::day(full_time[hist_days+1]) < 10){
+      file_name_F_day <- paste0("0",lubridate::day(full_time[hist_days+1]))
     }else{
-      file_name_F_day <- lubridate::day(full_time[hist_days+2])
+      file_name_F_day <- lubridate::day(full_time[hist_days+1])
     }
-    if(lubridate::month(full_time[hist_days+2]) < 10){
-      file_name_F_month <- paste0("0",lubridate::month(full_time[hist_days+2]))
+    if(lubridate::month(full_time[hist_days+1]) < 10){
+      file_name_F_month <- paste0("0",lubridate::month(full_time[hist_days+1]))
     }else{
-      file_name_F_month <- lubridate::month(full_time[hist_days+2])
+      file_name_F_month <- lubridate::month(full_time[hist_days+1])
     }
 
     save_file_name_short <- paste0(config$location$site_id, "-",
-                                   (lubridate::year(full_time[hist_days+2])),"-",
+                                   (lubridate::year(full_time[hist_days+1])),"-",
                                    file_name_F_month,"-",
                                    file_name_F_day,"-",
                                    config$run_config$sim_name)

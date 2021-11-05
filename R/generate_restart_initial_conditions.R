@@ -22,7 +22,7 @@ generate_restart_initial_conditions <- function(restart_file, state_names, par_n
     }
   }
 
-  print(paste0("Using restart file with restart index of ", restart_index))
+  message(paste0("Using restart file with restart index of ", restart_index))
 
 
   modeled_depths <- ncdf4::ncvar_get(nc, "depth")
