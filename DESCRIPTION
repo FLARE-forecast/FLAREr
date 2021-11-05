@@ -21,8 +21,6 @@ Roxygen: list(markdown = TRUE)
 RoxygenNote: 7.1.2
 Imports:
     ncdf4,
-    EFIstandards,
-    EML,
     magrittr,
     dplyr,
     lubridate,
@@ -39,7 +37,8 @@ Imports:
     rMR,
     GLM3r,
     patchwork,
-    parallel
+    parallel,
+    EML
 Suggests: 
     knitr,
     rmarkdown,
