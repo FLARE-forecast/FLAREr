@@ -7,7 +7,7 @@
 initialize_obs_processing(lake_directory, observation_yml = NA)
 }
 \arguments{
-\item{lake_directory}{}
+\item{lake_directory}{full path to repository directory}
 }
 \value{
 

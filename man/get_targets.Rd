@@ -7,7 +7,9 @@
 get_targets(lake_directory, config)
 }
 \arguments{
-\item{config}{}
+\item{lake_directory}{full path to repository directory}
+
+\item{config}{flare configuration object}
 }
 \value{
 

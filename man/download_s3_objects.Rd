@@ -7,7 +7,11 @@
 download_s3_objects(lake_directory, bucket, prefix)
 }
 \arguments{
-\item{prefix}{}
+\item{lake_directory}{full path to repository directory}
+
+\item{bucket}{name of s3 bucket}
+
+\item{prefix}{relative path directory within bucket}
 }
 \value{
 

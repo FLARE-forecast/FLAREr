@@ -7,7 +7,9 @@
 delete_restart(site, sim_name)
 }
 \arguments{
-\item{sim_name}{}
+\item{site}{four letter code for site}
+
+\item{sim_name}{name of simulation}
 }
 \value{
 

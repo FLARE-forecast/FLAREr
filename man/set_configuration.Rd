@@ -7,7 +7,11 @@
 set_configuration(configure_run_file, lake_directory, clean_start = FALSE)
 }
 \arguments{
-\item{clean_start}{}
+\item{configure_run_file}{name of run configuration file (do not include full path)}
+
+\item{lake_directory}{full path to repository directory}
+
+\item{clean_start}{logical: TRUE = reset run configuration with the file in the configuration directory within repository}
 }
 \value{
 

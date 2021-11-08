@@ -7,7 +7,11 @@
 put_forecast(saved_file, eml_file_name, config)
 }
 \arguments{
-\item{config}{}
+\item{saved_file}{full path of saved FLARE netcdf}
+
+\item{eml_file_name}{full path of saved FLARE metadata}
+
+\item{config}{flare configuration object}
 }
 \value{
 

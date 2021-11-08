@@ -7,7 +7,11 @@
 get_git_repo(lake_directory, directory, git_repo)
 }
 \arguments{
-\item{git_repo}{}
+\item{lake_directory}{full path to repository directory}
+
+\item{directory}{the branch name on github}
+
+\item{git_repo}{https of the github repository}
 }
 \value{
 

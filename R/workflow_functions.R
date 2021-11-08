@@ -1,14 +1,13 @@
 #' Get run configuration from s3 bucket
 #'
-#' @param configure_run_file
-#' @param lake_directory
-#' @param config
-#' @param clean_start
+#' @param configure_run_file file name (no path) of run configuration file
+#' @param lake_directory full path to repository directory
+#' @param config flare configuration object
+#' @param clean_start logical; reset the configuration run to the base file in the configuration directory
 #'
 #' @return
 #' @export
 #'
-#' @examples
 get_run_config <- function(configure_run_file, lake_directory, config, clean_start){
 
   if(clean_start | !config$run_config$use_s3){
@@ -30,14 +29,13 @@ get_run_config <- function(configure_run_file, lake_directory, config, clean_sta
 
 #' Get data from Github repository
 #'
-#' @param lake_directory
-#' @param directory
-#' @param git_repo
+#' @param lake_directory full path to repository directory
+#' @param directory the branch name on github
+#' @param git_repo https of the github repository
 #'
 #' @return
 #' @export
 #'
-#' @examples
 get_git_repo <- function(lake_directory, directory, git_repo){
   setwd(file.path(lake_directory, "data_raw"))
   if(!dir.exists(file.path(lake_directory, "data_raw", directory))){
@@ -51,14 +49,13 @@ get_git_repo <- function(lake_directory, directory, git_repo){
 
 #' Download file from EDI data portal
 #'
-#' @param edi_https
-#' @param file
-#' @param lake_directory
+#' @param edi_https https of the EDI package
+#' @param file name of the file in the EDI package (not full path)
+#' @param lake_directory full path to repository directory
 #'
 #' @return
 #' @export
 #'
-#' @examples
 get_edi_file <- function(edi_https, file, lake_directory){
 
   if(!file.exists(file.path(lake_directory, "data_raw", file))){
@@ -74,15 +71,15 @@ get_edi_file <- function(edi_https, file, lake_directory){
 
 #' Save target files to s3 bucket
 #'
-#' @param config
-#' @param cleaned_insitu_file
-#' @param cleaned_met_file
-#' @param cleaned_inflow_file
+#' @param site_id four letter code for the site
+#' @param cleaned_insitu_file full path of the cleaned insitu file
+#' @param cleaned_met_file full path of the cleaned met file
+#' @param cleaned_inflow_file full path of the cleaned inflow file
+#' @param use_s3 logical; TRUE = use s3
 #'
 #' @return
 #' @export
 #'
-#' @examples
 put_targets <- function(site_id, cleaned_insitu_file = NA, cleaned_met_file = NA, cleaned_inflow_file = NA, use_s3){
 
   if(use_s3){
@@ -100,13 +97,12 @@ put_targets <- function(site_id, cleaned_insitu_file = NA, cleaned_met_file = NA
 
 #' Download target data from s3
 #'
-#' @param lake_directory
-#' @param config
+#' @param lake_directory full path to repository directory
+#' @param config flare configuration object
 #'
 #' @return
 #' @export
 #'
-#' @examples
 get_targets <- function(lake_directory, config){
   if(config$run_config$use_s3){
     download_s3_objects(lake_directory, bucket = "targets", prefix = config$location$site_id)
@@ -116,14 +112,13 @@ get_targets <- function(lake_directory, config){
 
 #' Download stacked NOAA data from s3 bucket
 #'
-#' @param lake_directory
-#' @param config
-#' @param averaged
+#' @param lake_directory full path to repository directory
+#' @param config flare configuration object
+#' @param averaged logistical; TRUE = download averaged stacked forecast
 #'
 #' @return
 #' @export
 #'
-#' @examples
 get_stacked_noaa <- function(lake_directory, config, averaged = TRUE){
   if(config$run_config$use_s3){
     if(averaged){
@@ -136,13 +131,12 @@ get_stacked_noaa <- function(lake_directory, config, averaged = TRUE){
 
 #' Get file path for driver forecasts
 #'
-#' @param config
-#' @param forecast_model
+#' @param config flare configuration object
+#' @param forecast_model name of forecast model (i.e "noaa/NOAAGEFS_1hr); path relative to driver directory.
 #'
 #' @return
 #' @export
 #'
-#' @examples
 get_driver_forecast_path <- function(config, forecast_model){
   if(config$run_config$forecast_horizon > 0){
     # Set up timings
@@ -168,13 +162,12 @@ get_driver_forecast_path <- function(config, forecast_model){
 
 #' Download driver forecasts from s3 bucket
 #'
-#' @param lake_directory
-#' @param forecast_path
+#' @param lake_directory full path to repository directory
+#' @param forecast_path relative path of the driver forecast (relative to driver directory or bucket)
 #'
 #' @return
 #' @export
 #'
-#' @examples
 get_driver_forecast <- function(lake_directory, forecast_path){
 
   download_s3_objects(lake_directory,
@@ -184,14 +177,13 @@ get_driver_forecast <- function(lake_directory, forecast_path){
 
 #' Set and create directories in the configuration file
 #'
-#' @param configure_run_file
-#' @param lake_directory
-#' @param clean_start
+#' @param configure_run_file name of run configuration file (do not include full path)
+#' @param lake_directory full path to repository directory
+#' @param clean_start logical: TRUE = reset run configuration with the file in the configuration directory within repository
 #'
 #' @return
 #' @export
 #'
-#' @examples
 set_configuration <- function(configure_run_file, lake_directory, clean_start = FALSE){
   run_config <- yaml::read_yaml(file.path(lake_directory,"configuration","FLAREr",configure_run_file))
   config <- yaml::read_yaml(file.path(lake_directory,"configuration","FLAREr",run_config$configure_flare))
@@ -245,13 +237,12 @@ set_configuration <- function(configure_run_file, lake_directory, clean_start = 
 
 #' Download restart file from s3 bucket
 #'
-#' @param config
-#' @param lake_directory
+#' @param config flare configuration object
+#' @param lake_directory full path to repository directory
 #'
 #' @return
 #' @export
 #'
-#' @examples
 get_restart_file <- function(config, lake_directory){
   if(!is.na(config$run_config$restart_file)){
     restart_file <- basename(config$run_config$restart_file)
@@ -267,17 +258,16 @@ get_restart_file <- function(config, lake_directory){
 
 #' Update run configuration and upload to s3 bucket
 #'
-#' @param config
-#' @param lake_directory
-#' @param configure_run_file
-#' @param saved_file
-#' @param new_horizon
-#' @param day_advance
+#' @param config flare configuration object
+#' @param lake_directory full path to repository directory
+#' @param configure_run_file name of run configuration file (do not include full path)
+#' @param saved_file full path of saved FLARE netcdf
+#' @param new_horizon horizon (in days) to update the run configuration with
+#' @param day_advance number of days between forecast forecast generation (defaults to 1)
 #'
 #' @return
 #' @export
 #'
-#' @examples
 update_run_config <- function(config, lake_directory, configure_run_file, saved_file, new_horizon, day_advance = 1){
   config$run_config$start_datetime <- config$run_config$forecast_start_datetime
   if(config$run_config$forecast_horizon == 0){
@@ -296,14 +286,13 @@ update_run_config <- function(config, lake_directory, configure_run_file, saved_
 
 #' Upload forecast file and metadata to s3 bucket
 #'
-#' @param saved_file
-#' @param eml_file_name
-#' @param config
+#' @param saved_file full path of saved FLARE netcdf
+#' @param eml_file_name full path of saved FLARE metadata
+#' @param config flare configuration object
 #'
 #' @return
 #' @export
 #'
-#' @examples
 put_forecast <- function(saved_file, eml_file_name, config){
   if(config$run_config$use_s3){
     success <- aws.s3::put_object(file = saved_file, object = file.path(config$location$site_id, basename(saved_file)), bucket = "forecasts")
@@ -319,14 +308,13 @@ put_forecast <- function(saved_file, eml_file_name, config){
 
 #' Download file from s3 bucket
 #'
-#' @param lake_directory
-#' @param bucket
-#' @param prefix
+#' @param lake_directory full path to repository directory
+#' @param bucket name of s3 bucket
+#' @param prefix relative path directory within bucket
 #'
 #' @return
 #' @export
 #'
-#' @examples
 download_s3_objects <- function(lake_directory, bucket, prefix){
 
   files <- aws.s3::get_bucket(bucket = bucket, prefix = prefix)
@@ -342,13 +330,12 @@ download_s3_objects <- function(lake_directory, bucket, prefix){
 
 #' Delete restart file on s3 bucket
 #'
-#' @param site
-#' @param sim_name
+#' @param site four letter code for site
+#' @param sim_name name of simulation
 #'
 #' @return
 #' @export
 #'
-#' @examples
 delete_restart <- function(site, sim_name){
   files <- aws.s3::get_bucket(bucket = "restart", prefix = file.path(site, sim_name))
   keys <- vapply(files, `[[`, "", "Key", USE.NAMES = FALSE)
@@ -363,12 +350,11 @@ delete_restart <- function(site, sim_name){
 
 #' Set and create directories for observation configuration
 #'
-#' @param lake_directory
+#' @param lake_directory full path to repository directory
 #'
 #' @return
 #' @export
 #'
-#' @examples
 initialize_obs_processing <- function(lake_directory, observation_yml = NA){
 
   curr_dir1 <- file.path(lake_directory, "data_raw")
@@ -394,15 +380,12 @@ initialize_obs_processing <- function(lake_directory, observation_yml = NA){
 
 #' Check if NOAA forecast is on s3 bucket
 #'
-#' @param lake_directory
-#' @param s3_mode
-#' @param forecast_site
-#' @param configuration_file
+#' @param lake_directory full path to repository directory
+#' @param configuration_file file name (no path) of run configuration file
 #'
 #' @return
 #' @export
 #'
-#' @examples
 check_noaa_present <- function(lake_directory, configure_run_file){
 
   config <- set_configuration(configure_run_file,lake_directory)

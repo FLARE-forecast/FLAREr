@@ -7,7 +7,11 @@
 get_edi_file(edi_https, file, lake_directory)
 }
 \arguments{
-\item{lake_directory}{}
+\item{edi_https}{https of the EDI package}
+
+\item{file}{name of the file in the EDI package (not full path)}
+
+\item{lake_directory}{full path to repository directory}
 }
 \value{
 

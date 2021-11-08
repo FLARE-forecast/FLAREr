@@ -7,7 +7,9 @@
 get_driver_forecast(lake_directory, forecast_path)
 }
 \arguments{
-\item{forecast_path}{}
+\item{lake_directory}{full path to repository directory}
+
+\item{forecast_path}{relative path of the driver forecast (relative to driver directory or bucket)}
 }
 \value{
 

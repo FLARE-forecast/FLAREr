@@ -7,7 +7,11 @@
 get_stacked_noaa(lake_directory, config, averaged = TRUE)
 }
 \arguments{
-\item{averaged}{}
+\item{lake_directory}{full path to repository directory}
+
+\item{config}{flare configuration object}
+
+\item{averaged}{logistical; TRUE = download averaged stacked forecast}
 }
 \value{
 

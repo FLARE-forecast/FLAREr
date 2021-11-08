@@ -13,7 +13,15 @@ put_targets(
 )
 }
 \arguments{
-\item{cleaned_inflow_file}{}
+\item{site_id}{four letter code for the site}
+
+\item{cleaned_insitu_file}{full path of the cleaned insitu file}
+
+\item{cleaned_met_file}{full path of the cleaned met file}
+
+\item{cleaned_inflow_file}{full path of the cleaned inflow file}
+
+\item{use_s3}{logical; TRUE = use s3}
 }
 \value{
 

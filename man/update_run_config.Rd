@@ -14,7 +14,17 @@ update_run_config(
 )
 }
 \arguments{
-\item{day_advance}{}
+\item{config}{flare configuration object}
+
+\item{lake_directory}{full path to repository directory}
+
+\item{configure_run_file}{name of run configuration file (do not include full path)}
+
+\item{saved_file}{full path of saved FLARE netcdf}
+
+\item{new_horizon}{horizon (in days) to update the run configuration with}
+
+\item{day_advance}{number of days between forecast forecast generation (defaults to 1)}
 }
 \value{
 

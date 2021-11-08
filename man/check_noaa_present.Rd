@@ -7,7 +7,9 @@
 check_noaa_present(lake_directory, configure_run_file)
 }
 \arguments{
-\item{configuration_file}{}
+\item{lake_directory}{full path to repository directory}
+
+\item{configuration_file}{file name (no path) of run configuration file}
 }
 \value{
 

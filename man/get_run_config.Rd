@@ -7,7 +7,13 @@
 get_run_config(configure_run_file, lake_directory, config, clean_start)
 }
 \arguments{
-\item{clean_start}{}
+\item{configure_run_file}{file name (no path) of run configuration file}
+
+\item{lake_directory}{full path to repository directory}
+
+\item{config}{flare configuration object}
+
+\item{clean_start}{logical; reset the configuration run to the base file in the configuration directory}
 }
 \value{
 

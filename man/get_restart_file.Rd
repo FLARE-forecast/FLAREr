@@ -7,7 +7,9 @@
 get_restart_file(config, lake_directory)
 }
 \arguments{
-\item{lake_directory}{}
+\item{config}{flare configuration object}
+
+\item{lake_directory}{full path to repository directory}
 }
 \value{
 
