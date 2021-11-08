@@ -5,7 +5,7 @@
 \title{Generating inflow and output files in the GLM format}
 \usage{
 create_glm_inflow_outflow_files(
-  inflow_file_dir,
+  inflow_file_dir = NULL,
   inflow_obs,
   working_directory,
   config,
