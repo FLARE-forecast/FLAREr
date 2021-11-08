@@ -188,7 +188,7 @@ set_configuration <- function(configure_run_file, lake_directory, clean_start = 
   run_config <- yaml::read_yaml(file.path(lake_directory,"configuration","FLAREr",configure_run_file))
   config <- yaml::read_yaml(file.path(lake_directory,"configuration","FLAREr",run_config$configure_flare))
   config$run_config <- run_config
-  config$file_path$qaqc_data_directory <- file.path(lake_directory, "targets")
+  config$file_path$qaqc_data_directory <- file.path(lake_directory, "targets", config$location$site_id)
   config$file_path$data_directory <- file.path(lake_directory, "data_raw")
   config$file_path$noaa_directory <- file.path(lake_directory, "drivers")
   config$file_path$configuration_directory <- file.path(lake_directory, "configuration")
