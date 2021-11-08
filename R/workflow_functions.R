@@ -122,9 +122,9 @@ get_targets <- function(lake_directory, config){
 get_stacked_noaa <- function(lake_directory, config, averaged = TRUE){
   if(config$run_config$use_s3){
     if(averaged){
-      download_s3_objects(lake_directory, bucket = "drivers", prefix = file.path("noaa/NOAAGEFS_1hr_stacked_average/",config$location$site_id))
+      download_s3_objects(lake_directory, bucket = "drivers", prefix = file.path("noaa/NOAAGEFS_1hr_stacked_average",config$location$site_id))
     }else{
-      download_s3_objects(lake_directory, bucket = "drivers", prefix = file.path("noaa/NOAAGEFS_1hr_stacked/",config$location$site_id))
+      download_s3_objects(lake_directory, bucket = "drivers", prefix = file.path("noaa/NOAAGEFS_1hr_stacked",config$location$site_id))
     }
   }
 }
@@ -336,8 +336,8 @@ download_s3_objects <- function(lake_directory, bucket, prefix){
 #' @return
 #' @export
 #'
-delete_restart <- function(site, sim_name){
-  files <- aws.s3::get_bucket(bucket = "restart", prefix = file.path(site, sim_name))
+delete_restart <- function(site_id, sim_name){
+  files <- aws.s3::get_bucket(bucket = "restart", prefix = file.path(site_id, sim_name))
   keys <- vapply(files, `[[`, "", "Key", USE.NAMES = FALSE)
   empty <- grepl("/$", keys)
   keys <- keys[!empty]
@@ -414,6 +414,57 @@ check_noaa_present <- function(lake_directory, configure_run_file){
   }
   return(noaa_forecasts_ready)
 
+}
+
+#' Title
+#'
+#' @param site_id four letter code for site
+#' @param sim_name name of simulation
+#'
+#' @return
+#' @export
+#'
+delete_sim <- function(site_id, sim_name){
+
+  go <- utils::askYesNo(paste0("Do you want to delete the files for ",sim_name," from ",site_id))
+
+  if(go){
+    message("deleting analysis files")
+    files <- aws.s3::get_bucket(bucket = "analysis", prefix = site_id)
+    keys <- vapply(files, `[[`, "", "Key", USE.NAMES = FALSE)
+    empty <- grepl("/$", keys)
+    keys <- keys[!empty]
+    keys <- keys[stringr::str_detect(keys, sim_name)]
+    if(length(keys > 0)){
+      for(i in 1:length(keys)){
+        aws.s3::delete_object(object = keys[i], bucket = "analysis")
+      }
+    }
+
+    #forecasts
+    message("deleting forecast files")
+    files <- aws.s3::get_bucket(bucket = "forecasts", prefix = file.path(site_id))
+    keys <- vapply(files, `[[`, "", "Key", USE.NAMES = FALSE)
+    empty <- grepl("/$", keys)
+    keys <- keys[!empty]
+    keys <- keys[stringr::str_detect(keys, sim_name)]
+    if(length(keys > 0)){
+      for(i in 1:length(keys)){
+        aws.s3::delete_object(object = keys[i], bucket = "forecasts")
+      }
+    }
+
+    message("deleting restart files")
+    files <- aws.s3::get_bucket(bucket = "restart", prefix = file.path(site_id, sim_name))
+    keys <- vapply(files, `[[`, "", "Key", USE.NAMES = FALSE)
+    empty <- grepl("/$", keys)
+    keys <- keys[!empty]
+    if(length(keys > 0)){
+      for(i in 1:length(keys)){
+        aws.s3::delete_object(object = keys[i], bucket = "restart")
+      }
+    }
+  }
 }
 
 

@@ -68,7 +68,7 @@ write_forecast_netcdf <- function(da_forecast_output,
   forecasted <- rep(1, length(t))
   forecasted[1:(hist_days + 1)] <- 0
 
-  if(!use_short_filename | is.na(da_forecast_output$save_file_name_short)){
+  if(!use_short_filename | is.na(da_forecast_output$save_file_name_short) | length(which(forecasted == 1) == 0)){
     ncfname <- file.path(forecast_output_directory, paste0(da_forecast_output$save_file_name,".nc"))
   }else{
     ncfname <- file.path(forecast_output_directory, paste0(da_forecast_output$save_file_name_short,".nc"))
