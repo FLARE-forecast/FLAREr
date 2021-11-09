@@ -120,13 +120,11 @@ get_targets <- function(lake_directory, config){
 #' @export
 #'
 get_stacked_noaa <- function(lake_directory, config, averaged = TRUE){
-  if(config$run_config$use_s3){
     if(averaged){
       download_s3_objects(lake_directory, bucket = "drivers", prefix = file.path("noaa/NOAAGEFS_1hr_stacked_average",config$location$site_id))
     }else{
       download_s3_objects(lake_directory, bucket = "drivers", prefix = file.path("noaa/NOAAGEFS_1hr_stacked",config$location$site_id))
     }
-  }
 }
 
 #' Get file path for driver forecasts
