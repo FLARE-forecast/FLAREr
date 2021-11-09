@@ -8,15 +8,15 @@
 #' @return
 #' @export
 #'
-get_run_config <- function(configure_run_file, lake_directory, config, clean_start){
+get_run_config <- function(configure_run_file, lake_directory, config, clean_start = FALSE){
 
   if(clean_start | !config$run_config$use_s3){
-    restart_exists <- file.path(lake_directory, "restart", config$location$site_id, config$run_config$sim_name, configure_run_file)
+    restart_exists <- file.exists(file.path(lake_directory, "restart", config$location$site_id, config$run_config$sim_name, configure_run_file))
     if(!restart_exists){
       file.copy(file.path(lake_directory,"configuration","FLAREr",configure_run_file), file.path(lake_directory, "restart", config$location$site_id, config$run_config$sim_name, configure_run_file))
     }
   }else if(config$run_config$use_s3){
-    restart_exists <- aws.s3::object_exists(object = file.path(config$location$site_id, config$run_config$sim_name, configure_run_file), bucket = "restart")
+    restart_exists <- suppressMessages(aws.s3::object_exists(object = file.path(config$location$site_id, config$run_config$sim_name, configure_run_file), bucket = "restart"))
     if(restart_exists){
       aws.s3::save_object(object = file.path(config$location$site_id, config$run_config$sim_name, configure_run_file), bucket = "restart", file = file.path(lake_directory, "restart", config$location$site_id, config$run_config$sim_name, configure_run_file))
     }else{
@@ -80,7 +80,7 @@ get_edi_file <- function(edi_https, file, lake_directory){
 #' @return
 #' @export
 #'
-put_targets <- function(site_id, cleaned_insitu_file = NA, cleaned_met_file = NA, cleaned_inflow_file = NA, use_s3){
+put_targets <- function(site_id, cleaned_insitu_file = NA, cleaned_met_file = NA, cleaned_inflow_file = NA, use_s3 = FALSE){
 
   if(use_s3){
     if(!is.na(cleaned_insitu_file)){
@@ -394,7 +394,7 @@ check_noaa_present <- function(lake_directory, configure_run_file){
                                                  forecast_model = config$met$forecast_met_model)
 
   if(config$run_config$forecast_horizon > 0 & !is.null(noaa_forecast_path)){
-    noaa_files = aws.s3::get_bucket(bucket = "drivers", prefix = noaa_forecast_path)
+    noaa_files <- aws.s3::get_bucket(bucket = "drivers", prefix = noaa_forecast_path)
     noaa_forecast_path <- file.path(lake_directory,"drivers", noaa_forecast_path)
     keys <- vapply(noaa_files, `[[`, "", "Key", USE.NAMES = FALSE)
     empty <- grepl("/$", keys)
