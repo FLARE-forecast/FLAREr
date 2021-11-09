@@ -247,9 +247,9 @@ get_restart_file <- function(config, lake_directory){
     if(config$run_config$use_s3){
       aws.s3::save_object(object = file.path(config$location$site_id, restart_file),
                           bucket = "forecasts",
-                          file = file.path(lake_directory, "forecasts", restart_file))
+                          file = file.path(lake_directory, "forecasts", config$location$site_id, restart_file))
     }
-    config$run_config$restart_file <- file.path(lake_directory, "forecasts", restart_file)
+    config$run_config$restart_file <- file.path(lake_directory, "forecasts", config$location$site_id, restart_file)
   }
   return(config)
 }
