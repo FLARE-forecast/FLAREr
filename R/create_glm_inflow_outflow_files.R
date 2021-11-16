@@ -18,6 +18,32 @@ create_glm_inflow_outflow_files <- function(inflow_file_dir = NULL,
 
 {
 
+  VARS <- c("time", "FLOW", "TEMP", "SALT")
+
+  if(config$model_settings$model_name == "glm_aed"){
+    VARS <- c(VARS,
+              'OXY_oxy',
+              'CAR_dic',
+              'CAR_ch4',
+              'SIL_rsi',
+              'NIT_amm',
+              'NIT_nit',
+              'PHS_frp',
+              'OGM_doc',
+              'OGM_docr',
+              'OGM_poc',
+              'OGM_don',
+              'OGM_donr',
+              'OGM_pon',
+              'OGM_dop',
+              'OGM_dopr',
+              'OGM_pop',
+              'PHY_cyano',
+              'PHY_green',
+              'PHY_diatom')
+
+  }
+
   start_datetime <- lubridate::as_datetime(config$run_config$start_datetime)
   if(is.na(config$run_config$forecast_start_datetime)){
     end_datetime <- lubridate::as_datetime(config$run_config$end_datetime)
@@ -69,7 +95,7 @@ create_glm_inflow_outflow_files <- function(inflow_file_dir = NULL,
 
       obs_inflow_tmp <- obs_inflow %>%
         dplyr::filter(inflow_num == j) %>%
-        dplyr::select(c("time", "FLOW", "TEMP", "SALT"))
+        dplyr::select(dplyr::all_of(VARS))
 
       inflow_file_name <- file.path(working_directory, paste0("inflow",j,".csv"))
 
@@ -82,13 +108,13 @@ create_glm_inflow_outflow_files <- function(inflow_file_dir = NULL,
       for(i in 1:length(inflow_files)){
         d <- readr::read_csv(inflow_files[i], col_types = readr::cols()) %>%
           dplyr::filter(inflow_num == j) %>%
-          dplyr::select(time, FLOW, TEMP, SALT) %>%
-          dplyr::mutate_at(dplyr::vars(c("FLOW", "TEMP", "SALT")), list(~round(., 4)))
+          dplyr::select(dplyr::all_of(VARS)) %>%
+          dplyr::mutate_at(dplyr::vars(VARS), list(~round(., 4)))
 
         obs_inflow_tmp <- obs_inflow %>%
           dplyr::filter(inflow_num == j,
                         time < lubridate::as_date(forecast_start_datetime)) %>%
-          dplyr::select(c("time", "FLOW", "TEMP", "SALT"))
+          dplyr::select(dplyr::all_of(VARS))
 
 
         inflow <- rbind(obs_inflow_tmp, d)
