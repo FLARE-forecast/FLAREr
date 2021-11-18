@@ -109,7 +109,7 @@ create_glm_inflow_outflow_files <- function(inflow_file_dir = NULL,
         d <- readr::read_csv(inflow_files[i], col_types = readr::cols()) %>%
           dplyr::filter(inflow_num == j) %>%
           dplyr::select(dplyr::all_of(VARS)) %>%
-          dplyr::mutate_at(dplyr::vars(VARS), list(~round(., 4)))
+          dplyr::mutate_at(dplyr::vars(dplyr::all_of(VARS)), list(~round(., 4)))
 
         obs_inflow_tmp <- obs_inflow %>%
           dplyr::filter(inflow_num == j,
