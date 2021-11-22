@@ -26,11 +26,11 @@ generate_glm_met_files <- function(obs_met_file = NULL,
 
   start_datetime <- lubridate::as_datetime(config$run_config$start_datetime)
   if(is.na(config$run_config$forecast_start_datetime)){
-    end_datetime <- lubridate::as_datetime(config$run_config$end_datetime)
+    end_datetime <- lubridate::as_datetime(config$run_config$end_datetime) - lubridate::hours(1)
     forecast_start_datetime <- end_datetime
   }else{
     forecast_start_datetime <- lubridate::as_datetime(config$run_config$forecast_start_datetime)
-    end_datetime <- forecast_start_datetime + lubridate::days(config$run_config$forecast_horizon)
+    end_datetime <- forecast_start_datetime + days(35) - lubridate::hours(1) #lubridate::days(config$run_config$forecast_horizon) - lubridate::hours(1)
   }
 
   full_time <- seq(start_datetime, end_datetime, by = "1 hour")
@@ -132,7 +132,8 @@ generate_glm_met_files <- function(obs_met_file = NULL,
       names(noaa_met) <- c("time", glm_met_vars)
 
       noaa_met <- noaa_met %>%
-        dplyr::filter(time %in% full_time)
+        na.omit()
+        #dplyr::filter(time <= lubridate::as_datetime(max(full_time)))
 
       combined_met <- rbind(met, noaa_met)
       current_filename <- paste0('met_',ens,'.csv')

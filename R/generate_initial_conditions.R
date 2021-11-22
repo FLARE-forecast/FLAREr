@@ -131,6 +131,7 @@ generate_initial_conditions <- function(states_config,
   }else{
     nc <- ncdf4::nc_open(config$run_config$restart_file)
     forecast <- ncdf4::ncvar_get(nc, "forecast")
+    ncdf4::nc_close(nc)
     if(historical_met_error){
       restart_index <- max(which(forecast == 0)) + 1
     }else{
