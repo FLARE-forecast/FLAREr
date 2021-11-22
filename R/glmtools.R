@@ -265,7 +265,7 @@ write_nml  <-	function(glm_nml,file){
 
 nml_path_norm <- function(nml_file){
   if (nml_file == "template"){
-    nml_file <- GLMr::nml_template_path()
+    nml_file <- nml_template_path()
   }
   if (!is_nml_file(nml_file)){
     stop(nml_file, ' is not of file type *.nml')
