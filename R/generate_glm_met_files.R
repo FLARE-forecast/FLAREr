@@ -156,7 +156,7 @@ generate_glm_met_files <- function(obs_met_file = NULL,
 
     combined_met$time <- strftime(combined_met$time, format="%Y-%m-%d %H:%M", tz = "UTC")
 
-    readr::write_csv(combined_met,file = paste0(out_dir, "/", current_filename), escape = "none")
+    write.csv(combined_met, file = file.path(out_dir, current_filename), quote = FALSE, row.names = FALSE)
 
     filenames[j] <- paste0(out_dir, "/", current_filename)
   }
