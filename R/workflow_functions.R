@@ -266,7 +266,37 @@ get_restart_file <- function(config, lake_directory){
 #' @return
 #' @export
 #'
-update_run_config <- function(config, lake_directory, configure_run_file, saved_file, new_horizon, day_advance = 1){
+update_run_config <- function(config, lake_directory, configure_run_file, saved_file, new_horizon, day_advance = 1, new_start_datetime = TRUE){
+  if(new_start_datetime){
+  config$run_config$start_datetime <- config$run_config$forecast_start_datetime
+  }
+  if(config$run_config$forecast_horizon == 0){
+    config$run_config$forecast_horizon <- new_horizon
+  }
+  config$run_config$forecast_start_datetime <- as.character(lubridate::as_datetime(config$run_config$forecast_start_datetime) + lubridate::days(day_advance))
+  if(lubridate::hour(config$run_config$forecast_start_datetime) == 0){
+    config$run_config$forecast_start_datetime <- paste(config$run_config$forecast_start_datetime, "00:00:00")
+  }
+  if(!is.na(saved_file)){
+  config$run_config$restart_file <- basename(saved_file)
+  }
+  yaml::write_yaml(config$run_config, file = file.path(lake_directory,"restart",config$location$site_id,config$run_config$sim_name,configure_run_file))
+  if(config$run_config$use_s3){
+    aws.s3::put_object(file = file.path(lake_directory,"restart",config$location$site_id,config$run_config$sim_name, configure_run_file), object = file.path(config$location$site_id,config$run_config$sim_name, configure_run_file), bucket = "restart")
+  }
+  invisible(config)
+}
+
+#' Update run configuration and upload to s3 bucket
+#'
+#' @param config flare configuration object
+#' @param lake_directory full path to repository directory
+#' @param configure_run_file name of run configuration file (do not include full path)
+#'
+#' @return
+#' @export
+#'
+update_run_config_neon <- function(config, lake_directory, configure_run_file){
   config$run_config$start_datetime <- config$run_config$forecast_start_datetime
   if(config$run_config$forecast_horizon == 0){
     config$run_config$forecast_horizon <- new_horizon
@@ -280,7 +310,9 @@ update_run_config <- function(config, lake_directory, configure_run_file, saved_
   if(config$run_config$use_s3){
     aws.s3::put_object(file = file.path(lake_directory,"restart",config$location$site_id,config$run_config$sim_name, configure_run_file), object = file.path(config$location$site_id,config$run_config$sim_name, configure_run_file), bucket = "restart")
   }
+  invisible(config)
 }
+
 
 #' Upload forecast file and metadata to s3 bucket
 #'
