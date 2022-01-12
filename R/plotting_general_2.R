@@ -34,6 +34,7 @@ plotting_general_2 <- function(file_name,
                                                   target_file,
                                                   extra_historical_days = 0,
                                                   ncore = ncore)
+
   obs <- output$obs
   full_time_extended <- output$full_time_extended
   diagnostic_list <- output$diagnostic_list

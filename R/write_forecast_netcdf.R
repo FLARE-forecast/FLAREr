@@ -19,9 +19,7 @@ write_forecast_netcdf <- function(da_forecast_output,
                                   forecast_output_directory,
                                   use_short_filename = TRUE){
 
-  if(!dir.exists(forecast_output_directory)) {
-    dir.create(forecast_output_directory, recursive = TRUE)
-  }
+  dir.create(forecast_output_directory, recursive = TRUE, showWarnings = FALSE)
 
   x <- da_forecast_output$x
   lake_depth <- da_forecast_output$lake_depth
@@ -51,11 +49,11 @@ write_forecast_netcdf <- function(da_forecast_output,
   }else{
     npars <- 0
   }
+
   nstates <- dim(da_forecast_output$x)[3] - npars
 
   x_efi <- aperm(x, c(1,3,2))
   diagnostics_efi <- diagnostics
-
 
   #Set dimensionsda_forecast_output
   ens <- seq(1,dim(x)[2],1)
@@ -87,7 +85,7 @@ write_forecast_netcdf <- function(da_forecast_output,
   fillvalue <- 1e32
 
   def_list <- list()
-  def_list[[1]] <- ncdf4::ncvar_def("temp","degC",list(timedim,depthdim, ensdim),fillvalue,'state: temperature',prec="single")
+  def_list[[1]] <- ncdf4::ncvar_def("temp","degC",list(timedim,depthdim, ensdim),fillvalue,'state:temperature',prec="single")
   def_list[[2]] <- ncdf4::ncvar_def("data_assimilation","dimensionless",list(timedim),missval = -99,longname = '0 = no data assimilation; 1 = data assimilated',prec="integer")
   def_list[[3]] <- ncdf4::ncvar_def("forecast","dimensionless",list(timedim),missval = -99,longname = '0 = historical; 1 = forecasted',prec="integer")
   def_list[[4]] <- ncdf4::ncvar_def("da_qc","dimensionless",list(timedim),missval = -99,longname = '0 = successful DA; 1 = no data assimilated',prec="integer")
@@ -101,56 +99,36 @@ write_forecast_netcdf <- function(da_forecast_output,
 
   index <- 10
 
-  for(i in 1:length(obs_config$state_names_obs)){
-    long_name1 <- "observed"
-    long_name2 <- obs_config$state_names_obs[i]
-    long_name3 <- NULL
-    long_name4 <- NULL
-
-    long_name5 <- obs_config$target_variable[i]
-    long_name6 <- obs_config$distance_threshold[i]
-
-    for(j in 1:nrow(states_config)){
-      for(k in 1:length(states_config$states_to_obs[[j]])){
-        if(!is.na(states_config$states_to_obs[[j]][k])){
-          if(states_config$states_to_obs[[j]][k] == i){
-            if(is.null(long_name3)){
-              long_name3 <- states_config$state_names[[j]]
-              long_name4 <- states_config$states_to_obs_mapping[[j]][k]
-            }else{
-              long_name3 <- paste(long_name3, states_config$state_names[[j]],sep="-")
-              long_name4 <- paste(long_name4, format(states_config$states_to_obs_mapping[[j]][k], scientific = FALSE),sep="-")
-            }
-          }
-        }
-        long_name <- paste(long_name1,long_name2,long_name3,long_name4, long_name5, long_name6, sep = ":")
-      }
-    }
-
-
-
-
-    def_list[[index+i]] <-ncdf4::ncvar_def(paste0(obs_config$state_names_obs[i],"_observed"),obs_config$obs_units[i],list(timedim, depthdim),fillvalue,long_name,prec="single")
-  }
-
-  index <- index + length(obs_config$state_names_obs)
-
   if(npars > 0){
     for(par in 1:npars){
       def_list[[index+par]] <-ncdf4::ncvar_def(pars_config$par_names_save[par],pars_config$par_units[par],list(timedim,ensdim),fillvalue,paste0("parameter:",pars_config$par_names_save[par]),prec="single")
     }
   }
 
-
   if(config$include_wq){
     for(s in 2:length(states_config$state_names)){
-      def_list[[index+npars+s-1]]<- ncdf4::ncvar_def(states_config$state_names[s],"mmol m-3",list(timedim,depthdim, ensdim),fillvalue,paste0("state:", states_config$state_names[s]),prec="single")
+      if(states_config$state_names[s] %in% obs_config$state_names_obs){
+        tmp_index <- which(obs_config$state_names_obs == states_config$state_names[s])
+        long_name <- paste0("state:",obs_config$target_variable[tmp_index])
+      }else{
+        long_name <- "state"
+      }
+      def_list[[index+npars+s-1]]<- ncdf4::ncvar_def(states_config$state_names[s],"mmol m-3",list(timedim,depthdim, ensdim),fillvalue,long_name,prec="single")
     }
   }
 
   if(length(config$output_settings$diagnostics_names) > 0){
     for(s in 1:length(config$output_settings$diagnostics_names)){
       def_list[[index+npars+length(states_config$state_names)-1 + s]]<- ncdf4::ncvar_def(config$output_settings$diagnostics_names[s],"-",list(timedim,depthdim, ensdim),fillvalue,paste0("diagnostic:",config$output_settings$diagnostics_names[s]),prec="single")
+    }
+  }
+
+  tmp_index <- index+npars+length(states_config$state_names)+length(config$output_settings$diagnostics_names)-1
+  for(s in 1:length(obs_config$state_names_obs)){
+    if(!obs_config$state_names_obs[s] %in% states_config$state_names){
+      tmp_index <- tmp_index + 1
+      longname <- paste0("state:",obs_config$target_variable[s])
+      def_list[[tmp_index]] <- ncdf4::ncvar_def(obs_config$state_names_obs[s],obs_config$obs_units[s],list(timedim,depthdim, ensdim),fillvalue,longname,prec="single")
     }
   }
 
@@ -170,12 +148,6 @@ write_forecast_netcdf <- function(da_forecast_output,
 
   index <- 10
 
-  for(i in 1:length(obs_config$state_names_obs)){
-    ncdf4::ncvar_put(ncout,def_list[[index + i]] ,obs[i,,])
-  }
-
-  index <- index + length(obs_config$state_names_obs)
-
   if(npars > 0){
     for(par in 1:npars){
       ncdf4::ncvar_put(ncout,def_list[[index + par]] ,x[,,nstates + par])
@@ -186,12 +158,32 @@ write_forecast_netcdf <- function(da_forecast_output,
     for(s in 2:length(states_config$state_names)){
       ncdf4::ncvar_put(ncout,def_list[[index+npars+s-1]],x_efi[,states_config$wq_start[s]:states_config$wq_end[s], ])
     }
-
   }
 
   if(length(config$output_settings$diagnostics_names) > 0){
     for(s in 1:length(config$output_settings$diagnostics_names)){
       ncdf4::ncvar_put(ncout, def_list[[index+npars+length(states_config$state_names) - 1 + s]],diagnostics_efi[s, , ,])
+    }
+  }
+
+  tmp_index <- index+npars+length(states_config$state_names)+length(config$output_settings$diagnostics_names)-1
+  for(s in 1:length(obs_config$state_names_obs)){
+    if(!obs_config$state_names_obs[s] %in% states_config$state_names){
+      tmp_index <- tmp_index + 1
+      first_index <- 1
+      for(ii in 1:length(states_config$state_names)){
+        if(s %in% states_config$states_to_obs[[ii]]){
+          temp_index <- which(states_config$states_to_obs[[ii]] == s)
+          if(first_index == 1){
+            temp_var <- x_efi[, states_config$wq_start[ii]:states_config$wq_end[ii], ] * states_config$states_to_obs_mapping[[ii]][temp_index]
+            first_index <- 2
+          }else{
+            temp_var <- temp_var + x_efi[, states_config$wq_start[ii]:states_config$wq_end[ii], ] * states_config$states_to_obs_mapping[[ii]][temp_index]
+          }
+        }
+      }
+      ncdf4::ncvar_put(ncout,def_list[[tmp_index]] , temp_var)
+
     }
   }
 

@@ -344,7 +344,7 @@ run_model <- function(i,
       message("'output.nc' file not generated. Re-running simulation...")
       success <- FALSE
       if(debug){
-      verbose <- TRUE
+        verbose <- TRUE
       }
     }
 

@@ -488,7 +488,7 @@ run_da_forecast <- function(states_init,
 
     #if no observations at a time step then just propogate model uncertainity
 
-    if(length(z_index) == 0 | config$da_setup$da_method == "none"){
+    if(length(z_index) == 0 | config$da_setup$da_method == "none" | !config$da_setup$use_obs_constraint){
 
       if(i > (hist_days + 1)){
         data_assimilation_flag[i] <- 0
