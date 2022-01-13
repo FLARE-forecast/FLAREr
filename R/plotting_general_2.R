@@ -34,6 +34,7 @@ plotting_general_2 <- function(file_name,
                                                   target_file,
                                                   extra_historical_days = 0,
                                                   ncore = ncore)
+
   obs <- output$obs
   full_time_extended <- output$full_time_extended
   diagnostic_list <- output$diagnostic_list
@@ -271,6 +272,7 @@ plotting_general_2 <- function(file_name,
 
     if(nrow(obs_secchi) > 0){
       obs_curr <- dplyr::left_join(obs_date, obs_secchi, by = "date")
+
       obs_curr <- obs_curr$value
     }else{
       obs_curr <- rep(NA, length(obs_date))

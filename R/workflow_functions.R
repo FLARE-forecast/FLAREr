@@ -8,19 +8,19 @@
 #' @return
 #' @export
 #'
-get_run_config <- function(configure_run_file, lake_directory, config, clean_start = FALSE){
+get_run_config <- function(configure_run_file = "configure_run.yml", lake_directory, config, clean_start = FALSE, config_set_name = "default"){
 
   if(clean_start | !config$run_config$use_s3){
     restart_exists <- file.exists(file.path(lake_directory, "restart", config$location$site_id, config$run_config$sim_name, configure_run_file))
     if(!restart_exists){
-      file.copy(file.path(lake_directory,"configuration","FLAREr",configure_run_file), file.path(lake_directory, "restart", config$location$site_id, config$run_config$sim_name, configure_run_file))
+      file.copy(file.path(lake_directory,"configuration",config_set_name,configure_run_file), file.path(lake_directory, "restart", config$location$site_id, config$run_config$sim_name, configure_run_file))
     }
   }else if(config$run_config$use_s3){
     restart_exists <- suppressMessages(aws.s3::object_exists(object = file.path(config$location$site_id, config$run_config$sim_name, configure_run_file), bucket = "restart"))
     if(restart_exists){
       aws.s3::save_object(object = file.path(config$location$site_id, config$run_config$sim_name, configure_run_file), bucket = "restart", file = file.path(lake_directory, "restart", config$location$site_id, config$run_config$sim_name, configure_run_file))
     }else{
-      file.copy(file.path(lake_directory,"configuration","FLAREr",configure_run_file), file.path(lake_directory, "restart", config$location$site_id, config$run_config$sim_name, configure_run_file))
+      file.copy(file.path(lake_directory,"configuration",config_set_name,configure_run_file), file.path(lake_directory, "restart", config$location$site_id, config$run_config$sim_name, configure_run_file))
     }
   }
   run_config <- yaml::read_yaml(file.path(lake_directory, "restart", config$location$site_id, config$run_config$sim_name, configure_run_file))
@@ -120,11 +120,11 @@ get_targets <- function(lake_directory, config){
 #' @export
 #'
 get_stacked_noaa <- function(lake_directory, config, averaged = TRUE){
-    if(averaged){
-      download_s3_objects(lake_directory, bucket = "drivers", prefix = file.path("noaa/NOAAGEFS_1hr_stacked_average",config$location$site_id))
-    }else{
-      download_s3_objects(lake_directory, bucket = "drivers", prefix = file.path("noaa/NOAAGEFS_1hr_stacked",config$location$site_id))
-    }
+  if(averaged){
+    download_s3_objects(lake_directory, bucket = "drivers", prefix = file.path("noaa/NOAAGEFS_1hr_stacked_average",config$location$site_id))
+  }else{
+    download_s3_objects(lake_directory, bucket = "drivers", prefix = file.path("noaa/NOAAGEFS_1hr_stacked",config$location$site_id))
+  }
 }
 
 #' Get file path for driver forecasts
@@ -182,14 +182,14 @@ get_driver_forecast <- function(lake_directory, forecast_path){
 #' @return
 #' @export
 #'
-set_configuration <- function(configure_run_file, lake_directory, clean_start = FALSE){
-  run_config <- yaml::read_yaml(file.path(lake_directory,"configuration","FLAREr",configure_run_file))
-  config <- yaml::read_yaml(file.path(lake_directory,"configuration","FLAREr",run_config$configure_flare))
+set_configuration <- function(configure_run_file = "configure_run.yml", lake_directory, clean_start = FALSE, config_set_name = "default"){
+  run_config <- yaml::read_yaml(file.path(lake_directory,"configuration",config_set_name,configure_run_file))
+  config <- yaml::read_yaml(file.path(lake_directory,"configuration",config_set_name,run_config$configure_flare))
   config$run_config <- run_config
   config$file_path$qaqc_data_directory <- file.path(lake_directory, "targets", config$location$site_id)
   config$file_path$data_directory <- file.path(lake_directory, "data_raw")
   config$file_path$noaa_directory <- file.path(lake_directory, "drivers")
-  config$file_path$configuration_directory <- file.path(lake_directory, "configuration")
+  config$file_path$configuration_directory <- file.path(lake_directory, "configuration",config_set_name)
   config$file_path$inflow_directory <- file.path(lake_directory, "drivers")
   config$file_path$analysis_directory <- file.path(lake_directory, "analysis")
   config$file_path$forecast_output_directory <- file.path(lake_directory, "forecasts", config$location$site_id)
@@ -227,7 +227,7 @@ set_configuration <- function(configure_run_file, lake_directory, clean_start = 
     dir.create(config$file_path$execute_directory, recursive = TRUE)
   }
 
-  run_config <- get_run_config(configure_run_file, lake_directory, config, clean_start = clean_start)
+  run_config <- get_run_config(configure_run_file, lake_directory, config, clean_start, config_set_name = config_set_name)
   config$run_config <- run_config
 
   return(config)
@@ -266,7 +266,41 @@ get_restart_file <- function(config, lake_directory){
 #' @return
 #' @export
 #'
-update_run_config <- function(config, lake_directory, configure_run_file, saved_file, new_horizon, day_advance = 1){
+update_run_config <- function(config, lake_directory, configure_run_file = "configure_run.yml", saved_file = NA, new_horizon = NA, day_advance = NA, new_start_datetime = TRUE){
+  if(new_start_datetime){
+    config$run_config$start_datetime <- config$run_config$forecast_start_datetime
+  }
+  if(!is.na(config$run_config$forecast_horizon)){
+    if(config$run_config$forecast_horizon == 0){
+      config$run_config$forecast_horizon <- new_horizon
+    }
+  }
+  if(!is.na(day_advance)){
+    config$run_config$forecast_start_datetime <- as.character(lubridate::as_datetime(config$run_config$forecast_start_datetime) + lubridate::days(day_advance))
+    if(lubridate::hour(config$run_config$forecast_start_datetime) == 0){
+      config$run_config$forecast_start_datetime <- paste(config$run_config$forecast_start_datetime, "00:00:00")
+    }
+  }
+  if(!is.na(saved_file)){
+    config$run_config$restart_file <- basename(saved_file)
+  }
+  yaml::write_yaml(config$run_config, file = file.path(lake_directory,"restart",config$location$site_id,config$run_config$sim_name,configure_run_file))
+  if(config$run_config$use_s3){
+    aws.s3::put_object(file = file.path(lake_directory,"restart",config$location$site_id,config$run_config$sim_name, configure_run_file), object = file.path(config$location$site_id,config$run_config$sim_name, configure_run_file), bucket = "restart")
+  }
+  invisible(config)
+}
+
+#' Update run configuration and upload to s3 bucket
+#'
+#' @param config flare configuration object
+#' @param lake_directory full path to repository directory
+#' @param configure_run_file name of run configuration file (do not include full path)
+#'
+#' @return
+#' @export
+#'
+update_run_config_neon <- function(config, lake_directory, configure_run_file = "configure_run.yml"){
   config$run_config$start_datetime <- config$run_config$forecast_start_datetime
   if(config$run_config$forecast_horizon == 0){
     config$run_config$forecast_horizon <- new_horizon
@@ -280,7 +314,9 @@ update_run_config <- function(config, lake_directory, configure_run_file, saved_
   if(config$run_config$use_s3){
     aws.s3::put_object(file = file.path(lake_directory,"restart",config$location$site_id,config$run_config$sim_name, configure_run_file), object = file.path(config$location$site_id,config$run_config$sim_name, configure_run_file), bucket = "restart")
   }
+  invisible(config)
 }
+
 
 #' Upload forecast file and metadata to s3 bucket
 #'
@@ -353,7 +389,7 @@ delete_restart <- function(site_id, sim_name){
 #' @return
 #' @export
 #'
-initialize_obs_processing <- function(lake_directory, observation_yml = NA){
+initialize_obs_processing <- function(lake_directory, observation_yml = NA, config_set_name = "default"){
 
   curr_dir1 <- file.path(lake_directory, "data_raw")
   if(!dir.exists(curr_dir1)){
@@ -365,7 +401,7 @@ initialize_obs_processing <- function(lake_directory, observation_yml = NA){
   }
 
   if(!is.na(observation_yml)){
-    config_obs <- yaml::read_yaml(file.path(lake_directory,"configuration","observation_processing", observation_yml))
+    config_obs <- yaml::read_yaml(file.path(lake_directory,"configuration",config_set_name, observation_yml))
     config_obs$file_path$data_directory <- curr_dir1
     config_obs$file_path$targets_directory <- curr_dir2
     return(config_obs)
@@ -384,9 +420,9 @@ initialize_obs_processing <- function(lake_directory, observation_yml = NA){
 #' @return
 #' @export
 #'
-check_noaa_present <- function(lake_directory, configure_run_file){
+check_noaa_present <- function(lake_directory, configure_run_file = "configure_run.yml", config_set_name = "default"){
 
-  config <- set_configuration(configure_run_file,lake_directory)
+  config <- set_configuration(configure_run_file,lake_directory, config_set_name = config_set_name)
 
   noaa_forecast_path <- get_driver_forecast_path(config,
                                                  forecast_model = config$met$forecast_met_model)
@@ -403,7 +439,7 @@ check_noaa_present <- function(lake_directory, configure_run_file){
     noaa_forecasts_ready <- TRUE
   }
 
-  if(length(forecast_files) == 31){
+  if(length(forecast_files) == 31 | length(forecast_files) == 21){
     noaa_forecasts_ready <- TRUE
   }else{
     if(config$run_config$forecast_horizon > 0){

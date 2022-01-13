@@ -12,7 +12,7 @@
 initiate_model_error <- function(config, states_config){
   if(!is.null(config$model_settings$depth_model_sd_config_file)){
     model_sd <- array(NA, dim = c(nrow(states_config),length(config$model_settings$modeled_depths)))
-    config_process_error <- readr::read_csv(file.path(config$file_path$configuration_directory, "FLAREr",
+    config_process_error <- readr::read_csv(file.path(config$file_path$configuration_directory,
                                                       config$model_settings$depth_model_sd_config_file), col_type = readr::cols())
     for(s in 1:nrow(states_config)){
       if(states_config$state_names[s] %in% names(config_process_error)){
