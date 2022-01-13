@@ -120,11 +120,11 @@ get_targets <- function(lake_directory, config){
 #' @export
 #'
 get_stacked_noaa <- function(lake_directory, config, averaged = TRUE){
-    if(averaged){
-      download_s3_objects(lake_directory, bucket = "drivers", prefix = file.path("noaa/NOAAGEFS_1hr_stacked_average",config$location$site_id))
-    }else{
-      download_s3_objects(lake_directory, bucket = "drivers", prefix = file.path("noaa/NOAAGEFS_1hr_stacked",config$location$site_id))
-    }
+  if(averaged){
+    download_s3_objects(lake_directory, bucket = "drivers", prefix = file.path("noaa/NOAAGEFS_1hr_stacked_average",config$location$site_id))
+  }else{
+    download_s3_objects(lake_directory, bucket = "drivers", prefix = file.path("noaa/NOAAGEFS_1hr_stacked",config$location$site_id))
+  }
 }
 
 #' Get file path for driver forecasts
@@ -266,19 +266,23 @@ get_restart_file <- function(config, lake_directory){
 #' @return
 #' @export
 #'
-update_run_config <- function(config, lake_directory, configure_run_file = "configure_run.yml", saved_file, new_horizon, day_advance = 1, new_start_datetime = TRUE){
+update_run_config <- function(config, lake_directory, configure_run_file = "configure_run.yml", saved_file = NA, new_horizon = NA, day_advance = NA, new_start_datetime = TRUE){
   if(new_start_datetime){
-  config$run_config$start_datetime <- config$run_config$forecast_start_datetime
+    config$run_config$start_datetime <- config$run_config$forecast_start_datetime
   }
-  if(config$run_config$forecast_horizon == 0){
-    config$run_config$forecast_horizon <- new_horizon
+  if(!is.na(config$run_config$forecast_horizon)){
+    if(config$run_config$forecast_horizon == 0){
+      config$run_config$forecast_horizon <- new_horizon
+    }
   }
-  config$run_config$forecast_start_datetime <- as.character(lubridate::as_datetime(config$run_config$forecast_start_datetime) + lubridate::days(day_advance))
-  if(lubridate::hour(config$run_config$forecast_start_datetime) == 0){
-    config$run_config$forecast_start_datetime <- paste(config$run_config$forecast_start_datetime, "00:00:00")
+  if(!is.na(day_advance)){
+    config$run_config$forecast_start_datetime <- as.character(lubridate::as_datetime(config$run_config$forecast_start_datetime) + lubridate::days(day_advance))
+    if(lubridate::hour(config$run_config$forecast_start_datetime) == 0){
+      config$run_config$forecast_start_datetime <- paste(config$run_config$forecast_start_datetime, "00:00:00")
+    }
   }
   if(!is.na(saved_file)){
-  config$run_config$restart_file <- basename(saved_file)
+    config$run_config$restart_file <- basename(saved_file)
   }
   yaml::write_yaml(config$run_config, file = file.path(lake_directory,"restart",config$location$site_id,config$run_config$sim_name,configure_run_file))
   if(config$run_config$use_s3){
