@@ -270,8 +270,8 @@ update_run_config <- function(config, lake_directory, configure_run_file = "conf
   if(new_start_datetime){
     config$run_config$start_datetime <- config$run_config$forecast_start_datetime
   }
-  if(!is.na(config$run_config$forecast_horizon)){
-    if(config$run_config$forecast_horizon == 0){
+  if(!is.na(new_horizon)){
+    if(!is.na(config$run_config$forecast_horizon)){
       config$run_config$forecast_horizon <- new_horizon
     }
   }
