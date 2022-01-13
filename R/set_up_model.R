@@ -14,7 +14,7 @@ set_up_model <- function(config,
                          inflow_file_names,
                          outflow_file_names){
 
-  file.copy(from = file.path(config$file_path$configuration_directory, "forecast_model", config$model_settings$model_name, config$model_settings$base_GLM_nml),
+  file.copy(from = file.path(config$file_path$configuration_directory, config$model_settings$base_GLM_nml),
             to = file.path(ens_working_directory, "glm3.nml"), overwrite = TRUE)
 
   non_temp_names <- state_names[which(!(state_names %in% c("temp", "salt")))]
@@ -36,13 +36,13 @@ set_up_model <- function(config,
 
   if(config$model_settings$model_name == "glm_aed"){
 
-    file.copy(from = file.path(config$file_path$configuration_directory, "forecast_model", config$model_settings$model_name, config$model_settings$base_AED_nml),
+    file.copy(from = file.path(config$file_path$configuration_directory, config$model_settings$base_AED_nml),
               to = file.path(ens_working_directory, "aed2.nml"), overwrite = TRUE)
 
-    file.copy(from = file.path(config$file_path$configuration_directory, "forecast_model", config$model_settings$model_name, config$model_settings$base_AED_phyto_pars_nml),
+    file.copy(from = file.path(config$file_path$configuration_directory, config$model_settings$base_AED_phyto_pars_nml),
               to = file.path(ens_working_directory, "aed2_phyto_pars.nml"), overwrite = TRUE)
 
-    file.copy(from = file.path(config$file_path$configuration_directory, "forecast_model", config$model_settings$model_name, config$model_settings$base_AED_zoop_pars_nml),
+    file.copy(from = file.path(config$file_path$configuration_directory, config$model_settings$base_AED_zoop_pars_nml),
               to = file.path(ens_working_directory, "aed2_zoop_pars.nml"), overwrite = TRUE)
 
   }
