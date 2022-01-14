@@ -8,7 +8,8 @@ combine_forecast_observations(
   file_name,
   target_file,
   extra_historical_days,
-  ncore = 1
+  ncore = 1,
+  depth_threshold = 0.15
 )
 }
 \arguments{

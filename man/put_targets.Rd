@@ -9,7 +9,7 @@ put_targets(
   cleaned_insitu_file = NA,
   cleaned_met_file = NA,
   cleaned_inflow_file = NA,
-  use_s3
+  use_s3 = FALSE
 )
 }
 \arguments{

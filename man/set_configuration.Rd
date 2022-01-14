@@ -4,7 +4,12 @@
 \alias{set_configuration}
 \title{Set and create directories in the configuration file}
 \usage{
-set_configuration(configure_run_file, lake_directory, clean_start = FALSE)
+set_configuration(
+  configure_run_file = "configure_run.yml",
+  lake_directory,
+  clean_start = FALSE,
+  config_set_name = "default"
+)
 }
 \arguments{
 \item{configure_run_file}{name of run configuration file (do not include full path)}
