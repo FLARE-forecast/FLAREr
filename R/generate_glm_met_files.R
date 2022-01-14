@@ -161,6 +161,7 @@ generate_glm_met_files <- function(obs_met_file = NULL,
 
     filenames[j] <- paste0(out_dir, "/", current_filename)
   }
+  filenames <- as.character(gsub("\\\\", "/", filenames))
 
   return(list(filenames = filenames,
               historical_met_error = historical_met_error))
