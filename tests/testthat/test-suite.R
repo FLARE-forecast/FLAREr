@@ -24,7 +24,6 @@ test_that("inflow & outflow files are generated", {
 
   inflow_forecast_path <- config$file_path$inflow_directory
 
-  #### NEED A TEST HERE TO CHECK THAT INFLOW FILES ARE GENERATED AND CORRECT
   inflow_outflow_files <- FLAREr::create_glm_inflow_outflow_files(inflow_file_dir = inflow_forecast_path,
                                                                  inflow_obs = cleaned_inflow_file,
                                                                  working_directory = config$file_path$execute_directory,
@@ -44,14 +43,7 @@ test_that("inflow & outflow files are generated", {
 test_that("observation matrix is generated and correct", {
 
   template_folder <- system.file("example", package = "FLAREr")
-  temp_dir <- tempdir()
-  # dir.create("example")
-  file.copy(from = template_folder, to = temp_dir, recursive = TRUE)
-
-  # test_directory <- "C:\\Users\\mooret\\Desktop\\FLARE\\flare-1\\inst\\data"
-  test_directory <- file.path(temp_dir, "example")
-
-  source(file.path(test_directory, "R/test_met_prep.R"))
+  source(file.path(template_folder, "R/test_met_prep.R"))
 
   obs <- FLAREr::create_obs_matrix(cleaned_observations_file_long,
                                   obs_config,
@@ -67,14 +59,7 @@ test_that("observation matrix is generated and correct", {
 test_that("generate states to obs mapping", {
 
   template_folder <- system.file("example", package = "FLAREr")
-  temp_dir <- tempdir()
-  # dir.create("example")
-  file.copy(from = template_folder, to = temp_dir, recursive = TRUE)
-
-  # test_directory <- "C:\\Users\\mooret\\Desktop\\FLARE\\flare-1\\inst\\data"
-  test_directory <- file.path(temp_dir, "example")
-
-  source(file.path(test_directory, "R/test_met_prep.R"))
+  source(file.path(template_folder, "R/test_met_prep.R"))
 
   states_config <- FLAREr::generate_states_to_obs_mapping(states_config, obs_config)
   testthat::expect_true(is.data.frame(states_config))
@@ -133,14 +118,8 @@ test_that("initial conditions are generated", {
 test_that("EnKF can be run", {
 
   template_folder <- system.file("example", package = "FLAREr")
-  temp_dir <- tempdir()
-  # dir.create("example")
-  file.copy(from = template_folder, to = temp_dir, recursive = TRUE)
 
-  # test_directory <- "C:\\Users\\mooret\\Desktop\\FLARE\\flare-1\\inst\\data"
-  test_directory <- file.path(temp_dir, "example")
-
-  source(file.path(test_directory, "R/test_enkf_prep.R"))
+  source(file.path(template_folder, "R/test_enkf_prep.R"))
 
   obs <- FLAREr::create_obs_matrix(cleaned_observations_file_long,
                                   obs_config,
