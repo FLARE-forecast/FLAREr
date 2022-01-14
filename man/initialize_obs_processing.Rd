@@ -4,7 +4,11 @@
 \alias{initialize_obs_processing}
 \title{Set and create directories for observation configuration}
 \usage{
-initialize_obs_processing(lake_directory, observation_yml = NA)
+initialize_obs_processing(
+  lake_directory,
+  observation_yml = NA,
+  config_set_name = "default"
+)
 }
 \arguments{
 \item{lake_directory}{full path to repository directory}
