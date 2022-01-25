@@ -25,7 +25,7 @@ get_run_config <- function(configure_run_file = "configure_run.yml", lake_direct
                           bucket = "restart",
                           file = file.path(lake_directory, "restart", config$location$site_id, config$run_config$sim_name, configure_run_file),
                           region = Sys.getenv("AWS_DEFAULT_REGION"),
-                          use_https = as.logical(Sys.getenv("USE_HTTPS"))))
+                          use_https = as.logical(Sys.getenv("USE_HTTPS")))
     }else{
       file.copy(file.path(lake_directory,"configuration",config_set_name,configure_run_file), file.path(lake_directory, "restart", config$location$site_id, config$run_config$sim_name, configure_run_file))
     }
@@ -95,21 +95,21 @@ put_targets <- function(site_id, cleaned_insitu_file = NA, cleaned_met_file = NA
                          object = file.path(site_id, basename(cleaned_insitu_file)),
                          bucket = "targets",
                          region = Sys.getenv("AWS_DEFAULT_REGION"),
-                         use_https = as.logical(Sys.getenv("USE_HTTPS"))))
+                         use_https = as.logical(Sys.getenv("USE_HTTPS")))
     }
     if(!is.na(cleaned_inflow_file)){
       aws.s3::put_object(file = cleaned_inflow_file,
                          object = file.path(site_id, basename(cleaned_inflow_file)),
                          bucket = "targets",
                          region = Sys.getenv("AWS_DEFAULT_REGION"),
-                         use_https = as.logical(Sys.getenv("USE_HTTPS"))))
+                         use_https = as.logical(Sys.getenv("USE_HTTPS")))
     }
     if(!is.na(cleaned_met_file)){
       aws.s3::put_object(file = cleaned_met_file,
                          object = file.path(site_id, basename(cleaned_met_file)),
                          bucket = "targets",
                          region = Sys.getenv("AWS_DEFAULT_REGION"),
-                         use_https = as.logical(Sys.getenv("USE_HTTPS"))))
+                         use_https = as.logical(Sys.getenv("USE_HTTPS")))
     }
   }
 }
@@ -270,7 +270,7 @@ get_restart_file <- function(config, lake_directory){
                           bucket = "forecasts",
                           file = file.path(lake_directory, "forecasts", config$location$site_id, restart_file),
                           region = Sys.getenv("AWS_DEFAULT_REGION"),
-                          use_https = as.logical(Sys.getenv("USE_HTTPS"))))
+                          use_https = as.logical(Sys.getenv("USE_HTTPS")))
     }
     config$run_config$restart_file <- file.path(lake_directory, "forecasts", config$location$site_id, restart_file)
   }
@@ -313,7 +313,7 @@ update_run_config <- function(config, lake_directory, configure_run_file = "conf
                        object = file.path(config$location$site_id,config$run_config$sim_name, configure_run_file),
                        bucket = "restart",
                        region = Sys.getenv("AWS_DEFAULT_REGION"),
-                       use_https = as.logical(Sys.getenv("USE_HTTPS"))))
+                       use_https = as.logical(Sys.getenv("USE_HTTPS")))
   }
   invisible(config)
 }
@@ -343,7 +343,7 @@ update_run_config_neon <- function(config, lake_directory, configure_run_file = 
                        object = file.path(config$location$site_id,config$run_config$sim_name, configure_run_file),
                        bucket = "restart",
                        region = Sys.getenv("AWS_DEFAULT_REGION"),
-                       use_https = as.logical(Sys.getenv("USE_HTTPS"))))
+                       use_https = as.logical(Sys.getenv("USE_HTTPS")))
   }
   invisible(config)
 }
@@ -364,7 +364,7 @@ put_forecast <- function(saved_file, eml_file_name, config){
                                   object = file.path(config$location$site_id, basename(saved_file)),
                                   bucket = "forecasts",
                                   region = Sys.getenv("AWS_DEFAULT_REGION"),
-                                  use_https = as.logical(Sys.getenv("USE_HTTPS"))))
+                                  use_https = as.logical(Sys.getenv("USE_HTTPS")))
     if(success){
       unlink(saved_file)
     }
@@ -372,7 +372,7 @@ put_forecast <- function(saved_file, eml_file_name, config){
                                   object = file.path(config$location$site_id, basename(eml_file_name)),
                                   bucket = "forecasts",
                                   region = Sys.getenv("AWS_DEFAULT_REGION"),
-                                  use_https = as.logical(Sys.getenv("USE_HTTPS"))))
+                                  use_https = as.logical(Sys.getenv("USE_HTTPS")))
     if(success){
       unlink(eml_file_name)
     }
@@ -393,7 +393,7 @@ download_s3_objects <- function(lake_directory, bucket, prefix){
   files <- aws.s3::get_bucket(bucket = bucket,
                               prefix = prefix,
                               region = Sys.getenv("AWS_DEFAULT_REGION"),
-                              use_https = as.logical(Sys.getenv("USE_HTTPS"))))
+                              use_https = as.logical(Sys.getenv("USE_HTTPS")))
   keys <- vapply(files, `[[`, "", "Key", USE.NAMES = FALSE)
   empty <- grepl("/$", keys)
   keys <- keys[!empty]
@@ -403,7 +403,7 @@ download_s3_objects <- function(lake_directory, bucket, prefix){
                           bucket = bucket,
                           file = file.path(lake_directory, bucket, keys[i]),
                           region = Sys.getenv("AWS_DEFAULT_REGION"),
-                          use_https = as.logical(Sys.getenv("USE_HTTPS"))))
+                          use_https = as.logical(Sys.getenv("USE_HTTPS")))
     }
   }
 }
@@ -420,7 +420,7 @@ delete_restart <- function(site_id, sim_name){
   files <- aws.s3::get_bucket(bucket = "restart",
                               prefix = file.path(site_id, sim_name),
                               region = Sys.getenv("AWS_DEFAULT_REGION"),
-                              use_https = as.logical(Sys.getenv("USE_HTTPS"))))
+                              use_https = as.logical(Sys.getenv("USE_HTTPS")))
   keys <- vapply(files, `[[`, "", "Key", USE.NAMES = FALSE)
   empty <- grepl("/$", keys)
   keys <- keys[!empty]
@@ -429,7 +429,7 @@ delete_restart <- function(site_id, sim_name){
       aws.s3::delete_object(object = keys[i],
                             bucket = "restart",
                             region = Sys.getenv("AWS_DEFAULT_REGION"),
-                            use_https = as.logical(Sys.getenv("USE_HTTPS"))))
+                            use_https = as.logical(Sys.getenv("USE_HTTPS")))
     }
   }
 }
@@ -483,7 +483,7 @@ check_noaa_present <- function(lake_directory, configure_run_file = "configure_r
     noaa_files <- aws.s3::get_bucket(bucket = "drivers",
                                      prefix = noaa_forecast_path,
                                      region = Sys.getenv("AWS_DEFAULT_REGION"),
-                                     use_https = as.logical(Sys.getenv("USE_HTTPS"))))
+                                     use_https = as.logical(Sys.getenv("USE_HTTPS")))
     noaa_forecast_path <- file.path(lake_directory,"drivers", noaa_forecast_path)
     keys <- vapply(noaa_files, `[[`, "", "Key", USE.NAMES = FALSE)
     empty <- grepl("/$", keys)
@@ -522,7 +522,7 @@ delete_sim <- function(site_id, sim_name){
     files <- aws.s3::get_bucket(bucket = "analysis",
                                 prefix = site_id,
                                 region = Sys.getenv("AWS_DEFAULT_REGION"),
-                                use_https = as.logical(Sys.getenv("USE_HTTPS"))))
+                                use_https = as.logical(Sys.getenv("USE_HTTPS")))
     keys <- vapply(files, `[[`, "", "Key", USE.NAMES = FALSE)
     empty <- grepl("/$", keys)
     keys <- keys[!empty]
@@ -532,7 +532,7 @@ delete_sim <- function(site_id, sim_name){
         aws.s3::delete_object(object = keys[i],
                               bucket = "analysis",
                               region = Sys.getenv("AWS_DEFAULT_REGION"),
-                              use_https = as.logical(Sys.getenv("USE_HTTPS"))))
+                              use_https = as.logical(Sys.getenv("USE_HTTPS")))
       }
     }
 
@@ -541,7 +541,7 @@ delete_sim <- function(site_id, sim_name){
     files <- aws.s3::get_bucket(bucket = "forecasts",
                                 prefix = file.path(site_id),
                                 region = Sys.getenv("AWS_DEFAULT_REGION"),
-                                use_https = as.logical(Sys.getenv("USE_HTTPS"))))
+                                use_https = as.logical(Sys.getenv("USE_HTTPS")))
     keys <- vapply(files, `[[`, "", "Key", USE.NAMES = FALSE)
     empty <- grepl("/$", keys)
     keys <- keys[!empty]
@@ -551,7 +551,7 @@ delete_sim <- function(site_id, sim_name){
         aws.s3::delete_object(object = keys[i],
                               bucket = "forecasts",
                               region = Sys.getenv("AWS_DEFAULT_REGION"),
-                              use_https = as.logical(Sys.getenv("USE_HTTPS"))))
+                              use_https = as.logical(Sys.getenv("USE_HTTPS")))
       }
     }
 
@@ -559,7 +559,7 @@ delete_sim <- function(site_id, sim_name){
     files <- aws.s3::get_bucket(bucket = "restart",
                                 prefix = file.path(site_id, sim_name),
                                 region = Sys.getenv("AWS_DEFAULT_REGION"),
-                                use_https = as.logical(Sys.getenv("USE_HTTPS"))))
+                                use_https = as.logical(Sys.getenv("USE_HTTPS")))
     keys <- vapply(files, `[[`, "", "Key", USE.NAMES = FALSE)
     empty <- grepl("/$", keys)
     keys <- keys[!empty]
@@ -568,7 +568,7 @@ delete_sim <- function(site_id, sim_name){
         aws.s3::delete_object(object = keys[i],
                               bucket = "restart",
                               region = Sys.getenv("AWS_DEFAULT_REGION"),
-                              use_https = as.logical(Sys.getenv("USE_HTTPS"))))
+                              use_https = as.logical(Sys.getenv("USE_HTTPS")))
       }
     }
   }
