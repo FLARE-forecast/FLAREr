@@ -50,7 +50,7 @@ jobs:
           install.packages('remotes')
           saveRDS(remotes::dev_package_deps(dependencies = TRUE), ".github/depends.Rds", version = 2)
           writeLines(sprintf("R-%i.%i", getRversion()$major, getRversion()$minor), ".github/R-version")
-        shell: Rscript {0}
+        shell: $(which Rscript) {0}
 
       - name: Restore R package cache
         if: runner.os != 'Windows'
@@ -67,7 +67,7 @@ jobs:
           while read -r cmd
           do
             eval sudo $cmd
-          done < <(Rscript -e 'writeLines(remotes::system_requirements("ubuntu", "20.04"))')
+          done < <($(which Rscript) -e 'writeLines(remotes::system_requirements("ubuntu", "20.04"))')
 
       - name: Install dependencies
         run: |
@@ -79,7 +79,7 @@ jobs:
           remotes::install_cran("rcmdcheck")
           remotes::install_cran("knitr")
           install.packages(".", repos = NULL, type = "source")  ## needed by parallel workers
-        shell: Rscript {0}
+        shell: $(which Rscript) {0}
 
       - name: Session info
         run: |
@@ -89,7 +89,7 @@ jobs:
           message("Using GLM ", substr(glm_v[3], 35, 58))
           pkgs <- installed.packages()[, "Package"]
           sessioninfo::session_info(pkgs, include_base = TRUE)
-        shell: Rscript {0}
+        shell: $(which Rscript) {0}
 
       - name: Check
         env:
@@ -97,7 +97,7 @@ jobs:
         run: |
           options(crayon.enabled = TRUE)
           rcmdcheck::rcmdcheck(args = c("--no-manual", "--as-cran"), error_on = "error", check_dir = "check")
-        shell: Rscript {0}
+        shell: $(which Rscript) {0}
 
       - name: Upload check results
         if: failure()
