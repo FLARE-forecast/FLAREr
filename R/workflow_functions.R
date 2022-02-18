@@ -10,16 +10,7 @@
 #'
 get_run_config <- function(configure_run_file = "configure_run.yml", lake_directory, config, clean_start = FALSE, config_set_name = "default", sim_name = NA){
   run_config <- yaml::read_yaml(file.path(lake_directory,"configuration",config_set_name,configure_run_file))
-  if(is.na(sim_name)){
-    if(is.null(run_config$sim_name)){
-      stop(paste0(file.path(lake_directory,"configuration",config_set_name,configure_run_file), " is missing sim_name"))
-    }else{
-      sim_name <- run_config$sim_name
-    }
-  }else{
-    run_config$sim_name <- sim_name
-  }
-
+  sim_name <- run_config$sim_name
   dir.create(file.path(lake_directory, "restart", config$location$site_id, sim_name), recursive = TRUE, showWarnings = FALSE)
 
   if(clean_start | !config$run_config$use_s3){
