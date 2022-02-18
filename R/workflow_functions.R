@@ -136,6 +136,11 @@ get_targets <- function(lake_directory, config){
 #' @export
 #'
 get_stacked_noaa <- function(lake_directory, config, averaged = TRUE){
+
+  if(Sys.getenv(x = "AWS_DEFAULT_REGION") == "" | Sys.getenv(x = "AWS_S3_ENDPOINT") == ""){
+    stop(paste0("Missing AWS_DEFAULT_REGION or AWS_S3_ENDPOINT environment variable.  Unable to download Stoacked NOAA"))
+  }
+
   if(averaged){
     download_s3_objects(lake_directory, bucket = "drivers", prefix = file.path("noaa/NOAAGEFS_1hr_stacked_average",config$location$site_id))
   }else{
@@ -182,11 +187,29 @@ get_driver_forecast_path <- function(config, forecast_model){
 #' @return
 #' @export
 #'
-get_driver_forecast <- function(lake_directory, forecast_path){
+get_driver_forecast_s3 <- function(lake_directory, forecast_path){
+
+  if(Sys.getenv(x = "AWS_DEFAULT_REGION") == "" | Sys.getenv(x = "AWS_S3_ENDPOINT") == ""){
+    stop(paste0("Missing AWS_DEFAULT_REGION or AWS_S3_ENDPOINT environment variable.  Unable to download Stoacked NOAA"))
+  }
 
   download_s3_objects(lake_directory,
                       bucket = "drivers",
                       prefix = forecast_path)
+}
+
+#' Call get_driver_forecast_s3
+#'
+#' @param lake_directory full path to repository directory
+#' @param forecast_path relative path of the driver forecast (relative to driver directory or bucket)
+#'
+#' @return
+#' @export
+#'
+get_driver_forecast <- function(lake_directory, forecast_path){
+
+  get_driver_forecast_s3(lake_directory, forecast_path)
+
 }
 
 #' Set and create directories in the configuration file
@@ -223,6 +246,26 @@ set_configuration <- function(configure_run_file = "configure_run.yml", lake_dir
 
   config$file_path$execute_directory <- file.path(lake_directory, "flare_tempdir", config$location$site_id, config$run_config$sim_name)
   dir.create(config$file_path$execute_directory, recursive = TRUE, showWarnings = FALSE)
+
+  if(Sys.getenv(x = "AWS_DEFAULT_REGION") == "" & config$run_config$use_s3 == TRUE){
+    warning(paste0(" Use s3 is set to TRUE in ",file.path(lake_directory,"configuration",config_set_name,configure_run_file),
+                "AWS_DEFAULT_REGION environment variable is not set"))
+  }
+
+  if(Sys.getenv(x = "AWS_S3_ENDPOINT") == "" & config$run_config$use_s3 == TRUE){
+    warning(paste0(" Use s3 is set to TRUE in ",file.path(lake_directory,"configuration",config_set_name,configure_run_file),
+                "AWS_S3_ENDPOINT environment variable is not set"))
+  }
+
+  if(Sys.getenv(x = "AWS_ACCESS_KEY_ID") == "" & config$run_config$use_s3 == TRUE){
+    warning(paste0(" Use s3 is set to TRUE in ",file.path(lake_directory,"configuration",config_set_name,configure_run_file),
+                   "AWS_ACCESS_KEY_ID environment variable is not set.  s3 can still be used for downloading"))
+  }
+
+  if(Sys.getenv(x = "AWS_SECRET_ACCESS_KEY") == "" & config$run_config$use_s3 == TRUE){
+    warning(paste0(" Use s3 is set to TRUE in ",file.path(lake_directory,"configuration",config_set_name,configure_run_file),
+                   "AWS_SECRET_ACCESS_KEY environment variable is not set.  s3 can still be used for downloading"))
+  }
 
   invisible(config)
 }
