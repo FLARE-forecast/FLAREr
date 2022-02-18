@@ -4,7 +4,11 @@
 \alias{check_noaa_present}
 \title{Check if NOAA forecast is on s3 bucket}
 \usage{
-check_noaa_present(lake_directory, configure_run_file)
+check_noaa_present(
+  lake_directory,
+  configure_run_file = "configure_run.yml",
+  config_set_name = "default"
+)
 }
 \arguments{
 \item{lake_directory}{full path to repository directory}
