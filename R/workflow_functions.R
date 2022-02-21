@@ -150,8 +150,8 @@ get_targets <- function(lake_directory, config){
 #'
 get_stacked_noaa <- function(lake_directory, config, averaged = TRUE){
 
-  if(Sys.getenv(x = "AWS_DEFAULT_REGION") == "" | Sys.getenv(x = "AWS_S3_ENDPOINT") == ""){
-    warning(paste0("Missing AWS_DEFAULT_REGION or AWS_S3_ENDPOINT environment variable.  Unable to download Stoacked NOAA"))
+  if(Sys.getenv(x = "AWS_S3_ENDPOINT") == ""){
+    stop("Missing AWS_S3_ENDPOINT environment variable. Unable to download Stoacked NOAA.")
   }
 
   if(averaged){
@@ -202,8 +202,8 @@ get_driver_forecast_path <- function(config, forecast_model){
 #'
 get_driver_forecast_s3 <- function(lake_directory, forecast_path){
 
-  if(Sys.getenv(x = "AWS_DEFAULT_REGION") == "" | Sys.getenv(x = "AWS_S3_ENDPOINT") == ""){
-    warning(paste0("Missing AWS_DEFAULT_REGION or AWS_S3_ENDPOINT environment variable.  Unable to download Stoacked NOAA"))
+  if(Sys.getenv(x = "AWS_S3_ENDPOINT") == ""){
+    stop("Missing AWS_S3_ENDPOINT environment variable. Unable to download Stoacked NOAA.")
   }
 
   download_s3_objects(lake_directory,
