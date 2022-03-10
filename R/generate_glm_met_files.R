@@ -26,17 +26,17 @@ generate_glm_met_files <- function(obs_met_file = NULL,
 
   start_datetime <- lubridate::as_datetime(config$run_config$start_datetime)
   if(is.na(config$run_config$forecast_start_datetime)){
-    end_datetime <- lubridate::as_datetime(config$run_config$end_datetime) - lubridate::hours(1)
+    end_datetime <- lubridate::as_datetime(config$run_config$end_datetime) #- lubridate::hours(1)
     forecast_start_datetime <- end_datetime
   }else{
     forecast_start_datetime <- lubridate::as_datetime(config$run_config$forecast_start_datetime)
-    end_datetime <- forecast_start_datetime + days(35) - lubridate::hours(1) #lubridate::days(config$run_config$forecast_horizon) - lubridate::hours(1)
+    end_datetime <- forecast_start_datetime + lubridate::days(config$run_config$forecast_horizon) #- lubridate::hours(1)
   }
 
   full_time <- seq(start_datetime, end_datetime, by = "1 hour")
   if(config$met$use_forecasted_met){
     if(forecast_start_datetime > start_datetime){
-      full_time_hist <- seq(start_datetime, forecast_start_datetime - lubridate::hours(1), by = "1 hour")
+      full_time_hist <- seq(start_datetime, forecast_start_datetime, by = "1 hour")
     }else{
       full_time_hist <- NULL
     }
