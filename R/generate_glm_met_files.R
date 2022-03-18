@@ -131,11 +131,9 @@ generate_glm_met_files <- function(obs_met_file = NULL,
       ncdf4::nc_close(noaa_met_nc)
       names(noaa_met) <- c("time", glm_met_vars)
 
-      noaa_met <- noaa_met %>%
-        na.omit()
-        #dplyr::filter(time <= lubridate::as_datetime(max(full_time)))
+      met2 <- met %>% slice(-n())
 
-      combined_met <- rbind(met, noaa_met)
+      combined_met <- rbind(met2, noaa_met)
       current_filename <- paste0('met_',ens,'.csv')
     }else{
       combined_met <- met

@@ -71,30 +71,29 @@ generate_initial_conditions <- function(states_config,
       }
     }
 
-    for(m in 1:nmembers){
+    for(m in 1:nmembers) {
+      #Add process noise
       q_v[] <- NA
       w[] <- NA
       w_new[] <- NA
       for(jj in 1:nstates){
         w[] <- rnorm(ndepths_modeled, 0, 1)
-        w_new[1] <- w[1]
-        q_v[1] <- states_config$initial_model_sd[jj] * w[1]
-        for(kk in 2:ndepths_modeled){
-          w_new[kk] <- (alpha_v[jj] * w_new[kk-1] + sqrt(1 - alpha_v[jj]^2) * w[kk])
-          q_v[kk] <- w_new[kk] * states_config$initial_model_sd[jj]
-          #q_v[kk] <- alpha_v * q_v[kk-1] + sqrt(1 - alpha_v^2) * states_config$initial_model_sd[jj] * w[kk]
-        }
-
         if(config$uncertainty$initial_condition == FALSE){
-          init$states[jj, , m] <- init_depth[jj, ]
-        }else{
-          init$states[jj, , m] <- init_depth[jj, ] + q_v
+          w[] <- 0.0
         }
-        if(jj > 1){
-          init$states[jj,which(init$states[jj, , m] < 0.0) , m] <- 0.0
+        for(kk in 1:ndepths_modeled){
+          #q_v[kk] <- alpha_v * q_v[kk-1] + sqrt(1 - alpha_v^2) * model_sd[jj, kk] * w[kk]
+          if(kk == 1){
+            w_new[1] <- w[1]
+          }else{
+            w_new[kk] <- (alpha_v[jj] * w_new[kk-1] + sqrt(1 - alpha_v[jj]^2) * w[kk])
+          }
+          q_v[kk] <- w_new[kk] * states_config$initial_model_sd[jj]
+          init$states[jj,kk,m] <- init_depth[jj,kk ]  + q_v[kk]
         }
       }
-    }
+    } # END ENSEMBLE LOOP
+
 
     if(npars > 0){
       for(par in 1:npars){

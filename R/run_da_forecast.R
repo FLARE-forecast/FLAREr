@@ -57,7 +57,8 @@ run_da_forecast <- function(states_init,
                             management = NULL,
                             da_method = "enkf",
                             par_fit_method = "inflate",
-                            debug = FALSE){
+                            debug = FALSE,
+                            log_wq = FALSE){
 
   if(length(states_config$state_names) > 1){
     config$include_wq <- TRUE
@@ -96,7 +97,11 @@ run_da_forecast <- function(states_init,
   for(i in 1:length(obs_sd)){
     for(j in 1:ndepths_modeled){
       index <- index + 1
-      psi[index] <- obs_sd[i]
+      if(i == 1){
+        psi[index] <- obs_sd[i]
+      }else{
+        psi[index] <- obs_sd[i] #sqrt(log(1 + obs_sd[i] ^ 2))
+      }
     }
   }
 
@@ -411,11 +416,18 @@ run_da_forecast <- function(states_init,
                                  state_names = states_config$state_names,
                                  include_wq = config$include_wq,
                                  debug = debug)
+
       })
 
       # Loop through output and assign to matrix
       for(m in 1:nmembers) {
         x_star[m, ] <- out[[m]]$x_star_end
+        if(log_wq){
+          index <- which(x_star[m, ] <= 0.0000001)
+          x_star[m, index[which(index > ndepths_modeled)]] <- 0.0000001
+          x_star[m, (ndepths_modeled+1):nstates] <- log(x_star[m, (ndepths_modeled+1):nstates])
+        }
+
         lake_depth[i ,m ] <- out[[m]]$lake_depth_end
         snow_ice_thickness[,i ,m] <- out[[m]]$snow_ice_thickness_end
         avg_surf_temp[i , m] <- out[[m]]$avg_surf_temp_end
@@ -432,22 +444,27 @@ run_da_forecast <- function(states_init,
         w_new[] <- NA
         for(jj in 1:nrow(model_sd)){
           w[] <- rnorm(ndepths_modeled, 0, 1)
-          w_new[1] <- w[1]
-          q_v[1] <- model_sd[jj, 1] * w_new[1]
-          for(kk in 2:ndepths_modeled){
+          for(kk in 1:ndepths_modeled){
             #q_v[kk] <- alpha_v * q_v[kk-1] + sqrt(1 - alpha_v^2) * model_sd[jj, kk] * w[kk]
-
-            w_new[kk] <- (alpha_v[jj] * w_new[kk-1] + sqrt(1 - alpha_v[jj]^2) * w[kk])
-            q_v[kk] <- w_new[kk] * model_sd[jj, kk]
+            if(kk == 1){
+              w_new[kk] <- w[kk]
+            }else{
+              w_new[kk] <- (alpha_v[jj] * w_new[kk-1] + sqrt(1 - alpha_v[jj]^2) * w[kk])
+            }
+            q_v[kk] <- w_new[kk] * model_sd[jj, kk] #sqrt(log(1 + model_sd[jj, kk] ^ 2))
+            x_corr[m, (((jj-1)*ndepths_modeled)+kk)] <-
+              x_star[m, (((jj-1)*ndepths_modeled)+kk)] + q_v[kk] #- 0.5*log(1 + model_sd[jj, kk]^2)
           }
-
-          x_corr[m, (((jj-1)*ndepths_modeled)+1):(jj*ndepths_modeled)] <-
-            x_star[m, (((jj-1)*ndepths_modeled)+1):(jj*ndepths_modeled)] + q_v
         }
+        if(log_wq){
+          index <- which(x_corr[m, ] <=  0.0000001)
+          x_corr[m, index[which(index > ndepths_modeled)]] <- 0.0000001
+        }
+
       } # END ENSEMBLE LOOP
 
       #Correct any negative water quality states
-      if(config$include_wq & config$da_setup$no_negative_states){
+      if(config$include_wq & !log_wq){
         for(m in 1:nmembers){
           index <- which(x_corr[m,] < 0.0)
           x_corr[m, index[which(index <= states_config$wq_end[num_wq_vars + 1] & index >= states_config$wq_start[2])]] <- 0.0
@@ -526,7 +543,10 @@ run_da_forecast <- function(states_init,
         if(config$uncertainty$process == FALSE & i > (hist_days + 1)){
           x[i, , ] <- x_star
         }
+      }
 
+      if(log_wq){
+        x[i, , (ndepths_modeled+1):nstates] <- exp(x[i, , (ndepths_modeled+1):nstates])
       }
     }else{
 
@@ -534,12 +554,23 @@ run_da_forecast <- function(states_init,
       forecast_flag[i] <- 0
       da_qc_flag[i] <- 0
 
+      curr_obs <- obs[,i, ]
+
+      if(log_wq){
+        for(kk in 2:dim(curr_obs)[1]){
+          curr_obs[kk, which(curr_obs[kk, ] <= 0)] <- 0.0000001
+          curr_obs[kk, ] <- log(curr_obs[kk, ])
+        }
+      }
+
       #if observation then calucate Kalman adjustment
       if(dim(obs)[1] > 1){
-        zt <- c(aperm(obs[,i , ], perm = c(2,1)))
+        zt <- c(aperm(curr_obs, perm = c(2,1)))
+        #zt[(ndepths_modeled+1):nstates] <- zt[(ndepths_modeled+1):nstates]  - 0.5*log(1 + psi[(ndepths_modeled+1):nstates]^2)
       }else{
-        zt <- c(obs[1,i , ])
+        zt <- c(curr_obs[1, ])
       }
+
       zt <- zt[which(!is.na(zt))]
 
       #Assign which states have obs in the time step
@@ -579,7 +610,7 @@ run_da_forecast <- function(states_init,
         #Extract the data uncertainity for the data
         #types present during the time-step
 
-        curr_psi <- psi[z_index]  ^ 2
+        curr_psi <- psi[z_index] ^ 2
 
         if(length(z_index) > 1){
           psi_t <- diag(curr_psi)
@@ -592,7 +623,9 @@ run_da_forecast <- function(states_init,
         d_mat <- t(mvtnorm::rmvnorm(n = nmembers, mean = zt, sigma=as.matrix(psi_t)))
 
         #Set any negative observations of water quality variables to zero
-        d_mat[which(z_index > length(config$model_settings$modeled_depths) & d_mat < 0.0)] <- 0.0
+        if(!log_wq){
+          d_mat[which(z_index > length(config$model_settings$modeled_depths) & d_mat < 0.0)] <- 0.0
+        }
 
         #Ensemble mean
         ens_mean <- apply(x_corr[,], 2, mean)
@@ -655,6 +688,10 @@ run_da_forecast <- function(states_init,
                                                      k_t_pars %*% (d_mat - h %*% t(x_corr)))
         }
 
+        if(log_wq){
+          x[i, , (ndepths_modeled+1):nstates] <- exp(x[i, , (ndepths_modeled+1):nstates])
+        }
+
       }else if(da_method == "pf"){
 
 
@@ -711,7 +748,7 @@ run_da_forecast <- function(states_init,
     ##################
 
     #Correct any negative water quality states
-    if(config$include_wq & config$da_setup$no_negative_states){
+    if(config$include_wq & !log_wq){
       for(m in 1:nmembers){
         index <- which(x[i,m,] < 0.0)
         x[i, m, index[which(index <= states_config$wq_end[num_wq_vars + 1] & index >= states_config$wq_start[2])]] <- 0.0
