@@ -60,7 +60,8 @@ run_da_forecast <- function(states_init,
                             debug = FALSE,
                             log_wq = FALSE){
 
-  if(length(states_config$state_names) > 1){
+  if((length(states_config$state_names) > 2 & "salt" %in% states_config$state_names) |
+      (length(states_config$state_names) > 1 & !("salt" %in% states_config$state_names))){
     config$include_wq <- TRUE
   }else{
     config$include_wq <- FALSE
@@ -342,8 +343,8 @@ run_da_forecast <- function(states_init,
     #assimilate new observations)
     if(i > 1){
 
-      out <- parallel::parLapply(cl, 1:nmembers, function(m) {
-        #out <- lapply(1:nmembers, function(m) { # Commented out for debugging
+      #out <- parallel::parLapply(cl, 1:nmembers, function(m) {
+        out <- lapply(1:nmembers, function(m) { # Commented out for debugging
 
         if(config$model_settings$ncore == 1){
           ens_dir_index <- 1
@@ -464,10 +465,15 @@ run_da_forecast <- function(states_init,
       } # END ENSEMBLE LOOP
 
       #Correct any negative water quality states
-      if(config$include_wq & !log_wq){
+      if(length(states_config$state_names) > 1 & !log_wq){
         for(m in 1:nmembers){
           index <- which(x_corr[m,] < 0.0)
-          x_corr[m, index[which(index <= states_config$wq_end[num_wq_vars + 1] & index >= states_config$wq_start[2])]] <- 0.0
+          if(num_wq_vars == 0){
+            start_index <- 2
+          }else{
+            start_index <- 1
+          }
+          x_corr[m, index[which(index <= states_config$wq_end[num_wq_vars + start_index] & index >= states_config$wq_start[2])]] <- 0.0
         }
       }
 
@@ -568,7 +574,7 @@ run_da_forecast <- function(states_init,
         zt <- c(aperm(curr_obs, perm = c(2,1)))
         #zt[(ndepths_modeled+1):nstates] <- zt[(ndepths_modeled+1):nstates]  - 0.5*log(1 + psi[(ndepths_modeled+1):nstates]^2)
       }else{
-        zt <- c(curr_obs[1, ])
+        zt <- curr_obs
       }
 
       zt <- zt[which(!is.na(zt))]
@@ -748,10 +754,15 @@ run_da_forecast <- function(states_init,
     ##################
 
     #Correct any negative water quality states
-    if(config$include_wq & !log_wq){
+    if(length(states_config$state_names) > 1 & !log_wq){
       for(m in 1:nmembers){
         index <- which(x[i,m,] < 0.0)
-        x[i, m, index[which(index <= states_config$wq_end[num_wq_vars + 1] & index >= states_config$wq_start[2])]] <- 0.0
+        if(num_wq_vars == 0){
+          start_index <- 2
+        }else{
+          start_index <- 1
+        }
+        x[i, m, index[which(index <= states_config$wq_end[num_wq_vars + start_index] & index >= states_config$wq_start[2])]] <- 0.0
       }
     }
 

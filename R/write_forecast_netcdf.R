@@ -94,8 +94,11 @@ write_forecast_netcdf <- function(da_forecast_output,
   def_list[[7]] <- ncdf4::ncvar_def("avg_surf_temp","degC",list(timedim, ensdim),missval = -99,longname ='Running Average of Surface Temperature',prec="single")
   def_list[[8]] <- ncdf4::ncvar_def("mixing_vars","dimensionless",list(mixing_vars_dim, timedim, ensdim),fillvalue,longname = "variables required to restart mixing",prec="single")
   def_list[[9]] <- ncdf4::ncvar_def("model_internal_depths","meter",list(timedim, internal_model_depths_dim, ensdim),fillvalue,longname = "depths simulated by glm that are required to restart ",prec="single")
-  def_list[[10]] <- ncdf4::ncvar_def("salt","g_kg",list(timedim, depthdim, ensdim),fillvalue,longname = "salt",prec="single")
-
+  if("salt" %in% states_config$state_names){
+    def_list[[10]] <- ncdf4::ncvar_def("salt","g_kg",list(timedim, depthdim, ensdim),fillvalue,longname = "state:salt",prec="single")
+  }else{
+    def_list[[10]] <- ncdf4::ncvar_def("salt","g_kg",list(timedim, depthdim, ensdim),fillvalue,longname = "salt",prec="single")
+  }
 
   index <- 10
 
@@ -106,7 +109,12 @@ write_forecast_netcdf <- function(da_forecast_output,
   }
 
   if(config$include_wq){
-    for(s in 2:length(states_config$state_names)){
+    if("salt" %in% states_config$state_names){
+      start_index <- 3
+    }else{
+      start_index <- 2
+    }
+    for(s in start_index:length(states_config$state_names)){
       if(states_config$state_names[s] %in% obs_config$state_names_obs){
         tmp_index <- which(obs_config$state_names_obs == states_config$state_names[s])
         long_name <- paste0("state:",obs_config$target_variable[tmp_index])
@@ -118,8 +126,13 @@ write_forecast_netcdf <- function(da_forecast_output,
   }
 
   if(length(config$output_settings$diagnostics_names) > 0){
+    if("salt" %in% states_config$state_names){
+      start_index <- 2
+    }else{
+      start_index <- 1
+    }
     for(s in 1:length(config$output_settings$diagnostics_names)){
-      def_list[[index+npars+length(states_config$state_names)-1 + s]]<- ncdf4::ncvar_def(config$output_settings$diagnostics_names[s],"-",list(timedim,depthdim, ensdim),fillvalue,paste0("diagnostic:",config$output_settings$diagnostics_names[s]),prec="single")
+      def_list[[index+npars+length(states_config$state_names)-start_index + s]]<- ncdf4::ncvar_def(config$output_settings$diagnostics_names[s],"-",list(timedim,depthdim, ensdim),fillvalue,paste0("diagnostic:",config$output_settings$diagnostics_names[s]),prec="single")
     }
   }
 
@@ -171,8 +184,13 @@ write_forecast_netcdf <- function(da_forecast_output,
   }
 
   if(length(config$output_settings$diagnostics_names) > 0){
+    if("salt" %in% states_config$state_names){
+      start_index <- 2
+    }else{
+      start_index <- 1
+    }
     for(s in 1:length(config$output_settings$diagnostics_names)){
-      ncdf4::ncvar_put(ncout, def_list[[index+npars+length(states_config$state_names) - 1 + s]],diagnostics_efi[s, , ,])
+      ncdf4::ncvar_put(ncout, def_list[[index+npars+length(states_config$state_names) - start_index + s]],diagnostics_efi[s, , ,])
     }
   }
 
