@@ -144,7 +144,12 @@ write_forecast_netcdf <- function(da_forecast_output,
   ncdf4::ncvar_put(ncout,def_list[[7]] ,avg_surf_temp)
   ncdf4::ncvar_put(ncout,def_list[[8]] ,mixing_vars)
   ncdf4::ncvar_put(ncout,def_list[[9]] ,model_internal_depths)
-  ncdf4::ncvar_put(ncout,def_list[[10]] ,salt)
+  if("salt" %in% states_config$state_names){
+    ncdf4::ncvar_put(ncout,def_list[[10]] ,x_efi[,(length(depths)+1):(length(depths) * 2),])
+  }else{
+    ncdf4::ncvar_put(ncout,def_list[[10]] ,salt)
+  }
+
 
   index <- 10
 
@@ -155,7 +160,12 @@ write_forecast_netcdf <- function(da_forecast_output,
   }
 
   if(config$include_wq){
-    for(s in 2:length(states_config$state_names)){
+    if("salt" %in% states_config$state_names){
+      start_index <- 3
+    }else{
+      start_index <- 2
+    }
+    for(s in start_index:length(states_config$state_names)){
       ncdf4::ncvar_put(ncout,def_list[[index+npars+s-1]],x_efi[,states_config$wq_start[s]:states_config$wq_end[s], ])
     }
   }

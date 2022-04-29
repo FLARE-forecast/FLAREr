@@ -145,8 +145,15 @@ run_model <- function(i,
 
     wq_init_vals <- c()
 
+    if("salt" %in% state_names){
+      start_index <- 2
+    }else{
+      start_index <- 1
+    }
+
     for(wq in 1:num_wq_vars){
-      wq_enkf_tmp <- x_start[wq_start[wq + 1]:wq_end[wq + 1]]
+
+      wq_enkf_tmp <- x_start[wq_start[wq + start_index]:wq_end[wq + start_index]]
       wq_enkf_tmp[wq_enkf_tmp < 0] <- 0
       wq_init_vals <- c(wq_init_vals,
                         approx(modeled_depths,wq_enkf_tmp, glm_depths_mid, rule = 2)$y)
@@ -183,14 +190,16 @@ run_model <- function(i,
   }
 
   the_temps_enkf_tmp <- x_start[1:ndepths_modeled]
-
   the_temps_glm <- approx(modeled_depths,the_temps_enkf_tmp, glm_depths_mid, rule = 2)$y
-
   update_glm_nml_list[[list_index]] <- round(the_temps_glm, 4)
   update_glm_nml_names[list_index] <- "the_temps"
   list_index <- list_index + 1
 
+  if("salt" %in% state_names){
+    salt_start <- x_start[(ndepths_modeled + 1):(ndepths_modeled * 2)]
+  }
   the_sals_glm <- approx(modeled_depths,salt_start, glm_depths_mid, rule = 2)$y
+
   update_glm_nml_list[[list_index]] <- round(the_sals_glm, 4)
   update_glm_nml_names[list_index] <- "the_sals"
   list_index <- list_index + 1
@@ -368,6 +377,7 @@ run_model <- function(i,
 
       num_glm_depths <- length(GLM_temp_wq_out$depths_enkf)
       glm_temps <- rev(GLM_temp_wq_out$output[ ,1])
+
       glm_depths_end[1:num_glm_depths] <- GLM_temp_wq_out$depths_enkf
 
       glm_depths_tmp <- c(GLM_temp_wq_out$depths_enkf,GLM_temp_wq_out$lake_depth)
@@ -377,12 +387,21 @@ run_model <- function(i,
       x_star_end[1:ndepths_modeled] <- approx(glm_depths_mid,glm_temps, modeled_depths, rule = 2)$y
 
       salt_end <- approx(glm_depths_mid, GLM_temp_wq_out$salt, modeled_depths, rule = 2)$y
+      if("salt" %in% state_names){
+        glm_salt <- rev(GLM_temp_wq_out$output[ ,2])
+        x_star_end[(ndepths_modeled + 1):(ndepths_modeled * 2)] <- approx(glm_depths_mid, glm_salt, modeled_depths, rule = 2)$y
+      }
 
       if(include_wq){
+        if("salt" %in% state_names){
+          start_index <- 2
+        }else{
+          start_index <- 1
+        }
         for(wq in 1:num_wq_vars){
-          glm_wq <-  rev(GLM_temp_wq_out$output[ ,1+wq])
+          glm_wq <-  rev(GLM_temp_wq_out$output[ ,start_index+wq])
           #if(length(is.na(glm_wq)) > 0){next}
-          x_star_end[wq_start[1 + wq]:wq_end[1 + wq]] <- approx(glm_depths_mid,glm_wq, modeled_depths, rule = 2)$y
+          x_star_end[wq_start[start_index + wq]:wq_end[start_index + wq]] <- approx(glm_depths_mid,glm_wq, modeled_depths, rule = 2)$y
         }
       }
 
