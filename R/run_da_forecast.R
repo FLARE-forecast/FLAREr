@@ -61,7 +61,7 @@ run_da_forecast <- function(states_init,
                             log_wq = FALSE){
 
   if((length(states_config$state_names) > 2 & "salt" %in% states_config$state_names) |
-      (length(states_config$state_names) > 1 & !("salt" %in% states_config$state_names))){
+     (length(states_config$state_names) > 1 & !("salt" %in% states_config$state_names))){
     config$include_wq <- TRUE
   }else{
     config$include_wq <- FALSE
@@ -180,7 +180,11 @@ run_da_forecast <- function(states_init,
 
 
   if(config$include_wq){
-    num_wq_vars <- length(states_config$wq_start) - 1
+    if("salt" %in% states_config$state_names){
+      num_wq_vars <- length(states_config$wq_start) - 2
+    }else{
+      num_wq_vars <- length(states_config$wq_start) - 1
+    }
   }else{
     num_wq_vars <- 0
   }
@@ -343,8 +347,8 @@ run_da_forecast <- function(states_init,
     #assimilate new observations)
     if(i > 1){
 
-      #out <- parallel::parLapply(cl, 1:nmembers, function(m) {
-        out <- lapply(1:nmembers, function(m) { # Commented out for debugging
+      out <- parallel::parLapply(cl, 1:nmembers, function(m) {
+        #out <- lapply(1:nmembers, function(m) { # Commented out for debugging
 
         if(config$model_settings$ncore == 1){
           ens_dir_index <- 1
@@ -359,13 +363,20 @@ run_da_forecast <- function(states_init,
         if(npars > 0){
           if(par_fit_method == "inflate" & da_method == "enkf"){
             curr_pars_ens <- x[i - 1, m , (nstates+1):(nstates+ npars)]
-          }else if(par_fit_method == "perturb" & da_method != "none"){
-            if(i < (hist_days + 1)){
-              curr_pars_ens <- x[i - 1, m , (nstates+1):(nstates+ npars)] + rnorm(npars, mean = rep(0, npars), sd = pars_config$perturb_par)
+          }else if(par_fit_method %in% c("perturb","perturb_const") & da_method != "none"){
+
+            if(par_fit_method == "perturb_const"){
+              par_mean <- apply(x[i - 1, , (nstates+1):(nstates+ npars)], 2, mean)
+              curr_pars_ens <- rnorm(npars, par_mean, sd = pars_config$perturb_par)
             }else{
-              curr_pars_ens <- x[i - 1, m , (nstates+1):(nstates+ npars)]
+              if(i < (hist_days + 1)){
+                curr_pars_ens <- x[i - 1, m , (nstates+1):(nstates+ npars)] + rnorm(npars, mean = rep(0, npars), sd = pars_config$perturb_par)
+              }else{
+                curr_pars_ens <- x[i - 1, m , (nstates+1):(nstates+ npars)]
+              }
+
             }
-          }else if(da_method == "none"){
+          }else if(da_method == "none" | par_fit_method == "perturb_init"){
             curr_pars_ens <- x[i - 1, m , (nstates+1):(nstates+ npars)]
           }else{
             message("parameter fitting method not supported.  inflate or perturb are supported. only inflate is supported for enkf")
@@ -690,8 +701,12 @@ run_da_forecast <- function(states_init,
         update_increment <-  k_t %*% (d_mat - h %*% t(x_corr))
         x[i, , 1:nstates] <- t(t(x_corr) + update_increment)
         if(npars > 0){
-          x[i, , (nstates+1):(nstates+npars)] <- t(t(pars_corr) +
-                                                     k_t_pars %*% (d_mat - h %*% t(x_corr)))
+          if(par_fit_method == "perturb_init"){
+            x[i, , (nstates+1):(nstates+npars)] <- t(t(pars_corr) +
+                                                       k_t_pars %*% (d_mat - h %*% t(x_corr)))
+          }else{
+            x[i, , (nstates+1):(nstates+npars)]  <- x[i - 1,  , (nstates+1):(nstates+ npars)]
+          }
         }
 
         if(log_wq){

@@ -121,18 +121,16 @@ write_forecast_netcdf <- function(da_forecast_output,
       }else{
         long_name <- "state"
       }
-      def_list[[index+npars+s-1]]<- ncdf4::ncvar_def(states_config$state_names[s],"mmol m-3",list(timedim,depthdim, ensdim),fillvalue,long_name,prec="single")
+
+      print(index+npars+ s - start_index +1 )
+      def_list[[index+npars+ s - start_index +1 ]]<- ncdf4::ncvar_def(states_config$state_names[s],"mmol m-3",list(timedim,depthdim, ensdim),fillvalue,long_name,prec="single")
     }
   }
 
   if(length(config$output_settings$diagnostics_names) > 0){
-    if("salt" %in% states_config$state_names){
-      start_index <- 2
-    }else{
-      start_index <- 1
-    }
     for(s in 1:length(config$output_settings$diagnostics_names)){
-      def_list[[index+npars+length(states_config$state_names)-start_index + s]]<- ncdf4::ncvar_def(config$output_settings$diagnostics_names[s],"-",list(timedim,depthdim, ensdim),fillvalue,paste0("diagnostic:",config$output_settings$diagnostics_names[s]),prec="single")
+      print(index+npars+length(states_config$state_names) + s -1)
+      def_list[[index+npars+length(states_config$state_names) + s - start_index + 1]]<- ncdf4::ncvar_def(config$output_settings$diagnostics_names[s],"-",list(timedim,depthdim, ensdim),fillvalue,paste0("diagnostic:",config$output_settings$diagnostics_names[s]),prec="single")
     }
   }
 
@@ -179,18 +177,18 @@ write_forecast_netcdf <- function(da_forecast_output,
       start_index <- 2
     }
     for(s in start_index:length(states_config$state_names)){
-      ncdf4::ncvar_put(ncout,def_list[[index+npars+s-1]],x_efi[,states_config$wq_start[s]:states_config$wq_end[s], ])
+      ncdf4::ncvar_put(ncout,def_list[[index+npars+ s - start_index +1 ]],x_efi[,states_config$wq_start[s]:states_config$wq_end[s], ])
     }
   }
 
   if(length(config$output_settings$diagnostics_names) > 0){
     if("salt" %in% states_config$state_names){
-      start_index <- 2
+      start_index <- 3
     }else{
-      start_index <- 1
+      start_index <- 2
     }
     for(s in 1:length(config$output_settings$diagnostics_names)){
-      ncdf4::ncvar_put(ncout, def_list[[index+npars+length(states_config$state_names) - start_index + s]],diagnostics_efi[s, , ,])
+      ncdf4::ncvar_put(ncout, def_list[[index+npars+length(states_config$state_names) + s - start_index + 1]],diagnostics_efi[s, , ,])
     }
   }
 
