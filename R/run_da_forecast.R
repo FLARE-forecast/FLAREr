@@ -690,6 +690,14 @@ run_da_forecast <- function(states_init,
         update <- update[1:(ndepths_modeled*nstates), ]
         update <- aperm(array(c(update), dim = c(ndepths_modeled, nstates, nmembers)), perm = c(2,1,3))
 
+        if(!is.na(obs_depth[i])){
+          lake_depth[i, ] <- rnorm(nmembers, obs_depth[i], sd = 0.05)
+          for(m in 1:nmembers){
+            depth_index <- which(model_internal_depths[i, , m] > lake_depth[i, m])
+            model_internal_depths[i,depth_index , m] <- NA
+          }
+        }
+
         for(s in 1:nstates){
           for(m in 1:nmembers){
             depth_index <- which(config$model_settings$modeled_depths <= lake_depth[i, m])

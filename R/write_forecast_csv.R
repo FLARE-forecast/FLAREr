@@ -124,7 +124,7 @@ write_forecast_csv <- function(da_forecast_output,
            model_id = config$run_config$sim_name) |>
     select(start_time, pub_time, model_id, site_id, depth, time, variable, predicted, forecast, variable_type)
 
-  if(!use_short_filename | is.na(da_forecast_output$save_file_name_short) | length(which(forecasted == 1)) == 0){
+  if(!use_short_filename | is.na(da_forecast_output$save_file_name_short) | length(which(forecast_flag == 1)) == 0){
     fname <- file.path(forecast_output_directory, paste0(da_forecast_output$save_file_name,".csv.gz"))
   }else{
     fname <- file.path(forecast_output_directory, paste0(da_forecast_output$save_file_name_short,".csv.gz"))

@@ -85,6 +85,16 @@ combine_forecast_observations <- function(file_name,
   d <- readr::read_csv(target_file,
                        col_types = readr::cols())
 
+  if("observed" %in% names(d)){
+    d <- d |>
+      dplyr::rename(value = observed)
+  }
+  if("time" %in% names(d)){
+    d <- d |>
+      mutate(hour = lubridate::hour(time),
+             date = lubridate::as_date(time),
+             hour = ifelse(avg_period == "1 day", NA, hour))
+  }
 
   #####
 
