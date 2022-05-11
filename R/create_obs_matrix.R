@@ -29,39 +29,26 @@ create_obs_matrix <- function(cleaned_observations_file_long,
 
   full_time <- seq(start_datetime, end_datetime, by = "1 day")
 
-  d <- readr::read_csv(cleaned_observations_file_long, col_types = readr::cols(date = readr::col_date(format = ""),
-                                                                               hour = readr::col_double(),
-                                                                               depth = readr::col_double(),
-                                                                               value = readr::col_double(),
-                                                                               variable = readr::col_character()))
+  d <- readr::read_csv(cleaned_observations_file_long, show_col_types = FALSE, guess_max = 1000000)
 
-  obs_list <- list()
+  if("observed" %in% names(d)){
+    d <- d |>
+      dplyr::rename(value = observed)
+  }
+  if("time" %in% names(d)){
+  d <- d |>
+    mutate(hour = lubridate::hour(time),
+           date = lubridate::as_date(time),
+           hour = ifelse(avg_period == "1 day", NA, hour))
+  }
 
-  switch(Sys.info() [["sysname"]],
-         Linux = { machine <- "unix" },
-         Darwin = { machine <- "mac" },
-         Windows = { machine <- "windows"})
-  if(machine == "windows") {
-    cl <- parallel::makeCluster(config$model_settings$ncore)
-    parallel::clusterEvalQ(cl, library(magrittr))
-    } else {
-      cl <- parallel::makeCluster(config$model_settings$ncore, setup_strategy = "sequential")
-      parallel::clusterEvalQ(cl, library(magrittr))
-      }
-  # Close parallel sockets on exit even if function is crashed or canceled
-  on.exit({
-    tryCatch({parallel::stopCluster(cl)},
-             error = function(e) {
-               return(NA)
-               })
-    })
+  if(config$model_settings$ncore == 1){
+    future::plan("future::sequential", workers = config$model_settings$ncore)
+  }else{
+    future::plan("future::multisession", workers = config$model_settings$ncore)
+  }
 
-  parallel::clusterExport(cl, varlist = list("obs_config", "full_time", "config", "d"),
-                            envir = environment())
-
-  obs_list <- parallel::parLapply(cl, 1:length(obs_config$state_names_obs), function(i) {
-
-        message("Extracting ", obs_config$target_variable[i])
+  obs_list <- furrr::future_map(1:length(obs_config$state_names_obs), function(i) {
 
     obs_tmp <- array(NA,dim = c(length(full_time), length(config$model_settings$modeled_depths)))
 

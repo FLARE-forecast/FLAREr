@@ -22,7 +22,10 @@ run_da_forecast(
   management = NULL,
   da_method = "enkf",
   par_fit_method = "inflate",
-  debug = FALSE
+  debug = FALSE,
+  log_wq = FALSE,
+  obs_secchi = NULL,
+  obs_depth = NULL
 )
 }
 \arguments{

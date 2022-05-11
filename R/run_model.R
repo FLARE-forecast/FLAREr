@@ -70,7 +70,7 @@ run_model <- function(i,
                       nstates,
                       state_names,
                       include_wq,
-                      debug = FALSE){
+                      debug = TRUE){
 
   switch(Sys.info() [["sysname"]],
          Linux = { machine <- "unix" },
@@ -109,7 +109,7 @@ run_model <- function(i,
 
   diagnostics <- array(NA, dim = c(length(diagnostics_names),ndepths_modeled))
 
-  x_star_end <- array(NA, dim = c(nstates, ndepths_modeled))
+  x_star_end <- array(NA, dim =c(nstates, ndepths_modeled))
 
   if(npars > 0){
 
@@ -293,7 +293,7 @@ run_model <- function(i,
 
       nc <- tryCatch(ncdf4::nc_open(paste0(working_directory, "/output.nc")),
                      error = function(e){
-                       warning(paste(e$message, "error in output.nc regenration"),
+                       warning(paste0(e$message, " error in output.nc regenration: ensemble ", m),
                                call. = FALSE)
                        return(NULL)
                      },
@@ -307,28 +307,28 @@ run_model <- function(i,
             success <- TRUE
           } else {
             # Catch for if the output has more than one layer
-            message("'output.nc' file generated but has one layer in the file. Re-running simulation...")
+            message(paste0("'output.nc' file generated but has one layer in the file. Re-running simulation: ensemble ", m))
             success <- FALSE
             if(debug){
               verbose <- TRUE
             }
           }
         }else{
-          message("'output.nc' file generated but has NA for the layer in the file. Re-running simulation...")
+          message(paste0("'output.nc' file generated but has NA for the layer in the file. Re-running simulation: ensemble ", m))
           success <- FALSE
           if(debug){
             verbose <- TRUE
           }
         }
       }else{
-        message("'output.nc' file generated but has NA for the layer in the file. Re-running simulation...")
+        message(paste0("'output.nc' file generated but has NA for the layer in the file. Re-running simulation: ensemble ", m))
         success <- FALSE
         if(debug){
           verbose <- TRUE
         }
       }
     }else{
-      message("'output.nc' file not generated. Re-running simulation...")
+      message(paste0("'output.nc' file not generated. Re-running simulation: ensemble ", m))
       success <- FALSE
       if(debug){
         verbose <- TRUE
