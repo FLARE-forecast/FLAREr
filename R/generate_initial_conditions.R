@@ -90,6 +90,7 @@ generate_initial_conditions <- function(states_config,
           }
           q_v[kk] <- w_new[kk] * states_config$initial_model_sd[jj]
           init$states[jj,kk,m] <- init_depth[jj,kk ]  + q_v[kk]
+          if(jj > 1 & init$states[jj,kk,m] < 0) init$states[jj,kk,m] <- 0.0
         }
       }
     } # END ENSEMBLE LOOP

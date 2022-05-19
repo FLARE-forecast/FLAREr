@@ -317,8 +317,8 @@ run_da_forecast <- function(states_init,
                                  lake_depth_start = lake_depth[i-1, m],
                                  x_start = x[i-1, , ,m ],
                                  full_time,
-                                 wq_start = states_config$wq_start,
-                                 wq_end = states_config$wq_end,
+                                 wq_start = NULL,
+                                 wq_end = NULL,
                                  management = management,
                                  hist_days,
                                  modeled_depths = config$model_settings$modeled_depths,
@@ -482,7 +482,7 @@ run_da_forecast <- function(states_init,
         }
       }
 
-      for(d in 1:dim(diagnostics)){
+      for(d in 1:dim(diagnostics)[1]){
         for(m in 1:nmembers){
           depth_index <- which(config$model_settings$modeled_depths > lake_depth[i, m])
           diagnostics[d,i, depth_index, m] <- NA
@@ -768,14 +768,18 @@ run_da_forecast <- function(states_init,
         for(s in 1:nstates){
           for(m in 1:nmembers){
             depth_index <- which(config$model_settings$modeled_depths > lake_depth[i, m])
-            x[i, s, depth_index, m ] <- NA
+            if(length(depth_index) > 0){
+              x[i, s, depth_index, m ] <- NA
+            }
           }
         }
 
-        for(d in 1:dim(diagnostics)){
+        for(d in 1:dim(diagnostics)[1]){
           for(m in 1:nmembers){
             depth_index <- which(config$model_settings$modeled_depths > lake_depth[i, m])
-            diagnostics[d,i, depth_index, m] <- NA
+            if(length(depth_index > 0)){
+              diagnostics[d,i, depth_index, m] <- NA
+            }
           }
         }
 
@@ -891,7 +895,7 @@ run_da_forecast <- function(states_init,
                            forecast_days,"_",
                            forecast_iteration_id)
 
-  if(length(full_time) >= hist_days+1){
+
 
     if(lubridate::day(full_time[hist_days+1]) < 10){
       file_name_F_day <- paste0("0",lubridate::day(full_time[hist_days+1]))
@@ -904,13 +908,18 @@ run_da_forecast <- function(states_init,
       file_name_F_month <- lubridate::month(full_time[hist_days+1])
     }
 
+  if(length(full_time) >= hist_days+1){
     save_file_name_short <- paste0(config$location$site_id, "-",
                                    (lubridate::year(full_time[hist_days+1])),"-",
                                    file_name_F_month,"-",
                                    file_name_F_day,"-",
                                    config$run_config$sim_name)
   }else{
-    save_file_name_short <- NA
+    save_file_name_short <- paste0(config$location$site_id, "-",
+                                   (lubridate::year(full_time[hist_days+1])),"-",
+                                   file_name_F_month,"-",
+                                   file_name_F_day,"-",
+                                   paste0(config$run_config$sim_name,"_spinup"))
   }
 
   #for(m in 1:nmembers){
