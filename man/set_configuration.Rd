@@ -8,7 +8,8 @@ set_configuration(
   configure_run_file = "configure_run.yml",
   lake_directory,
   clean_start = FALSE,
-  config_set_name = "default"
+  config_set_name = "default",
+  sim_name = NA
 )
 }
 \arguments{

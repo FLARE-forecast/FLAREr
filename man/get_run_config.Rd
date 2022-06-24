@@ -9,7 +9,8 @@ get_run_config(
   lake_directory,
   config,
   clean_start = FALSE,
-  config_set_name = "default"
+  config_set_name = "default",
+  sim_name = NA
 )
 }
 \arguments{

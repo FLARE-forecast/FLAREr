@@ -58,9 +58,11 @@ run_da_forecast <- function(states_init,
                             da_method = "enkf",
                             par_fit_method = "inflate",
                             debug = FALSE,
-                            log_wq = FALSE){
+                            log_wq = FALSE,
+                            obs_secchi = NULL,
+                            obs_depth = NULL){
 
-  if(length(states_config$state_names) > 1){
+  if(length(states_config$state_names) > 2){
     config$include_wq <- TRUE
   }else{
     config$include_wq <- FALSE
@@ -80,55 +82,15 @@ run_da_forecast <- function(states_init,
     par_nml <- NA
   }
 
-  x_init <- array(NA, dim = c(nmembers, nstates * ndepths_modeled + npars))
-  for(m in 1:nmembers){
-    if(nstates > 1){
-      x_init[m,1:(nstates * ndepths_modeled)] <- c(aperm(states_init[, ,m ], perm = c(2,1)))
-    }else{
-      x_init[m,1:(nstates * ndepths_modeled)] <- states_init[1, ,m]
-    }
-    if(!is.null(pars_init) & npars > 0){
-      x_init[m,(nstates * ndepths_modeled + 1):(nstates * ndepths_modeled + npars)] <- pars_init[, m]
-    }
-  }
-
-  psi <- rep(NA, length(obs_sd) * ndepths_modeled)
-  index <- 0
-  for(i in 1:length(obs_sd)){
-    for(j in 1:ndepths_modeled){
-      index <- index + 1
-      if(i == 1){
-        psi[index] <- obs_sd[i]
-      }else{
-        psi[index] <- obs_sd[i] #sqrt(log(1 + obs_sd[i] ^ 2))
-      }
-    }
-  }
-
-  wq_start <- rep(NA, nstates)
-  wq_end <- rep(NA, nstates)
-  for(wq in 1:nstates){
-    if(wq == 1){
-      wq_start[wq] <- 1
-      wq_end[wq] <- ndepths_modeled
-    }else{
-      wq_start[wq] <- wq_end[wq-1]+1
-      wq_end[wq] <- wq_end[wq-1] + (ndepths_modeled)
-    }
-  }
-
-  states_config$wq_start <- wq_start
-  states_config$wq_end <- wq_end
-
-  FLAREr:::check_enkf_inputs(states_init,
-                             pars_init,
-                             obs,
-                             psi,
-                             model_sd,
-                             config,
-                             pars_config,
-                             states_config,
-                             obs_config)
+  # FLAREr:::check_enkf_inputs(states_init,
+  #                            pars_init,
+  #                            obs,
+  #                            psi,
+  #                            model_sd,
+  #                            config,
+  #                            pars_config,
+  #                            states_config,
+  #                            obs_config)
 
   start_datetime <- lubridate::as_datetime(config$run_config$start_datetime)
   if(is.na(config$run_config$forecast_start_datetime)){
@@ -143,30 +105,21 @@ run_da_forecast <- function(states_init,
   start_forecast_step <- 1 + hist_days
   full_time <- seq(start_datetime, end_datetime, by = "1 day")
   forecast_days <- as.numeric(end_datetime - forecast_start_datetime)
-
-  if(!is.null(pars_config)){
-    npars <- nrow(pars_config)
-    par_names <- pars_config$par_names
-    par_nml <- pars_config$par_nml
-  }else{
-    npars <- 0
-    par_names <- NA
-    par_nml <- NA
-  }
-
-  nstates <- dim(x_init)[2] -  npars
   nsteps <- length(full_time)
-  nmembers <- dim(x_init)[1]
-  n_met_members <- length(met_file_names)
-  ndepths_modeled <- length(config$model_settings$modeled_depths)
 
   data_assimilation_flag <- rep(NA, nsteps)
   forecast_flag <- rep(NA, nsteps)
   da_qc_flag <- rep(NA, nsteps)
 
-  x <- array(NA, dim=c(nsteps, nmembers, nstates + npars))
+  x <- array(NA, dim=c(nsteps, nstates, ndepths_modeled, nmembers))
+  x[1, , , ]  <- states_init
 
-  x[1, ,]  <- x_init
+  if(npars > 0){
+    pars <- array(NA, dim=c(nsteps, npars, nmembers))
+    pars[1, , ] <- pars_init
+  }else{
+    pars <- NULL
+  }
 
   q_v <- rep(NA, ndepths_modeled)
   w <- rep(NA, ndepths_modeled)
@@ -174,12 +127,10 @@ run_da_forecast <- function(states_init,
 
   alpha_v <- 1 - exp(-states_config$vert_decorr_length)
 
-
   glm_output_vars <- states_config$state_names
 
-
   if(config$include_wq){
-    num_wq_vars <- length(states_config$wq_start) - 1
+    num_wq_vars <- dim(x)[2] - 2
   }else{
     num_wq_vars <- 0
   }
@@ -195,8 +146,6 @@ run_da_forecast <- function(states_init,
   full_time_char <- strftime(full_time,
                              format="%Y-%m-%d %H:%M",
                              tz = "UTC")
-
-  x_prior <- array(NA, dim = c(nsteps, nmembers, nstates + npars))
 
   if(!is.null(inflow_file_names)){
     inflow_file_names <- as.matrix(inflow_file_names)
@@ -220,7 +169,7 @@ run_da_forecast <- function(states_init,
                           inflow_file_names = inflow_file_names,
                           outflow_file_names = outflow_file_names)
   } else {
-    lapply(1:nmembers, function(m){
+    purrr::walk(1:nmembers, function(m){
       if(!dir.exists(file.path(working_directory, m))) {
         dir.create(file.path(working_directory, m), showWarnings = FALSE)
       } else {
@@ -241,14 +190,12 @@ run_da_forecast <- function(states_init,
   lake_depth <- array(NA, dim = c(nsteps, nmembers))
   snow_ice_thickness <- array(NA, dim = c(3, nsteps, nmembers))
   avg_surf_temp <- array(NA, dim = c(nsteps, nmembers))
-  salt <- array(NA, dim = c(nsteps, ndepths_modeled, nmembers))
 
   mixing_vars[,1 ,] <- aux_states_init$mixing_vars
   model_internal_depths[1, ,] <- aux_states_init$model_internal_depths
   lake_depth[1, ] <- aux_states_init$lake_depth
   snow_ice_thickness[,1 , ] <- aux_states_init$snow_ice_thickness
   avg_surf_temp[1, ] <- aux_states_init$avg_surf_temp
-  salt[1, , ] <- aux_states_init$salt
 
   if(config$da_setup$assimilate_first_step){
     start_step <- 1
@@ -266,9 +213,13 @@ run_da_forecast <- function(states_init,
 
   for(i in start_step:nsteps){
 
-    curr_start <- strftime(full_time[i - 1],
-                           format="%Y-%m-%d %H:%M",
-                           tz = "UTC")
+    if(i > 1){
+      curr_start <- strftime(full_time[i - 1],
+                             format="%Y-%m-%d %H:%M",
+                             tz = "UTC")
+    }else{
+      curr_start <- "Restart"
+    }
     curr_stop <- strftime(full_time[i],
                           format="%Y-%m-%d %H:%M",
                           tz = "UTC")
@@ -287,17 +238,11 @@ run_da_forecast <- function(states_init,
     }
 
     #Create array to hold GLM predictions for each ensemble
-    x_star <- array(NA, dim = c(nmembers, nstates))
-    x_corr <- array(NA, dim = c(nmembers, nstates))
-    curr_pars <- array(NA, dim = c(nmembers, npars))
+    x_star <- array(NA, dim = c(nstates, ndepths_modeled, nmembers))
+    x_corr <- array(NA, dim = c(nstates, ndepths_modeled, nmembers))
+    curr_pars <- array(NA, dim = c(npars, nmembers))
 
-    #Matrix to store calculated ensemble specific deviations and innovations
-    dit <- array(NA, dim = c(nmembers, nstates))
 
-    if(npars > 0){
-      pars_corr <-  array(NA, dim = c(nmembers, npars))
-      dit_pars<- array(NA, dim = c(nmembers, npars))
-    }
 
     # if i = start_step set up cluster for parallelization
     # Switch for
@@ -305,51 +250,22 @@ run_da_forecast <- function(states_init,
            Linux = { machine <- "unix" },
            Darwin = { machine <- "mac" },
            Windows = { machine <- "windows"})
-    if(i == start_step) {
-      if(machine == "windows") {
-        cl <- parallel::makeCluster(config$model_settings$ncore, setup_strategy = "sequential")
-        parallel::clusterEvalQ(cl, library(FLAREr))
-      } else {
-        cl <- parallel::makeCluster(config$model_settings$ncore, setup_strategy = "sequential")
-      }
-      # Close parallel sockets on exit even if function is crashed or cancelled
-      on.exit({
-        tryCatch({parallel::stopCluster(cl)},
-                 error = function(e) {
-                   return(NA)
-                 })
-      })
-
-      parallel::clusterExport(cl, varlist = list("working_directory", "met_file_names", "met_index",
-                                                 "par_fit_method", "da_method", "nstates", "npars",
-                                                 "pars_config", "inflow_file_names", "inflow_outflow_index",
-                                                 "outflow_file_names", "curr_start",
-                                                 "curr_stop", "par_names", "par_nml",
-                                                 "num_phytos", "full_time", "management",
-                                                 "hist_days", "config", "states_config",
-                                                 "ndepths_modeled", "glm_output_vars", "num_wq_vars"),
-                              envir = environment())
-    }
-
-    # Variables that need to be exported at each timestep
-    parallel::clusterExport(cl, varlist = list("x", "i", "mixing_vars", "model_internal_depths", "lake_depth",
-                                               "snow_ice_thickness", "avg_surf_temp", "salt"),
-                            envir = environment())
-
 
     #If i == 1 then assimilate the first time step without running the process
     #model (i.e., use yesterday's forecast of today as initial conditions and
     #assimilate new observations)
     if(i > 1){
 
-      out <- parallel::parLapply(cl, 1:nmembers, function(m) {
-        #out <- lapply(1:nmembers, function(m) { # Commented out for debugging
+      if(config$model_settings$ncore == 1){
+        future::plan("future::sequential", workers = config$model_settings$ncore)
+      }else{
+        future::plan("future::multisession", workers = config$model_settings$ncore)
+      }
 
-        if(config$model_settings$ncore == 1){
-          ens_dir_index <- 1
-        }else{
-          ens_dir_index <- m
-        }
+      out <- furrr::future_map(1:nmembers, function(m) {
+
+        ens_dir_index <- m
+        if(config$model_settings$ncore == 1) ens_dir_index <- 1
 
         setwd(file.path(working_directory, ens_dir_index))
 
@@ -357,15 +273,21 @@ run_da_forecast <- function(states_init,
 
         if(npars > 0){
           if(par_fit_method == "inflate" & da_method == "enkf"){
-            curr_pars_ens <- x[i - 1, m , (nstates+1):(nstates+ npars)]
-          }else if(par_fit_method == "perturb" & da_method != "none"){
-            if(i < (hist_days + 1)){
-              curr_pars_ens <- x[i - 1, m , (nstates+1):(nstates+ npars)] + rnorm(npars, mean = rep(0, npars), sd = pars_config$perturb_par)
+            curr_pars_ens <-  pars[i-1, , m]
+          }else if(par_fit_method %in% c("perturb","perturb_const") & da_method != "none"){
+            if(par_fit_method == "perturb_const"){
+              par_mean <- apply(pars[i-1, , ], 1, mean)
+              curr_pars_ens <- rnorm(npars, par_mean, sd = pars_config$perturb_par)
             }else{
-              curr_pars_ens <- x[i - 1, m , (nstates+1):(nstates+ npars)]
+              if(i < (hist_days + 1)){
+                curr_pars_ens <- pars[i-1, , m] + rnorm(npars, mean = rep(0, npars), sd = pars_config$perturb_par)
+              }else{
+                curr_pars_ens <- pars[i-1, , m]
+              }
+
             }
-          }else if(da_method == "none"){
-            curr_pars_ens <- x[i - 1, m , (nstates+1):(nstates+ npars)]
+          }else if(da_method == "none" | par_fit_method == "perturb_init"){
+            curr_pars_ens <- pars[i-1, , m]
           }else{
             message("parameter fitting method not supported.  inflate or perturb are supported. only inflate is supported for enkf")
 
@@ -381,7 +303,6 @@ run_da_forecast <- function(states_init,
           inflow_file_name <- NULL
           outflow_file_name <- NULL
         }
-
         out <-FLAREr:::run_model(i,
                                  m,
                                  mixing_vars_start = mixing_vars[,i-1 , m],
@@ -394,10 +315,10 @@ run_da_forecast <- function(states_init,
                                  num_phytos,
                                  glm_depths_start = model_internal_depths[i-1, ,m ],
                                  lake_depth_start = lake_depth[i-1, m],
-                                 x_start = x[i-1, m, ],
+                                 x_start = x[i-1, , ,m ],
                                  full_time,
-                                 wq_start = states_config$wq_start,
-                                 wq_end = states_config$wq_end,
+                                 wq_start = NULL,
+                                 wq_end = NULL,
                                  management = management,
                                  hist_days,
                                  modeled_depths = config$model_settings$modeled_depths,
@@ -411,22 +332,21 @@ run_da_forecast <- function(states_init,
                                  num_wq_vars,
                                  snow_ice_thickness_start = snow_ice_thickness[, i-1, m ],
                                  avg_surf_temp_start = avg_surf_temp[i-1, m],
-                                 salt_start = salt[i-1, , m],
                                  nstates,
                                  state_names = states_config$state_names,
                                  include_wq = config$include_wq,
                                  debug = debug)
 
-      })
+      }, .options = furrr::furrr_options(seed = TRUE))
 
       # Loop through output and assign to matrix
       for(m in 1:nmembers) {
-        x_star[m, ] <- out[[m]]$x_star_end
-        if(log_wq){
-          index <- which(x_star[m, ] <= 0.0000001)
-          x_star[m, index[which(index > ndepths_modeled)]] <- 0.0000001
-          x_star[m, (ndepths_modeled+1):nstates] <- log(x_star[m, (ndepths_modeled+1):nstates])
-        }
+        x_star[, , m] <- out[[m]]$x_star_end
+        #if(log_wq){
+        #  index <- which(x_star[m, ] <= 0.0000001)
+        #  x_star[m, index[which(index > ndepths_modeled)]] <- 0.0000001
+        #  x_star[m, (ndepths_modeled+1):nstates] <- log(x_star[m, (ndepths_modeled+1):nstates])
+        #}
 
         lake_depth[i ,m ] <- out[[m]]$lake_depth_end
         snow_ice_thickness[,i ,m] <- out[[m]]$snow_ice_thickness_end
@@ -434,9 +354,7 @@ run_da_forecast <- function(states_init,
         mixing_vars[, i, m] <- out[[m]]$mixing_vars_end
         diagnostics[, i, , m] <- out[[m]]$diagnostics_end
         model_internal_depths[i, ,m] <- out[[m]]$model_internal_depths
-        salt[i, , m]  <- out[[m]]$salt_end
-        curr_pars[m, ] <- out[[m]]$curr_pars
-
+        curr_pars[, m] <- out[[m]]$curr_pars
 
         #Add process noise
         q_v[] <- NA
@@ -452,22 +370,24 @@ run_da_forecast <- function(states_init,
               w_new[kk] <- (alpha_v[jj] * w_new[kk-1] + sqrt(1 - alpha_v[jj]^2) * w[kk])
             }
             q_v[kk] <- w_new[kk] * model_sd[jj, kk] #sqrt(log(1 + model_sd[jj, kk] ^ 2))
-            x_corr[m, (((jj-1)*ndepths_modeled)+kk)] <-
-              x_star[m, (((jj-1)*ndepths_modeled)+kk)] + q_v[kk] #- 0.5*log(1 + model_sd[jj, kk]^2)
+            x_corr[jj, kk, m] <-
+              x_star[jj, kk, m] + q_v[kk] #- 0.5*log(1 + model_sd[jj, kk]^2)
           }
         }
-        if(log_wq){
-          index <- which(x_corr[m, ] <=  0.0000001)
-          x_corr[m, index[which(index > ndepths_modeled)]] <- 0.0000001
-        }
+        #if(log_wq){
+        #  index <- which(x_corr[m, ] <=  0.0000001)
+        #  x_corr[m, index[which(index > ndepths_modeled)]] <- 0.0000001
+        #}
 
       } # END ENSEMBLE LOOP
 
       #Correct any negative water quality states
-      if(config$include_wq & !log_wq){
-        for(m in 1:nmembers){
-          index <- which(x_corr[m,] < 0.0)
-          x_corr[m, index[which(index <= states_config$wq_end[num_wq_vars + 1] & index >= states_config$wq_start[2])]] <- 0.0
+      if(length(states_config$state_names) > 1 & !log_wq){
+        for(s in 2:nstates){
+          for(k in 1:ndepths_modeled){
+            index <- which(x_corr[s, k, ] < 0.0)
+            x_corr[s, k, index] <- 0.0
+          }
         }
       }
 
@@ -480,7 +400,7 @@ run_da_forecast <- function(states_init,
       }
 
     }else{
-      x_star <- x[i, ,1:nstates]
+      x_star <- x[i, , , ]
       x_corr <- x_star
       if(npars > 0){
         pars_corr <- curr_pars
@@ -491,17 +411,29 @@ run_da_forecast <- function(states_init,
       }
     }
 
-    if(npars > 0){
-      x_prior[i, , ] <- cbind(x_corr, pars_corr)
-    }else{
-      x_prior[i, , ] <- x_corr
-    }
-
     if(dim(obs)[1] > 1){
       z_index <- which(!is.na(c(aperm(obs[,i , ], perm = c(2,1)))))
+      max_index <- length(c(aperm(obs[,i , ], perm = c(2,1)))) + 1
     }else{
       z_index <- which(!is.na(c(obs[1,i , ])))
+      max_index <- length(c(obs[1,i , ])) + 1
     }
+
+      if(!is.null(obs_secchi)){
+        if(!is.na(obs_secchi[i])){
+          z_index <- c(z_index,max_index)
+        }
+      }
+
+    #if(!is.null(obs_depth)){
+    #  if(!is.na(obs_depth[i])){
+    #    if(!is.na(obs_secchi[i])){
+    #    z_index <- c(z_index,max_index +1)
+    #  }else{
+    #    z_index <- c(z_index,max_index)
+    #  }
+    #  }
+    #}
 
     #if no observations at a time step then just propogate model uncertainity
 
@@ -523,61 +455,108 @@ run_da_forecast <- function(states_init,
 
       if(npars > 0){
 
-        x[i, , ] <- cbind(x_corr, pars_star)
+        x[i, , , ] <- x_corr
+        if(npars > 0) pars[i, , ] <- pars_star
 
         if(config$uncertainty$process == FALSE & i > (hist_days + 1)){
           #don't add process noise if process uncertainty is false (x_star doesn't have noise)
           #don't add the noise to parameters in future forecast mode ()
-          x[i, , ] <- cbind(x_star, pars_star)
+          x[i, , , ] <- x_star
+          if(npars > 0) pars[i, , ] <- pars_star
         }
 
         if(i == (hist_days + 1) & config$uncertainty$initial_condition == FALSE){
-          for(m in 1:nmembers){
-            x[i, m, ] <- c(colMeans(x_star), pars_star[m, ])
+          pars[i, , ] <- pars_star
+          for(s in 1:nstates){
+            for(k in 1:ndepths_modeled){
+              x[i, s, k , ] <- mean(x_star[s, k, ])
+            }
           }
         }
+      }
 
-      }else{
-        x[i, , ] <- cbind(x_corr)
-
-        if(config$uncertainty$process == FALSE & i > (hist_days + 1)){
-          x[i, , ] <- x_star
+      for(s in 1:nstates){
+        for(m in 1:nmembers){
+          depth_index <- which(config$model_settings$modeled_depths > lake_depth[i, m])
+          x[i, s, depth_index, m ] <- NA
         }
       }
 
-      if(log_wq){
-        x[i, , (ndepths_modeled+1):nstates] <- exp(x[i, , (ndepths_modeled+1):nstates])
+      for(d in 1:dim(diagnostics)[1]){
+        for(m in 1:nmembers){
+          depth_index <- which(config$model_settings$modeled_depths > lake_depth[i, m])
+          diagnostics[d,i, depth_index, m] <- NA
+        }
       }
+      #if(log_wq){
+      #  x[i, , (ndepths_modeled+1):nstates] <- exp(x[i, , (ndepths_modeled+1):nstates])
+      #}
     }else{
+
+
+      x_matrix <- apply(aperm(x_corr[,1:ndepths_modeled,], perm = c(2,1,3)), 3, rbind)
+      modeled_secchi <- 1.7 / diagnostics[1, i, which.min(abs(config$model_settings$modeled_depths-1.0)), ]
+      x_matrix <- rbind(x_matrix, modeled_secchi)
+
+      max_obs_index <- 0
+      for(s in 1:dim(obs)[1]){
+        if(length(which(!is.na(obs[s,i ,]))) > 0){
+          max_obs_index <- max(max_obs_index, max(max_obs_index, max(which(!is.na(obs[s,i ,])))))
+        }
+      }
+
+      for(m in 1:nmembers){
+        if(config$model_settings$modeled_depths[max_obs_index] > lake_depth[i, m]){
+          lake_depth[i, m] = config$model_settings$modeled_depths[max_obs_index]
+        }
+      }
 
       data_assimilation_flag[i] <- 1
       forecast_flag[i] <- 0
       da_qc_flag[i] <- 0
 
-      curr_obs <- obs[,i, ]
+      curr_obs <- obs[,i,]
 
-      if(log_wq){
-        for(kk in 2:dim(curr_obs)[1]){
-          curr_obs[kk, which(curr_obs[kk, ] <= 0)] <- 0.0000001
-          curr_obs[kk, ] <- log(curr_obs[kk, ])
-        }
-      }
+      #if(log_wq){
+      #  for(kk in 2:dim(curr_obs)[1]){
+      #    curr_obs[kk, which(curr_obs[kk, ] <= 0)] <- 0.0000001
+      #    curr_obs[kk, ] <- log(curr_obs[kk, ])
+      #  }
+      #}
 
       #if observation then calucate Kalman adjustment
       if(dim(obs)[1] > 1){
         zt <- c(aperm(curr_obs, perm = c(2,1)))
         #zt[(ndepths_modeled+1):nstates] <- zt[(ndepths_modeled+1):nstates]  - 0.5*log(1 + psi[(ndepths_modeled+1):nstates]^2)
       }else{
-        zt <- c(curr_obs[1, ])
+        zt <- curr_obs
       }
 
       zt <- zt[which(!is.na(zt))]
 
+      secchi_index <- 0
+      if(!is.null(obs_secchi)){
+        secchi_index <- 1
+        if(!is.na(obs_secchi[i])){
+          zt <- c(zt, obs_secchi[i])
+
+        }
+      }
+
+      depth_index <- 0
+      #if(!is.null(obs_depth)){
+      #  depth_index <- 1
+      #  if(!is.na(obs_depth[i])){
+      #    zt <- c(zt, obs_depth[i])
+      #  }
+      #}
+
+
       #Assign which states have obs in the time step
-      h <- matrix(0, nrow = length(obs_sd) * ndepths_modeled, ncol = nstates)
+      h <- matrix(0, nrow = length(obs_sd) * ndepths_modeled + secchi_index + depth_index, ncol = nstates * ndepths_modeled + secchi_index + depth_index)
 
       index <- 0
-      for(k in 1:((nstates/ndepths_modeled))){
+      for(k in 1:nstates){
         for(j in 1:ndepths_modeled){
           index <- index + 1
           if(!is.na(dplyr::first(states_config$states_to_obs[[k]]))){
@@ -589,6 +568,12 @@ run_da_forecast <- function(states_init,
               }
             }
           }
+        }
+      }
+
+      if(!is.null(obs_secchi)){
+        if(!is.na(obs_secchi[i])){
+          h[dim(h)[1],dim(h)[2]] <- 1
         }
       }
 
@@ -607,8 +592,25 @@ run_da_forecast <- function(states_init,
 
       if(da_method == "enkf"){
 
-        #Extract the data uncertainity for the data
+        #Extract the data uncertainty for the data
         #types present during the time-step
+
+        psi <- rep(NA, length(obs_sd) * ndepths_modeled + secchi_index)
+        index <- 0
+        for(k in 1:length(obs_sd)){
+          for(j in 1:ndepths_modeled){
+            index <- index + 1
+            if(k == 1){
+              psi[index] <- obs_sd[k]
+            }else{
+              psi[index] <- obs_sd[k] #sqrt(log(1 + obs_sd[i] ^ 2))
+            }
+          }
+        }
+
+        if(!is.null(obs_secchi)){
+          psi[length(psi)] <- 0.2
+        }
 
         curr_psi <- psi[z_index] ^ 2
 
@@ -624,29 +626,32 @@ run_da_forecast <- function(states_init,
 
         #Set any negative observations of water quality variables to zero
         if(!log_wq){
-          d_mat[which(z_index > length(config$model_settings$modeled_depths) & d_mat < 0.0)] <- 0.0
+          d_mat[which(z_index > ndepths_modeled & d_mat < 0.0)] <- 0.0
         }
 
         #Ensemble mean
-        ens_mean <- apply(x_corr[,], 2, mean)
+        ens_mean <- apply(x_matrix, 1, mean)
 
         if(npars > 0){
-          par_mean <- apply(pars_corr, 2, mean)
+          par_mean <- apply(pars_corr, 1, mean)
           if(par_fit_method == "inflate"){
             for(m in 1:nmembers){
-              pars_corr[m, ] <- pars_config$inflat_pars * (pars_corr[m,] - par_mean) + par_mean
+              pars_corr[, m] <- pars_config$inflat_pars * (pars_corr[, m] - par_mean) + par_mean
             }
-            par_mean <- apply(pars_corr, 2, mean)
+            par_mean <- apply(pars_corr, 1, mean)
           }
         }
 
+        dit <- matrix(NA, nrow = nmembers, ncol = dim(x_matrix)[1])
+
+        if(npars > 0) dit_pars<- array(NA, dim = c(nmembers, npars))
 
         #Loop through ensemble members
         for(m in 1:nmembers){
           #  #Ensemble specific deviation
-          dit[m, ] <- x_corr[m, ] - ens_mean
+          dit[m, ] <- x_matrix[, m] - ens_mean
           if(npars > 0){
-            dit_pars[m, ] <- pars_corr[m, ] - par_mean
+            dit_pars[m, ] <- pars_corr[, m] - par_mean
           }
           if(m == 1){
             p_it <- dit[m, ] %*% t(dit[m, ])
@@ -667,12 +672,12 @@ run_da_forecast <- function(states_init,
           p_t_pars <- p_it_pars / (nmembers - 1)
         }
 
-        if(!is.na(config$da_setup$localization_distance)){
-          p_t <- localization(p_t,
-                              nstates,
-                              modeled_depths = config$model_settings$modeled_depths,
-                              localization_distance = config$da_setup$localization_distance)
-        }
+        #if(!is.na(config$da_setup$localization_distance)){
+        #  p_t <- localization(p_t,
+        #                      nstates,
+        #                      modeled_depths = config$model_settings$modeled_depths,
+        #                      localization_distance = config$da_setup$localization_distance)
+        #}
         #Kalman gain
         k_t <- p_t %*% t(h) %*% solve(h %*% p_t %*% t(h) + psi_t, tol = 1e-17)
         if(npars > 0){
@@ -681,22 +686,65 @@ run_da_forecast <- function(states_init,
 
         #Update states array (transposes are necessary to convert
         #between the dims here and the dims in the EnKF formulations)
-        update_increment <-  k_t %*% (d_mat - h %*% t(x_corr))
-        x[i, , 1:nstates] <- t(t(x_corr) + update_increment)
-        if(npars > 0){
-          x[i, , (nstates+1):(nstates+npars)] <- t(t(pars_corr) +
-                                                     k_t_pars %*% (d_mat - h %*% t(x_corr)))
+        update <-  x_matrix + k_t %*% (d_mat - h %*% x_matrix)
+        update <- update[1:(ndepths_modeled*nstates), ]
+        update <- aperm(array(c(update), dim = c(ndepths_modeled, nstates, nmembers)), perm = c(2,1,3))
+
+        if(!is.na(obs_depth[i])){
+          lake_depth[i, ] <- rnorm(nmembers, obs_depth[i], sd = 0.05)
+          for(m in 1:nmembers){
+            depth_index <- which(model_internal_depths[i, , m] > lake_depth[i, m])
+            model_internal_depths[i,depth_index , m] <- NA
+          }
         }
 
-        if(log_wq){
-          x[i, , (ndepths_modeled+1):nstates] <- exp(x[i, , (ndepths_modeled+1):nstates])
+        for(s in 1:nstates){
+          for(m in 1:nmembers){
+            depth_index <- which(config$model_settings$modeled_depths <= lake_depth[i, m])
+            x[i, s, depth_index, m ] <- update[s,depth_index , m]
+          }
         }
+
+        for(d in 1:dim(diagnostics)[1]){
+          for(m in 1:nmembers){
+            depth_index <- which(config$model_settings$modeled_depths > lake_depth[i, m])
+            diagnostics[d,i, depth_index, m] <- NA
+          }
+        }
+
+        #  if(max_depth_index < ndepths_modeled){
+        #    x[i, s,(max_depth_index+1):ndepths_modeled, ] <- NA
+        #  }
+        #  if(max_depth_index < max_obs_index){
+        #    for(m in 1:nmembers){
+        #      if(!is.na(states_config$states_to_obs[[s]]) &
+        #         length(which(!is.na(obs[states_config$states_to_obs[[s]],i,(max_depth_index+1):ndepths_modeled]))) > 0){
+        #        new_depth <- config$model_settings$modeled_depths[max_depth_index:ndepths_modeled]
+        #        modeled <- c(x[i, s,max_depth_index, m ], obs[states_config$states_to_obs[[s]],i,(max_depth_index+1):ndepths_modeled])
+        #        x[i, s,(max_depth_index+1):ndepths_modeled, m] <- approx(new_depth,modeled , xout = new_depth[-1], rule = 2)$y
+        #      }else{
+        #        x[i, s,(max_depth_index+1):ndepths_modeled, m] <- x[i, s,max_depth_index, m ]
+        #      }
+        #      lake_depth[i, m] <- max(lake_depth[i, m], onfig$model_settings$modeled_depths[max_obs_index])
+        #    }
+        #  }
+        #}
+
+        if(npars > 0){
+          if(par_fit_method != "perturb_init"){
+            pars[i, , ] <- pars_corr + k_t_pars %*% (d_mat - h %*% x_matrix)
+          }else{
+            pars[i, , ]  <- pars[i-1, , ]
+          }
+        }
+
+        #if(log_wq){
+        #  x[i, , (ndepths_modeled+1):nstates] <- exp(x[i, , (ndepths_modeled+1):nstates])
+        #}
 
       }else if(da_method == "pf"){
 
-
-        obs_states <- t(h %*% t(x_corr))
-
+        obs_states <- t(h %*% t(x_matrix))
 
         LL <- rep(NA, length(nmembers))
         for(m in 1:nmembers){
@@ -705,18 +753,35 @@ run_da_forecast <- function(states_init,
 
         sample <- sample.int(nmembers, replace = TRUE, prob = exp(LL))
 
+        update <- x_matrix[, sample]
+
         if(npars > 0){
-          x[i, , ] <- cbind(x_corr, pars_star)[sample, ]
-        }else{
-          x[i, , ] <- cbind(x_corr)[sample, ]
+          pars[i] <- pars_star[, sample]
         }
 
         snow_ice_thickness[ ,i, ] <- snow_ice_thickness[ ,i, sample]
         avg_surf_temp[i, ] <- avg_surf_temp[i, sample]
         lake_depth[i, ] <- lake_depth[i, sample]
-        salt[i, , ] <- salt[i, ,sample]
         model_internal_depths[i, , ] <- model_internal_depths[i, , sample]
         diagnostics[ ,i, , ] <- diagnostics[ ,i, ,sample]
+
+        for(s in 1:nstates){
+          for(m in 1:nmembers){
+            depth_index <- which(config$model_settings$modeled_depths > lake_depth[i, m])
+            if(length(depth_index) > 0){
+              x[i, s, depth_index, m ] <- NA
+            }
+          }
+        }
+
+        for(d in 1:dim(diagnostics)[1]){
+          for(m in 1:nmembers){
+            depth_index <- which(config$model_settings$modeled_depths > lake_depth[i, m])
+            if(length(depth_index > 0)){
+              diagnostics[d,i, depth_index, m] <- NA
+            }
+          }
+        }
 
       }else{
         message("da_method not supported; select enkf or pf or none")
@@ -725,43 +790,44 @@ run_da_forecast <- function(states_init,
 
     #IF NO INITIAL CONDITION UNCERTAINITY THEN SET EACH ENSEMBLE MEMBER TO THE MEAN
     #AT THE INITIATION OF ThE FUTURE FORECAST
-    if(i == (hist_days + 1)){
-
-      if(config$uncertainty$initial_condition == FALSE){
-        state_means <- colMeans(x[i, ,1:nstates])
-        for(m in 1:nmembers){
-          x[i, m, 1:nstates]  <- state_means
-        }
-      }
-      if(npars > 0){
-        if(config$uncertainty$parameter == FALSE){
-          par_means <- colMeans(x[i, ,(nstates + 1):(nstates + npars)])
-          for(m in 1:nmembers){
-            x[i, m, (nstates + 1):(nstates + npars)] <- par_means
-          }
-        }
-      }
-    }
+    # if(i == (hist_days + 1)){
+    #   if(config$uncertainty$initial_condition == FALSE){
+    #     state_means <- colMeans(x[i, ,1:nstates])
+    #     for(m in 1:nmembers){
+    #       x[i, m, 1:nstates]  <- state_means
+    #     }
+    #   }
+    #   if(npars > 0){
+    #     if(config$uncertainty$parameter == FALSE){
+    #       par_means <- colMeans(x[i, ,(nstates + 1):(nstates + npars)])
+    #       for(m in 1:nmembers){
+    #         x[i, m, (nstates + 1):(nstates + npars)] <- par_means
+    #       }
+    #     }
+    #   }
+    # }
 
     ###################
     ## Quality Control Step
     ##################
 
     #Correct any negative water quality states
-    if(config$include_wq & !log_wq){
-      for(m in 1:nmembers){
-        index <- which(x[i,m,] < 0.0)
-        x[i, m, index[which(index <= states_config$wq_end[num_wq_vars + 1] & index >= states_config$wq_start[2])]] <- 0.0
+    if(length(states_config$state_names) > 1 & !log_wq){
+      for(s in 2:nstates){
+        for(k in 1:ndepths_modeled){
+          index <- which(x[i, s, k, ] < 0.0)
+          x[i, s, k, index] <- 0.0
+        }
       }
     }
 
     #Correct any parameter values outside bounds
     if(npars > 0){
       for(par in 1:npars){
-        low_index <- which(x[i, ,nstates + par] < pars_config$par_lowerbound[par])
-        high_index <- which(x[i, ,nstates + par] > pars_config$par_upperbound[par])
-        x[i,low_index ,nstates + par] <- pars_config$par_lowerbound[par]
-        x[i,high_index ,nstates + par] <- pars_config$par_upperbound[par]
+        low_index <- which(pars[i,par ,] < pars_config$par_lowerbound[par])
+        high_index <- which(pars[i,par ,] > pars_config$par_upperbound[par])
+        pars[i,par, low_index] <- pars_config$par_lowerbound[par]
+        pars[i,par, high_index]  <- pars_config$par_upperbound[par]
       }
     }
 
@@ -771,8 +837,8 @@ run_da_forecast <- function(states_init,
     if(npars > 0){
       for(par in 1:npars){
         message(paste0(pars_config$par_names_save[par],": mean ",
-                       round(mean(pars_corr[,par]),4)," sd ",
-                       round(sd(pars_corr[,par]),4)))
+                       round(mean(pars_corr[par,]),4)," sd ",
+                       round(sd(pars_corr[par,]),4)))
       }
     }
   }
@@ -829,7 +895,7 @@ run_da_forecast <- function(states_init,
                            forecast_days,"_",
                            forecast_iteration_id)
 
-  if(length(full_time) >= hist_days+1){
+
 
     if(lubridate::day(full_time[hist_days+1]) < 10){
       file_name_F_day <- paste0("0",lubridate::day(full_time[hist_days+1]))
@@ -842,13 +908,18 @@ run_da_forecast <- function(states_init,
       file_name_F_month <- lubridate::month(full_time[hist_days+1])
     }
 
+  if(length(full_time) >= hist_days+1){
     save_file_name_short <- paste0(config$location$site_id, "-",
                                    (lubridate::year(full_time[hist_days+1])),"-",
                                    file_name_F_month,"-",
                                    file_name_F_day,"-",
                                    config$run_config$sim_name)
   }else{
-    save_file_name_short <- NA
+    save_file_name_short <- paste0(config$location$site_id, "-",
+                                   (lubridate::year(full_time[hist_days+1])),"-",
+                                   file_name_F_month,"-",
+                                   file_name_F_day,"-",
+                                   paste0(config$run_config$sim_name,"_spinup"))
   }
 
   #for(m in 1:nmembers){
@@ -859,6 +930,7 @@ run_da_forecast <- function(states_init,
   return(list(full_time = full_time,
               forecast_start_datetime = forecast_start_datetime,
               x = x,
+              pars = pars,
               obs = obs,
               save_file_name = save_file_name,
               save_file_name_short = save_file_name_short,
@@ -869,7 +941,6 @@ run_da_forecast <- function(states_init,
               snow_ice_thickness = snow_ice_thickness,
               avg_surf_temp = avg_surf_temp,
               lake_depth = lake_depth,
-              salt = salt,
               model_internal_depths = model_internal_depths,
               diagnostics = diagnostics,
               data_assimilation_flag = data_assimilation_flag,

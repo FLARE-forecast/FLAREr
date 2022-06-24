@@ -29,7 +29,6 @@
 #' @param num_wq_vars number of water quality variables
 #' @param snow_ice_thickness_start vector of snow and ice states
 #' @param avg_surf_temp_start average surface temperature
-#' @param salt_start salt
 #' @param nstates number of nstates simulated
 #' @param state_names state names
 #' @param include_wq boolean; TRUE = use water quality model
@@ -68,11 +67,10 @@ run_model <- function(i,
                       num_wq_vars,
                       snow_ice_thickness_start,
                       avg_surf_temp_start,
-                      salt_start,
                       nstates,
                       state_names,
                       include_wq,
-                      debug = FALSE){
+                      debug = TRUE){
 
   switch(Sys.info() [["sysname"]],
          Linux = { machine <- "unix" },
@@ -111,7 +109,7 @@ run_model <- function(i,
 
   diagnostics <- array(NA, dim = c(length(diagnostics_names),ndepths_modeled))
 
-  x_star_end <- rep(NA, nstates)
+  x_star_end <- array(NA, dim =c(nstates, ndepths_modeled))
 
   if(npars > 0){
 
@@ -144,9 +142,11 @@ run_model <- function(i,
   if(include_wq){
 
     wq_init_vals <- c()
+    start_index <- 2
 
     for(wq in 1:num_wq_vars){
-      wq_enkf_tmp <- x_start[wq_start[wq + 1]:wq_end[wq + 1]]
+
+      wq_enkf_tmp <- x_start[start_index + wq, ]
       wq_enkf_tmp[wq_enkf_tmp < 0] <- 0
       wq_init_vals <- c(wq_init_vals,
                         approx(modeled_depths,wq_enkf_tmp, glm_depths_mid, rule = 2)$y)
@@ -182,14 +182,13 @@ run_model <- function(i,
     }
   }
 
-  the_temps_enkf_tmp <- x_start[1:ndepths_modeled]
-
+  the_temps_enkf_tmp <- x_start[1, ]
   the_temps_glm <- approx(modeled_depths,the_temps_enkf_tmp, glm_depths_mid, rule = 2)$y
-
   update_glm_nml_list[[list_index]] <- round(the_temps_glm, 4)
   update_glm_nml_names[list_index] <- "the_temps"
   list_index <- list_index + 1
 
+  salt_start <- x_start[2, ]
   the_sals_glm <- approx(modeled_depths,salt_start, glm_depths_mid, rule = 2)$y
   update_glm_nml_list[[list_index]] <- round(the_sals_glm, 4)
   update_glm_nml_names[list_index] <- "the_sals"
@@ -267,18 +266,6 @@ run_model <- function(i,
                         "aed2_phyto_pars.nml")
   }
 
-  #if(ncol(as.matrix(inflow_file_names)) == 2){
-  #  tmp <- file.copy(from = inflow_file_names[inflow_outflow_index, 1],
-  #                   to = "inflow_file1.csv", overwrite = TRUE)
-  #  tmp <- file.copy(from = inflow_file_names[inflow_outflow_index, 2],
-  #                   to = "inflow_file2.csv", overwrite = TRUE)
-  #}else{
-  #  tmp <- file.copy(from = inflow_file_names[inflow_outflow_index],
-  #                   to = "inflow_file1.csv", overwrite = TRUE)
-  #}
-  #tmp <- file.copy(from = outflow_file_names[inflow_outflow_index],
-  #                 to = "outflow_file1.csv", overwrite = TRUE)
-
   #Use GLM NML files to run GLM for a day
   # Only allow simulations without NaN values in the output to proceed.
   #Necessary due to random Nan in AED output
@@ -306,7 +293,7 @@ run_model <- function(i,
 
       nc <- tryCatch(ncdf4::nc_open(paste0(working_directory, "/output.nc")),
                      error = function(e){
-                       warning(paste(e$message, "error in output.nc regenration"),
+                       warning(paste0(e$message, " error in output.nc regenration: ensemble ", m),
                                call. = FALSE)
                        return(NULL)
                      },
@@ -320,28 +307,28 @@ run_model <- function(i,
             success <- TRUE
           } else {
             # Catch for if the output has more than one layer
-            message("'output.nc' file generated but has one layer in the file. Re-running simulation...")
+            message(paste0("'output.nc' file generated but has one layer in the file. Re-running simulation: ensemble ", m))
             success <- FALSE
             if(debug){
               verbose <- TRUE
             }
           }
         }else{
-          message("'output.nc' file generated but has NA for the layer in the file. Re-running simulation...")
+          message(paste0("'output.nc' file generated but has NA for the layer in the file. Re-running simulation: ensemble ", m))
           success <- FALSE
           if(debug){
             verbose <- TRUE
           }
         }
       }else{
-        message("'output.nc' file generated but has NA for the layer in the file. Re-running simulation...")
+        message(paste0("'output.nc' file generated but has NA for the layer in the file. Re-running simulation: ensemble ", m))
         success <- FALSE
         if(debug){
           verbose <- TRUE
         }
       }
     }else{
-      message("'output.nc' file not generated. Re-running simulation...")
+      message(paste0("'output.nc' file not generated. Re-running simulation: ensemble ", m))
       success <- FALSE
       if(debug){
         verbose <- TRUE
@@ -368,21 +355,24 @@ run_model <- function(i,
 
       num_glm_depths <- length(GLM_temp_wq_out$depths_enkf)
       glm_temps <- rev(GLM_temp_wq_out$output[ ,1])
+
       glm_depths_end[1:num_glm_depths] <- GLM_temp_wq_out$depths_enkf
 
       glm_depths_tmp <- c(GLM_temp_wq_out$depths_enkf,GLM_temp_wq_out$lake_depth)
 
       glm_depths_mid <- glm_depths_tmp[1:(length(glm_depths_tmp)-1)] + diff(glm_depths_tmp)/2
 
-      x_star_end[1:ndepths_modeled] <- approx(glm_depths_mid,glm_temps, modeled_depths, rule = 2)$y
+      x_star_end[1, ] <- approx(glm_depths_mid,glm_temps, modeled_depths, rule = 2)$y
 
-      salt_end <- approx(glm_depths_mid, GLM_temp_wq_out$salt, modeled_depths, rule = 2)$y
+      glm_salt <- rev(GLM_temp_wq_out$output[ ,2])
+      x_star_end[2, ] <- approx(glm_depths_mid, glm_salt, modeled_depths, rule = 2)$y
 
       if(include_wq){
+      start_index <- 2
         for(wq in 1:num_wq_vars){
-          glm_wq <-  rev(GLM_temp_wq_out$output[ ,1+wq])
+          glm_wq <-  rev(GLM_temp_wq_out$output[ ,start_index+wq])
           #if(length(is.na(glm_wq)) > 0){next}
-          x_star_end[wq_start[1 + wq]:wq_end[1 + wq]] <- approx(glm_depths_mid,glm_wq, modeled_depths, rule = 2)$y
+          x_star_end[start_index + wq, ] <- approx(glm_depths_mid,glm_wq, modeled_depths, rule = 2)$y
         }
       }
 
@@ -412,7 +402,6 @@ run_model <- function(i,
               snow_ice_thickness_end  = GLM_temp_wq_out$snow_wice_bice,
               avg_surf_temp_end  = GLM_temp_wq_out$avg_surf_temp,
               mixing_vars_end = GLM_temp_wq_out$mixing_vars,
-              salt_end = salt_end,
               diagnostics_end  = diagnostics,
               model_internal_depths  = glm_depths_end,
               curr_pars = curr_pars))
