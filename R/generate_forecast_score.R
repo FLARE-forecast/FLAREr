@@ -1,0 +1,34 @@
+#' Generate forecast score from csv target and forecast files
+#'
+#' @param targets_file
+#' @param forecast_file
+#' @param output_directory
+#'
+#' @return
+#' @export
+#'
+#' @examples
+generate_forecast_score <- function(targets_file,
+                                    forecast_file,
+                                    output_directory){
+
+  target <- read_csv(targets_file, show_col_types = FALSE) |>
+    rename(z = depth) |>
+    mutate(x = NA,
+           y = NA,
+           target_id = "fcre")
+
+  forecast_file %>%
+    read4cast::read_forecast(grouping_variables = c("time", "depth"),
+                             target_variables = "temperature") %>%
+    dplyr::mutate(filename = forecast_file) %>%
+    #score4cast::select_forecasts() %>%
+    score4cast::pivot_forecast() %>%
+    score4cast::crps_logs_score(target) %>%
+    mutate(horizon = time-start_time) |>
+    mutate(horizon = as.numeric(lubridate::as.duration(horizon),
+                                units = "seconds"),
+           horizon = horizon / 86400) |>
+    #score4cast::include_horizon() %>%
+    readr::write_csv(file.path(output_directory,paste0("score-",da_forecast_output$save_file_name_short,".csv.gz")))
+}

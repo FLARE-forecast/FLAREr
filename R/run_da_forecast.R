@@ -72,14 +72,18 @@ run_da_forecast <- function(states_init,
   ndepths_modeled <- dim(states_init)[2]
   nmembers <- dim(states_init)[3]
   n_met_members <- length(met_file_names)
+  model <- config$model_settings$model
   if(!is.null(pars_config)){
+    if("model" %in% names(pars_config)){
+      pars_config <- pars_config[pars_config$model == model, ]
+    }
     npars <- nrow(pars_config)
     par_names <- pars_config$par_names
-    par_nml <- pars_config$par_nml
+    par_file <- pars_config$par_file
   }else{
     npars <- 0
     par_names <- NA
-    par_nml <- NA
+    par_file <- NA
   }
 
   # FLAREr:::check_enkf_inputs(states_init,
@@ -127,7 +131,7 @@ run_da_forecast <- function(states_init,
 
   alpha_v <- 1 - exp(-states_config$vert_decorr_length)
 
-  glm_output_vars <- states_config$state_names
+  output_vars <- states_config$state_names
 
   if(config$include_wq){
     num_wq_vars <- dim(x)[2] - 2
@@ -311,7 +315,7 @@ run_da_forecast <- function(states_init,
                                  par_names,
                                  curr_pars = curr_pars_ens,
                                  working_directory = file.path(working_directory, ens_dir_index),
-                                 par_nml,
+                                 par_nml = par_file,
                                  num_phytos,
                                  glm_depths_start = model_internal_depths[i-1, ,m ],
                                  lake_depth_start = lake_depth[i-1, m],
@@ -326,7 +330,7 @@ run_da_forecast <- function(states_init,
                                  curr_met_file,
                                  inflow_file_name = inflow_file_name,
                                  outflow_file_name = outflow_file_name,
-                                 glm_output_vars = glm_output_vars,
+                                 glm_output_vars = output_vars,
                                  diagnostics_names = config$output_settings$diagnostics_names,
                                  npars,
                                  num_wq_vars,
@@ -352,7 +356,9 @@ run_da_forecast <- function(states_init,
         snow_ice_thickness[,i ,m] <- out[[m]]$snow_ice_thickness_end
         avg_surf_temp[i , m] <- out[[m]]$avg_surf_temp_end
         mixing_vars[, i, m] <- out[[m]]$mixing_vars_end
-        diagnostics[, i, , m] <- out[[m]]$diagnostics_end
+        if(length(config$output_settings$diagnostics_names) > 0){
+          diagnostics[, i, , m] <- out[[m]]$diagnostics_end
+        }
         model_internal_depths[i, ,m] <- out[[m]]$model_internal_depths
         curr_pars[, m] <- out[[m]]$curr_pars
 
@@ -419,11 +425,11 @@ run_da_forecast <- function(states_init,
       max_index <- length(c(obs[1,i , ])) + 1
     }
 
-      if(!is.null(obs_secchi)){
-        if(!is.na(obs_secchi[i])){
-          z_index <- c(z_index,max_index)
-        }
+    if(!is.null(obs_secchi)){
+      if(!is.na(obs_secchi[i])){
+        z_index <- c(z_index,max_index)
       }
+    }
 
     #if(!is.null(obs_depth)){
     #  if(!is.na(obs_depth[i])){
@@ -482,10 +488,12 @@ run_da_forecast <- function(states_init,
         }
       }
 
-      for(d in 1:dim(diagnostics)[1]){
-        for(m in 1:nmembers){
-          depth_index <- which(config$model_settings$modeled_depths > lake_depth[i, m])
-          diagnostics[d,i, depth_index, m] <- NA
+      if(length(config$output_settings$diagnostics_names) > 0){
+        for(d in 1:dim(diagnostics)[1]){
+          for(m in 1:nmembers){
+            depth_index <- which(config$model_settings$modeled_depths > lake_depth[i, m])
+            diagnostics[d,i, depth_index, m] <- NA
+          }
         }
       }
       #if(log_wq){
@@ -495,8 +503,14 @@ run_da_forecast <- function(states_init,
 
 
       x_matrix <- apply(aperm(x_corr[,1:ndepths_modeled,], perm = c(2,1,3)), 3, rbind)
-      modeled_secchi <- 1.7 / diagnostics[1, i, which.min(abs(config$model_settings$modeled_depths-1.0)), ]
-      x_matrix <- rbind(x_matrix, modeled_secchi)
+      if(length(config$output_settings$diagnostics_names) > 0){
+        modeled_secchi <- 1.7 / diagnostics[1, i, which.min(abs(config$model_settings$modeled_depths-1.0)), ]
+        if(!is.null(obs_secchi)){
+          if(!is.na(obs_secchi[i])){
+            x_matrix <- rbind(x_matrix, modeled_secchi)
+          }
+        }
+      }
 
       max_obs_index <- 0
       for(s in 1:dim(obs)[1]){
@@ -690,11 +704,13 @@ run_da_forecast <- function(states_init,
         update <- update[1:(ndepths_modeled*nstates), ]
         update <- aperm(array(c(update), dim = c(ndepths_modeled, nstates, nmembers)), perm = c(2,1,3))
 
-        if(!is.na(obs_depth[i])){
-          lake_depth[i, ] <- rnorm(nmembers, obs_depth[i], sd = 0.05)
-          for(m in 1:nmembers){
-            depth_index <- which(model_internal_depths[i, , m] > lake_depth[i, m])
-            model_internal_depths[i,depth_index , m] <- NA
+        if(!is.null(obs_depth)){
+          if(!is.na(obs_depth[i])){
+            lake_depth[i, ] <- rnorm(nmembers, obs_depth[i], sd = 0.05)
+            for(m in 1:nmembers){
+              depth_index <- which(model_internal_depths[i, , m] > lake_depth[i, m])
+              model_internal_depths[i,depth_index , m] <- NA
+            }
           }
         }
 
@@ -704,11 +720,12 @@ run_da_forecast <- function(states_init,
             x[i, s, depth_index, m ] <- update[s,depth_index , m]
           }
         }
-
-        for(d in 1:dim(diagnostics)[1]){
-          for(m in 1:nmembers){
-            depth_index <- which(config$model_settings$modeled_depths > lake_depth[i, m])
-            diagnostics[d,i, depth_index, m] <- NA
+        if(length(config$output_settings$diagnostics_names) > 0){
+          for(d in 1:dim(diagnostics)[1]){
+            for(m in 1:nmembers){
+              depth_index <- which(config$model_settings$modeled_depths > lake_depth[i, m])
+              diagnostics[d,i, depth_index, m] <- NA
+            }
           }
         }
 
@@ -763,7 +780,9 @@ run_da_forecast <- function(states_init,
         avg_surf_temp[i, ] <- avg_surf_temp[i, sample]
         lake_depth[i, ] <- lake_depth[i, sample]
         model_internal_depths[i, , ] <- model_internal_depths[i, , sample]
-        diagnostics[ ,i, , ] <- diagnostics[ ,i, ,sample]
+        if(length(config$output_settings$diagnostics_names) > 0){
+          diagnostics[ ,i, , ] <- diagnostics[ ,i, ,sample]
+        }
 
         for(s in 1:nstates){
           for(m in 1:nmembers){
@@ -774,11 +793,13 @@ run_da_forecast <- function(states_init,
           }
         }
 
-        for(d in 1:dim(diagnostics)[1]){
-          for(m in 1:nmembers){
-            depth_index <- which(config$model_settings$modeled_depths > lake_depth[i, m])
-            if(length(depth_index > 0)){
-              diagnostics[d,i, depth_index, m] <- NA
+        if(length(config$output_settings$diagnostics_names) > 0){
+          for(d in 1:dim(diagnostics)[1]){
+            for(m in 1:nmembers){
+              depth_index <- which(config$model_settings$modeled_depths > lake_depth[i, m])
+              if(length(depth_index > 0)){
+                diagnostics[d,i, depth_index, m] <- NA
+              }
             }
           }
         }
@@ -897,16 +918,16 @@ run_da_forecast <- function(states_init,
 
 
 
-    if(lubridate::day(full_time[hist_days+1]) < 10){
-      file_name_F_day <- paste0("0",lubridate::day(full_time[hist_days+1]))
-    }else{
-      file_name_F_day <- lubridate::day(full_time[hist_days+1])
-    }
-    if(lubridate::month(full_time[hist_days+1]) < 10){
-      file_name_F_month <- paste0("0",lubridate::month(full_time[hist_days+1]))
-    }else{
-      file_name_F_month <- lubridate::month(full_time[hist_days+1])
-    }
+  if(lubridate::day(full_time[hist_days+1]) < 10){
+    file_name_F_day <- paste0("0",lubridate::day(full_time[hist_days+1]))
+  }else{
+    file_name_F_day <- lubridate::day(full_time[hist_days+1])
+  }
+  if(lubridate::month(full_time[hist_days+1]) < 10){
+    file_name_F_month <- paste0("0",lubridate::month(full_time[hist_days+1]))
+  }else{
+    file_name_F_month <- lubridate::month(full_time[hist_days+1])
+  }
 
   if(length(full_time) >= hist_days+1){
     save_file_name_short <- paste0(config$location$site_id, "-",

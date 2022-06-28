@@ -50,8 +50,6 @@ write_forecast_netcdf <- function(da_forecast_output,
     npars <- 0
   }
 
-  nstates <- dim(da_forecast_output$x)[3]
-
   x_efi <- aperm(x, c(1,3,4,2))
   diagnostics_efi <- diagnostics
 
@@ -59,7 +57,6 @@ write_forecast_netcdf <- function(da_forecast_output,
   ens <- seq(1,dim(x)[4],1)
   depths <- config$model_settings$modeled_depths
   t <- as.numeric(as.POSIXct(lubridate::with_tz(full_time),origin = '1970-01-01 00:00.00 UTC'))
-  states <- seq(1,nstates,1)
   #obs_states <- seq(1,dim(obs)[3],1)
 
   #Set variable that states whether value is forecasted

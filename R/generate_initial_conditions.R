@@ -20,13 +20,15 @@ generate_initial_conditions <- function(states_config,
                                         pars_config = NULL,
                                         obs,
                                         config,
-                                        restart_file = NA,
                                         historical_met_error = FALSE){
 
-  if(is.na(restart_file)){
+  pars_config <- pars_config[pars_config$model == config$model_settings$model, ]
+
+  if(is.na(config$run_config$restart_file)){
 
     init <- list()
-    if(!is.null(pars_config)){
+    if(!is.null(pars_config) & any(pars_config$model == config$model_settings$model)){
+      pars_config <- pars_config[pars_config$model == config$model_settings$model, ]
       npars <- nrow(pars_config)
     }else{
       npars <- 0
