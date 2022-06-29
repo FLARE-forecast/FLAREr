@@ -14,8 +14,8 @@
 ##'
 
 write_forecast_csv <- function(da_forecast_output,
-                                  forecast_output_directory,
-                                  use_short_filename = TRUE){
+                               forecast_output_directory,
+                               use_short_filename = TRUE){
 
   dir.create(forecast_output_directory, recursive = TRUE, showWarnings = FALSE)
 
@@ -40,80 +40,86 @@ write_forecast_csv <- function(da_forecast_output,
   for(i in 1:dim(x)[1]){
     for(j in 1:dim(x)[2]){
       for(k in 1:dim(x)[3]){
-      tmp <- tibble(predicted = x[i, j, k, ],
-                    time  = full_time[i],
-                    depth = config$model_settings$modeled_depths[k],
-                    variable = states_config$state_names[j],
-                    forecast = forecast_flag[i],
-                    ensemble = 1:dim(x)[4],
-                    variable_type = "state")
-      output_list <- rbind(output_list, tmp)
+        tmp <- tibble(predicted = x[i, j, k, ],
+                      time  = full_time[i],
+                      depth = config$model_settings$modeled_depths[k],
+                      variable = states_config$state_names[j],
+                      forecast = forecast_flag[i],
+                      ensemble = 1:dim(x)[4],
+                      variable_type = "state")
+        output_list <- rbind(output_list, tmp)
       }
     }
   }
 
-  for(i in 1:dim(diagnostics)[1]){
-    for(j in 1:dim(diagnostics)[2]){
-      for(k in 1:dim(diagnostics)[3]){
-        tmp <- tibble(predicted = diagnostics[i, j, k, ],
-                      time  = full_time[j],
-                      variable = states_config$state_names[i],
-                      depth = config$model_settings$modeled_depths[k],
-                      forecast = forecast_flag[j],
-                      ensemble = 1:dim(diagnostics)[4],
-                      variable_type = "diagnostic")
-        output_list <- rbind(output_list, tmp)
+  if(length(config$output_settings$diagnostics_names) > 0){
+    for(i in 1:dim(diagnostics)[1]){
+      for(j in 1:dim(diagnostics)[2]){
+        for(k in 1:dim(diagnostics)[3]){
+          tmp <- tibble(predicted = diagnostics[i, j, k, ],
+                        time  = full_time[j],
+                        variable = states_config$state_names[i],
+                        depth = config$model_settings$modeled_depths[k],
+                        forecast = forecast_flag[j],
+                        ensemble = 1:dim(diagnostics)[4],
+                        variable_type = "diagnostic")
+          output_list <- rbind(output_list, tmp)
+        }
       }
     }
   }
 
   for(i in 1:dim(pars)[1]){
     for(j in 1:dim(pars)[2]){
-        tmp <- tibble(predicted = pars[i, j, ],
-                      time  = full_time[i],
-                      variable = pars_config$par_names_save[j],
-                      depth = NA,
-                      forecast = forecast_flag[i],
-                      ensemble = 1:dim(pars)[3],
-                      variable_type = "parameter")
-        output_list <- rbind(output_list, tmp)
-      }
+      tmp <- tibble(predicted = pars[i, j, ],
+                    time  = full_time[i],
+                    variable = pars_config$par_names_save[j],
+                    depth = NA,
+                    forecast = forecast_flag[i],
+                    ensemble = 1:dim(pars)[3],
+                    variable_type = "parameter")
+      output_list <- rbind(output_list, tmp)
+    }
   }
 
+  if(!is.null(da_forecast_output$restart_list)){
+    lake_depth <- da_forecast_output$restart_list$lake_depth
+  }
   for(i in 1:dim(lake_depth)[1]){
-  tmp <- tibble(predicted = lake_depth[i, ],
-                time  = full_time[i],
-                variable = "depth",
-                depth = NA,
-                forecast = forecast_flag[i],
-                ensemble = 1:dim(lake_depth)[2],
-                variable_type = "state")
-  output_list <- rbind(output_list, tmp)
+    tmp <- tibble(predicted = lake_depth[i, ],
+                  time  = full_time[i],
+                  variable = "depth",
+                  depth = NA,
+                  forecast = forecast_flag[i],
+                  ensemble = 1:dim(lake_depth)[2],
+                  variable_type = "state")
+    output_list <- rbind(output_list, tmp)
   }
 
 
-
-  for(i in 1:dim(diagnostics)[2]){
-  tmp <- tibble(predicted = 1.7 / diagnostics[1, i, which.min(abs(config$model_settings$modeled_depths-1.0)), ],
-                time = full_time[i],
-                variable = "secchi",
-                depth = NA,
-                forecast = forecast_flag[i],
-                ensemble = 1:dim(diagnostics)[4],
-                variable_type = "state")
-  output_list <- rbind(output_list, tmp)
+  if(length(config$output_settings$diagnostics_names) > 0){
+    for(i in 1:dim(diagnostics)[2]){
+      tmp <- tibble(predicted = 1.7 / diagnostics[1, i, which.min(abs(config$model_settings$modeled_depths-1.0)), ],
+                    time = full_time[i],
+                    variable = "secchi",
+                    depth = NA,
+                    forecast = forecast_flag[i],
+                    ensemble = 1:dim(diagnostics)[4],
+                    variable_type = "state")
+      output_list <- rbind(output_list, tmp)
+    }
 
   }
 
   for(i in 1:dim(snow_ice_thickness)[1]){
-      tmp <- tibble(predicted = apply(snow_ice_thickness[2:3, i, ], 2, sum),
-                    time = full_time[i],
-                    variable = "ice_thickness",
-                    depth = NA,
-                    forecast = forecast_flag[i],
-                    ensemble = 1:dim(snow_ice_thickness)[3],
-                    variable_type = "state")
-      output_list <- rbind(output_list, tmp)
+    tmp <- tibble(predicted = apply(snow_ice_thickness[2:3, i, ], 2, sum),
+                  time = full_time[i],
+                  variable = "ice_thickness",
+                  depth = NA,
+                  forecast = forecast_flag[i],
+                  ensemble = 1:dim(snow_ice_thickness)[3],
+                  variable_type = "state")
+    output_list <- rbind(output_list, tmp)
   }
 
   time_of_forecast <- lubridate::with_tz(da_forecast_output$time_of_forecast, tzone = "UTC")
