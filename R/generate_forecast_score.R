@@ -11,7 +11,7 @@ generate_forecast_score <- function(targets_file,
     dplyr::mutate(x = NA,
                   y = NA,
                   target_id = "fcre",
-                  site_id = paste0(site_id,"-",depth))
+                  site_id = paste0(site_id,"-",z))
 
   forecast_file %>%
     read4cast::read_forecast(grouping_variables = c("time", "depth"),
