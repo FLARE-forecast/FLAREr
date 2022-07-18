@@ -129,9 +129,9 @@ get_glm_nc_var_all_wq <- function(ncFile,working_dir, z_out,vars_depth, vars_no_
   heights <- heights[1:tallest_layer, final_time_step]
   heights_out <- heights_surf - z_out
 
-  snow <-  matrix(ncdf4::ncvar_get(glm_nc, "hsnow"), ncol = final_time_step)[final_time_step]
-  ice_white <- matrix(ncdf4::ncvar_get(glm_nc, "hwice"), ncol = final_time_step)[final_time_step]
-  ice_blue <- matrix(ncdf4::ncvar_get(glm_nc, "hice"), ncol = final_time_step)[final_time_step]
+  snow <-  matrix(ncdf4::ncvar_get(glm_nc, "snow_thickness"), ncol = final_time_step)[final_time_step]
+  ice_white <- matrix(ncdf4::ncvar_get(glm_nc, "white_ice_thickness"), ncol = final_time_step)[final_time_step]
+  ice_blue <- matrix(ncdf4::ncvar_get(glm_nc, "blue_ice_thickness"), ncol = final_time_step)[final_time_step]
   avg_surf_temp <- matrix(ncdf4::ncvar_get(glm_nc, "avg_surf_temp"), ncol = final_time_step)[final_time_step]
 
 

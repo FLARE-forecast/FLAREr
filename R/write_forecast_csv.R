@@ -36,100 +36,108 @@ write_forecast_csv <- function(da_forecast_output,
 
   forecast_flag[which(is.na(forecast_flag))] <- 0
 
-  output_list <- NULL
-  for(i in 1:dim(x)[1]){
-    for(j in 1:dim(x)[2]){
-      for(k in 1:dim(x)[3]){
-        tmp <- tibble(predicted = x[i, j, k, ],
-                      time  = full_time[i],
-                      depth = config$model_settings$modeled_depths[k],
-                      variable = states_config$state_names[j],
-                      forecast = forecast_flag[i],
-                      ensemble = 1:dim(x)[4],
-                      variable_type = "state")
-        output_list <- rbind(output_list, tmp)
-      }
-    }
-  }
+  indexes <- expand.grid(1:dim(x)[1], 1:dim(x)[2], 1:dim(x)[3])
+  ensembles <- 1:dim(x)[4]
+
+  output_list <- map_dfr(1:nrow(indexes), function(i, indexes){
+    var1 <- indexes$Var1[i]
+    var2 <- indexes$Var2[i]
+    var3 <- indexes$Var3[i]
+    tibble::tibble(predicted = x[var1, var2, var3, ],
+                   time  = full_time[var1],
+                   depth = config$model_settings$modeled_depths[var3],
+                   variable = states_config$state_names[var2],
+                   forecast = forecast_flag[var1],
+                   ensemble = ensembles,
+                   variable_type = "state")
+  },
+  indexes = indexes
+  )
+
+  indexes <- expand.grid(1:dim(diagnostics)[1], 1:dim(diagnostics)[2], 1:dim(diagnostics)[3])
 
   if(length(config$output_settings$diagnostics_names) > 0){
-    for(i in 1:dim(diagnostics)[1]){
-      for(j in 1:dim(diagnostics)[2]){
-        for(k in 1:dim(diagnostics)[3]){
-          tmp <- tibble(predicted = diagnostics[i, j, k, ],
-                        time  = full_time[j],
-                        variable = states_config$state_names[i],
-                        depth = config$model_settings$modeled_depths[k],
-                        forecast = forecast_flag[j],
-                        ensemble = 1:dim(diagnostics)[4],
-                        variable_type = "diagnostic")
-          output_list <- rbind(output_list, tmp)
-        }
-      }
-    }
+    output_list2 <- map_dfr(1:nrow(indexes), function(i, indexes){
+      var1 <- indexes$Var1[i]
+      var2 <- indexes$Var2[i]
+      var3 <- indexes$Var3[i]
+      tibble::tibble(predicted = diagnostics[var1, var2, var3, ],
+                     time  = full_time[var1],
+                     depth = config$model_settings$modeled_depths[var3],
+                     variable = states_config$state_names[var2],
+                     forecast = forecast_flag[var1],
+                     ensemble = ensembles,
+                     variable_type = "diagnostic")
+    },
+    indexes = indexes
+    )
+    output_list <- dplyr::bind_rows(output_list, output_list2)
   }
 
-  for(i in 1:dim(pars)[1]){
-    for(j in 1:dim(pars)[2]){
-      tmp <- tibble(predicted = pars[i, j, ],
-                    time  = full_time[i],
-                    variable = pars_config$par_names_save[j],
-                    depth = NA,
-                    forecast = forecast_flag[i],
-                    ensemble = 1:dim(pars)[3],
-                    variable_type = "parameter")
-      output_list <- rbind(output_list, tmp)
-    }
-  }
+  indexes <- expand.grid(1:dim(pars)[1], 1:dim(pars)[2])
+
+  output_list3 <- map_dfr(1:nrow(indexes), function(i, indexes){
+    var1 <- indexes$Var1[i]
+    var2 <- indexes$Var2[i]
+    tibble::tibble(predicted = pars[var1, var2, ],
+                   time  = full_time[var1],
+                   depth = NA,
+                   variable = pars_config$par_names_save[var2],
+                   forecast = forecast_flag[var1],
+                   ensemble = ensembles,
+                   variable_type = "parameter")
+  },
+  indexes = indexes
+  )
+  output_list <- dplyr::bind_rows(output_list, output_list3)
 
   if(!is.null(da_forecast_output$restart_list)){
     lake_depth <- da_forecast_output$restart_list$lake_depth
   }
   for(i in 1:dim(lake_depth)[1]){
-    tmp <- tibble(predicted = lake_depth[i, ],
-                  time  = full_time[i],
-                  variable = "depth",
-                  depth = NA,
-                  forecast = forecast_flag[i],
-                  ensemble = 1:dim(lake_depth)[2],
-                  variable_type = "state")
-    output_list <- rbind(output_list, tmp)
+    tmp <- tibble::tibble(predicted = lake_depth[i, ],
+                          time  = full_time[i],
+                          variable = "depth",
+                          depth = NA,
+                          forecast = forecast_flag[i],
+                          ensemble = 1:dim(lake_depth)[2],
+                          variable_type = "state")
+    output_list <- dplyr::bind_rows(output_list, tmp)
   }
 
 
   if(length(config$output_settings$diagnostics_names) > 0){
     for(i in 1:dim(diagnostics)[2]){
-      tmp <- tibble(predicted = 1.7 / diagnostics[1, i, which.min(abs(config$model_settings$modeled_depths-1.0)), ],
-                    time = full_time[i],
-                    variable = "secchi",
-                    depth = NA,
-                    forecast = forecast_flag[i],
-                    ensemble = 1:dim(diagnostics)[4],
-                    variable_type = "state")
-      output_list <- rbind(output_list, tmp)
+      tmp <- tibble::tibble(predicted = 1.7 / diagnostics[1, i, which.min(abs(config$model_settings$modeled_depths-1.0)), ],
+                            time = full_time[i],
+                            variable = "secchi",
+                            depth = NA,
+                            forecast = forecast_flag[i],
+                            ensemble = 1:dim(diagnostics)[4],
+                            variable_type = "state")
+      output_list <- dplyr::bind_rows(output_list, tmp)
     }
-
   }
 
   for(i in 1:dim(snow_ice_thickness)[1]){
-    tmp <- tibble(predicted = apply(snow_ice_thickness[2:3, i, ], 2, sum),
-                  time = full_time[i],
-                  variable = "ice_thickness",
-                  depth = NA,
-                  forecast = forecast_flag[i],
-                  ensemble = 1:dim(snow_ice_thickness)[3],
-                  variable_type = "state")
-    output_list <- rbind(output_list, tmp)
+    tmp <- tibble::tibble(predicted = apply(snow_ice_thickness[2:3, i, ], 2, sum),
+                          time = full_time[i],
+                          variable = "ice_thickness",
+                          depth = NA,
+                          forecast = forecast_flag[i],
+                          ensemble = 1:dim(snow_ice_thickness)[3],
+                          variable_type = "state")
+    output_list <- dplyr::bind_rows(output_list, tmp)
   }
 
   time_of_forecast <- lubridate::with_tz(da_forecast_output$time_of_forecast, tzone = "UTC")
 
   output_list <- output_list |>
-    mutate(pub_time = time_of_forecast,
-           start_time = forecast_start_datetime,
-           site_id = config$location$site_id,
-           model_id = config$run_config$sim_name) |>
-    select(start_time, pub_time, model_id, site_id, depth, time, ensemble, variable, predicted, forecast, variable_type)
+    dplyr::mutate(pub_time = time_of_forecast,
+                  start_time = forecast_start_datetime,
+                  site_id = config$location$site_id,
+                  model_id = config$run_config$sim_name) |>
+    dplyr::select(start_time, pub_time, model_id, site_id, depth, time, ensemble, variable, predicted, forecast, variable_type)
 
   if(!use_short_filename | is.na(da_forecast_output$save_file_name_short) | length(which(forecast_flag == 1)) == 0){
     fname <- file.path(forecast_output_directory, paste0(da_forecast_output$save_file_name,".csv.gz"))
@@ -141,11 +149,10 @@ write_forecast_csv <- function(da_forecast_output,
     if(length(which(obs_config$state_names_obs == states_config$state_names[i])) >0){
       obs_name <- obs_config$target_variable[which(obs_config$state_names_obs == states_config$state_names[i])]
       output_list <- output_list %>%
-        mutate(variable = ifelse(variable == states_config$state_names[i], obs_name, variable))
+        dplyr::mutate(variable = ifelse(variable == states_config$state_names[i], obs_name, variable))
     }
   }
 
   write_csv(output_list, fname)
   invisible(fname)
-
 }
