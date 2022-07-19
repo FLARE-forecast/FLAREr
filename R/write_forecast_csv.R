@@ -54,6 +54,42 @@ write_forecast_csv <- function(da_forecast_output,
   indexes = indexes
   )
 
+  tmp_index <- 0
+  for(s in 1:length(obs_config$state_names_obs)){
+    if(!obs_config$state_names_obs[s] %in% states_config$state_names){
+      tmp_index <- tmp_index + 1
+      first_index <- 1
+      for(ii in 1:length(states_config$state_names)){
+        if(s %in% states_config$states_to_obs[[ii]]){
+          temp_index <- which(states_config$states_to_obs[[ii]] == s)
+          if(first_index == 1){
+            temp_var <- x[ ,ii , , ] * states_config$states_to_obs_mapping[[ii]][temp_index]
+            first_index <- 2
+          }else{
+            temp_var <- temp_var + x[, ii, , ] * states_config$states_to_obs_mapping[[ii]][temp_index]
+          }
+        }
+      }
+    }
+
+    indexes <- expand.grid(1:dim(temp_var)[1], 1:dim(temp_var)[2])
+
+    output_list_tmp <- map_dfr(1:nrow(indexes), function(i, indexes){
+      var1 <- indexes$Var1[i]
+      var3 <- indexes$Var2[i]
+      tibble::tibble(predicted = temp_var[var1, var3, ],
+                     time  = full_time[var1],
+                     depth = config$model_settings$modeled_depths[var3],
+                     variable = obs_config$target_variable[s],
+                     forecast = forecast_flag[var1],
+                     ensemble = ensembles,
+                     variable_type = "state")
+    },
+    indexes = indexes
+    )
+    output_list <- bind_rows(output_list, output_list_tmp)
+  }
+
   indexes <- expand.grid(1:dim(diagnostics)[1], 1:dim(diagnostics)[2], 1:dim(diagnostics)[3])
 
   if(length(config$output_settings$diagnostics_names) > 0){
@@ -145,6 +181,7 @@ write_forecast_csv <- function(da_forecast_output,
     fname <- file.path(forecast_output_directory, paste0(da_forecast_output$save_file_name_short,".csv.gz"))
   }
 
+  #Convert to target variable name
   for(i in 1:length(states_config$state_names)){
     if(length(which(obs_config$state_names_obs == states_config$state_names[i])) >0){
       obs_name <- obs_config$target_variable[which(obs_config$state_names_obs == states_config$state_names[i])]

@@ -13,6 +13,8 @@ generate_forecast_score <- function(targets_file,
                   target_id = "fcre",
                   site_id = paste0(site_id,"-",z))
 
+  file_name <- file.path(output_directory,paste0("score-",da_forecast_output$save_file_name_short,".csv.gz"))
+
   forecast_file %>%
     read4cast::read_forecast(grouping_variables = c("time", "depth"),
                              target_variables = "temperature") %>%
@@ -26,5 +28,7 @@ generate_forecast_score <- function(targets_file,
                                 units = "seconds"),
            horizon = horizon / 86400) |>
     #score4cast::include_horizon() %>%
-    readr::write_csv(file.path(output_directory,paste0("score-",da_forecast_output$save_file_name_short,".csv.gz")))
+    readr::write_csv(file_name)
+
+  invisible(file_name)
 }
