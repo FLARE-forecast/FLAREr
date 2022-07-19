@@ -70,7 +70,6 @@ write_forecast_csv <- function(da_forecast_output,
           }
         }
       }
-    }
 
     indexes <- expand.grid(1:dim(temp_var)[1], 1:dim(temp_var)[2])
 
@@ -88,11 +87,14 @@ write_forecast_csv <- function(da_forecast_output,
     indexes = indexes
     )
     output_list <- bind_rows(output_list, output_list_tmp)
+    }
   }
 
-  indexes <- expand.grid(1:dim(diagnostics)[1], 1:dim(diagnostics)[2], 1:dim(diagnostics)[3])
 
   if(length(config$output_settings$diagnostics_names) > 0){
+
+    indexes <- expand.grid(1:dim(diagnostics)[1], 1:dim(diagnostics)[2], 1:dim(diagnostics)[3])
+
     output_list2 <- map_dfr(1:nrow(indexes), function(i, indexes){
       var1 <- indexes$Var1[i]
       var2 <- indexes$Var2[i]
@@ -110,22 +112,24 @@ write_forecast_csv <- function(da_forecast_output,
     output_list <- dplyr::bind_rows(output_list, output_list2)
   }
 
-  indexes <- expand.grid(1:dim(pars)[1], 1:dim(pars)[2])
+  if(!is.null(pars)){
+    indexes <- expand.grid(1:dim(pars)[1], 1:dim(pars)[2])
 
-  output_list3 <- map_dfr(1:nrow(indexes), function(i, indexes){
-    var1 <- indexes$Var1[i]
-    var2 <- indexes$Var2[i]
-    tibble::tibble(predicted = pars[var1, var2, ],
-                   time  = full_time[var1],
-                   depth = NA,
-                   variable = pars_config$par_names_save[var2],
-                   forecast = forecast_flag[var1],
-                   ensemble = ensembles,
-                   variable_type = "parameter")
-  },
-  indexes = indexes
-  )
-  output_list <- dplyr::bind_rows(output_list, output_list3)
+    output_list3 <- map_dfr(1:nrow(indexes), function(i, indexes){
+      var1 <- indexes$Var1[i]
+      var2 <- indexes$Var2[i]
+      tibble::tibble(predicted = pars[var1, var2, ],
+                     time  = full_time[var1],
+                     depth = NA,
+                     variable = pars_config$par_names_save[var2],
+                     forecast = forecast_flag[var1],
+                     ensemble = ensembles,
+                     variable_type = "parameter")
+    },
+    indexes = indexes
+    )
+    output_list <- dplyr::bind_rows(output_list, output_list3)
+  }
 
   if(!is.null(da_forecast_output$restart_list)){
     lake_depth <- da_forecast_output$restart_list$lake_depth
