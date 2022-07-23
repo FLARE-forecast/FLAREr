@@ -40,7 +40,7 @@ set_up_model <- function(config,
               to = file.path(ens_working_directory, "aed2.nml"), overwrite = TRUE)
 
     file.copy(from = file.path(config$file_path$configuration_directory, config$model_settings$base_AED_phyto_pars_nml),
-              to = file.path(ens_working_directory, "aed2_phyto_pars.nml"), overwrite = TRUE)
+              to = file.path(ens_working_directory, "aed_phyto_pars.csv"), overwrite = TRUE)
 
     file.copy(from = file.path(config$file_path$configuration_directory, config$model_settings$base_AED_zoop_pars_nml),
               to = file.path(ens_working_directory, "aed2_zoop_pars.nml"), overwrite = TRUE)

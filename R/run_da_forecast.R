@@ -459,7 +459,7 @@ run_da_forecast <- function(states_init,
         da_qc_flag[i] <- 0
       }
 
-      if(npars > 0){
+
 
         x[i, , , ] <- x_corr
         if(npars > 0) pars[i, , ] <- pars_star
@@ -472,14 +472,14 @@ run_da_forecast <- function(states_init,
         }
 
         if(i == (hist_days + 1) & config$uncertainty$initial_condition == FALSE){
-          pars[i, , ] <- pars_star
+          if(npars > 0) pars[i, , ] <- pars_star
           for(s in 1:nstates){
             for(k in 1:ndepths_modeled){
               x[i, s, k , ] <- mean(x_star[s, k, ])
             }
           }
         }
-      }
+
 
       for(s in 1:nstates){
         for(m in 1:nmembers){

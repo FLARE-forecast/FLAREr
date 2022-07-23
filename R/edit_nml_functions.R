@@ -121,6 +121,7 @@ update_nml <- function(var_list,var_name_list,working_directory, nml){
 #' add(10, 1)
 get_glm_nc_var_all_wq <- function(ncFile,working_dir, z_out,vars_depth, vars_no_depth, diagnostic_vars){
   glm_nc <- ncdf4::nc_open(paste0(working_dir, ncFile))
+  glm_vars <- names(glm_nc$var)
   tallest_layer <- ncdf4::ncvar_get(glm_nc, "NS")
   final_time_step <- length(tallest_layer)
   tallest_layer <- tallest_layer[final_time_step]
@@ -129,9 +130,15 @@ get_glm_nc_var_all_wq <- function(ncFile,working_dir, z_out,vars_depth, vars_no_
   heights <- heights[1:tallest_layer, final_time_step]
   heights_out <- heights_surf - z_out
 
-  snow <-  matrix(ncdf4::ncvar_get(glm_nc, "hsnow"), ncol = final_time_step)[final_time_step]
-  ice_white <- matrix(ncdf4::ncvar_get(glm_nc, "hwice"), ncol = final_time_step)[final_time_step]
-  ice_blue <- matrix(ncdf4::ncvar_get(glm_nc, "hice"), ncol = final_time_step)[final_time_step]
+  if("hsnow" %in% glm_vars){
+    snow <-  matrix(ncdf4::ncvar_get(glm_nc, "hsnow"), ncol = final_time_step)[final_time_step]
+    ice_white <- matrix(ncdf4::ncvar_get(glm_nc, "hwice"), ncol = final_time_step)[final_time_step]
+    ice_blue <- matrix(ncdf4::ncvar_get(glm_nc, "hice"), ncol = final_time_step)[final_time_step]
+  }else{
+    snow <-  matrix(ncdf4::ncvar_get(glm_nc, "snow_thickness"), ncol = final_time_step)[final_time_step]
+    ice_white <- matrix(ncdf4::ncvar_get(glm_nc, "white_ice_thickness"), ncol = final_time_step)[final_time_step]
+    ice_blue <- matrix(ncdf4::ncvar_get(glm_nc, "blue_ice_thickness"), ncol = final_time_step)[final_time_step]
+  }
   avg_surf_temp <- matrix(ncdf4::ncvar_get(glm_nc, "avg_surf_temp"), ncol = final_time_step)[final_time_step]
 
 

@@ -172,10 +172,10 @@ write_forecast_netcdf <- function(da_forecast_output,
         if(s %in% states_config$states_to_obs[[ii]]){
           temp_index <- which(states_config$states_to_obs[[ii]] == s)
           if(first_index == 1){
-            temp_var <- x_efi[, , , 3] * states_config$states_to_obs_mapping[[ii]][temp_index]
+            temp_var <- x_efi[, , , ii] * states_config$states_to_obs_mapping[[ii]][temp_index]
             first_index <- 2
           }else{
-            temp_var <- temp_var + x_efi[, , , 3] * states_config$states_to_obs_mapping[[ii]][temp_index]
+            temp_var <- temp_var + x_efi[, , , ii] * states_config$states_to_obs_mapping[[ii]][temp_index]
           }
         }
       }
