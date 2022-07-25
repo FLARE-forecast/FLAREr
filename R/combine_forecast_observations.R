@@ -89,11 +89,11 @@ combine_forecast_observations <- function(file_name,
                        col_types = readr::cols())
 
   if("observed" %in% names(d)){
-    d <- d |>
+    d <- d %>%
       dplyr::rename(value = observed)
   }
   if("time" %in% names(d)){
-    d <- d |>
+    d <- d %>%
       mutate(hour = lubridate::hour(time),
              date = lubridate::as_date(time))
   }
