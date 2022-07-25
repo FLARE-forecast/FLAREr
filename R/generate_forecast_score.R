@@ -15,7 +15,7 @@ generate_forecast_score <- function(targets_file,
 
   tools::file_path_sans_ext(basename(forecast_file))
 
-  file_name <- file.path(output_directory,paste0("score-",tools::file_path_sans_ext(basename(forecast_file)),".csv.gz"))
+  file_name <- file.path(output_directory,paste0("score-",basename(forecast_file)))
 
   forecast_file %>%
     read4cast::read_forecast(grouping_variables = c("time", "depth"),
