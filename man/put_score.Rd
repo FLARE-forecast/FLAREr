@@ -4,12 +4,12 @@
 \alias{put_score}
 \title{Upload score to s3 bucket}
 \usage{
-put_score(score_file, config)
+put_score(saved_file, config)
 }
 \arguments{
-\item{score_file}{full path of saved FLARE netcdf}
-
 \item{config}{flare configuration object}
+
+\item{score_file}{full path of saved FLARE netcdf}
 }
 \value{
 

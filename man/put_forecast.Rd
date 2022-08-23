@@ -4,7 +4,7 @@
 \alias{put_forecast}
 \title{Upload forecast file and metadata to s3 bucket}
 \usage{
-put_forecast(saved_file, eml_file_name, config)
+put_forecast(saved_file, eml_file_name = NULL, config)
 }
 \arguments{
 \item{saved_file}{full path of saved FLARE netcdf}
