@@ -4,7 +4,7 @@
 \alias{delete_restart}
 \title{Delete restart file on s3 bucket}
 \usage{
-delete_restart(site_id, sim_name)
+delete_restart(site_id, sim_name, bucket = "restart", base_url)
 }
 \arguments{
 \item{sim_name}{name of simulation}

@@ -1,3 +1,7 @@
+#' Score a forecast using score4cast package
+#' @param targets_file observation file
+#' @param forecast_file forecast file
+#' @output_directory directory to save scored file
 #' @return
 #' @export
 #'
@@ -10,7 +14,7 @@ generate_forecast_score <- function(targets_file,
     dplyr::rename(z = depth) |>
     dplyr::mutate(x = NA,
                   y = NA,
-                  target_id = "fcre",
+                  target_id = site_id,
                   site_id = paste0(site_id,"-",z))
 
   tools::file_path_sans_ext(basename(forecast_file))
@@ -21,9 +25,10 @@ generate_forecast_score <- function(targets_file,
     read4cast::read_forecast(grouping_variables = c("time", "depth"),
                              target_variables = "temperature") %>%
     dplyr::mutate(filename = forecast_file,
-                  site_id = paste0(site_id,"-",depth)) %>%
+                  site_id = paste0(site_id,"-",depth),
+                  target_id = site_id) %>%
     #score4cast::select_forecasts() %>%
-    score4cast::pivot_forecast() %>%
+    #score4cast::pivot_forecast() %>%
     score4cast::crps_logs_score(target) %>%
     mutate(horizon = time-start_time) |>
     mutate(horizon = as.numeric(lubridate::as.duration(horizon),

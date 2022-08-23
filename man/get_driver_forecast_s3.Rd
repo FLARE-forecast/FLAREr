@@ -4,12 +4,14 @@
 \alias{get_driver_forecast_s3}
 \title{Download driver forecasts from s3 bucket}
 \usage{
-get_driver_forecast_s3(lake_directory, forecast_path)
+get_driver_forecast_s3(lake_directory, forecast_path, config)
 }
 \arguments{
 \item{lake_directory}{full path to repository directory}
 
 \item{forecast_path}{relative path of the driver forecast (relative to driver directory or bucket)}
+
+\item{config}{flare configuration object}
 }
 \value{
 

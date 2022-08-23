@@ -2,16 +2,18 @@
 % Please edit documentation in R/generate_forecast_score.R
 \name{generate_forecast_score}
 \alias{generate_forecast_score}
-\title{Generate forecast score from csv target and forecast files}
+\title{Score a forecast using score4cast package}
 \usage{
 generate_forecast_score(targets_file, forecast_file, output_directory)
 }
 \arguments{
-\item{output_directory}{}
+\item{targets_file}{observation file}
+
+\item{forecast_file}{forecast file}
 }
 \value{
 
 }
 \description{
-Generate forecast score from csv target and forecast files
+Score a forecast using score4cast package
 }

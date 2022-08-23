@@ -102,7 +102,7 @@ write_forecast_csv <- function(da_forecast_output,
       tibble::tibble(predicted = diagnostics[var1, var2, var3, ],
                      time  = full_time[var1],
                      depth = config$model_settings$modeled_depths[var3],
-                     variable = states_config$state_names[var2],
+                     variable = config$output_settings$diagnostics_names[var2],
                      forecast = forecast_flag[var1],
                      ensemble = ensembles,
                      variable_type = "diagnostic")

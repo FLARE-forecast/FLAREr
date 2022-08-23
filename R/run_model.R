@@ -260,10 +260,13 @@ run_model <- function(i,
   }
 
   if(list_index_phyto > 1){
-    FLAREr:::update_nml(update_phyto_nml_list,
-                        update_phyto_nml_names,
-                        working_directory,
-                        "aed2_phyto_pars.nml")
+    phytos <- readr::read_csv(file.path(working_directory, "aed_phyto_pars.csv"))
+
+    for(k in 1:length(update_phyto_nml_names)){
+      phytos[which(phytos$`'p_name'` == update_phyto_nml_names[[k]]), ] <- update_aed_nml_list[[k]]
+    }
+
+    readr::write_csv(phytos, file.path(working_directory, "aed_phyto_pars.csv"))
   }
 
   #Use GLM NML files to run GLM for a day
