@@ -446,6 +446,30 @@ put_score <- function(saved_file, config){
   }
 }
 
+#' Upload forecast csv to s3 bucket
+#'
+#' @param score_file full path of saved FLARE netcdf
+#' @param config flare configuration object
+#'
+#' @return
+#' @export
+#'
+
+put_forecast_csv <- function(saved_file, config){
+  if(config$run_config$use_s3){
+    success <- aws.s3::put_object(file = saved_file,
+                                  object = file.path(config$location$site_id, basename(saved_file)),
+                                  bucket = config$s3$forecasts_csv$bucket,
+                                  region = stringr::str_split_fixed(config$s3$forecasts_csv$endpoint, pattern = "\\.", n = 2)[1],
+                                  base_url = stringr::str_split_fixed(config$s3$forecasts_csv$endpoint, pattern = "\\.", n = 2)[2],
+                                  use_https = as.logical(Sys.getenv("USE_HTTPS")))
+    if(success){
+      unlink(saved_file)
+    }
+  }
+}
+
+
 #' Download file from s3 bucket
 #'
 #' @param lake_directory full path to repository directory
