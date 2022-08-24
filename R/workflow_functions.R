@@ -218,7 +218,7 @@ get_driver_forecast_s3 <- function(lake_directory, forecast_path, config){
                       bucket = stringr::str_split_fixed(config$s3$drivers$bucket, "/", n = 2)[1],
                       prefix = file.path(stringr::str_split_fixed(config$s3$drivers$bucket, "/", n = 2)[2], forecast_path),
                       region = stringr::str_split_fixed(config$s3$drivers$endpoint, pattern = "\\.", n = 2)[1],
-                      base_url = stringr::str_split_fixed(config$s3$driver$endpoint, pattern = "\\.", n = 2)[2])
+                      base_url = stringr::str_split_fixed(config$s3$drivers$endpoint, pattern = "\\.", n = 2)[2])
 }
 
 #' Call get_driver_forecast_s3
