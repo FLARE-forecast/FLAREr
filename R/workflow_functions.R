@@ -21,7 +21,7 @@ get_run_config <- function(configure_run_file = "configure_run.yml", lake_direct
       message("Using existing restart file")
     }
   }else if(config$run_config$use_s3){
-    restart_exists <- suppressMessages(aws.s3::object_exists(object = file.path(stringr::str_split_fixed(config$s3$warm_start$bucket, "/", n = 2)[1],
+    restart_exists <- suppressMessages(aws.s3::object_exists(object = file.path(stringr::str_split_fixed(config$s3$warm_start$bucket, "/", n = 2)[2],
                                                                                 config$location$site_id, sim_name, configure_run_file),
                                                              bucket = stringr::str_split_fixed(config$s3$warm_start$bucket, "/", n = 2)[1],
                                                              region = stringr::str_split_fixed(config$s3$warm_start$endpoint, pattern = "\\.", n = 2)[1],
@@ -30,7 +30,7 @@ get_run_config <- function(configure_run_file = "configure_run.yml", lake_direct
 
     if(restart_exists){
       message("Using existing restart file from s3 bucket")
-      aws.s3::save_object(object = file.path(stringr::str_split_fixed(config$s3$warm_start$bucket, "/", n = 2)[1], config$location$site_id, config$run_config$sim_name, configure_run_file),
+      aws.s3::save_object(object = file.path(stringr::str_split_fixed(config$s3$warm_start$bucket, "/", n = 2)[2], config$location$site_id, config$run_config$sim_name, configure_run_file),
                           bucket = stringr::str_split_fixed(config$s3$warm_start$bucket, "/", n = 2)[1],
                           file = file.path(lake_directory, "restart", config$location$site_id, sim_name, configure_run_file),
                           region = stringr::str_split_fixed(config$s3$warm_start$endpoint, pattern = "\\.", n = 2)[1],
@@ -103,24 +103,24 @@ put_targets <- function(site_id, cleaned_insitu_file = NA, cleaned_met_file = NA
   if(use_s3){
     if(!is.na(cleaned_insitu_file)){
       aws.s3::put_object(file = cleaned_insitu_file,
-                         object = file.path(stringr::str_split_fixed(config$s3$targets$bucket, "/", n = 2)[1], site_id, basename(cleaned_insitu_file)),
-                         bucket = stringr::str_split_fixed(test_bucket, "/", n = 2)[2],
+                         object = file.path(stringr::str_split_fixed(config$s3$targets$bucket, "/", n = 2)[2], site_id, basename(cleaned_insitu_file)),
+                         bucket = stringr::str_split_fixed(test_bucket, "/", n = 2)[1],
                          region = stringr::str_split_fixed(config$s3$targets$endpoint, pattern = "\\.", n = 2)[1],
                          base_url = stringr::str_split_fixed(config$s3$targets$endpoint, pattern = "\\.", n = 2)[2],
                          use_https = as.logical(Sys.getenv("USE_HTTPS")))
     }
     if(!is.na(cleaned_inflow_file)){
       aws.s3::put_object(file = cleaned_inflow_file,
-                         object = file.path(stringr::str_split_fixed(config$s3$targets$bucket, "/", n = 2)[1], site_id, basename(cleaned_inflow_file)),
-                         bucket = stringr::str_split_fixed(test_bucket, "/", n = 2)[2],
+                         object = file.path(stringr::str_split_fixed(config$s3$targets$bucket, "/", n = 2)[2], site_id, basename(cleaned_inflow_file)),
+                         bucket = stringr::str_split_fixed(test_bucket, "/", n = 2)[1],
                          region = stringr::str_split_fixed(config$s3$targets$endpoint, pattern = "\\.", n = 2)[1],
                          base_url = stringr::str_split_fixed(config$s3$targets$endpoint, pattern = "\\.", n = 2)[2],
                          use_https = as.logical(Sys.getenv("USE_HTTPS")))
     }
     if(!is.na(cleaned_met_file)){
       aws.s3::put_object(file = cleaned_met_file,
-                         object = file.path(stringr::str_split_fixed(config$s3$targets$bucket, "/", n = 2)[1], site_id, basename(cleaned_met_file)),
-                         bucket = stringr::str_split_fixed(test_bucket, "/", n = 2)[2],
+                         object = file.path(stringr::str_split_fixed(config$s3$targets$bucket, "/", n = 2)[2], site_id, basename(cleaned_met_file)),
+                         bucket = stringr::str_split_fixed(test_bucket, "/", n = 2)[1],
                          region = stringr::str_split_fixed(config$s3$targets$endpoint, pattern = "\\.", n = 2)[1],
                          base_url = stringr::str_split_fixed(config$s3$targets$endpoint, pattern = "\\.", n = 2)[2],
                          use_https = as.logical(Sys.getenv("USE_HTTPS")))
@@ -216,7 +216,7 @@ get_driver_forecast_s3 <- function(lake_directory, forecast_path, config){
 
   download_s3_objects(lake_directory,
                       bucket = stringr::str_split_fixed(config$s3$drivers$bucket, "/", n = 2)[1],
-                      prefix = file.path(stringr::str_split_fixed(config$s3$drivers$bucket, "/", n = 2)[1], forecast_path),
+                      prefix = file.path(stringr::str_split_fixed(config$s3$drivers$bucket, "/", n = 2)[2], forecast_path),
                       region = stringr::str_split_fixed(config$s3$drivers$endpoint, pattern = "\\.", n = 2)[1],
                       base_url = stringr::str_split_fixed(config$s3$driver$endpoint, pattern = "\\.", n = 2)[2])
 }
