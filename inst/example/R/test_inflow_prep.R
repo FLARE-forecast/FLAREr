@@ -35,6 +35,7 @@ states_config <- readr::read_csv(file.path(configuration_directory, config$model
 
 #Download and process observations (already done)
 
-cleaned_observations_file_long <- file.path(config$qaqc_data_directory,"observations_postQAQC_long.csv")
-cleaned_inflow_file <- file.path(config$qaqc_data_directory, "/inflow_postQAQC.csv")
-observed_met_file <- file.path(config$qaqc_data_directory,"observed-met_fcre.nc")
+cleaned_observations_file_long <- file.path(config$file_path$qaqc_data_directory,"fcre-targets-insitu.csv")
+cleaned_inflow_file <- file.path(config$file_path$qaqc_data_directory, "fcre-targets-inflow.csv")
+observed_met_file <- file.path(config$file_path$qaqc_data_directory,"observed-met_fcre.nc")
+

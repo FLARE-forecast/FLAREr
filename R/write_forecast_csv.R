@@ -39,7 +39,7 @@ write_forecast_csv <- function(da_forecast_output,
   indexes <- expand.grid(1:dim(x)[1], 1:dim(x)[2], 1:dim(x)[3])
   ensembles <- 1:dim(x)[4]
 
-  output_list <- map_dfr(1:nrow(indexes), function(i, indexes){
+  output_list <- purrr::map_dfr(1:nrow(indexes), function(i, indexes){
     var1 <- indexes$Var1[i]
     var2 <- indexes$Var2[i]
     var3 <- indexes$Var3[i]
@@ -73,7 +73,7 @@ write_forecast_csv <- function(da_forecast_output,
 
     indexes <- expand.grid(1:dim(temp_var)[1], 1:dim(temp_var)[2])
 
-    output_list_tmp <- map_dfr(1:nrow(indexes), function(i, indexes){
+    output_list_tmp <- purrr::map_dfr(1:nrow(indexes), function(i, indexes){
       var1 <- indexes$Var1[i]
       var3 <- indexes$Var2[i]
       tibble::tibble(predicted = temp_var[var1, var3, ],
@@ -95,7 +95,7 @@ write_forecast_csv <- function(da_forecast_output,
 
     indexes <- expand.grid(1:dim(diagnostics)[1], 1:dim(diagnostics)[2], 1:dim(diagnostics)[3])
 
-    output_list2 <- map_dfr(1:nrow(indexes), function(i, indexes){
+    output_list2 <- purrr::map_dfr(1:nrow(indexes), function(i, indexes){
       var1 <- indexes$Var1[i]
       var2 <- indexes$Var2[i]
       var3 <- indexes$Var3[i]
@@ -115,7 +115,7 @@ write_forecast_csv <- function(da_forecast_output,
   if(!is.null(pars)){
     indexes <- expand.grid(1:dim(pars)[1], 1:dim(pars)[2])
 
-    output_list3 <- map_dfr(1:nrow(indexes), function(i, indexes){
+    output_list3 <- purrr::map_dfr(1:nrow(indexes), function(i, indexes){
       var1 <- indexes$Var1[i]
       var2 <- indexes$Var2[i]
       tibble::tibble(predicted = pars[var1, var2, ],
@@ -194,6 +194,6 @@ write_forecast_csv <- function(da_forecast_output,
     }
   }
 
-  write_csv(output_list, fname)
+  readr::write_csv(output_list, fname)
   invisible(fname)
 }

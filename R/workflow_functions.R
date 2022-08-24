@@ -104,7 +104,7 @@ put_targets <- function(site_id, cleaned_insitu_file = NA, cleaned_met_file = NA
     if(!is.na(cleaned_insitu_file)){
       aws.s3::put_object(file = cleaned_insitu_file,
                          object = file.path(stringr::str_split_fixed(config$s3$targets$bucket, "/", n = 2)[2], site_id, basename(cleaned_insitu_file)),
-                         bucket = stringr::str_split_fixed(test_bucket, "/", n = 2)[1],
+                         bucket = stringr::str_split_fixed(config$s3$targets$bucket, "/", n = 2)[1],
                          region = stringr::str_split_fixed(config$s3$targets$endpoint, pattern = "\\.", n = 2)[1],
                          base_url = stringr::str_split_fixed(config$s3$targets$endpoint, pattern = "\\.", n = 2)[2],
                          use_https = as.logical(Sys.getenv("USE_HTTPS")))
@@ -112,7 +112,7 @@ put_targets <- function(site_id, cleaned_insitu_file = NA, cleaned_met_file = NA
     if(!is.na(cleaned_inflow_file)){
       aws.s3::put_object(file = cleaned_inflow_file,
                          object = file.path(stringr::str_split_fixed(config$s3$targets$bucket, "/", n = 2)[2], site_id, basename(cleaned_inflow_file)),
-                         bucket = stringr::str_split_fixed(test_bucket, "/", n = 2)[1],
+                         bucket = stringr::str_split_fixed(config$s3$targets$bucket, "/", n = 2)[1],
                          region = stringr::str_split_fixed(config$s3$targets$endpoint, pattern = "\\.", n = 2)[1],
                          base_url = stringr::str_split_fixed(config$s3$targets$endpoint, pattern = "\\.", n = 2)[2],
                          use_https = as.logical(Sys.getenv("USE_HTTPS")))
@@ -120,7 +120,7 @@ put_targets <- function(site_id, cleaned_insitu_file = NA, cleaned_met_file = NA
     if(!is.na(cleaned_met_file)){
       aws.s3::put_object(file = cleaned_met_file,
                          object = file.path(stringr::str_split_fixed(config$s3$targets$bucket, "/", n = 2)[2], site_id, basename(cleaned_met_file)),
-                         bucket = stringr::str_split_fixed(test_bucket, "/", n = 2)[1],
+                         bucket = stringr::str_split_fixed(config$s3$targets$bucket, "/", n = 2)[1],
                          region = stringr::str_split_fixed(config$s3$targets$endpoint, pattern = "\\.", n = 2)[1],
                          base_url = stringr::str_split_fixed(config$s3$targets$endpoint, pattern = "\\.", n = 2)[2],
                          use_https = as.logical(Sys.getenv("USE_HTTPS")))
@@ -161,13 +161,13 @@ get_stacked_noaa <- function(lake_directory, config, averaged = TRUE){
   if(averaged){
     download_s3_objects(lake_directory,
                         bucket = stringr::str_split_fixed(config$s3$drivers$bucket, "/", n = 2)[1],
-                        prefix = file.path(stringr::str_split_fixed(config$s3$drives$bucket, "/", n = 2)[2], "noaa/NOAAGEFS_1hr_stacked_average",config$location$site_id),
+                        prefix = file.path(stringr::str_split_fixed(config$s3$drivers$bucket, "/", n = 2)[2], "noaa/NOAAGEFS_1hr_stacked_average",config$location$site_id),
                         region = stringr::str_split_fixed(config$s3$drivers$endpoint, pattern = "\\.", n = 2)[1],
                         base_url = stringr::str_split_fixed(config$s3$drivers$endpoint, pattern = "\\.", n = 2)[2])
   }else{
     download_s3_objects(lake_directory,
                         bucket = stringr::str_split_fixed(config$s3$drivers$bucket, "/", n = 2)[1],
-                        prefix = file.path(stringr::str_split_fixed(config$s3$drives$bucket, "/", n = 2)[2],"noaa/NOAAGEFS_1hr_stacked",config$location$site_id),
+                        prefix = file.path(stringr::str_split_fixed(config$s3$drivers$bucket, "/", n = 2)[2],"noaa/NOAAGEFS_1hr_stacked",config$location$site_id),
                         region = stringr::str_split_fixed(config$s3$drivers$endpoint, pattern = "\\.", n = 2)[1],
                         base_url = stringr::str_split_fixed(config$s3$drivers$endpoint, pattern = "\\.", n = 2)[2])
   }

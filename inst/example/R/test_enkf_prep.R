@@ -36,9 +36,10 @@ states_config <- readr::read_csv(file.path(configuration_directory, config$model
 
 #Download and process observations (already done)
 
-cleaned_observations_file_long <- file.path(config$file_path$qaqc_data_directory,"observations_postQAQC_long.csv")
-cleaned_inflow_file <- file.path(config$file_path$qaqc_data_directory, "/inflow_postQAQC.csv")
+cleaned_observations_file_long <- file.path(config$file_path$qaqc_data_directory,"fcre-targets-insitu.csv")
+cleaned_inflow_file <- file.path(config$file_path$qaqc_data_directory, "fcre-targets-inflow.csv")
 observed_met_file <- file.path(config$file_path$qaqc_data_directory,"observed-met_fcre.nc")
+
 
 #Step up Drivers
 met_out <- FLAREr::generate_glm_met_files(obs_met_file = observed_met_file,
@@ -55,7 +56,7 @@ inflow_outflow_files <- FLAREr::create_glm_inflow_outflow_files(inflow_file_dir 
                                                                 inflow_obs = cleaned_inflow_file,
                                                                 working_directory = config$file_path$execute_directory,
                                                                 config,
-                                                                state_names = NULL)
+                                                                state_names = states_config$state_names)
 
 inflow_file_names <- inflow_outflow_files$inflow_file_name
 outflow_file_names <- inflow_outflow_files$outflow_file_name
@@ -71,4 +72,5 @@ init <- FLAREr::generate_initial_conditions(states_config,
                                            obs_config,
                                            pars_config,
                                            obs,
-                                           config)
+                                           config,
+                                           historical_met_error = met_out$historical_met_error)

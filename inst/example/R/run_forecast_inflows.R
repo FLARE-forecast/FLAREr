@@ -35,11 +35,14 @@ message("Forecasting inflow and outflows")
 # Forecast Inflows
 
 forecast_files <- list.files(noaa_forecast_path, pattern = "NOAAGEFS_1hr", full.names = TRUE)
-forecast_inflows_outflows(inflow_obs = file.path(config$qaqc_data_location, "/inflow_postQAQC.csv"),
+forecast_inflows_outflows(inflow_obs = file.path(config$file_path$qaqc_data_directory, "fcre-targets-inflow.csv"),
                           forecast_files = forecast_files,
-                          obs_met_file = file.path(config$qaqc_data_location,"observed-met_fcre.nc"),
-                          output_dir = config$data_location,
-                          inflow_model = config$forecast_inflow_model,
+                          obs_met_file = file.path(config$file_path$qaqc_data_directory,"observed-met_fcre.nc"),
+                          output_dir = config$file_path$inflow_directory,
+                          inflow_model = config$inflow$forecast_inflow_model,
                           inflow_process_uncertainty = FALSE,
-                          forecast_location = config$run_config$forecast_location,
-                          config = config)
+                          forecast_location = config$file_path$forecast_output_directory,
+                          config = config,
+                          use_s3 = config$run_config$use_s3,
+                          bucket = "drivers",
+                          model_name = config$model_settings$model_name)
