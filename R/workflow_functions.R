@@ -608,32 +608,35 @@ check_noaa_present <- function(lake_directory, configure_run_file = "configure_r
 #'
 #' @param site_id four letter code for site
 #' @param sim_name name of simulation
+#' @param config FLARE configuration object (needed for s3 buckets and endpoit)
 #'
 #' @return
 #' @export
 #'
-delete_sim <- function(site_id, sim_name){
+delete_sim <- function(site_id, sim_name, config){
 
   go <- utils::askYesNo(paste0("Do you want to delete the files for ",sim_name," from ",site_id))
 
   if(go){
-    #message("deleting analysis files")
-    #files <- aws.s3::get_bucket(bucket = "analysis",
-    #                            prefix = site_id,
-    #                            region = Sys.getenv("AWS_DEFAULT_REGION"),
-    #                            use_https = as.logical(Sys.getenv("USE_HTTPS")))
-    #keys <- vapply(files, `[[`, "", "Key", USE.NAMES = FALSE)
-    #empty <- grepl("/$", keys)
-    #keys <- keys[!empty]
-    #keys <- keys[stringr::str_detect(keys, sim_name)]
-    #if(length(keys > 0)){
-    #  for(i in 1:length(keys)){
-    #    aws.s3::delete_object(object = keys[i],
-    #                          bucket = "analysis",
-    #                          region = Sys.getenv("AWS_DEFAULT_REGION"),
-    #                          use_https = as.logical(Sys.getenv("USE_HTTPS")))
-    #  }
-    #}
+    message("deleting analysis files")
+    files <- aws.s3::get_bucket(bucket = config$s3$analysis$bucket,
+                                prefix = site_id,
+                                region = stringr::str_split_fixed(config$s3$analysis$endpoint, pattern = "\\.", n = 2)[1],
+                                base_url = stringr::str_split_fixed(config$s3$analysis$endpoint, pattern = "\\.", n = 2)[2],
+                                use_https = as.logical(Sys.getenv("USE_HTTPS")))
+    keys <- vapply(files, `[[`, "", "Key", USE.NAMES = FALSE)
+    empty <- grepl("/$", keys)
+    keys <- keys[!empty]
+    keys <- keys[stringr::str_detect(keys, sim_name)]
+    if(length(keys > 0)){
+      for(i in 1:length(keys)){
+       aws.s3::delete_object(object = keys[i],
+                             bucket = config$s3$analysis$bucket,
+                             region = stringr::str_split_fixed(config$s3$analysis$endpoint, pattern = "\\.", n = 2)[1],
+                             base_url = stringr::str_split_fixed(config$s3$analysis$endpoint, pattern = "\\.", n = 2)[2],
+                             use_https = as.logical(Sys.getenv("USE_HTTPS")))
+     }
+    }
 
     #forecasts
     message("deleting forecast files")
