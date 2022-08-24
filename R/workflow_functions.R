@@ -21,16 +21,17 @@ get_run_config <- function(configure_run_file = "configure_run.yml", lake_direct
       message("Using existing restart file")
     }
   }else if(config$run_config$use_s3){
-    restart_exists <- suppressMessages(aws.s3::object_exists(object = file.path(config$location$site_id, sim_name, configure_run_file),
-                                                             bucket = config$s3$warm_start$bucket,
+    restart_exists <- suppressMessages(aws.s3::object_exists(object = file.path(stringr::str_split_fixed(config$s3$warm_start$bucket, "/", n = 2)[1],
+                                                                                config$location$site_id, sim_name, configure_run_file),
+                                                             bucket = stringr::str_split_fixed(config$s3$warm_start$bucket, "/", n = 2)[1],
                                                              region = stringr::str_split_fixed(config$s3$warm_start$endpoint, pattern = "\\.", n = 2)[1],
                                                              base_url = stringr::str_split_fixed(config$s3$warm_start$endpoint, pattern = "\\.", n = 2)[2],
                                                              use_https = as.logical(Sys.getenv("USE_HTTPS"))))
 
     if(restart_exists){
       message("Using existing restart file from s3 bucket")
-      aws.s3::save_object(object = file.path(config$location$site_id, config$run_config$sim_name, configure_run_file),
-                          bucket = config$s3$warm_start$bucket,
+      aws.s3::save_object(object = file.path(stringr::str_split_fixed(config$s3$warm_start$bucket, "/", n = 2)[1], config$location$site_id, config$run_config$sim_name, configure_run_file),
+                          bucket = stringr::str_split_fixed(config$s3$warm_start$bucket, "/", n = 2)[1],
                           file = file.path(lake_directory, "restart", config$location$site_id, sim_name, configure_run_file),
                           region = stringr::str_split_fixed(config$s3$warm_start$endpoint, pattern = "\\.", n = 2)[1],
                           base_url = stringr::str_split_fixed(config$s3$warm_start$endpoint, pattern = "\\.", n = 2)[2],
@@ -102,24 +103,24 @@ put_targets <- function(site_id, cleaned_insitu_file = NA, cleaned_met_file = NA
   if(use_s3){
     if(!is.na(cleaned_insitu_file)){
       aws.s3::put_object(file = cleaned_insitu_file,
-                         object = file.path(site_id, basename(cleaned_insitu_file)),
-                         bucket = config$s3$targets$bucket,
+                         object = file.path(stringr::str_split_fixed(config$s3$targets$bucket, "/", n = 2)[1], site_id, basename(cleaned_insitu_file)),
+                         bucket = stringr::str_split_fixed(test_bucket, "/", n = 2)[2],
                          region = stringr::str_split_fixed(config$s3$targets$endpoint, pattern = "\\.", n = 2)[1],
                          base_url = stringr::str_split_fixed(config$s3$targets$endpoint, pattern = "\\.", n = 2)[2],
                          use_https = as.logical(Sys.getenv("USE_HTTPS")))
     }
     if(!is.na(cleaned_inflow_file)){
       aws.s3::put_object(file = cleaned_inflow_file,
-                         object = file.path(site_id, basename(cleaned_inflow_file)),
-                         bucket = config$s3$targets$bucket,
+                         object = file.path(stringr::str_split_fixed(config$s3$targets$bucket, "/", n = 2)[1], site_id, basename(cleaned_inflow_file)),
+                         bucket = stringr::str_split_fixed(test_bucket, "/", n = 2)[2],
                          region = stringr::str_split_fixed(config$s3$targets$endpoint, pattern = "\\.", n = 2)[1],
                          base_url = stringr::str_split_fixed(config$s3$targets$endpoint, pattern = "\\.", n = 2)[2],
                          use_https = as.logical(Sys.getenv("USE_HTTPS")))
     }
     if(!is.na(cleaned_met_file)){
       aws.s3::put_object(file = cleaned_met_file,
-                         object = file.path(site_id, basename(cleaned_met_file)),
-                         bucket = config$s3$targets$bucket,
+                         object = file.path(stringr::str_split_fixed(config$s3$targets$bucket, "/", n = 2)[1], site_id, basename(cleaned_met_file)),
+                         bucket = stringr::str_split_fixed(test_bucket, "/", n = 2)[2],
                          region = stringr::str_split_fixed(config$s3$targets$endpoint, pattern = "\\.", n = 2)[1],
                          base_url = stringr::str_split_fixed(config$s3$targets$endpoint, pattern = "\\.", n = 2)[2],
                          use_https = as.logical(Sys.getenv("USE_HTTPS")))
@@ -138,8 +139,8 @@ put_targets <- function(site_id, cleaned_insitu_file = NA, cleaned_met_file = NA
 get_targets <- function(lake_directory, config){
   if(config$run_config$use_s3){
     download_s3_objects(lake_directory,
-                        bucket = config$s3$targets$bucket,
-                        prefix = config$location$site_id,
+                        bucket = stringr::str_split_fixed(config$s3$targets$bucket, "/", n = 2)[1],
+                        prefix = file.path(stringr::str_split_fixed(config$s3$targets$bucket, "/", n = 2)[2], config$location$site_id),
                         region = stringr::str_split_fixed(config$s3$targets$endpoint, pattern = "\\.", n = 2)[1],
                         base_url = stringr::str_split_fixed(config$s3$targets$endpoint, pattern = "\\.", n = 2)[2])
   }
@@ -159,16 +160,16 @@ get_stacked_noaa <- function(lake_directory, config, averaged = TRUE){
 
   if(averaged){
     download_s3_objects(lake_directory,
-                        bucket = config$s3$drivers$bucket,
-                        prefix = file.path("noaa/NOAAGEFS_1hr_stacked_average",config$location$site_id),
+                        bucket = stringr::str_split_fixed(config$s3$drivers$bucket, "/", n = 2)[1],
+                        prefix = file.path(stringr::str_split_fixed(config$s3$drives$bucket, "/", n = 2)[2], "noaa/NOAAGEFS_1hr_stacked_average",config$location$site_id),
                         region = stringr::str_split_fixed(config$s3$drivers$endpoint, pattern = "\\.", n = 2)[1],
-                        base_url = stringr::str_split_fixed(config$s3$driver$endpoint, pattern = "\\.", n = 2)[2])
+                        base_url = stringr::str_split_fixed(config$s3$drivers$endpoint, pattern = "\\.", n = 2)[2])
   }else{
     download_s3_objects(lake_directory,
-                        bucket = config$s3$drivers$bucket,
-                        prefix = file.path("noaa/NOAAGEFS_1hr_stacked",config$location$site_id),
+                        bucket = stringr::str_split_fixed(config$s3$drivers$bucket, "/", n = 2)[1],
+                        prefix = file.path(stringr::str_split_fixed(config$s3$drives$bucket, "/", n = 2)[2],"noaa/NOAAGEFS_1hr_stacked",config$location$site_id),
                         region = stringr::str_split_fixed(config$s3$drivers$endpoint, pattern = "\\.", n = 2)[1],
-                        base_url = stringr::str_split_fixed(config$s3$driver$endpoint, pattern = "\\.", n = 2)[2])
+                        base_url = stringr::str_split_fixed(config$s3$drivers$endpoint, pattern = "\\.", n = 2)[2])
   }
 }
 
@@ -214,8 +215,8 @@ get_driver_forecast_path <- function(config, forecast_model){
 get_driver_forecast_s3 <- function(lake_directory, forecast_path, config){
 
   download_s3_objects(lake_directory,
-                      bucket = config$s3$drivers$bucket,
-                      prefix = forecast_path,
+                      bucket = stringr::str_split_fixed(config$s3$drivers$bucket, "/", n = 2)[1],
+                      prefix = file.path(stringr::str_split_fixed(config$s3$drivers$bucket, "/", n = 2)[1], forecast_path),
                       region = stringr::str_split_fixed(config$s3$drivers$endpoint, pattern = "\\.", n = 2)[1],
                       base_url = stringr::str_split_fixed(config$s3$driver$endpoint, pattern = "\\.", n = 2)[2])
 }
@@ -304,8 +305,8 @@ get_restart_file <- function(config, lake_directory){
   if(!is.na(config$run_config$restart_file)){
     restart_file <- basename(config$run_config$restart_file)
     if(config$run_config$use_s3){
-      aws.s3::save_object(object = file.path(config$location$site_id, restart_file),
-                          bucket = config$s3$forecasts$bucket,
+      aws.s3::save_object(object = file.path(stringr::str_split_fixed(config$s3$forecasts$bucket, "/", n = 2)[2], config$location$site_id, restart_file),
+                          bucket = stringr::str_split_fixed(config$s3$forecasts$bucket, "/", n = 2)[1],
                           file = file.path(lake_directory, "forecasts", config$location$site_id, restart_file),
                           region = stringr::str_split_fixed(config$s3$forecasts$endpoint, pattern = "\\.", n = 2)[1],
                           base_url = stringr::str_split_fixed(config$s3$forecasts$endpoint, pattern = "\\.", n = 2)[2],
@@ -349,8 +350,8 @@ update_run_config <- function(config, lake_directory, configure_run_file = "conf
   yaml::write_yaml(config$run_config, file = file.path(lake_directory,"restart",config$location$site_id,config$run_config$sim_name,configure_run_file))
   if(config$run_config$use_s3){
     aws.s3::put_object(file = file.path(lake_directory,"restart",config$location$site_id,config$run_config$sim_name, configure_run_file),
-                       object = file.path(config$location$site_id,config$run_config$sim_name, configure_run_file),
-                       bucket = config$s3$warm_start$bucket,
+                       object = file.path(stringr::str_split_fixed(config$s3$warm_start$bucket, "/", n = 2)[2], config$location$site_id,config$run_config$sim_name, configure_run_file),
+                       bucket = stringr::str_split_fixed(config$s3$warm_start$bucket, "/", n = 2)[1],
                        region = stringr::str_split_fixed(config$s3$warm_start$endpoint, pattern = "\\.", n = 2)[1],
                        base_url = stringr::str_split_fixed(config$s3$warm_start$endpoint, pattern = "\\.", n = 2)[2],
                        use_https = as.logical(Sys.getenv("USE_HTTPS")))
@@ -380,8 +381,8 @@ update_run_config_neon <- function(config, lake_directory, configure_run_file = 
   yaml::write_yaml(config$run_config, file = file.path(lake_directory,"restart",config$location$site_id,config$run_config$sim_name,configure_run_file))
   if(config$run_config$use_s3){
     aws.s3::put_object(file = file.path(lake_directory,"restart",config$location$site_id,config$run_config$sim_name, configure_run_file),
-                       object = file.path(config$location$site_id,config$run_config$sim_name, configure_run_file),
-                       bucket = config$s3$warm_start$bucket,
+                       object = file.path(stringr::str_split_fixed(config$s3$warm_start$bucket, "/", n = 2)[2], config$location$site_id,config$run_config$sim_name, configure_run_file),
+                       bucket = stringr::str_split_fixed(config$s3$warm_start$bucket, "/", n = 2)[1],
                        region = stringr::str_split_fixed(config$s3$warm_start$endpoint, pattern = "\\.", n = 2)[1],
                        base_url = stringr::str_split_fixed(config$s3$warm_start$endpoint, pattern = "\\.", n = 2)[2],
                        use_https = as.logical(Sys.getenv("USE_HTTPS")))
@@ -402,8 +403,8 @@ update_run_config_neon <- function(config, lake_directory, configure_run_file = 
 put_forecast <- function(saved_file, eml_file_name = NULL, config){
   if(config$run_config$use_s3){
     success <- aws.s3::put_object(file = saved_file,
-                                  object = file.path(config$location$site_id, basename(saved_file)),
-                                  bucket = config$s3$forecasts$bucket,
+                                  object = file.path(stringr::str_split_fixed(config$s3$forecasts$bucket, "/", n = 2)[2], config$location$site_id, basename(saved_file)),
+                                  bucket = stringr::str_split_fixed(config$s3$forecasts$bucket, "/", n = 2)[1],
                                   region = stringr::str_split_fixed(config$s3$forecasts$endpoint, pattern = "\\.", n = 2)[1],
                                   base_url = stringr::str_split_fixed(config$s3$forecasts$endpoint, pattern = "\\.", n = 2)[2],
                                   use_https = as.logical(Sys.getenv("USE_HTTPS")))
@@ -412,8 +413,8 @@ put_forecast <- function(saved_file, eml_file_name = NULL, config){
     }
     if(!is.null(eml_file_name)){
       success <- aws.s3::put_object(file = eml_file_name,
-                                    object = file.path(config$location$site_id, basename(eml_file_name)),
-                                    bucket = config$s3$forecasts$bucket,
+                                    object = file.path(stringr::str_split_fixed(config$s3$forecasts$bucket, "/", n = 2)[2], config$location$site_id, basename(eml_file_name)),
+                                    bucket = stringr::str_split_fixed(config$s3$forecasts$bucket, "/", n = 2)[1],
                                     region = stringr::str_split_fixed(config$s3$forecasts$endpoint, pattern = "\\.", n = 2)[1],
                                     base_url = stringr::str_split_fixed(config$s3$forecasts$endpoint, pattern = "\\.", n = 2)[2],
                                     use_https = as.logical(Sys.getenv("USE_HTTPS")))
@@ -435,8 +436,8 @@ put_forecast <- function(saved_file, eml_file_name = NULL, config){
 put_score <- function(saved_file, config){
   if(config$run_config$use_s3){
     success <- aws.s3::put_object(file = saved_file,
-                                  object = file.path(config$location$site_id, basename(saved_file)),
-                                  bucket = config$s3$scores$bucket,
+                                  object = file.path(stringr::str_split_fixed(config$s3$scores$bucket, "/", n = 2)[2], config$location$site_id, basename(saved_file)),
+                                  bucket = stringr::str_split_fixed(config$s3$scores$bucket, "/", n = 2)[1],
                                   region = stringr::str_split_fixed(config$s3$scores$endpoint, pattern = "\\.", n = 2)[1],
                                   base_url = stringr::str_split_fixed(config$s3$scores$endpoint, pattern = "\\.", n = 2)[2],
                                   use_https = as.logical(Sys.getenv("USE_HTTPS")))
@@ -458,8 +459,8 @@ put_score <- function(saved_file, config){
 put_forecast_csv <- function(saved_file, config){
   if(config$run_config$use_s3){
     success <- aws.s3::put_object(file = saved_file,
-                                  object = file.path(config$location$site_id, basename(saved_file)),
-                                  bucket = config$s3$forecasts_csv$bucket,
+                                  object = file.path(stringr::str_split_fixed(config$s3$forecasts_csv$bucket, "/", n = 2)[2], config$location$site_id, basename(saved_file)),
+                                  bucket = stringr::str_split_fixed(config$s3$forecasts_csv$bucket, "/", n = 2)[1],
                                   region = stringr::str_split_fixed(config$s3$forecasts_csv$endpoint, pattern = "\\.", n = 2)[1],
                                   base_url = stringr::str_split_fixed(config$s3$forecasts_csv$endpoint, pattern = "\\.", n = 2)[2],
                                   use_https = as.logical(Sys.getenv("USE_HTTPS")))
@@ -513,8 +514,8 @@ download_s3_objects <- function(lake_directory, bucket, prefix, region, base_url
 #' @export
 #'
 delete_restart <- function(site_id, sim_name, bucket = "restart", endpoint){
-  files <- aws.s3::get_bucket(bucket = bucket,
-                              prefix = file.path(site_id, sim_name),
+  files <- aws.s3::get_bucket(bucket = stringr::str_split_fixed(bucket, "/", n = 2)[1],
+                              prefix = file.path(stringr::str_split_fixed(bucket, "/", n = 2)[2], site_id, sim_name),
                               region = stringr::str_split_fixed(endpoint, pattern = "\\.", n = 2)[1],
                               base_url = stringr::str_split_fixed(endpoint, pattern = "\\.", n = 2)[2],
                               use_https = as.logical(Sys.getenv("USE_HTTPS")))
@@ -524,7 +525,7 @@ delete_restart <- function(site_id, sim_name, bucket = "restart", endpoint){
   if(length(keys > 0)){
     for(i in 1:length(keys)){
       aws.s3::delete_object(object = keys[i],
-                            bucket = bucket,
+                            bucket = stringr::str_split_fixed(bucket, "/", n = 2)[1],
                             region = stringr::str_split_fixed(endpoint, pattern = "\\.", n = 2)[1],
                             base_url = stringr::str_split_fixed(endpoint, pattern = "\\.", n = 2)[2],
                             use_https = as.logical(Sys.getenv("USE_HTTPS")))
@@ -578,8 +579,8 @@ check_noaa_present <- function(lake_directory, configure_run_file = "configure_r
                                                  forecast_model = config$met$forecast_met_model)
 
   if(config$run_config$forecast_horizon > 0 & !is.null(noaa_forecast_path)){
-    noaa_files <- aws.s3::get_bucket(bucket = config$s3$drivers$bucket,
-                                     prefix = noaa_forecast_path,
+    noaa_files <- aws.s3::get_bucket(bucket = stringr::str_split_fixed(config$s3$drivers$bucket, "/", n = 2)[1],
+                                     prefix = file.path(stringr::str_split_fixed(config$s3$drivers$bucket, "/", n = 2)[2], noaa_forecast_path),
                                      region = stringr::str_split_fixed(config$s3$drivers$endpoint, pattern = "\\.", n = 2)[1],
                                      base_url = stringr::str_split_fixed(config$s3$drivers$endpoint, pattern = "\\.", n = 2)[2],
                                      use_https = as.logical(Sys.getenv("USE_HTTPS")))
@@ -619,8 +620,8 @@ delete_sim <- function(site_id, sim_name, config){
 
   if(go){
     message("deleting analysis files")
-    files <- aws.s3::get_bucket(bucket = config$s3$analysis$bucket,
-                                prefix = site_id,
+    files <- aws.s3::get_bucket(bucket = stringr::str_split_fixed(config$s3$analysis$bucket, "/", n = 2)[1],
+                                prefix = file.path(stringr::str_split_fixed(config$s3$analysis$bucket, "/", n = 2)[2], site_id),
                                 region = stringr::str_split_fixed(config$s3$analysis$endpoint, pattern = "\\.", n = 2)[1],
                                 base_url = stringr::str_split_fixed(config$s3$analysis$endpoint, pattern = "\\.", n = 2)[2],
                                 use_https = as.logical(Sys.getenv("USE_HTTPS")))
@@ -631,7 +632,7 @@ delete_sim <- function(site_id, sim_name, config){
     if(length(keys > 0)){
       for(i in 1:length(keys)){
        aws.s3::delete_object(object = keys[i],
-                             bucket = config$s3$analysis$bucket,
+                             bucket = stringr::str_split_fixed(config$s3$analysis$bucket, "/", n = 2)[1],
                              region = stringr::str_split_fixed(config$s3$analysis$endpoint, pattern = "\\.", n = 2)[1],
                              base_url = stringr::str_split_fixed(config$s3$analysis$endpoint, pattern = "\\.", n = 2)[2],
                              use_https = as.logical(Sys.getenv("USE_HTTPS")))
@@ -640,8 +641,8 @@ delete_sim <- function(site_id, sim_name, config){
 
     #forecasts
     message("deleting forecast files")
-    files <- aws.s3::get_bucket(bucket = config$s3$forecasts$bucket,
-                                prefix = file.path(site_id),
+    files <- aws.s3::get_bucket(bucket = stringr::str_split_fixed(config$s3$forecasts$bucket, "/", n = 2)[1],
+                                prefix = file.path(stringr::str_split_fixed(config$s3$forecasts$bucket, "/", n = 2)[2], site_id),
                                 region = stringr::str_split_fixed(config$s3$forecasts$endpoint, pattern = "\\.", n = 2)[1],
                                 base_url = stringr::str_split_fixed(config$s3$forecasts$endpoint, pattern = "\\.", n = 2)[2],
                                 use_https = as.logical(Sys.getenv("USE_HTTPS")))
@@ -652,7 +653,7 @@ delete_sim <- function(site_id, sim_name, config){
     if(length(keys > 0)){
       for(i in 1:length(keys)){
         aws.s3::delete_object(object = keys[i],
-                              bucket = config$s3$forecasts$bucket,
+                              bucket = stringr::str_split_fixed(config$s3$forecasts$bucket, "/", n = 2)[1],
                               region = stringr::str_split_fixed(config$s3$forecasts$endpoint, pattern = "\\.", n = 2)[1],
                               base_url = stringr::str_split_fixed(config$s3$forecasts$endpoint, pattern = "\\.", n = 2)[2],
                               use_https = as.logical(Sys.getenv("USE_HTTPS")))
@@ -660,8 +661,8 @@ delete_sim <- function(site_id, sim_name, config){
     }
 
     message("deleting restart files")
-    files <- aws.s3::get_bucket(bucket = config$s3$warm_start$bucket,
-                                prefix = file.path(site_id, sim_name),
+    files <- aws.s3::get_bucket(bucket = stringr::str_split_fixed(config$s3$warm_start$bucket, "/", n = 2)[1],
+                                prefix = file.path(stringr::str_split_fixed(config$s3$warm_start$bucket, "/", n = 2)[2], site_id, sim_name),
                                 region = stringr::str_split_fixed(config$s3$warm_start$endpoint, pattern = "\\.", n = 2)[1],
                                 base_url = stringr::str_split_fixed(config$s3$warm_start$endpoint, pattern = "\\.", n = 2)[2],
                                 use_https = as.logical(Sys.getenv("USE_HTTPS")))
@@ -671,7 +672,7 @@ delete_sim <- function(site_id, sim_name, config){
     if(length(keys > 0)){
       for(i in 1:length(keys)){
         aws.s3::delete_object(object = keys[i],
-                              bucket = config$s3$warm_start$bucket,
+                              bucket = stringr::str_split_fixed(config$s3$warm_start$bucket, "/", n = 2)[1],
                               region = stringr::str_split_fixed(config$s3$warm_start$endpoint, pattern = "\\.", n = 2)[1],
                               base_url = stringr::str_split_fixed(config$s3$warm_start$endpoint, pattern = "\\.", n = 2)[2],
                               use_https = as.logical(Sys.getenv("USE_HTTPS")))
