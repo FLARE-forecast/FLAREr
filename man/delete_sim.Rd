@@ -4,12 +4,14 @@
 \alias{delete_sim}
 \title{Title}
 \usage{
-delete_sim(site_id, sim_name)
+delete_sim(site_id, sim_name, config)
 }
 \arguments{
 \item{site_id}{four letter code for site}
 
 \item{sim_name}{name of simulation}
+
+\item{config}{FLARE configuration object (needed for s3 buckets and endpoit)}
 }
 \value{
 

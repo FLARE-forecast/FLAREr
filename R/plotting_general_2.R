@@ -260,7 +260,7 @@ plotting_general_2 <- function(file_name,
       print(p)
     }
 
-  if("extc_coef" %in% diagnostics_names){
+  if(("extc_coef" %in% diagnostics_names) | ("extc" %in% diagnostics_names)){
 
     message("secchi")
 
@@ -268,7 +268,8 @@ plotting_general_2 <- function(file_name,
       dplyr::mutate(date = as.character(date))
 
     obs_secchi <- obs_long %>% dplyr::filter(variable == "secchi") %>%
-      dplyr::mutate(date = as.character(date))
+      dplyr::mutate(date = as.character(date)) %>%
+      distinct()
 
     if(nrow(obs_secchi) > 0){
       obs_curr <- dplyr::left_join(obs_date, obs_secchi, by = "date")
@@ -278,7 +279,7 @@ plotting_general_2 <- function(file_name,
       obs_curr <- rep(NA, length(obs_date))
     }
 
-    i <- which(diagnostics_names == "extc_coef")
+    i <- which(diagnostics_names == "extc_coef" | diagnostics_names == "extc")
     ii <- which.min(abs(depths-1.0))
     curr_var <- diagnostic_list[[i]]
 

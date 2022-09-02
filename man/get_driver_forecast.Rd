@@ -2,18 +2,20 @@
 % Please edit documentation in R/workflow_functions.R
 \name{get_driver_forecast}
 \alias{get_driver_forecast}
-\title{Download driver forecasts from s3 bucket}
+\title{Call get_driver_forecast_s3}
 \usage{
-get_driver_forecast(lake_directory, forecast_path)
+get_driver_forecast(lake_directory, forecast_path, config)
 }
 \arguments{
 \item{lake_directory}{full path to repository directory}
 
 \item{forecast_path}{relative path of the driver forecast (relative to driver directory or bucket)}
+
+\item{config}{flare configuration object}
 }
 \value{
 
 }
 \description{
-Download driver forecasts from s3 bucket
+Call get_driver_forecast_s3
 }

@@ -38,8 +38,13 @@ Imports:
     GLM3r,
     patchwork,
     parallel,
-    EML
-Remotes: FLARE-forecast/GLM3r
+    EML,
+    purrr,
+    furrr,
+    future,
+    score4cast,
+    read4cast
+Remotes: FLARE-forecast/GLM3r, eco4cast/score4cast, eco4cast/read4cast
 Suggests: 
     knitr,
     rmarkdown,

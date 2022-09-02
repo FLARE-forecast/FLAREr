@@ -71,12 +71,15 @@ combine_forecast_observations <- function(file_name,
 
   names(state_list) <- state_names
 
+
   diagnostic_list <- list()
+  if(length(diagnostics_names) > 0){
   for(s in 1:length(diagnostics_names)){
     diagnostic_list[[s]] <- ncdf4::ncvar_get(nc, diagnostics_names[s])
   }
 
   names(diagnostic_list) <- diagnostics_names
+  }
 
   ncdf4::nc_close(nc)
 
@@ -85,6 +88,15 @@ combine_forecast_observations <- function(file_name,
   d <- readr::read_csv(target_file,
                        col_types = readr::cols())
 
+  if("observed" %in% names(d)){
+    d <- d %>%
+      dplyr::rename(value = observed)
+  }
+  if("time" %in% names(d)){
+    d <- d %>%
+      mutate(hour = lubridate::hour(time),
+             date = lubridate::as_date(time))
+  }
 
   #####
 
@@ -111,7 +123,7 @@ combine_forecast_observations <- function(file_name,
   })
 
 
-  parallel::clusterExport(cl, varlist = list("obs_names", "full_time", "depths", "full_time_extended", "d", "obs_names_targets"),
+  parallel::clusterExport(cl, varlist = list("obs_names", "full_time", "depths", "full_time_extended", "d", "obs_names_targets", "depth_threshold"),
                           envir = environment())
 
   obs_list <- parallel::parLapply(cl, 1:length(obs_names), function(i) {

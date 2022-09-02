@@ -4,7 +4,7 @@
 \alias{download_s3_objects}
 \title{Download file from s3 bucket}
 \usage{
-download_s3_objects(lake_directory, bucket, prefix)
+download_s3_objects(lake_directory, bucket, prefix, region, base_url)
 }
 \arguments{
 \item{lake_directory}{full path to repository directory}
@@ -12,6 +12,10 @@ download_s3_objects(lake_directory, bucket, prefix)
 \item{bucket}{name of s3 bucket}
 
 \item{prefix}{relative path directory within bucket}
+
+\item{region}{S3 region}
+
+\item{base_url}{S3 endpoint}
 }
 \value{
 
