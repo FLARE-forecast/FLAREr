@@ -98,7 +98,7 @@ get_edi_file <- function(edi_https, file, lake_directory){
 #' @return
 #' @export
 #'
-put_targets <- function(site_id, cleaned_insitu_file = NA, cleaned_met_file = NA, cleaned_inflow_file = NA, use_s3 = FALSE){
+put_targets <- function(site_id, cleaned_insitu_file = NA, cleaned_met_file = NA, cleaned_inflow_file = NA, use_s3 = FALSE, config){
 
   if(use_s3){
     if(!is.na(cleaned_insitu_file)){
