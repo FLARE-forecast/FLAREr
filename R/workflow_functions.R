@@ -9,8 +9,12 @@
 #' @export
 #'
 get_run_config <- function(configure_run_file = "configure_run.yml", lake_directory, config, clean_start = FALSE, config_set_name = "default", sim_name = NA){
+
   run_config <- yaml::read_yaml(file.path(lake_directory,"configuration",config_set_name,configure_run_file))
+  if(is.na(sim_name)){
   sim_name <- run_config$sim_name
+  }
+
   dir.create(file.path(lake_directory, "restart", config$location$site_id, sim_name), recursive = TRUE, showWarnings = FALSE)
 
   if(clean_start | !config$run_config$use_s3){
@@ -18,7 +22,7 @@ get_run_config <- function(configure_run_file = "configure_run.yml", lake_direct
     if(!restart_exists){
       yaml::write_yaml(run_config, file.path(lake_directory,"restart", config$location$site_id, sim_name, configure_run_file))
     }else{
-      message("Using existing restart file")
+      #message("Using existing restart file")
     }
   }else if(config$run_config$use_s3){
     restart_exists <- suppressMessages(aws.s3::object_exists(object = file.path(stringr::str_split_fixed(config$s3$warm_start$bucket, "/", n = 2)[2],
@@ -29,8 +33,7 @@ get_run_config <- function(configure_run_file = "configure_run.yml", lake_direct
                                                              use_https = as.logical(Sys.getenv("USE_HTTPS"))))
 
     if(restart_exists){
-      message("Using existing restart file from s3 bucket")
-      aws.s3::save_object(object = file.path(stringr::str_split_fixed(config$s3$warm_start$bucket, "/", n = 2)[2], config$location$site_id, config$run_config$sim_name, configure_run_file),
+      aws.s3::save_object(object = file.path(stringr::str_split_fixed(config$s3$warm_start$bucket, "/", n = 2)[2], config$location$site_id, sim_name, configure_run_file),
                           bucket = stringr::str_split_fixed(config$s3$warm_start$bucket, "/", n = 2)[1],
                           file = file.path(lake_directory, "restart", config$location$site_id, sim_name, configure_run_file),
                           region = stringr::str_split_fixed(config$s3$warm_start$endpoint, pattern = "\\.", n = 2)[1],
@@ -98,7 +101,7 @@ get_edi_file <- function(edi_https, file, lake_directory){
 #' @return
 #' @export
 #'
-put_targets <- function(site_id, cleaned_insitu_file = NA, cleaned_met_file = NA, cleaned_inflow_file = NA, use_s3 = FALSE){
+put_targets <- function(site_id, cleaned_insitu_file = NA, cleaned_met_file = NA, cleaned_inflow_file = NA, use_s3 = FALSE, config){
 
   if(use_s3){
     if(!is.na(cleaned_insitu_file)){
