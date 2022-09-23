@@ -24,11 +24,12 @@ generate_forecast_score <- function(targets_file,
                   site_id = paste0(site_id,"-",depth)) %>%
     #score4cast::select_forecasts() %>%
     score4cast::pivot_forecast() %>%
+    score4cast::standardize_forecast() %>%
     score4cast::crps_logs_score(target) %>%
-    mutate(horizon = time-start_time) |>
+    mutate(horizon = datetime-reference_datetime) %>%
     mutate(horizon = as.numeric(lubridate::as.duration(horizon),
                                 units = "seconds"),
-           horizon = horizon / 86400) |>
+           horizon = horizon / 86400) %>%
     #score4cast::include_horizon() %>%
     arrow::write_parquet(file_name)
 
