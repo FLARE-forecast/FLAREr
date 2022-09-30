@@ -26,7 +26,9 @@ generate_forecast_score <- function(targets_file,
                   site_id = paste0(site_id,"-",depth)) %>%
     score4cast::standardize_forecast() %>%
     score4cast::crps_logs_score(target) %>%
-    mutate(horizon = datetime-reference_datetime) %>%
+  
+    mutate(reference_datetime = lubridate::as_datetime(reference_datetime),
+           horizon = datetime-reference_datetime) %>%
     mutate(horizon = as.numeric(lubridate::as.duration(horizon),
                                 units = "seconds"),
            horizon = horizon / 86400) %>%
