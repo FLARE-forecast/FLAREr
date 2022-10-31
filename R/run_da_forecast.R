@@ -280,8 +280,17 @@ run_da_forecast <- function(states_init,
             curr_pars_ens <-  pars[i-1, , m]
           }else if(par_fit_method %in% c("perturb","perturb_const") & da_method != "none"){
             if(par_fit_method == "perturb_const"){
-              par_mean <- apply(pars[i-1, , ], 1, mean)
-              curr_pars_ens <- rnorm(npars, par_mean, sd = pars_config$perturb_par)
+              if(npars > 1){
+                par_mean <- apply(pars[i-1, , ], 1, mean)
+                par_sd <- apply(pars[i-1, , ], 1, sd)
+              }else{
+                par_mean <- mean(pars[i-1, , ])
+                par_sd <- sd(pars[i-1, , ])
+              }
+
+              par_z <- (pars[i-1, ,m] - par_mean)/par_sd
+
+              curr_pars_ens <- par_z * pars_config$perturb_par + par_mean
             }else{
               if(i < (hist_days + 1)){
                 curr_pars_ens <- pars[i-1, , m] + rnorm(npars, mean = rep(0, npars), sd = pars_config$perturb_par)
@@ -461,24 +470,24 @@ run_da_forecast <- function(states_init,
 
 
 
-        x[i, , , ] <- x_corr
+      x[i, , , ] <- x_corr
+      if(npars > 0) pars[i, , ] <- pars_star
+
+      if(config$uncertainty$process == FALSE & i > (hist_days + 1)){
+        #don't add process noise if process uncertainty is false (x_star doesn't have noise)
+        #don't add the noise to parameters in future forecast mode ()
+        x[i, , , ] <- x_star
         if(npars > 0) pars[i, , ] <- pars_star
+      }
 
-        if(config$uncertainty$process == FALSE & i > (hist_days + 1)){
-          #don't add process noise if process uncertainty is false (x_star doesn't have noise)
-          #don't add the noise to parameters in future forecast mode ()
-          x[i, , , ] <- x_star
-          if(npars > 0) pars[i, , ] <- pars_star
-        }
-
-        if(i == (hist_days + 1) & config$uncertainty$initial_condition == FALSE){
-          if(npars > 0) pars[i, , ] <- pars_star
-          for(s in 1:nstates){
-            for(k in 1:ndepths_modeled){
-              x[i, s, k , ] <- mean(x_star[s, k, ])
-            }
+      if(i == (hist_days + 1) & config$uncertainty$initial_condition == FALSE){
+        if(npars > 0) pars[i, , ] <- pars_star
+        for(s in 1:nstates){
+          for(k in 1:ndepths_modeled){
+            x[i, s, k , ] <- mean(x_star[s, k, ])
           }
         }
+      }
 
 
       for(s in 1:nstates){
@@ -519,9 +528,11 @@ run_da_forecast <- function(states_init,
         }
       }
 
-      for(m in 1:nmembers){
-        if(config$model_settings$modeled_depths[max_obs_index] > lake_depth[i, m]){
-          lake_depth[i, m] = config$model_settings$modeled_depths[max_obs_index]
+      if(max_obs_index > 0){
+        for(m in 1:nmembers){
+          if(config$model_settings$modeled_depths[max_obs_index] > lake_depth[i, m]){
+            lake_depth[i, m] = config$model_settings$modeled_depths[max_obs_index]
+          }
         }
       }
 
@@ -550,10 +561,11 @@ run_da_forecast <- function(states_init,
 
       secchi_index <- 0
       if(!is.null(obs_secchi)){
-        secchi_index <- 1
         if(!is.na(obs_secchi[i])){
-          zt <- c(zt, obs_secchi[i])
-
+          secchi_index <- 1
+          if(!is.na(obs_secchi[i])){
+            zt <- c(zt, obs_secchi[i])
+          }
         }
       }
 
