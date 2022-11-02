@@ -683,3 +683,23 @@ delete_sim <- function(site_id, sim_name, config){
     }
   }
 }
+
+
+arrow_env_vars <- function(){
+  user_region <- Sys.getenv("AWS_DEFAULT_REGION")
+  user_meta <- Sys.getenv("AWS_EC2_METADATA_DISABLED")
+  Sys.unsetenv("AWS_DEFAULT_REGION")
+  Sys.setenv(AWS_EC2_METADATA_DISABLED="TRUE")
+
+  list(user_region=user_region, user_meta = user_meta)
+}
+
+unset_arrow_vars <- function(vars) {
+  Sys.setenv("AWS_DEFAULT_REGION" = vars$user_region)
+  if (vars$user_meta != "") {
+    Sys.setenv(AWS_EC2_METADATA_DISABLED = vars$user_meta)
+  }
+}
+
+
+

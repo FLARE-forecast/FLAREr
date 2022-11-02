@@ -201,24 +201,19 @@ write_forecast_parquet <- function(da_forecast_output,
 
   output_list <- output_list |> mutate(reference_datetime = strftime(lubridate::as_datetime(reference_datetime),format=reference_datetime_format,tz = "UTC"))
   if(config$run_config$use_s3){
-    user_region <- Sys.getenv("AWS_DEFAULT_REGION")
-    user_meta <- Sys.getenv("AWS_EC2_METADATA_DISABLED")
-    Sys.unsetenv("AWS_DEFAULT_REGION")
-    Sys.setenv(AWS_EC2_METADATA_DISABLED="TRUE")
-  s3 <- arrow::s3_bucket(config$s3$forecasts_parquet$bucket, endpoint_override = config$s3$forecasts_parquet$endpoint)
-  arrow::write_dataset(dataset = output_list,
-                       path = s3,
-                       partitioning = c("model_id","reference_datetime"))
-
-  Sys.setenv("AWS_DEFAULT_REGION" = user_region)
-  if (user_meta != "") {
-    Sys.setenv(AWS_EC2_METADATA_DISABLED = user_meta)
-  }
+  FLAREr:::arrow_env_vars()
+  output_path <- arrow::s3_bucket(config$s3$forecasts_parquet$bucket, endpoint_override = config$s3$forecasts_parquet$endpoint)
+  FLAREr:::unset_arrow_vars()
   }else{
     fs::dir_create(file.path(lake_directory, "forecasts","parquet"))
-    local_dir <- SubTreeFileSystem$create(file.path(lake_directory, "forecasts","parquet"))
+    output_path <- SubTreeFileSystem$create(file.path(lake_directory, "forecasts","parquet"))
     arrow::write_dataset(dataset = output_list,
                          path = local_dir,
                          partitioning = c("model_id","reference_datetime"))
   }
+  arrow::write_dataset(dataset = output_list,
+                       path = output_path,
+                       partitioning = c("model_id","reference_datetime"))
+
+  return(output_list)
 }

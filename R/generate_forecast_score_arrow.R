@@ -1,4 +1,4 @@
-#' Score a forecast using score4cast package
+#' Score a forecast using score4cast package and arrow
 #' @param targets_file observation file
 #' @param forecast_file forecast file
 #' @output_directory directory to save scored file
@@ -6,7 +6,7 @@
 #' @export
 #'
 #' @examples
-generate_forecast_score <- function(targets_file,
+generate_forecast_score_arrow <- function(targets_file,
                                     forecast_file,
                                     output_directory){
 
@@ -20,10 +20,7 @@ generate_forecast_score <- function(targets_file,
 
   fn <- tools::file_path_sans_ext(tools::file_path_sans_ext(basename(forecast_file)))
 
-  file_name <- file.path(output_directory,paste0(fn, ".parquet"))
-
-  forecast <- forecast_file %>%
-    read4cast::read_forecast() %>%
+  forecast_df %>%
     select(-pub_time) %>%
     filter(variable_type == "state") %>%
     dplyr::mutate(filename = forecast_file,
@@ -34,7 +31,6 @@ generate_forecast_score <- function(targets_file,
     mutate(horizon = as.numeric(lubridate::as.duration(horizon),
                                 units = "seconds"),
            horizon = horizon / 86400) %>%
-    arrow::write_parquet(file_name)
+    arrow::write_dataset(path = output_directory, partitioning = c("site_id","model_id"))
 
-  invisible(file_name)
 }

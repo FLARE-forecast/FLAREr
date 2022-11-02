@@ -35,11 +35,18 @@ create_obs_matrix <- function(cleaned_observations_file_long,
     if("observed" %in% names(d)){
       d <- d |>
         dplyr::rename(value = observed)
+    }else if ("observation" %in% names(d)){
+      d <- d |>
+        dplyr::rename(value = observation)
     }
     if("time" %in% names(d)){
       d <- d |>
         mutate(hour = lubridate::hour(time),
                date = lubridate::as_date(time))
+    }else if("datetime" %in% names(d)){
+      d <- d |>
+        mutate(hour = lubridate::hour(datetime),
+               date = lubridate::as_date(datetime))
     }
 
     if(config$model_settings$ncore == 1){
