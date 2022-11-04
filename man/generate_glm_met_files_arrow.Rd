@@ -8,7 +8,11 @@ generate_glm_met_files_arrow(
   obs_met_file = NULL,
   out_dir,
   forecast_dir = NULL,
-  config
+  config,
+  use_s3 = FALSE,
+  bucket = NULL,
+  endpoint = NULL,
+  local_directory = NULL
 )
 }
 \arguments{

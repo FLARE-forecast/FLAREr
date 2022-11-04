@@ -1,14 +1,34 @@
 #' Score a forecast using score4cast package and arrow
 #' @param targets_file observation file
-#' @param forecast_file forecast file
+#' @param forecast_df forecast file
 #' @output_directory directory to save scored file
 #' @return
 #' @export
 #'
 #' @examples
 generate_forecast_score_arrow <- function(targets_file,
-                                    forecast_file,
-                                    output_directory){
+                                          forecast_df,
+                                          use_s3 = FALSE,
+                                          bucket = NULL,
+                                          endpoint = NULL,
+                                          local_directory = NULL){
+
+
+  if(use_s3){
+    if(is.null(bucket) | is.null(endpoint)){
+      stop("scoring function needs bucket and endpoint if use_s3=TRUE")
+    }
+    vars <- FLAREr:::arrow_env_vars()
+    output_directory <- arrow::s3_bucket(bucket = bucket,
+                                         endpoint_override =  endpoint)
+    FLAREr:::unset_arrow_vars(vars)
+  }else{
+    if(is.null(local_directory)){
+      stop("scoring function needs local_directory if use_s3=FALSE")
+    }
+    inflow_s3 <- arrow::SubTreeFileSystem$create(local_directory)
+  }
+
 
   target <- readr::read_csv(targets_file, show_col_types = FALSE) |>
     dplyr::mutate(site_id = paste0(site_id,"-",depth))
@@ -18,13 +38,10 @@ generate_forecast_score_arrow <- function(targets_file,
       dplyr::rename(datetime = time)
   }
 
-  fn <- tools::file_path_sans_ext(tools::file_path_sans_ext(basename(forecast_file)))
-
-  forecast_df %>%
+  df <- forecast_df %>%
     select(-pub_time) %>%
     filter(variable_type == "state") %>%
-    dplyr::mutate(filename = forecast_file,
-                  site_id = paste0(site_id,"-",depth)) %>%
+    dplyr::mutate(site_id = paste0(site_id,"-",depth)) %>%
     score4cast::standardize_forecast() %>%
     score4cast::crps_logs_score(target) %>%
     mutate(horizon = datetime-lubridate::as_datetime(reference_datetime)) %>%

@@ -13,9 +13,29 @@
 ##' }
 ##'
 
-write_forecast_parquet <- function(da_forecast_output,
-                               forecast_output_directory,
-                               use_short_filename = TRUE){
+write_forecast_arrow <- function(da_forecast_output,
+                                 use_s3 = FALSE,
+                                 bucket = NULL,
+                                 endpoint = NULL,
+                                 local_directory = NULL){
+
+
+  if(use_s3){
+    if(is.null(bucket) | is.null(endpoint)){
+      stop("scoring function needs bucket and endpoint if use_s3=TRUE")
+    }
+    vars <- FLAREr:::arrow_env_vars()
+    output_directory <- arrow::s3_bucket(bucket = bucket,
+                                         endpoint_override =  endpoint)
+    FLAREr:::unset_arrow_vars(vars)
+  }else{
+    if(is.null(local_directory)){
+      stop("scoring function needs local_directory if use_s3=FALSE")
+    }
+    output_directory <- arrow::SubTreeFileSystem$create(local_directory)
+  }
+
+
 
   x <- da_forecast_output$x
   pars <- da_forecast_output$pars
@@ -180,12 +200,6 @@ write_forecast_parquet <- function(da_forecast_output,
            prediction = predicted) %>%
     dplyr::select(reference_datetime, datetime, pub_time, model_id, site_id, depth, family, parameter, variable, prediction, forecast, variable_type)
 
-  if(!use_short_filename | is.na(da_forecast_output$save_file_name_short) | length(which(forecast_flag == 1)) == 0){
-    fname <- file.path(forecast_output_directory, paste0(da_forecast_output$save_file_name,".csv.gz"))
-  }else{
-    fname <- file.path(forecast_output_directory, paste0(da_forecast_output$save_file_name_short,".csv.gz"))
-  }
-
   #Convert to target variable name
   for(i in 1:length(states_config$state_names)){
     if(length(which(obs_config$state_names_obs == states_config$state_names[i])) >0){
@@ -200,19 +214,8 @@ write_forecast_parquet <- function(da_forecast_output,
   reference_datetime_format <- "%Y-%m-%d %H:%M:%S"
 
   output_list <- output_list |> mutate(reference_datetime = strftime(lubridate::as_datetime(reference_datetime),format=reference_datetime_format,tz = "UTC"))
-  if(config$run_config$use_s3){
-  FLAREr:::arrow_env_vars()
-  output_path <- arrow::s3_bucket(config$s3$forecasts_parquet$bucket, endpoint_override = config$s3$forecasts_parquet$endpoint)
-  FLAREr:::unset_arrow_vars()
-  }else{
-    fs::dir_create(file.path(lake_directory, "forecasts","parquet"))
-    output_path <- SubTreeFileSystem$create(file.path(lake_directory, "forecasts","parquet"))
-    arrow::write_dataset(dataset = output_list,
-                         path = local_dir,
-                         partitioning = c("model_id","reference_datetime"))
-  }
   arrow::write_dataset(dataset = output_list,
-                       path = output_path,
+                       path = output_directory,
                        partitioning = c("model_id","reference_datetime"))
 
   return(output_list)

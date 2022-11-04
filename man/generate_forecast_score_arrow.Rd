@@ -4,7 +4,14 @@
 \alias{generate_forecast_score_arrow}
 \title{Score a forecast using score4cast package and arrow}
 \usage{
-generate_forecast_score_arrow(targets_file, forecast_file, output_directory)
+generate_forecast_score_arrow(
+  targets_file,
+  forecast_df,
+  use_s3 = FALSE,
+  bucket = NULL,
+  endpoint = NULL,
+  local_directory = NULL
+)
 }
 \arguments{
 \item{targets_file}{observation file}

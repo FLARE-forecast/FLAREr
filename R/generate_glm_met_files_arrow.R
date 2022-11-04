@@ -18,11 +18,12 @@
 generate_glm_met_files_arrow <- function(obs_met_file = NULL,
                                          out_dir,
                                          forecast_dir = NULL,
-                                         config){
+                                         config,
+                                         use_s3 = FALSE,
+                                         bucket = NULL,
+                                         endpoint = NULL,
+                                         local_directory = NULL){
 
-  if(is.null(obs_met_file) & is.null(forecast_dir)){
-    stop("missing files to convert")
-  }
 
   start_datetime <- lubridate::as_datetime(config$run_config$start_datetime)
   if(is.na(config$run_config$forecast_start_datetime)){
@@ -32,6 +33,38 @@ generate_glm_met_files_arrow <- function(obs_met_file = NULL,
     forecast_start_datetime <- lubridate::as_datetime(config$run_config$forecast_start_datetime)
     end_datetime <- forecast_start_datetime + lubridate::days(config$run_config$forecast_horizon) #- lubridate::hours(1)
   }
+
+
+  if(!is.na(config$run_config$forecast_start_datetime)){
+
+    forecast_date <- lubridate::as_date(config$run_config$forecast_start_datetime)
+    forecast_hour <- lubridate::hour(config$run_config$forecast_start_datetime)
+
+    if(forecast_hour != 0){
+      stop("Only forecasts that start at 00:00:00 UTC are currently supported")
+    }
+
+    if(use_s3){
+      if(is.null(bucket) | is.null(endpoint)){
+        stop("inflow forecast function needs bucket and endpoint if use_s3=TRUE")
+      }
+      vars <- FLAREr:::arrow_env_vars()
+      forecast_dir <- arrow::s3_bucket(bucket = file.path(bucket, forecast_hour,forecast_date),
+                                       endpoint_override =  endpoint)
+      FLAREr:::unset_arrow_vars(vars)
+    }else{
+      if(is.null(local_directory)){
+        stop("inflow forecast function needs local_directory if use_s3=FALSE")
+      }
+      forecast_dir <- arrow::SubTreeFileSystem$create(local_directory)
+    }
+  }
+
+  if(is.null(obs_met_file) & is.null(forecast_dir)){
+    stop("missing files to convert")
+  }
+
+
 
   full_time <- seq(start_datetime, end_datetime, by = "1 hour")
   if(config$met$use_forecasted_met){
@@ -108,17 +141,17 @@ generate_glm_met_files_arrow <- function(obs_met_file = NULL,
 
     ensemble_members <- unique(forecast$ensemble)
 
-    d <- purrr::map_chr(ensemble_members, function(ens, out_dir, forecast, target){
+    current_filename <- purrr::map_chr(ensemble_members, function(ens, out_dir, forecast, target){
       df <- forecast |>
         dplyr::filter(ensemble == ens) |>
         dplyr::select(-ensemble) |>
         dplyr::bind_rows(target) |>
         dplyr::arrange(time)
 
-      current_filename <- paste0("met_",stringr::str_pad(ens, width = 2, side = "left", pad = "0"),".csv")
-      current_filename <- file.path(out_dir, current_filename)
-      write.csv(df, file = current_filename, quote = FALSE, row.names = FALSE)
-      return(current_filename)
+      fn <- paste0("met_",stringr::str_pad(ens, width = 2, side = "left", pad = "0"),".csv")
+      fn <- file.path(out_dir, fn)
+      write.csv(df, file = fn, quote = FALSE, row.names = FALSE)
+      return(fn)
     },
     out_dir = out_dir,
     forecast,

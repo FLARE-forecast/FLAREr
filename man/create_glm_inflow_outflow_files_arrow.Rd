@@ -9,7 +9,11 @@ create_glm_inflow_outflow_files_arrow(
   inflow_obs,
   working_directory,
   config,
-  state_names
+  state_names,
+  use_s3 = FALSE,
+  bucket = NULL,
+  endpoint = NULL,
+  local_directory = NULL
 )
 }
 \arguments{

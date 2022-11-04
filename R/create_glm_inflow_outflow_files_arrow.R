@@ -11,12 +11,37 @@
 ##' inflow_outflow_files <- create_glm_inflow_outflow_files(inflow_file_dir = inflow_forecast_path, inflow_obs = cleaned_inflow_file, working_directory = config$file_path$execute_directory, config, state_names = NULL)
 ##' }
 create_glm_inflow_outflow_files_arrow <- function(inflow_file_dir = NULL,
-                                            inflow_obs,
-                                            working_directory,
-                                            config,
-                                            state_names)
+                                                  inflow_obs,
+                                                  working_directory,
+                                                  config,
+                                                  state_names,
+                                                  use_s3 = FALSE,
+                                                  bucket = NULL,
+                                                  endpoint = NULL,
+                                                  local_directory = NULL){
 
-{
+
+  if(!is.null(inflow_file_dir)){
+
+    if(use_s3){
+      if(is.null(bucket) | is.null(endpoint)){
+        stop("scoring function needs bucket and endpoint if use_s3=TRUE")
+      }
+      vars <- FLAREr:::arrow_env_vars()
+      inflow_s3 <- arrow::s3_bucket(bucket = file.path(bucket, inflow_file_dir),
+                                    endpoint_override =  endpoint)
+      FLAREr:::unset_arrow_vars(vars)
+    }else{
+      if(is.null(local_directory)){
+        stop("scoring function needs local_directory if use_s3=FALSE")
+      }
+      inflow_s3 <- arrow::SubTreeFileSystem$create(local_directory)
+    }
+  }else{
+    inflow_s3 <- NULL
+  }
+
+
 
   VARS <- c("time", "FLOW", "TEMP", "SALT")
 
@@ -65,20 +90,20 @@ create_glm_inflow_outflow_files_arrow <- function(inflow_file_dir = NULL,
 
   obs_outflow <- obs_inflow |> mutate(outflow_num = 1)
 
-  if(!is.null(inflow_file_dir)){
-  df <- arrow::open_dataset(inflow_file_dir) |>
-    dplyr::collect()
+  if(!is.null(inflow_s3)){
+    df <- arrow::open_dataset(inflow_s3) |>
+      dplyr::collect()
 
-  inflow_files <- df |>
-    filter(flow_type == "inflow")
+    inflow_files <- df |>
+      filter(flow_type == "inflow")
 
-  outflow_files <- df |>
-    filter(flow_type == "outflow")
+    outflow_files <- df |>
+      filter(flow_type == "outflow")
 
-  num_inflows <- max(inflow_files$flow_number)
-  num_outflows <- max(outflow_files$flow_number )
+    num_inflows <- max(inflow_files$flow_number)
+    num_outflows <- max(outflow_files$flow_number)
 
-  ensemble_members <- unique(inflow_files$parameter)
+    ensemble_members <- unique(inflow_files$parameter)
 
   }else{
     inflow_files <- NULL
@@ -137,8 +162,8 @@ create_glm_inflow_outflow_files_arrow <- function(inflow_file_dir = NULL,
         inflow_file_names[i, j] <- inflow_file_name
 
         readr::write_csv(x = inflow,
-                           file = inflow_file_name,
-                           quote = "none")
+                         file = inflow_file_name,
+                         quote = "none")
       }
     }
   }
