@@ -26,7 +26,7 @@ generate_forecast_score_arrow <- function(targets_file,
     if(is.null(local_directory)){
       stop("scoring function needs local_directory if use_s3=FALSE")
     }
-    inflow_s3 <- arrow::SubTreeFileSystem$create(local_directory)
+    output_directory <- arrow::SubTreeFileSystem$create(local_directory)
   }
 
 
@@ -48,6 +48,8 @@ generate_forecast_score_arrow <- function(targets_file,
     mutate(horizon = as.numeric(lubridate::as.duration(horizon),
                                 units = "seconds"),
            horizon = horizon / 86400) %>%
+    mutate(depth = as.numeric(str_split_fixed(site_id, "-", 2)[,2]),
+           site_id = str_split_fixed(site_id, "-", 2)[,1]) |>
     arrow::write_dataset(path = output_directory, partitioning = c("site_id","model_id"))
 
 }
