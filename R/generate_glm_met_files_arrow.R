@@ -34,7 +34,6 @@ generate_glm_met_files_arrow <- function(obs_met_file = NULL,
     end_datetime <- forecast_start_datetime + lubridate::days(config$run_config$forecast_horizon) #- lubridate::hours(1)
   }
 
-
   if(!is.na(config$run_config$forecast_start_datetime)){
 
     forecast_date <- lubridate::as_date(config$run_config$forecast_start_datetime)
@@ -49,14 +48,17 @@ generate_glm_met_files_arrow <- function(obs_met_file = NULL,
         stop("inflow forecast function needs bucket and endpoint if use_s3=TRUE")
       }
       vars <- FLAREr:::arrow_env_vars()
-      forecast_dir <- arrow::s3_bucket(bucket = file.path(bucket, forecast_hour,forecast_date),
+      forecast_dir <- arrow::s3_bucket(bucket = file.path(bucket, "stage2/parquet", forecast_hour,forecast_date),
                                        endpoint_override =  endpoint)
+      past_dir <- arrow::s3_bucket(bucket = file.path(bucket, "stage3/parquet", config$location$site_id),
+                                   endpoint_override =  endpoint)
       FLAREr:::unset_arrow_vars(vars)
     }else{
       if(is.null(local_directory)){
         stop("inflow forecast function needs local_directory if use_s3=FALSE")
       }
-      forecast_dir <- arrow::SubTreeFileSystem$create(local_directory)
+      forecast_dir <- arrow::SubTreeFileSystem$create(file.path(local_directory, "stage2/parquet", forecast_hour,forecast_date))
+      past_dir <-  arrow::SubTreeFileSystem$create(file.path(local_directory, "stage3/parquet", config$location$site_id))
     }
   }
 
@@ -99,18 +101,63 @@ generate_glm_met_files_arrow <- function(obs_met_file = NULL,
                     time = strftime(time, format="%Y-%m-%d %H:%M", tz = "UTC")) |>
       dplyr::select(time, AirTemp,ShortWave, LongWave, RelHum, WindSpeed,Rain)
   }else{
-    target <- NULL
-  }
+    target <- arrow::open_dataset(past_dir) |>
+      dplyr::filter(site_id == config$location$site_id) |>
+      dplyr::select(datetime, parameter,variable,prediction) |>
+      dplyr::collect() |>
+      dplyr::filter(datetime %in% full_time_hist) |>
+      tidyr::pivot_wider(names_from = variable, values_from = prediction) |>
+      dplyr::arrange(parameter, datetime) |>
+      dplyr::mutate(WindSpeed = sqrt(eastward_wind^2 + northward_wind^2)) |>
+      dplyr::rename(AirTemp = air_temperature,
+                    ShortWave = surface_downwelling_shortwave_flux_in_air,
+                    LongWave = surface_downwelling_longwave_flux_in_air,
+                    RelHum = relative_humidity,
+                    Rain = precipitation_flux,
+                    ensemble = parameter,
+                    time = datetime) |>
+      dplyr::mutate(AirTemp = AirTemp - 273.15,
+                    RelHum = RelHum * 100,
+                    Rain = Rain * (60 * 60 * 24)/1000,
+                    Snow = 0.0) |>
+      dplyr::mutate_at(dplyr::vars(all_of(c("AirTemp", "ShortWave","LongWave","RelHum","WindSpeed"))), list(~round(., 2))) |>
+      dplyr::mutate(Rain = round(Rain, 5),
+                    time = strftime(time, format="%Y-%m-%d %H:%M", tz = "UTC")) |>
+      dplyr::select(ensemble, time, AirTemp,ShortWave, LongWave, RelHum, WindSpeed,Rain) |>
+      dplyr::group_by(ensemble) |>
+      dplyr::slice(-dplyr::n()) |>
+      dplyr::ungroup()
+    }
 
 
   if(is.null(forecast_dir)){
+
+    if(!is.null(obs_met_file)){
 
     current_filename <- "met.csv"
     current_filename <- file.path(out_dir, current_filename)
 
 
     write.csv(target, file = current_filename, quote = FALSE, row.names = FALSE)
+    }else{
 
+      ensemble_members <- unique(target$ensemble)
+
+      current_filename <- purrr::map_chr(ensemble_members, function(ens, out_dir, target){
+        df <- target |>
+          dplyr::filter(ensemble == ens) |>
+          dplyr::select(-ensemble) |>
+          dplyr::arrange(time)
+
+        fn <- paste0("met_",stringr::str_pad(ens, width = 2, side = "left", pad = "0"),".csv")
+        fn <- file.path(out_dir, fn)
+        write.csv(df, file = fn, quote = FALSE, row.names = FALSE)
+        return(fn)
+      },
+      out_dir = out_dir,
+      forecast,
+      target)
+    }
   }else{
 
     forecast <- arrow::open_dataset(forecast_dir) |>
@@ -142,6 +189,14 @@ generate_glm_met_files_arrow <- function(obs_met_file = NULL,
     ensemble_members <- unique(forecast$ensemble)
 
     current_filename <- purrr::map_chr(ensemble_members, function(ens, out_dir, forecast, target){
+
+      if("ensemble" %in% names(target)){
+        target <- target |>
+          dplyr::filter(ensemble == ens) |>
+          dplyr::select(-ensemble)
+      }
+
+
       df <- forecast |>
         dplyr::filter(ensemble == ens) |>
         dplyr::select(-ensemble) |>
