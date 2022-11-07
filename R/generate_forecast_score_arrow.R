@@ -11,7 +11,8 @@ generate_forecast_score_arrow <- function(targets_file,
                                           use_s3 = FALSE,
                                           bucket = NULL,
                                           endpoint = NULL,
-                                          local_directory = NULL){
+                                          local_directory = NULL,
+                                          variable_types = "state"){
 
 
   if(use_s3){
@@ -40,7 +41,7 @@ generate_forecast_score_arrow <- function(targets_file,
 
   df <- forecast_df %>%
     select(-pub_time) %>%
-    filter(variable_type == "state") %>%
+    filter(variable_type %in% variable_types) %>%
     dplyr::mutate(site_id = paste0(site_id,"-",depth)) %>%
     score4cast::standardize_forecast() %>%
     score4cast::crps_logs_score(target) %>%

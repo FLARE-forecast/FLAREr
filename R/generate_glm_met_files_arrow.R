@@ -49,9 +49,9 @@ generate_glm_met_files_arrow <- function(obs_met_file = NULL,
       }
       vars <- FLAREr:::arrow_env_vars()
       forecast_dir <- arrow::s3_bucket(bucket = file.path(bucket, "stage2/parquet", forecast_hour,forecast_date),
-                                       endpoint_override =  endpoint)
+                                       endpoint_override =  endpoint, anonymous = TRUE)
       past_dir <- arrow::s3_bucket(bucket = file.path(bucket, "stage3/parquet", config$location$site_id),
-                                   endpoint_override =  endpoint)
+                                   endpoint_override =  endpoint, anonymous = TRUE)
       FLAREr:::unset_arrow_vars(vars)
     }else{
       if(is.null(local_directory)){

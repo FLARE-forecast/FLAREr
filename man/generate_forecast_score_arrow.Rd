@@ -10,13 +10,14 @@ generate_forecast_score_arrow(
   use_s3 = FALSE,
   bucket = NULL,
   endpoint = NULL,
-  local_directory = NULL
+  local_directory = NULL,
+  variable_types = "state"
 )
 }
 \arguments{
 \item{targets_file}{observation file}
 
-\item{forecast_file}{forecast file}
+\item{forecast_df}{forecast file}
 }
 \value{
 
