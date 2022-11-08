@@ -2,7 +2,6 @@
 ##' @details Function combines historical meteorology and NOAA forecasts to create meteorology input files in the GLM format.  A file is generated for each ensemble member.
 ##' @param obs_met_file string; full path to netcdf that is observed historical meteorology
 ##' @param out_dir string; full path to directory where the converted files will be saved
-##' @param forecast_dir string; full path to arrow file system with the NOAA forecast netcdf files
 ##' @return list; vector of full path for the converted files and boolean flag if issues with historical meteorology files
 ##' @export
 ##' @import dplyr
@@ -15,29 +14,35 @@
 ##' \dontrun{
 ##' met_out <- FLAREr::generate_glm_met_files(obs_met_file = observed_met_file, out_dir = config$file_path$execute_directory, forecast_dir = config$file_path$noaa_directory, config)
 ##' }
-generate_glm_met_files_arrow <- function(obs_met_file = NULL,
-                                         out_dir,
-                                         forecast_dir = NULL,
-                                         config,
-                                         use_s3 = FALSE,
-                                         bucket = NULL,
-                                         endpoint = NULL,
-                                         local_directory = NULL){
+generate_met_files_arrow <- function(obs_met_file = NULL,
+                                     out_dir,
+                                     start_datetime,
+                                     end_datetime = NA,
+                                     forecast_start_datetime = NA,
+                                     forecast_horizon = 0,
+                                     site_id,
+                                     use_s3 = FALSE,
+                                     bucket = NULL,
+                                     endpoint = NULL,
+                                     local_directory = NULL,
+                                     use_forecast = TRUE,
+                                     use_ler_vars = FALSE){
 
+  lake_name_code <- site_id
 
-  start_datetime <- lubridate::as_datetime(config$run_config$start_datetime)
-  if(is.na(config$run_config$forecast_start_datetime)){
-    end_datetime <- lubridate::as_datetime(config$run_config$end_datetime) #- lubridate::hours(1)
+  start_datetime <- lubridate::as_datetime(start_datetime)
+  if(is.na(forecast_start_datetime)){
+    end_datetime <- lubridate::as_datetime(end_datetime) #- lubridate::hours(1)
     forecast_start_datetime <- end_datetime
   }else{
-    forecast_start_datetime <- lubridate::as_datetime(config$run_config$forecast_start_datetime)
-    end_datetime <- forecast_start_datetime + lubridate::days(config$run_config$forecast_horizon) #- lubridate::hours(1)
+    forecast_start_datetime <- lubridate::as_datetime(forecast_start_datetime)
+    end_datetime <- forecast_start_datetime + lubridate::days(forecast_horizon) #- lubridate::hours(1)
   }
 
-  if(!is.na(config$run_config$forecast_start_datetime)){
+  if(!is.na(forecast_start_datetime)){
 
-    forecast_date <- lubridate::as_date(config$run_config$forecast_start_datetime)
-    forecast_hour <- lubridate::hour(config$run_config$forecast_start_datetime)
+    forecast_date <- lubridate::as_date(forecast_start_datetime)
+    forecast_hour <- lubridate::hour(forecast_start_datetime)
 
     if(forecast_hour != 0){
       stop("Only forecasts that start at 00:00:00 UTC are currently supported")
@@ -50,7 +55,7 @@ generate_glm_met_files_arrow <- function(obs_met_file = NULL,
       vars <- FLAREr:::arrow_env_vars()
       forecast_dir <- arrow::s3_bucket(bucket = file.path(bucket, "stage2/parquet", forecast_hour,forecast_date),
                                        endpoint_override =  endpoint, anonymous = TRUE)
-      past_dir <- arrow::s3_bucket(bucket = file.path(bucket, "stage3/parquet", config$location$site_id),
+      past_dir <- arrow::s3_bucket(bucket = file.path(bucket, "stage3/parquet", lake_name_code),
                                    endpoint_override =  endpoint, anonymous = TRUE)
       FLAREr:::unset_arrow_vars(vars)
     }else{
@@ -58,7 +63,7 @@ generate_glm_met_files_arrow <- function(obs_met_file = NULL,
         stop("inflow forecast function needs local_directory if use_s3=FALSE")
       }
       forecast_dir <- arrow::SubTreeFileSystem$create(file.path(local_directory, "stage2/parquet", forecast_hour,forecast_date))
-      past_dir <-  arrow::SubTreeFileSystem$create(file.path(local_directory, "stage3/parquet", config$location$site_id))
+      past_dir <-  arrow::SubTreeFileSystem$create(file.path(local_directory, "stage3/parquet", lake_name_code))
     }
   }
 
@@ -69,7 +74,7 @@ generate_glm_met_files_arrow <- function(obs_met_file = NULL,
 
 
   full_time <- seq(start_datetime, end_datetime, by = "1 hour")
-  if(config$met$use_forecasted_met){
+  if(use_forecast){
     if(forecast_start_datetime > start_datetime){
       full_time_hist <- seq(start_datetime, forecast_start_datetime, by = "1 hour")
     }else{
@@ -93,16 +98,24 @@ generate_glm_met_files_arrow <- function(obs_met_file = NULL,
                     time = datetime) |>
       dplyr::mutate(AirTemp = AirTemp - 273.15,
                     RelHum = RelHum * 100,
-                    Rain = Rain * (60 * 60 * 24)/1000,
+                    RelHum = ifelse(RelHum > 100, 100, RelHum),
+                    Rain = ifelse(use_ler_vars, Rain * (60 * 60), Rain * (60 * 60 * 24)/1000),
                     Snow = 0.0) |>
       dplyr::mutate_at(dplyr::vars(all_of(c("AirTemp", "ShortWave","LongWave","RelHum","WindSpeed"))), list(~round(., 2))) |>
       dplyr::filter(time %in% full_time_hist) |>
       dplyr::mutate(Rain = round(Rain, 5),
                     time = strftime(time, format="%Y-%m-%d %H:%M", tz = "UTC")) |>
       dplyr::select(time, AirTemp,ShortWave, LongWave, RelHum, WindSpeed,Rain)
+
+    if( any(target$RelHum <= 0.0)) {
+      idx <- which(target$RelHum <= 0.0)
+      target$RelHum[idx] <- NA
+      target$RelHum <- zoo::na.approx(target$RelHum, rule = 2)
+    }
+
   }else{
     target <- arrow::open_dataset(past_dir) |>
-      dplyr::filter(site_id == config$location$site_id) |>
+      dplyr::filter(site_id == lake_name_code) |>
       dplyr::select(datetime, parameter,variable,prediction) |>
       dplyr::collect() |>
       dplyr::filter(datetime %in% full_time_hist) |>
@@ -118,7 +131,8 @@ generate_glm_met_files_arrow <- function(obs_met_file = NULL,
                     time = datetime) |>
       dplyr::mutate(AirTemp = AirTemp - 273.15,
                     RelHum = RelHum * 100,
-                    Rain = Rain * (60 * 60 * 24)/1000,
+                    RelHum = ifelse(RelHum > 100, 100, RelHum),
+                    Rain = ifelse(use_ler_vars, Rain * (60 * 60), Rain * (60 * 60 * 24)/1000),
                     Snow = 0.0) |>
       dplyr::mutate_at(dplyr::vars(all_of(c("AirTemp", "ShortWave","LongWave","RelHum","WindSpeed"))), list(~round(., 2))) |>
       dplyr::mutate(Rain = round(Rain, 5),
@@ -127,18 +141,31 @@ generate_glm_met_files_arrow <- function(obs_met_file = NULL,
       dplyr::group_by(ensemble) |>
       dplyr::slice(-dplyr::n()) |>
       dplyr::ungroup()
-    }
+  }
 
+  if(use_ler_vars){
+
+    target <- target |>
+      dplyr::rename(Air_Temperature_celsius = AirTemp,
+                    Shortwave_Radiation_Downwelling_wattPerMeterSquared = ShortWave,
+                    Longwave_Radiation_Downwelling_wattPerMeterSquared = LongWave,
+                    Relative_Humidity_percent = RelHum,
+                    Ten_Meter_Elevation_Wind_Speed_meterPerSecond = WindSpeed,
+                    Precipitation_millimeterPerHour = Rain,
+                    Snowfall_millimeterPerHour = Snow)
+
+
+  }
 
   if(is.null(forecast_dir)){
 
     if(!is.null(obs_met_file)){
 
-    current_filename <- "met.csv"
-    current_filename <- file.path(out_dir, current_filename)
+      current_filename <- "met.csv"
+      current_filename <- file.path(out_dir, current_filename)
 
 
-    write.csv(target, file = current_filename, quote = FALSE, row.names = FALSE)
+      write.csv(target, file = current_filename, quote = FALSE, row.names = FALSE)
     }else{
 
       ensemble_members <- unique(target$ensemble)
@@ -161,7 +188,7 @@ generate_glm_met_files_arrow <- function(obs_met_file = NULL,
   }else{
 
     forecast <- arrow::open_dataset(forecast_dir) |>
-      dplyr::filter(site_id == config$location$site_id) |>
+      dplyr::filter(site_id == lake_name_code) |>
       dplyr::select(datetime, parameter,variable,prediction) |>
       dplyr::collect() |>
       tidyr::pivot_wider(names_from = variable, values_from = prediction) |>
@@ -176,7 +203,8 @@ generate_glm_met_files_arrow <- function(obs_met_file = NULL,
                     time = datetime) |>
       dplyr::mutate(AirTemp = AirTemp - 273.15,
                     RelHum = RelHum * 100,
-                    Rain = Rain * (60 * 60 * 24)/1000,
+                    RelHum = ifelse(RelHum > 100, 100, RelHum),
+                    Rain = ifelse(use_ler_vars, Rain * (60 * 60), Rain * (60 * 60 * 24)/1000),
                     Snow = 0.0) |>
       dplyr::mutate_at(dplyr::vars(all_of(c("AirTemp", "ShortWave","LongWave","RelHum","WindSpeed"))), list(~round(., 2))) |>
       dplyr::mutate(Rain = round(Rain, 5),
@@ -185,6 +213,18 @@ generate_glm_met_files_arrow <- function(obs_met_file = NULL,
       dplyr::group_by(ensemble) |>
       dplyr::slice(-dplyr::n()) |>
       dplyr::ungroup()
+
+
+    if(use_ler_vars){
+      forecast <- forecast |>
+        dplyr::rename(Air_Temperature_celsius = AirTemp,
+                      Shortwave_Radiation_Downwelling_wattPerMeterSquared = ShortWave,
+                      Longwave_Radiation_Downwelling_wattPerMeterSquared = LongWave,
+                      Relative_Humidity_percent = RelHum,
+                      Ten_Meter_Elevation_Wind_Speed_meterPerSecond = WindSpeed,
+                      Precipitation_millimeterPerHour = Rain,
+                      Snowfall_millimeterPerHour = Snow)
+    }
 
     ensemble_members <- unique(forecast$ensemble)
 
