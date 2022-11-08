@@ -608,6 +608,39 @@ check_noaa_present <- function(lake_directory, configure_run_file = "configure_r
 
 }
 
+check_noaa_present_arrow <- function(lake_directory, configure_run_file = "configure_run.yml", config_set_name = "default"){
+
+  config <- set_configuration(configure_run_file,lake_directory, config_set_name = config_set_name)
+
+  if(config$run_config$forecast_horizon > 0){
+
+    forecast_date <- lubridate::as_date(config$run_config$forecast_start_datetime)
+    forecast_hour <- lubridate::hour(config$run_config$forecast_start_datetime)
+
+    forecast_dir <- arrow::s3_bucket(bucket = file.path(bucket, "stage2/parquet", forecast_hour),
+                                     endpoint_override =  endpoint, anonymous = TRUE)
+
+    avail_dates <- forecast_dir$ls()
+
+    if(forecast_date %in% avail_dates){
+      if (length(forecast_dir$ls(forecast_date)) > 0){
+        noaa_forecasts_ready <- TRUE
+      }
+    }
+
+  }else{
+    forecast_files <- NULL
+    noaa_forecasts_ready <- TRUE
+  }
+
+    if(config$run_config$forecast_horizon > 0 & !noaa_forecasts_ready){
+      message(paste0("waiting for NOAA forecast: ", config$run_config$forecast_start_datetime))
+    }
+  return(noaa_forecasts_ready)
+
+}
+
+
 #' Title
 #'
 #' @param site_id four letter code for site
