@@ -1,6 +1,6 @@
 #' @title Generating inflow and output files in the GLM format using arrow
 #' @details Processes historical inflow data from inflow_obs and from files in the inflow_file_dir into the GLM format
-#' @param inflow_file_dir string; full directory path that contains forecasted inflow and outflow files
+#' @param inflow_forecast_dir string; full directory path that contains forecasted inflow and outflow files
 #' @param inflow_obs string; full path to cleaned inflow observation in the specified format
 #' @param working_directory string; full directory where FLARE executes
 #' @param state_names vector; vector of state names that will be included in the inflow files
@@ -35,7 +35,7 @@ create_inflow_outflow_files_arrow <- function(inflow_forecast_dir = NULL,
         stop("scoring function needs bucket and endpoint if use_s3=TRUE")
       }
       vars <- FLAREr:::arrow_env_vars()
-      inflow_s3 <- arrow::s3_bucket(bucket = file.path(bucket, inflow_file_dir),
+      inflow_s3 <- arrow::s3_bucket(bucket = file.path(bucket, inflow_forecast_dir),
                                     endpoint_override =  endpoint)
       FLAREr:::unset_arrow_vars(vars)
     }else{
@@ -108,7 +108,7 @@ create_inflow_outflow_files_arrow <- function(inflow_forecast_dir = NULL,
       obs_inflow_tmp <- obs_inflow %>%
         tidyr::pivot_wider(names_from = variable, values_from = observation) |>
         dplyr::rename(time = datetime) |>
-        dplyr::select(dplyr::all_of(VARS))
+        dplyr::select(dplyr::all_of(variables))
 
       inflow_file_name <- file.path(out_dir, paste0("inflow",j,".csv"))
 
@@ -124,14 +124,14 @@ create_inflow_outflow_files_arrow <- function(inflow_forecast_dir = NULL,
                         parameter == ensemble_members[i]) %>%
           tidyr::pivot_wider(names_from = variable, values_from = prediction) |>
           dplyr::rename(time = datetime) |>
-          dplyr::select(dplyr::all_of(VARS)) %>%
-          dplyr::mutate_at(dplyr::vars(dplyr::all_of(VARS)), list(~round(., 4)))
+          dplyr::select(dplyr::all_of(variables)) %>%
+          dplyr::mutate_at(dplyr::vars(dplyr::all_of(variables)), list(~round(., 4)))
 
         obs_inflow_tmp <- obs_inflow %>%
           dplyr::filter(datetime < lubridate::as_date(forecast_start_datetime)) %>%
           tidyr::pivot_wider(names_from = variable, values_from = observation) |>
           dplyr::rename(time = datetime) |>
-          dplyr::select(dplyr::all_of(VARS))
+          dplyr::select(dplyr::all_of(variables))
 
 
         inflow <- dplyr::bind_rows(obs_inflow_tmp, curr_ens)

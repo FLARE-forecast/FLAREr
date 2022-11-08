@@ -608,21 +608,32 @@ check_noaa_present <- function(lake_directory, configure_run_file = "configure_r
 
 }
 
+#' Check if NOAA forecasts have been downloaded and processed
+#'
+#' @param lake_directory four letter code for site
+#' @param configure_run_file name of simulation
+#' @param config_set_name FLARE configuration object (needed for s3 buckets and endpoit)
+#'
+#' @return
+#' @export
+#'
+
 check_noaa_present_arrow <- function(lake_directory, configure_run_file = "configure_run.yml", config_set_name = "default"){
 
-  config <- set_configuration(configure_run_file,lake_directory, config_set_name = config_set_name)
+  config <- FLAREr:::set_configuration(configure_run_file,lake_directory, config_set_name = config_set_name)
 
   if(config$run_config$forecast_horizon > 0){
 
     forecast_date <- lubridate::as_date(config$run_config$forecast_start_datetime)
     forecast_hour <- lubridate::hour(config$run_config$forecast_start_datetime)
 
-    forecast_dir <- arrow::s3_bucket(bucket = file.path(bucket, "stage2/parquet", forecast_hour),
-                                     endpoint_override =  endpoint, anonymous = TRUE)
+    forecast_dir <- arrow::s3_bucket(bucket = file.path(config$s3$drivers$bucket, "stage2/parquet", forecast_hour),
+                                     endpoint_override =  config$s3$drivers$endpoint, anonymous = TRUE)
 
     avail_dates <- forecast_dir$ls()
 
-    if(forecast_date %in% avail_dates){
+    noaa_forecasts_ready <- FALSE
+    if(as.character(forecast_date) %in% avail_dates){
       if (length(forecast_dir$ls(forecast_date)) > 0){
         noaa_forecasts_ready <- TRUE
       }

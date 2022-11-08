@@ -50,7 +50,13 @@ generate_forecast_score_arrow <- function(targets_file,
                                 units = "seconds"),
            horizon = horizon / 86400) %>%
     mutate(depth = as.numeric(str_split_fixed(site_id, "-", 2)[,2]),
-           site_id = str_split_fixed(site_id, "-", 2)[,1]) |>
-    arrow::write_dataset(path = output_directory, partitioning = c("site_id","model_id"))
+           site_id = str_split_fixed(site_id, "-", 2)[,1])
+
+
+  reference_datetime_format <- "%Y-%m-%d %H:%M:%S"
+
+  df <- df |> mutate(reference_datetime = strftime(lubridate::as_datetime(reference_datetime),format=reference_datetime_format,tz = "UTC"))
+
+  arrow::write_dataset(df, path = output_directory, partitioning = c("site_id","model_id","reference_datetime"))
 
 }
