@@ -627,9 +627,10 @@ check_noaa_present_arrow <- function(lake_directory, configure_run_file = "confi
     forecast_date <- lubridate::as_date(config$run_config$forecast_start_datetime)
     forecast_hour <- lubridate::hour(config$run_config$forecast_start_datetime)
 
+    vars <- FLAREr:::arrow_env_vars()
     forecast_dir <- arrow::s3_bucket(bucket = file.path(config$s3$drivers$bucket, "stage2/parquet", forecast_hour),
                                      endpoint_override =  config$s3$drivers$endpoint, anonymous = TRUE)
-
+    FLAREr:::unset_arrow_vars(vars)
     avail_dates <- forecast_dir$ls()
 
     noaa_forecasts_ready <- FALSE
