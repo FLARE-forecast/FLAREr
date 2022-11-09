@@ -27,15 +27,13 @@ write_forecast_arrow <- function(da_forecast_output,
     vars <- FLAREr:::arrow_env_vars()
     output_directory <- arrow::s3_bucket(bucket = bucket,
                                          endpoint_override =  endpoint)
-    FLAREr:::unset_arrow_vars(vars)
+    on.exit(unset_arrow_vars(vars))
   }else{
     if(is.null(local_directory)){
       stop("scoring function needs local_directory if use_s3=FALSE")
     }
     output_directory <- arrow::SubTreeFileSystem$create(local_directory)
   }
-
-
 
   x <- da_forecast_output$x
   pars <- da_forecast_output$pars
@@ -214,9 +212,10 @@ write_forecast_arrow <- function(da_forecast_output,
   reference_datetime_format <- "%Y-%m-%d %H:%M:%S"
 
   output_list <- output_list |> mutate(reference_datetime = strftime(lubridate::as_datetime(reference_datetime),format=reference_datetime_format,tz = "UTC"))
+  message("starting writing dataset")
   arrow::write_dataset(dataset = output_list,
                        path = output_directory,
                        partitioning = c("site_id", "model_id","reference_datetime"))
-
+  message("ending writing dataset")
   return(output_list)
 }
