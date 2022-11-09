@@ -24,9 +24,12 @@ write_forecast_arrow <- function(da_forecast_output,
     if(is.null(bucket) | is.null(endpoint)){
       stop("scoring function needs bucket and endpoint if use_s3=TRUE")
     }
+
+    message("ITS IT CRASHING HERE 1?")
     vars <- FLAREr:::arrow_env_vars()
     output_directory <- arrow::s3_bucket(bucket = bucket,
                                          endpoint_override =  endpoint)
+    message("ITS IT CRASHING HERE 2?")
     on.exit(unset_arrow_vars(vars))
   }else{
     if(is.null(local_directory)){
