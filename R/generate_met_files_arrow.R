@@ -105,7 +105,7 @@ generate_met_files_arrow <- function(obs_met_file = NULL,
       dplyr::filter(time %in% full_time_hist) |>
       dplyr::mutate(Rain = round(Rain, 5),
                     time = strftime(time, format="%Y-%m-%d %H:%M", tz = "UTC")) |>
-      dplyr::select(time, AirTemp,ShortWave, LongWave, RelHum, WindSpeed,Rain)
+      dplyr::select(time, AirTemp,ShortWave, LongWave, RelHum, WindSpeed,Rain, Snow)
 
     if( any(target$RelHum <= 0.0)) {
       idx <- which(target$RelHum <= 0.0)
@@ -137,25 +137,13 @@ generate_met_files_arrow <- function(obs_met_file = NULL,
       dplyr::mutate_at(dplyr::vars(all_of(c("AirTemp", "ShortWave","LongWave","RelHum","WindSpeed"))), list(~round(., 2))) |>
       dplyr::mutate(Rain = round(Rain, 5),
                     time = strftime(time, format="%Y-%m-%d %H:%M", tz = "UTC")) |>
-      dplyr::select(ensemble, time, AirTemp,ShortWave, LongWave, RelHum, WindSpeed,Rain) |>
+      dplyr::select(ensemble, time, AirTemp,ShortWave, LongWave, RelHum, WindSpeed,Rain, Snow) |>
       dplyr::group_by(ensemble) |>
       dplyr::slice(-dplyr::n()) |>
       dplyr::ungroup()
   }
 
-  if(use_ler_vars){
 
-    target <- target |>
-      dplyr::rename(Air_Temperature_celsius = AirTemp,
-                    Shortwave_Radiation_Downwelling_wattPerMeterSquared = ShortWave,
-                    Longwave_Radiation_Downwelling_wattPerMeterSquared = LongWave,
-                    Relative_Humidity_percent = RelHum,
-                    Ten_Meter_Elevation_Wind_Speed_meterPerSecond = WindSpeed,
-                    Precipitation_millimeterPerHour = Rain,
-                    Snowfall_millimeterPerHour = Snow)
-
-
-  }
 
   if(is.null(forecast_dir)){
 
@@ -175,6 +163,19 @@ generate_met_files_arrow <- function(obs_met_file = NULL,
           dplyr::filter(ensemble == ens) |>
           dplyr::select(-ensemble) |>
           dplyr::arrange(time)
+
+        if(use_ler_vars){
+
+          df <- df |>
+            dplyr::rename(datetime = time,
+                          Air_Temperature_celsius = AirTemp,
+                          Shortwave_Radiation_Downwelling_wattPerMeterSquared = ShortWave,
+                          Longwave_Radiation_Downwelling_wattPerMeterSquared = LongWave,
+                          Relative_Humidity_percent = RelHum,
+                          Ten_Meter_Elevation_Wind_Speed_meterPerSecond = WindSpeed,
+                          Precipitation_millimeterPerHour = Rain,
+                          Snowfall_millimeterPerHour = Snow)
+        }
 
         fn <- paste0("met_",stringr::str_pad(ens, width = 2, side = "left", pad = "0"),".csv")
         fn <- file.path(out_dir, fn)
@@ -209,22 +210,10 @@ generate_met_files_arrow <- function(obs_met_file = NULL,
       dplyr::mutate_at(dplyr::vars(all_of(c("AirTemp", "ShortWave","LongWave","RelHum","WindSpeed"))), list(~round(., 2))) |>
       dplyr::mutate(Rain = round(Rain, 5),
                     time = strftime(time, format="%Y-%m-%d %H:%M", tz = "UTC")) |>
-      dplyr::select(ensemble, time, AirTemp,ShortWave, LongWave, RelHum, WindSpeed,Rain) |>
+      dplyr::select(ensemble, time, AirTemp,ShortWave, LongWave, RelHum, WindSpeed,Rain, Snow) |>
       dplyr::group_by(ensemble) |>
       dplyr::slice(-dplyr::n()) |>
       dplyr::ungroup()
-
-
-    if(use_ler_vars){
-      forecast <- forecast |>
-        dplyr::rename(Air_Temperature_celsius = AirTemp,
-                      Shortwave_Radiation_Downwelling_wattPerMeterSquared = ShortWave,
-                      Longwave_Radiation_Downwelling_wattPerMeterSquared = LongWave,
-                      Relative_Humidity_percent = RelHum,
-                      Ten_Meter_Elevation_Wind_Speed_meterPerSecond = WindSpeed,
-                      Precipitation_millimeterPerHour = Rain,
-                      Snowfall_millimeterPerHour = Snow)
-    }
 
     ensemble_members <- unique(forecast$ensemble)
 
@@ -242,6 +231,21 @@ generate_met_files_arrow <- function(obs_met_file = NULL,
         dplyr::select(-ensemble) |>
         dplyr::bind_rows(target) |>
         dplyr::arrange(time)
+
+      if(use_ler_vars){
+
+        df <- df |>
+          dplyr::rename(datetime = time,
+                        Air_Temperature_celsius = AirTemp,
+                        Shortwave_Radiation_Downwelling_wattPerMeterSquared = ShortWave,
+                        Longwave_Radiation_Downwelling_wattPerMeterSquared = LongWave,
+                        Relative_Humidity_percent = RelHum,
+                        Ten_Meter_Elevation_Wind_Speed_meterPerSecond = WindSpeed,
+                        Precipitation_millimeterPerHour = Rain,
+                        Snowfall_millimeterPerHour = Snow)
+      }
+
+
 
       fn <- paste0("met_",stringr::str_pad(ens, width = 2, side = "left", pad = "0"),".csv")
       fn <- file.path(out_dir, fn)
