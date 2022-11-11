@@ -677,6 +677,10 @@ run_da_forecast <- function(states_init,
           psi_t <- curr_psi
         }
 
+        if(!config$uncertainty$observation){
+          psi_t[] <- 0.0
+        }
+
         d_mat <- t(mvtnorm::rmvnorm(n = nmembers, mean = zt, sigma=as.matrix(psi_t)))
 
         #Set any negative observations of water quality variables to zero
