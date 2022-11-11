@@ -273,11 +273,20 @@ run_da_forecast <- function(states_init,
 
         setwd(file.path(working_directory, ens_dir_index))
 
-        curr_met_file <- met_file_names[met_index[m]]
+        if(!config$uncertainty$weather & i >= (hist_days + 1)){
+          curr_met_file <- met_file_names[met_index[1]]
+        }else{
+          curr_met_file <- met_file_names[met_index[m]]
+        }
+
+
 
         if(npars > 0){
           if(par_fit_method == "inflate" & da_method == "enkf"){
             curr_pars_ens <-  pars[i-1, , m]
+            if(i >= (hist_days + 1) & !config$uncertainty$parameter){
+              curr_pars_ens <- mean(pars[i-1, , m])
+            }
           }else if(par_fit_method %in% c("perturb","perturb_const") & da_method != "none"){
             if(par_fit_method == "perturb_const"){
               if(npars > 1){
@@ -291,6 +300,12 @@ run_da_forecast <- function(states_init,
               par_z <- (pars[i-1, ,m] - par_mean)/par_sd
 
               curr_pars_ens <- par_z * pars_config$perturb_par + par_mean
+
+              if(i >= (hist_days + 1) & !config$uncertainty$parameter){
+                curr_pars_ens <- mean(pars[i-1, , m])
+              }
+
+
             }else{
               if(i < (hist_days + 1)){
                 curr_pars_ens <- pars[i-1, , m] + rnorm(npars, mean = rep(0, npars), sd = pars_config$perturb_par)
@@ -298,9 +313,18 @@ run_da_forecast <- function(states_init,
                 curr_pars_ens <- pars[i-1, , m]
               }
 
+              if(i >= (hist_days + 1) & !config$uncertainty$parameter){
+                curr_pars_ens <- mean(pars[i-1, , m])
+              }
+
             }
           }else if(da_method == "none" | par_fit_method == "perturb_init"){
             curr_pars_ens <- pars[i-1, , m]
+
+            if(i >= (hist_days + 1) & !config$uncertainty$parameter){
+              curr_pars_ens <- mean(pars[i-1, , m])
+            }
+
           }else{
             message("parameter fitting method not supported.  inflate or perturb are supported. only inflate is supported for enkf")
 
@@ -310,8 +334,13 @@ run_da_forecast <- function(states_init,
         }
 
         if(!is.null(ncol(inflow_file_names))){
-          inflow_file_name <- inflow_file_names[inflow_outflow_index[m], ]
-          outflow_file_name <- outflow_file_names[inflow_outflow_index[m], ]
+          if(!config$uncertainty$inflow & i >= (hist_days + 1)){
+            inflow_file_name <- inflow_file_names[inflow_outflow_index[1], ]
+            outflow_file_name <- outflow_file_names[inflow_outflow_index[1], ]
+          }else{
+            inflow_file_name <- inflow_file_names[inflow_outflow_index[m], ]
+            outflow_file_name <- outflow_file_names[inflow_outflow_index[m], ]
+          }
         }else{
           inflow_file_name <- NULL
           outflow_file_name <- NULL
@@ -377,6 +406,9 @@ run_da_forecast <- function(states_init,
         w_new[] <- NA
         for(jj in 1:nrow(model_sd)){
           w[] <- rnorm(ndepths_modeled, 0, 1)
+          if(config$uncertainty$process == FALSE & i >= (hist_days + 1)){
+            w[] <- 0.0
+          }
           for(kk in 1:ndepths_modeled){
             #q_v[kk] <- alpha_v * q_v[kk-1] + sqrt(1 - alpha_v^2) * model_sd[jj, kk] * w[kk]
             if(kk == 1){
@@ -473,12 +505,12 @@ run_da_forecast <- function(states_init,
       x[i, , , ] <- x_corr
       if(npars > 0) pars[i, , ] <- pars_star
 
-      if(config$uncertainty$process == FALSE & i > (hist_days + 1)){
+      #if(config$uncertainty$process == FALSE & i > (hist_days + 1)){
         #don't add process noise if process uncertainty is false (x_star doesn't have noise)
         #don't add the noise to parameters in future forecast mode ()
-        x[i, , , ] <- x_star
-        if(npars > 0) pars[i, , ] <- pars_star
-      }
+      #  x[i, , , ] <- x_star
+      #  if(npars > 0) pars[i, , ] <- pars_star
+      #}
 
       if(i == (hist_days + 1) & config$uncertainty$initial_condition == FALSE){
         if(npars > 0) pars[i, , ] <- pars_star
@@ -488,7 +520,6 @@ run_da_forecast <- function(states_init,
           }
         }
       }
-
 
       for(s in 1:nstates){
         for(m in 1:nmembers){
@@ -509,7 +540,6 @@ run_da_forecast <- function(states_init,
       #  x[i, , (ndepths_modeled+1):nstates] <- exp(x[i, , (ndepths_modeled+1):nstates])
       #}
     }else{
-
 
       x_matrix <- apply(aperm(x_corr[,1:ndepths_modeled,], perm = c(2,1,3)), 3, rbind)
       if(length(config$output_settings$diagnostics_names) > 0){
@@ -576,7 +606,6 @@ run_da_forecast <- function(states_init,
       #    zt <- c(zt, obs_depth[i])
       #  }
       #}
-
 
       #Assign which states have obs in the time step
       h <- matrix(0, nrow = length(obs_sd) * ndepths_modeled + secchi_index + depth_index, ncol = nstates * ndepths_modeled + secchi_index + depth_index)
