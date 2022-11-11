@@ -175,7 +175,7 @@ write_forecast_arrow <- function(da_forecast_output,
     }
   }
 
-  for(i in 1:dim(snow_ice_thickness)[1]){
+  for(i in 1:dim(snow_ice_thickness)[2]){
     tmp <- tibble::tibble(predicted = apply(snow_ice_thickness[2:3, i, ], 2, sum),
                           time = full_time[i],
                           variable = "ice_thickness",
