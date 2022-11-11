@@ -302,7 +302,7 @@ run_da_forecast <- function(states_init,
               curr_pars_ens <- par_z * pars_config$perturb_par + par_mean
 
               if(i >= (hist_days + 1) & !config$uncertainty$parameter){
-                curr_pars_ens <- mean(pars[i-1, , m])
+                curr_pars_ens <- apply(pars[i-1, , ], 1, mean)
               }
 
 
@@ -314,7 +314,7 @@ run_da_forecast <- function(states_init,
               }
 
               if(i >= (hist_days + 1) & !config$uncertainty$parameter){
-                curr_pars_ens <- mean(pars[i-1, , m])
+                curr_pars_ens <- apply(pars[i-1, , ], 1, mean)
               }
 
             }
@@ -322,7 +322,7 @@ run_da_forecast <- function(states_init,
             curr_pars_ens <- pars[i-1, , m]
 
             if(i >= (hist_days + 1) & !config$uncertainty$parameter){
-              curr_pars_ens <- mean(pars[i-1, , m])
+              curr_pars_ens <- apply(pars[i-1, , ], 1, mean)
             }
 
           }else{
