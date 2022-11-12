@@ -635,9 +635,9 @@ check_noaa_present_arrow <- function(lake_directory, configure_run_file = "confi
     FLAREr:::unset_arrow_vars(vars)
     avail_dates <- forecast_dir$ls()
 
-    if(forecast_date %in% avail_dates){
+    if(forecast_date %in% lubridate::as_date(avail_dates)){
       if (length(forecast_dir$ls(forecast_date)) > 0){
-        avial_horizons <- arrow::open_dataset(forecast_dir$path(forecast_date)) %>%
+        avial_horizons <- arrow::open_dataset(forecast_dir$path(as.character(forecast_date))) %>%
           filter(variable == "air_temperature",
                  site_id == site) %>%
           group_by(parameter) %>%
