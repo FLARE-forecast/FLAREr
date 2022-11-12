@@ -12,7 +12,7 @@ get_run_config <- function(configure_run_file = "configure_run.yml", lake_direct
 
   run_config <- yaml::read_yaml(file.path(lake_directory,"configuration",config_set_name,configure_run_file))
   if(is.na(sim_name)){
-  sim_name <- run_config$sim_name
+    sim_name <- run_config$sim_name
   }
 
   dir.create(file.path(lake_directory, "restart", config$location$site_id, sim_name), recursive = TRUE, showWarnings = FALSE)
@@ -626,6 +626,8 @@ check_noaa_present_arrow <- function(lake_directory, configure_run_file = "confi
 
     forecast_date <- lubridate::as_date(config$run_config$forecast_start_datetime)
     forecast_hour <- lubridate::hour(config$run_config$forecast_start_datetime)
+    site <- config$location$site_id
+    forecast_horizon <- config$run_config$forecast_horizon
 
     vars <- FLAREr:::arrow_env_vars()
     forecast_dir <- arrow::s3_bucket(bucket = file.path(config$s3$drivers$bucket, "stage2/parquet", forecast_hour),
@@ -633,21 +635,44 @@ check_noaa_present_arrow <- function(lake_directory, configure_run_file = "confi
     FLAREr:::unset_arrow_vars(vars)
     avail_dates <- forecast_dir$ls()
 
-    noaa_forecasts_ready <- FALSE
-    if(as.character(forecast_date) %in% avail_dates){
+    if(forecast_date %in% avail_dates){
       if (length(forecast_dir$ls(forecast_date)) > 0){
-        noaa_forecasts_ready <- TRUE
-      }
-    }
+        avial_horizons <- arrow::open_dataset(forecast_dir$path(forecast_date)) %>%
+          filter(variable == "air_temperature",
+                 site_id == site) %>%
+          group_by(parameter) %>%
+          summarize(max_horizon = max(horizon)) %>%
+          collect() %>%
+          ungroup() %>%
+          mutate(over = ifelse(max_horizon >= forecast_horizon * 24, 1, 0)) %>%
+          summarize(sum = sum(over))
 
+        if(forecast_horizon > 16){
+          if(avial_horizons$sum == 30){
+            noaa_forecasts_ready <- TRUE
+          }else{
+            noaa_forecasts_ready <- FALSE
+          }
+        }else if(forecast_horizon <= 16){
+          if(avial_horizons$sum == 31){
+            noaa_forecasts_ready <- TRUE
+          }else{
+            noaa_forecasts_ready <- FALSE
+          }
+        }
+      }else{
+        noaa_forecasts_ready <- FALSE
+      }
+    }else{
+      noaa_forecasts_ready <- FALSE
+    }
   }else{
-    forecast_files <- NULL
     noaa_forecasts_ready <- TRUE
   }
 
-    if(config$run_config$forecast_horizon > 0 & !noaa_forecasts_ready){
-      message(paste0("waiting for NOAA forecast: ", config$run_config$forecast_start_datetime))
-    }
+  if(!noaa_forecasts_ready){
+    message(paste0("waiting for NOAA forecast: ", config$run_config$forecast_start_datetime))
+  }
   return(noaa_forecasts_ready)
 
 }
@@ -679,12 +704,12 @@ delete_sim <- function(site_id, sim_name, config){
     keys <- keys[stringr::str_detect(keys, sim_name)]
     if(length(keys > 0)){
       for(i in 1:length(keys)){
-       aws.s3::delete_object(object = keys[i],
-                             bucket = stringr::str_split_fixed(config$s3$analysis$bucket, "/", n = 2)[1],
-                             region = stringr::str_split_fixed(config$s3$analysis$endpoint, pattern = "\\.", n = 2)[1],
-                             base_url = stringr::str_split_fixed(config$s3$analysis$endpoint, pattern = "\\.", n = 2)[2],
-                             use_https = as.logical(Sys.getenv("USE_HTTPS")))
-     }
+        aws.s3::delete_object(object = keys[i],
+                              bucket = stringr::str_split_fixed(config$s3$analysis$bucket, "/", n = 2)[1],
+                              region = stringr::str_split_fixed(config$s3$analysis$endpoint, pattern = "\\.", n = 2)[1],
+                              base_url = stringr::str_split_fixed(config$s3$analysis$endpoint, pattern = "\\.", n = 2)[2],
+                              use_https = as.logical(Sys.getenv("USE_HTTPS")))
+      }
     }
 
     #forecasts
