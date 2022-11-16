@@ -826,8 +826,6 @@ run_da_forecast <- function(states_init,
           pars[i, ,] <- pars_star[, sample]
         }
 
-        print(pars_star[4,sample])
-
         snow_ice_thickness[ ,i, ] <- snow_ice_thickness[ ,i, sample]
         avg_surf_temp[i, ] <- avg_surf_temp[i, sample]
         lake_depth[i, ] <- lake_depth[i, sample]
