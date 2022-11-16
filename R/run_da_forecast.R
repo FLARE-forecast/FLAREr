@@ -645,41 +645,42 @@ run_da_forecast <- function(states_init,
         h <- t(as.matrix(h))
       }
 
+      psi <- rep(NA, length(obs_sd) * ndepths_modeled + secchi_index)
+      index <- 0
+      for(k in 1:length(obs_sd)){
+        for(j in 1:ndepths_modeled){
+          index <- index + 1
+          if(k == 1){
+            psi[index] <- obs_sd[k]
+          }else{
+            psi[index] <- obs_sd[k] #sqrt(log(1 + obs_sd[i] ^ 2))
+          }
+        }
+      }
+
+      if(!is.null(obs_secchi)){
+        psi[length(psi)] <- 0.2
+      }
+
+      curr_psi <- psi[z_index] ^ 2
+
+      if(length(z_index) > 1){
+        psi_t <- diag(curr_psi)
+      }else{
+        #Special case where there is only one data
+        #type during the time-step
+        psi_t <- curr_psi
+      }
+
+      if(!config$uncertainty$observation){
+        psi_t[] <- 0.0
+      }
+
+
       if(da_method == "enkf"){
 
         #Extract the data uncertainty for the data
         #types present during the time-step
-
-        psi <- rep(NA, length(obs_sd) * ndepths_modeled + secchi_index)
-        index <- 0
-        for(k in 1:length(obs_sd)){
-          for(j in 1:ndepths_modeled){
-            index <- index + 1
-            if(k == 1){
-              psi[index] <- obs_sd[k]
-            }else{
-              psi[index] <- obs_sd[k] #sqrt(log(1 + obs_sd[i] ^ 2))
-            }
-          }
-        }
-
-        if(!is.null(obs_secchi)){
-          psi[length(psi)] <- 0.2
-        }
-
-        curr_psi <- psi[z_index] ^ 2
-
-        if(length(z_index) > 1){
-          psi_t <- diag(curr_psi)
-        }else{
-          #Special case where there is only one data
-          #type during the time-step
-          psi_t <- curr_psi
-        }
-
-        if(!config$uncertainty$observation){
-          psi_t[] <- 0.0
-        }
 
         d_mat <- t(mvtnorm::rmvnorm(n = nmembers, mean = zt, sigma=as.matrix(psi_t)))
 
@@ -806,7 +807,8 @@ run_da_forecast <- function(states_init,
 
       }else if(da_method == "pf"){
 
-        obs_states <- t(h %*% t(x_matrix))
+        obs_states <- t(h %*% x_matrix)
+
 
         LL <- rep(NA, length(nmembers))
         for(m in 1:nmembers){
@@ -816,10 +818,15 @@ run_da_forecast <- function(states_init,
         sample <- sample.int(nmembers, replace = TRUE, prob = exp(LL))
 
         update <- x_matrix[, sample]
+        update <- update[1:(ndepths_modeled*nstates), ]
+        update <- aperm(array(c(update), dim = c(ndepths_modeled, nstates, nmembers)), perm = c(2,1,3))
+
 
         if(npars > 0){
-          pars[i] <- pars_star[, sample]
+          pars[i, ,] <- pars_star[, sample]
         }
+
+        print(pars_star[4,sample])
 
         snow_ice_thickness[ ,i, ] <- snow_ice_thickness[ ,i, sample]
         avg_surf_temp[i, ] <- avg_surf_temp[i, sample]
@@ -829,22 +836,27 @@ run_da_forecast <- function(states_init,
           diagnostics[ ,i, , ] <- diagnostics[ ,i, ,sample]
         }
 
-        for(s in 1:nstates){
-          for(m in 1:nmembers){
-            depth_index <- which(config$model_settings$modeled_depths > lake_depth[i, m])
-            if(length(depth_index) > 0){
-              x[i, s, depth_index, m ] <- NA
+        if(!is.null(obs_depth)){
+          if(!is.na(obs_depth[i])){
+            lake_depth[i, ] <- rnorm(nmembers, obs_depth[i], sd = 0.05)
+            for(m in 1:nmembers){
+              depth_index <- which(model_internal_depths[i, , m] > lake_depth[i, m])
+              model_internal_depths[i,depth_index , m] <- NA
             }
           }
         }
 
+        for(s in 1:nstates){
+          for(m in 1:nmembers){
+            depth_index <- which(config$model_settings$modeled_depths <= lake_depth[i, m])
+            x[i, s, depth_index, m ] <- update[s,depth_index , m]
+          }
+        }
         if(length(config$output_settings$diagnostics_names) > 0){
           for(d in 1:dim(diagnostics)[1]){
             for(m in 1:nmembers){
               depth_index <- which(config$model_settings$modeled_depths > lake_depth[i, m])
-              if(length(depth_index > 0)){
-                diagnostics[d,i, depth_index, m] <- NA
-              }
+              diagnostics[d,i, depth_index, m] <- NA
             }
           }
         }
