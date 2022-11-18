@@ -12,11 +12,11 @@ generate_forecast_score <- function(targets_file,
 
   target <- readr::read_csv(targets_file, show_col_types = FALSE) |>
     dplyr::mutate(site_id = paste0(site_id,"-",depth))
-
+  
   if("time" %in% colnames(target)){
     target <- target |>
-      dplyr::rename(datetime = time)
-  }
+       dplyr::rename(datetime = time)
+    }
 
   fn <- tools::file_path_sans_ext(tools::file_path_sans_ext(basename(forecast_file)))
 
