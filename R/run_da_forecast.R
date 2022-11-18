@@ -450,7 +450,7 @@ run_da_forecast <- function(states_init,
       x_star <- x[i, , , ]
       x_corr <- x_star
       if(npars > 0){
-        pars_corr <- curr_pars
+        pars_corr <- pars[i, ,]
         if(npars == 1){
           pars_corr <- matrix(pars_corr,nrow = length(pars_corr),ncol = 1)
         }
@@ -466,15 +466,19 @@ run_da_forecast <- function(states_init,
       max_index <- length(c(obs[1,i , ])) + 1
     }
 
-    if(!is.null(obs_secchi)){
-      if(!is.na(obs_secchi[i])){
-        z_index <- c(z_index,max_index)
+    if(i > 1){
+      #DON"T USE SECCHI ON DAY 1 BECAUSE THE THE DIAGONOSTIC OF LIGHT EXTINCTION
+      #IS NOT IN THE RESTART
+      if(!is.null(obs_secchi$obs)){
+        if(!is.na(obs_secchi$obs[i])){
+          z_index <- c(z_index,max_index)
+        }
       }
     }
 
     #if(!is.null(obs_depth)){
     #  if(!is.na(obs_depth[i])){
-    #    if(!is.na(obs_secchi[i])){
+    #    if(!is.na(obs_secchi$obs[i])){
     #    z_index <- c(z_index,max_index +1)
     #  }else{
     #    z_index <- c(z_index,max_index)
@@ -506,8 +510,8 @@ run_da_forecast <- function(states_init,
       if(npars > 0) pars[i, , ] <- pars_star
 
       #if(config$uncertainty$process == FALSE & i > (hist_days + 1)){
-        #don't add process noise if process uncertainty is false (x_star doesn't have noise)
-        #don't add the noise to parameters in future forecast mode ()
+      #don't add process noise if process uncertainty is false (x_star doesn't have noise)
+      #don't add the noise to parameters in future forecast mode ()
       #  x[i, , , ] <- x_star
       #  if(npars > 0) pars[i, , ] <- pars_star
       #}
@@ -542,10 +546,10 @@ run_da_forecast <- function(states_init,
     }else{
 
       x_matrix <- apply(aperm(x_corr[,1:ndepths_modeled,], perm = c(2,1,3)), 3, rbind)
-      if(length(config$output_settings$diagnostics_names) > 0){
+      if(length(config$output_settings$diagnostics_names) > 0 & i > 1){
         modeled_secchi <- 1.7 / diagnostics[1, i, which.min(abs(config$model_settings$modeled_depths-1.0)), ]
         if(!is.null(obs_secchi)){
-          if(!is.na(obs_secchi[i])){
+          if(!is.na(obs_secchi$obs[i])){
             x_matrix <- rbind(x_matrix, modeled_secchi)
           }
         }
@@ -590,15 +594,16 @@ run_da_forecast <- function(states_init,
       zt <- zt[which(!is.na(zt))]
 
       secchi_index <- 0
-      if(!is.null(obs_secchi)){
-        if(!is.na(obs_secchi[i])){
-          secchi_index <- 1
-          if(!is.na(obs_secchi[i])){
-            zt <- c(zt, obs_secchi[i])
+      if(i > 1){
+        if(!is.null(obs_secchi)){
+          if(!is.na(obs_secchi$obs[i])){
+            secchi_index <- 1
+            if(!is.na(obs_secchi$obs[i])){
+              zt <- c(zt, obs_secchi$obs[i])
+            }
           }
         }
       }
-
       depth_index <- 0
       #if(!is.null(obs_depth)){
       #  depth_index <- 1
@@ -627,7 +632,7 @@ run_da_forecast <- function(states_init,
       }
 
       if(!is.null(obs_secchi)){
-        if(!is.na(obs_secchi[i])){
+        if(!is.na(obs_secchi$obs[i])){
           h[dim(h)[1],dim(h)[2]] <- 1
         }
       }
@@ -658,8 +663,9 @@ run_da_forecast <- function(states_init,
         }
       }
 
-      if(!is.null(obs_secchi)){
-        psi[length(psi)] <- 0.2
+
+      if(secchi_index > 0){
+        psi[length(psi)] <- obs_secchi$secchi_sd
       }
 
       curr_psi <- psi[z_index] ^ 2

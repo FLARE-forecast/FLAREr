@@ -131,15 +131,19 @@ generate_initial_conditions <- function(states_config,
 
   }else{
     nc <- ncdf4::nc_open(config$run_config$restart_file)
-    forecast <- ncdf4::ncvar_get(nc, "forecast")
+    #forecast <- ncdf4::ncvar_get(nc, "forecast")
+    t <- ncdf4::ncvar_get(nc,'time')
+    local_tzone <- ncdf4::ncatt_get(nc, 0)$local_time_zone_of_simulation
+    datetime <- as.POSIXct(t,
+                           origin = '1970-01-01 00:00.00 UTC',
+                           tz = "UTC")
     ncdf4::nc_close(nc)
-    if(historical_met_error){
-      restart_index <- max(which(forecast == 0)) + 1
-    }else{
-      restart_index <- max(which(forecast == 0))
-    }
-    if(max(which(forecast == 0)) == length(forecast)){
-      restart_index <- max(which(forecast == 0))
+
+
+    restart_index <- which(datetime == lubridate::as_datetime(config$run_config$start_datetime))
+
+    if(length(restart_index) != 1){
+      warning("start_datetime for this simulation is missing from restart file")
     }
 
     out <- FLAREr:::generate_restart_initial_conditions(

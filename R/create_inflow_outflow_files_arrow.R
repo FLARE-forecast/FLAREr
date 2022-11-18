@@ -128,10 +128,16 @@ create_inflow_outflow_files_arrow <- function(inflow_forecast_dir = NULL,
           dplyr::mutate_at(dplyr::vars(dplyr::all_of(variables)), list(~round(., 4)))
 
         obs_inflow_tmp <- obs_inflow %>%
-          dplyr::filter(datetime < lubridate::as_date(forecast_start_datetime)) %>%
+          dplyr::filter(datetime < lubridate::as_date(forecast_start_datetime))
+
+        if(nrow(obs_inflow_tmp) > 0){
+          obs_inflow_tmp <- obs_inflow_tmp |>
           tidyr::pivot_wider(names_from = variable, values_from = observation) |>
           dplyr::rename(time = datetime) |>
           dplyr::select(dplyr::all_of(variables))
+        }else{
+          obs_inflow_tmp <- NULL
+        }
 
 
         inflow <- dplyr::bind_rows(obs_inflow_tmp, curr_ens)
@@ -201,10 +207,17 @@ create_inflow_outflow_files_arrow <- function(inflow_forecast_dir = NULL,
           dplyr::select(time,FLOW)
 
         obs_outflow_tmp <- obs_outflow %>%
-          dplyr::filter( datetime < lubridate::as_date(forecast_start_datetime)) %>%
-          tidyr::pivot_wider(names_from = variable, values_from = observation) |>
-          dplyr::rename(time = datetime) |>
-          dplyr::select(time,FLOW)
+          dplyr::filter( datetime < lubridate::as_date(forecast_start_datetime))
+
+        if(nrow(obs_outflow_tmp) > 0){
+          obs_outflow_tmp <- obs_outflow_tmp |>
+            tidyr::pivot_wider(names_from = variable, values_from = observation) |>
+            dplyr::rename(time = datetime) |>
+            dplyr::select(time, FLOW)
+
+        }else{
+          obs_outflow_tmp <- NULL
+        }
 
         outflow <- dplyr::bind_rows(obs_outflow_tmp, d)
 
