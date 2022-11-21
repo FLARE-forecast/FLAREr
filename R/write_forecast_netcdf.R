@@ -187,10 +187,10 @@ write_forecast_netcdf <- function(da_forecast_output,
   time_of_forecast <- lubridate::with_tz(da_forecast_output$time_of_forecast, tzone = "UTC")
 
   #Global file metadata
-  ncdf4::ncatt_put(ncout,0,"title", config$metadata$forecast_title, prec =  "text")
-  ncdf4::ncatt_put(ncout,0,"forecast_iteration_id" ,da_forecast_output$forecast_iteration_id, prec =  "text")
-  ncdf4::ncatt_put(ncout,0,"forecast_project_id", config$metadata$forecast_project_id, prec =  "text")
-  ncdf4::ncatt_put(ncout,0,"forecast_model_id", config$metadata$model_description$forecast_model_id, prec =  "text")
+  #ncdf4::ncatt_put(ncout,0,"title", config$metadata$forecast_title, prec =  "text")
+  #ncdf4::ncatt_put(ncout,0,"forecast_iteration_id" ,da_forecast_output$forecast_iteration_id, prec =  "text")
+  #ncdf4::ncatt_put(ncout,0,"forecast_project_id", config$metadata$forecast_project_id, prec =  "text")
+  ncdf4::ncatt_put(ncout,0,"forecast_model_id", config$run_config$sim_name, prec =  "text")
   ncdf4::ncatt_put(ncout,0,"time_zone_of_simulation","UTC", prec =  "text")
 
   ncdf4::nc_close(ncout)

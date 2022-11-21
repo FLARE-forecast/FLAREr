@@ -362,6 +362,71 @@ update_run_config <- function(config, lake_directory, configure_run_file = "conf
   invisible(config)
 }
 
+#' Update run configuration
+#'
+#' @param lake_directory
+#' @param configure_run_file
+#' @param restart_file
+#' @param start_datetime
+#' @param end_datetime
+#' @param forecast_start_datetime
+#' @param forecast_horizon
+#' @param sim_name
+#' @param site_id
+#' @param configure_flare
+#' @param configure_obs
+#' @param use_s3
+#' @param bucket
+#' @param endpoint
+#' @param use_https
+#'
+#' @return
+#' @export
+#'
+#' @examples
+
+update_run_config2 <- function(lake_directory,
+                               configure_run_file = "configure_run.yml",
+                               restart_file,
+                               start_datetime,
+                               end_datetime,
+                               forecast_start_datetime,
+                               forecast_horizon,
+                               sim_name,
+                               site_id,
+                               configure_flare,
+                               configure_obs,
+                               use_s3,
+                               bucket,
+                               endpoint,
+                               use_https = TRUE){
+
+  run_config <- NULL
+
+  run_config$restart_file <- restart_file
+  run_config$start_datetime <- start_datetime
+  run_config$end_datetime <- end_datetime
+  run_config$forecast_start_datetime <- forecast_start_datetime
+  run_config$forecast_horizon <- forecast_horizon
+  run_config$sim_name <- sim_name
+  run_config$configure_flare <- configure_flare
+  run_config$configure_obs <- configure_obs
+  run_config$use_s3 <- use_s3
+
+  file_name <- file.path(lake_directory,"restart",site_id, sim_name, configure_run_file)
+  yaml::write_yaml(run_config, file_name)
+  if(use_s3){
+    aws.s3::put_object(file = file_name,
+                       object = file.path(stringr::str_split_fixed(bucket, "/", n = 2)[2], site_id, sim_name, configure_run_file),
+                       bucket = stringr::str_split_fixed(bucket, "/", n = 2)[1],
+                       region = stringr::str_split_fixed(endpoint, pattern = "\\.", n = 2)[1],
+                       base_url = stringr::str_split_fixed(endpoint, pattern = "\\.", n = 2)[2],
+                       use_https = as.logical(Sys.getenv("USE_HTTPS")))
+  }
+}
+
+
+
 #' Update run configuration and upload to s3 bucket
 #'
 #' @param config flare configuration object
