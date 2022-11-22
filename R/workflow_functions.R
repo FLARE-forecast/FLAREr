@@ -404,9 +404,25 @@ update_run_config2 <- function(lake_directory,
   run_config <- NULL
 
   run_config$restart_file <- restart_file
-  run_config$start_datetime <- start_datetime
-  run_config$end_datetime <- end_datetime
-  run_config$forecast_start_datetime <- forecast_start_datetime
+  run_config$start_datetime <- as.character(lubridate::as_datetime(start_datetime))
+  if(lubridate::hour(run_config$start_datetime) == 0){
+    run_config$start_datetime <- paste(run_config$start_datetime, "00:00:00")
+  }
+
+  run_config$forecast_start_datetime <- as.character(lubridate::as_datetime(forecast_start_datetime))
+  if(!is.na(run_config$forecast_start_datetime)){
+    if(lubridate::hour(run_config$forecast_start_datetime) == 0){
+      run_config$forecast_start_datetime <- paste(run_config$forecast_start_datetime, "00:00:00")
+    }
+  }
+
+  run_config$end_datetime <- as.character(lubridate::as_datetime(end_datetime))
+  if(!is.na(run_config$end_datetime)){
+    if(lubridate::hour(run_config$end_datetime) == 0){
+      run_config$end_datetime <- paste(run_config$end_datetime, "00:00:00")
+    }
+  }
+
   run_config$forecast_horizon <- forecast_horizon
   run_config$sim_name <- sim_name
   run_config$configure_flare <- configure_flare

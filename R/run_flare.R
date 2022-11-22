@@ -28,6 +28,10 @@ run_flare <- function(lake_directory,
   obs_config <- readr::read_csv(file.path(config$file_path$configuration_directory, config$model_settings$obs_config_file), col_types = readr::cols())
   states_config <- readr::read_csv(file.path(config$file_path$configuration_directory, config$model_settings$states_config_file), col_types = readr::cols())
 
+  if(!"temp" %in% states_config$state_names) stop("missing temp as a state name in states config")
+  if(!"salt" %in% states_config$state_names) stop("missing salt as a state name in states config")
+
+
   if(!config$met$use_observed_met){
     obs_met_file = NULL
   }else{
