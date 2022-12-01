@@ -41,8 +41,8 @@ run_flare <- function(lake_directory,
     }
   }
 
-  start_datetime <- lubridate::as_datetime(forecast_start_datetime)
-  forecast_start_datetime <- lubridate::as_datetime(forecast_start_datetime)
+  start_datetime <- lubridate::as_datetime(config$start_datetime)
+  forecast_start_datetime <- lubridate::as_datetime(config$forecast_start_datetime)
 
   if(config$run_config$forecast_horizon > 16 & config$met$use_forecasted_met){
     forecast_start_datetime <- forecast_start_datetime - lubridate::days(1)
