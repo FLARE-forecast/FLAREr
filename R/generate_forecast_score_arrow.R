@@ -43,8 +43,8 @@ generate_forecast_score_arrow <- function(targets_file,
     dplyr::select(-pub_time) %>%
     dplyr::filter(variable_type %in% variable_types) %>%
     dplyr::mutate(site_id = paste0(site_id,"-",depth)) %>%
-    score4cast::standardize_forecast() %>%
-    dplyr::mutate(family = as.character(family)) |> 
+    score4cast::standardize_forecast(reference_datetime_format = "%Y-%m-%d %H:%M:%S") %>%
+    dplyr::mutate(family = as.character(family)) |>
     score4cast::crps_logs_score(target) %>%
     dplyr::mutate(horizon = datetime-lubridate::as_datetime(reference_datetime)) %>%
     dplyr::mutate(horizon = as.numeric(lubridate::as.duration(horizon),
