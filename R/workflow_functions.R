@@ -703,10 +703,21 @@ check_noaa_present_arrow <- function(lake_directory, configure_run_file = "confi
 
   config <- FLAREr:::set_configuration(configure_run_file,lake_directory, config_set_name = config_set_name)
 
-  if(config$run_config$forecast_horizon > 0){
+  if(config$run_config$forecast_horizon > 0 & config$met$use_forecasted_met){
 
-    forecast_date <- lubridate::as_date(config$run_config$forecast_start_datetime)
-    forecast_hour <- lubridate::hour(config$run_config$forecast_start_datetime)
+    met_start_datetime <- lubridate::as_datetime(config$run_config$start_datetime)
+    met_forecast_start_datetime <- lubridate::as_datetime(config$run_config$forecast_start_datetime)
+
+    if(config$run_config$forecast_horizon > 16){
+      met_forecast_start_datetime <- met_forecast_start_datetime - lubridate::days(config$met$forecast_lag_days)
+      if(met_forecast_start_datetime < met_start_datetime){
+        met_start_datetime <- met_forecast_start_datetime
+        message("horizon is > 16 days so adjusting forecast_start_datetime in the met file generation to use yesterdays forecast. But adjusted forecast_start_datetime < start_datetime")
+      }
+    }
+
+    forecast_date <- lubridate::as_date(met_forecast_start_datetime)
+    forecast_hour <- lubridate::hour(met_forecast_start_datetime)
     site <- config$location$site_id
     forecast_horizon <- config$run_config$forecast_horizon
 

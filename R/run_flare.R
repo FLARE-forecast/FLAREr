@@ -45,7 +45,7 @@ run_flare <- function(lake_directory,
   met_forecast_start_datetime <- lubridate::as_datetime(config$run_config$forecast_start_datetime)
 
   if(config$run_config$forecast_horizon > 16 & config$met$use_forecasted_met){
-    met_forecast_start_datetime <- met_forecast_start_datetime - lubridate::days(1)
+    met_forecast_start_datetime <- met_forecast_start_datetime - lubridate::days(config$met$forecast_lag_days)
     if(met_forecast_start_datetime < met_start_datetime){
       met_start_datetime <- met_forecast_start_datetime
       message("horizon is > 16 days so adjusting forecast_start_datetime in the met file generation to use yesterdays forecast. But adjusted forecast_start_datetime < start_datetime")
