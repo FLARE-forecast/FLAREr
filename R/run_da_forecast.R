@@ -284,7 +284,7 @@ run_da_forecast <- function(states_init,
         if(npars > 0){
           if(par_fit_method == "inflate" & da_method == "enkf"){
             curr_pars_ens <-  pars[i-1, , m]
-            if(i >= (hist_days + 1) & !config$uncertainty$parameter){
+            if(i > (hist_days + 1) & !config$uncertainty$parameter){
               curr_pars_ens <- mean(pars[i-1, , m])
             }
           }else if(par_fit_method %in% c("perturb","perturb_const") & da_method != "none"){
@@ -301,18 +301,18 @@ run_da_forecast <- function(states_init,
 
               curr_pars_ens <- par_z * pars_config$perturb_par + par_mean
 
-              if(i >= (hist_days + 1) & !config$uncertainty$parameter){
+              if(i > (hist_days + 1) & !config$uncertainty$parameter){
                 curr_pars_ens <- apply(pars[i-1, , ], 1, mean)
               }
 
             }else{
-              if(i < (hist_days + 1)){
+              if(i <= (hist_days + 1)){
                 curr_pars_ens <- pars[i-1, , m] + rnorm(npars, mean = rep(0, npars), sd = pars_config$perturb_par)
               }else{
                 curr_pars_ens <- pars[i-1, , m]
               }
 
-              if(i >= (hist_days + 1) & !config$uncertainty$parameter){
+              if(i > (hist_days + 1) & !config$uncertainty$parameter){
                 curr_pars_ens <- apply(pars[i-1, , ], 1, mean)
               }
 
@@ -320,7 +320,7 @@ run_da_forecast <- function(states_init,
           }else if(da_method == "none" | par_fit_method == "perturb_init"){
             curr_pars_ens <- pars[i-1, , m]
 
-            if(i >= (hist_days + 1) & !config$uncertainty$parameter){
+            if(i > (hist_days + 1) & !config$uncertainty$parameter){
               curr_pars_ens <- apply(pars[i-1, , ], 1, mean)
             }
 
@@ -333,7 +333,7 @@ run_da_forecast <- function(states_init,
         }
 
         if(!is.null(ncol(inflow_file_names))){
-          if(!config$uncertainty$inflow & i >= (hist_days + 1)){
+          if(!config$uncertainty$inflow & i > (hist_days + 1)){
             inflow_file_name <- inflow_file_names[inflow_outflow_index[1], ]
             outflow_file_name <- outflow_file_names[inflow_outflow_index[1], ]
           }else{
@@ -405,7 +405,7 @@ run_da_forecast <- function(states_init,
         w_new[] <- NA
         for(jj in 1:nrow(model_sd)){
           w[] <- rnorm(ndepths_modeled, 0, 1)
-          if(config$uncertainty$process == FALSE & i >= (hist_days + 1)){
+          if(config$uncertainty$process == FALSE & i > (hist_days + 1)){
             w[] <- 0.0
           }
           for(kk in 1:ndepths_modeled){
