@@ -12,6 +12,8 @@ run_flare <- function(lake_directory,
                       configure_run_file,
                       config_set_name){
 
+  ignore_sigpipe()
+
   config <- FLAREr::set_configuration(configure_run_file, lake_directory, config_set_name = config_set_name)
 
   config <- FLAREr::get_restart_file(config, lake_directory)
