@@ -86,16 +86,24 @@ combine_forecast_observations <- function(file_name,
   #PROCESS TEMPERATURE OBSERVATIONS
 
   d <- readr::read_csv(target_file,
-                       col_types = readr::cols())
+                       show_col_types = FALSE)
 
   if("observed" %in% names(d)){
     d <- d %>%
       dplyr::rename(value = observed)
+  }else if("observation" %in% names(d)){
+    d <- d %>%
+      dplyr::rename(value = observation)
   }
+
   if("time" %in% names(d)){
     d <- d %>%
       mutate(hour = lubridate::hour(time),
              date = lubridate::as_date(time))
+  }else if("datetime" %in% names(d)){
+    d <- d %>%
+      mutate(hour = lubridate::hour(datetime),
+             date = lubridate::as_date(datetime))
   }
 
   #####

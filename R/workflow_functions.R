@@ -12,7 +12,7 @@ get_run_config <- function(configure_run_file = "configure_run.yml", lake_direct
 
   run_config <- yaml::read_yaml(file.path(lake_directory,"configuration",config_set_name,configure_run_file))
   if(is.na(sim_name)){
-  sim_name <- run_config$sim_name
+    sim_name <- run_config$sim_name
   }
 
   dir.create(file.path(lake_directory, "restart", config$location$site_id, sim_name), recursive = TRUE, showWarnings = FALSE)
@@ -362,6 +362,87 @@ update_run_config <- function(config, lake_directory, configure_run_file = "conf
   invisible(config)
 }
 
+#' Update run configuration
+#'
+#' @param lake_directory
+#' @param configure_run_file
+#' @param restart_file
+#' @param start_datetime
+#' @param end_datetime
+#' @param forecast_start_datetime
+#' @param forecast_horizon
+#' @param sim_name
+#' @param site_id
+#' @param configure_flare
+#' @param configure_obs
+#' @param use_s3
+#' @param bucket
+#' @param endpoint
+#' @param use_https
+#'
+#' @return
+#' @export
+#'
+#' @examples
+
+update_run_config2 <- function(lake_directory,
+                               configure_run_file = "configure_run.yml",
+                               restart_file,
+                               start_datetime,
+                               end_datetime,
+                               forecast_start_datetime,
+                               forecast_horizon,
+                               sim_name,
+                               site_id,
+                               configure_flare,
+                               configure_obs,
+                               use_s3,
+                               bucket,
+                               endpoint,
+                               use_https = TRUE){
+
+  run_config <- NULL
+
+  run_config$restart_file <- restart_file
+  run_config$start_datetime <- as.character(lubridate::as_datetime(start_datetime))
+  if(lubridate::hour(run_config$start_datetime) == 0){
+    run_config$start_datetime <- paste(run_config$start_datetime, "00:00:00")
+  }
+
+  run_config$forecast_start_datetime <- as.character(lubridate::as_datetime(forecast_start_datetime))
+  if(!is.na(run_config$forecast_start_datetime)){
+    if(lubridate::hour(run_config$forecast_start_datetime) == 0){
+      run_config$forecast_start_datetime <- paste(run_config$forecast_start_datetime, "00:00:00")
+    }
+  }
+
+  run_config$end_datetime <- as.character(lubridate::as_datetime(end_datetime))
+  if(!is.na(run_config$end_datetime)){
+    if(lubridate::hour(run_config$end_datetime) == 0){
+      run_config$end_datetime <- paste(run_config$end_datetime, "00:00:00")
+    }
+  }
+
+  run_config$forecast_horizon <- forecast_horizon
+  run_config$sim_name <- sim_name
+  run_config$configure_flare <- configure_flare
+  run_config$configure_obs <- configure_obs
+  run_config$use_s3 <- use_s3
+
+  file_name <- file.path(lake_directory,"restart",site_id, sim_name, configure_run_file)
+  yaml::write_yaml(run_config, file_name)
+  if(use_s3){
+    aws.s3::put_object(file = file_name,
+                       object = file.path(stringr::str_split_fixed(bucket, "/", n = 2)[2], site_id, sim_name, configure_run_file),
+                       bucket = stringr::str_split_fixed(bucket, "/", n = 2)[1],
+                       region = stringr::str_split_fixed(endpoint, pattern = "\\.", n = 2)[1],
+                       base_url = stringr::str_split_fixed(endpoint, pattern = "\\.", n = 2)[2],
+                       use_https = as.logical(Sys.getenv("USE_HTTPS")))
+  }
+}
+
+
+
 #' Update run configuration and upload to s3 bucket
 #'
 #' @param config flare configuration object
@@ -608,6 +689,87 @@ check_noaa_present <- function(lake_directory, configure_run_file = "configure_r
 
 }
 
+#' Check if NOAA forecasts have been downloaded and processed
+#'
+#' @param lake_directory four letter code for site
+#' @param configure_run_file name of simulation
+#' @param config_set_name FLARE configuration object (needed for s3 buckets and endpoit)
+#'
+#' @return
+#' @export
+#'
+
+check_noaa_present_arrow <- function(lake_directory, configure_run_file = "configure_run.yml", config_set_name = "default"){
+
+  config <- FLAREr:::set_configuration(configure_run_file,lake_directory, config_set_name = config_set_name)
+
+  if(config$run_config$forecast_horizon > 0 & config$met$use_forecasted_met){
+
+    met_start_datetime <- lubridate::as_datetime(config$run_config$start_datetime)
+    met_forecast_start_datetime <- lubridate::as_datetime(config$run_config$forecast_start_datetime)
+
+    if(config$run_config$forecast_horizon > 16){
+      met_forecast_start_datetime <- met_forecast_start_datetime - lubridate::days(config$met$forecast_lag_days)
+      if(met_forecast_start_datetime < met_start_datetime){
+        met_start_datetime <- met_forecast_start_datetime
+        message("horizon is > 16 days so adjusting forecast_start_datetime in the met file generation to use yesterdays forecast. But adjusted forecast_start_datetime < start_datetime")
+      }
+    }
+
+    forecast_date <- lubridate::as_date(met_forecast_start_datetime)
+    forecast_hour <- lubridate::hour(met_forecast_start_datetime)
+    site <- config$location$site_id
+    forecast_horizon <- config$run_config$forecast_horizon
+
+    vars <- FLAREr:::arrow_env_vars()
+    forecast_dir <- arrow::s3_bucket(bucket = file.path(config$s3$drivers$bucket, "stage2/parquet", forecast_hour),
+                                     endpoint_override =  config$s3$drivers$endpoint, anonymous = TRUE)
+    FLAREr:::unset_arrow_vars(vars)
+    avail_dates <- forecast_dir$ls()
+
+    if(forecast_date %in% lubridate::as_date(avail_dates)){
+      if (length(forecast_dir$ls(forecast_date)) > 0){
+        avial_horizons <- arrow::open_dataset(forecast_dir$path(as.character(forecast_date))) %>%
+          filter(variable == "air_temperature",
+                 site_id == site) %>%
+          group_by(parameter) %>%
+          summarize(max_horizon = max(horizon)) %>%
+          collect() %>%
+          ungroup() %>%
+          mutate(over = ifelse(max_horizon >= forecast_horizon * 24, 1, 0)) %>%
+          summarize(sum = sum(over))
+
+        if(forecast_horizon > 16){
+          if(avial_horizons$sum == 30){
+            noaa_forecasts_ready <- TRUE
+          }else{
+            noaa_forecasts_ready <- FALSE
+          }
+        }else if(forecast_horizon <= 16){
+          if(avial_horizons$sum == 31){
+            noaa_forecasts_ready <- TRUE
+          }else{
+            noaa_forecasts_ready <- FALSE
+          }
+        }
+      }else{
+        noaa_forecasts_ready <- FALSE
+      }
+    }else{
+      noaa_forecasts_ready <- FALSE
+    }
+  }else{
+    noaa_forecasts_ready <- TRUE
+  }
+
+  if(!noaa_forecasts_ready){
+    message(paste0("waiting for NOAA forecast: ", config$run_config$forecast_start_datetime))
+  }
+  return(noaa_forecasts_ready)
+
+}
+
+
 #' Title
 #'
 #' @param site_id four letter code for site
@@ -634,12 +796,12 @@ delete_sim <- function(site_id, sim_name, config){
     keys <- keys[stringr::str_detect(keys, sim_name)]
     if(length(keys > 0)){
       for(i in 1:length(keys)){
-       aws.s3::delete_object(object = keys[i],
-                             bucket = stringr::str_split_fixed(config$s3$analysis$bucket, "/", n = 2)[1],
-                             region = stringr::str_split_fixed(config$s3$analysis$endpoint, pattern = "\\.", n = 2)[1],
-                             base_url = stringr::str_split_fixed(config$s3$analysis$endpoint, pattern = "\\.", n = 2)[2],
-                             use_https = as.logical(Sys.getenv("USE_HTTPS")))
-     }
+        aws.s3::delete_object(object = keys[i],
+                              bucket = stringr::str_split_fixed(config$s3$analysis$bucket, "/", n = 2)[1],
+                              region = stringr::str_split_fixed(config$s3$analysis$endpoint, pattern = "\\.", n = 2)[1],
+                              base_url = stringr::str_split_fixed(config$s3$analysis$endpoint, pattern = "\\.", n = 2)[2],
+                              use_https = as.logical(Sys.getenv("USE_HTTPS")))
+      }
     }
 
     #forecasts
@@ -683,3 +845,23 @@ delete_sim <- function(site_id, sim_name, config){
     }
   }
 }
+
+
+arrow_env_vars <- function(){
+  user_region <- Sys.getenv("AWS_DEFAULT_REGION")
+  user_meta <- Sys.getenv("AWS_EC2_METADATA_DISABLED")
+  Sys.unsetenv("AWS_DEFAULT_REGION")
+  Sys.setenv(AWS_EC2_METADATA_DISABLED="TRUE")
+
+  list(user_region=user_region, user_meta = user_meta)
+}
+
+unset_arrow_vars <- function(vars) {
+  Sys.setenv("AWS_DEFAULT_REGION" = vars$user_region)
+  if (vars$user_meta != "") {
+    Sys.setenv(AWS_EC2_METADATA_DISABLED = vars$user_meta)
+  }
+}
+
+
+
