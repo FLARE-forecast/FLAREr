@@ -8,7 +8,8 @@
 #' @examples
 generate_forecast_score <- function(targets_file,
                                     forecast_file,
-                                    output_directory){
+                                    output_directory,
+                                    variable_types = "state"){
 
   target <- readr::read_csv(targets_file, show_col_types = FALSE) |>
     dplyr::mutate(site_id = paste0(site_id,"-",depth))
