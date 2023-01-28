@@ -231,6 +231,13 @@ generate_met_files_arrow <- function(obs_met_file = NULL,
         dplyr::select(-ensemble) |>
         dplyr::bind_rows(target) |>
         dplyr::arrange(time)
+      
+      df_na <- df %>%
+        dplyr::filter(is.na(AirTemp))
+      
+      if(nrow(df_na) > 1){
+        stop("NA values in GLM met files")
+      }
 
       if(use_ler_vars){
 
