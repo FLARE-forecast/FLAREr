@@ -233,7 +233,7 @@ generate_met_files_arrow <- function(obs_met_file = NULL,
         dplyr::arrange(time)
       
       if(max(forecast$time) < strftime(end_datetime, format="%Y-%m-%d %H:%M", tz = "UTC")){
-         stop("Weather forecasts do not cover full forecast horizon")
+         stop(paste0("Weather forecasts do not cover full forecast horizon: ", max(forecast$time), " ", strftime(end_datetime, format="%Y-%m-%d %H:%M", tz = "UTC")))
       }
 
       
