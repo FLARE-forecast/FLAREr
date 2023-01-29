@@ -232,9 +232,10 @@ generate_met_files_arrow <- function(obs_met_file = NULL,
         dplyr::bind_rows(target) |>
         dplyr::arrange(time)
       
-      if(max(df$time) >= strftime(end_datetime, format="%Y-%m-%d %H:%M", tz = "UTC")){
-        stop("NA values in GLM met files")
+      if(max(forecast$time) < strftime(end_datetime, format="%Y-%m-%d %H:%M", tz = "UTC")){
+         stop("Weather forecasts do not cover full forecast horizon")
       }
+
       
       if(use_ler_vars){
 
