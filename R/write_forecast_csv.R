@@ -194,6 +194,10 @@ write_forecast_csv <- function(da_forecast_output,
         dplyr::mutate(variable = ifelse(variable == states_config$state_names[i], obs_name, variable))
     }
   }
+  
+   reference_datetime_format <- "%Y-%m-%d %H:%M:%S"
+
+   output_list <- output_list |> mutate(reference_datetime = strftime(lubridate::as_datetime(reference_datetime),format=reference_datetime_format,tz = "UTC"))
 
   readr::write_csv(output_list, fname)
   invisible(fname)
