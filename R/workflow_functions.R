@@ -85,7 +85,8 @@ get_edi_file <- function(edi_https, file, lake_directory){
     }
     download.file(edi_https,
                   destfile = file.path(lake_directory, "data_raw", file),
-                  method="curl")
+                  method="curl",
+                 extra = options(timeout = 120))
   }
 }
 
