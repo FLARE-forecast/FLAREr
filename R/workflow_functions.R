@@ -78,7 +78,7 @@ get_git_repo <- function(lake_directory, directory, git_repo){
 #' @return
 #' @export
 #'
-get_edi_file <- function(edi_https, file, lake_directory, curl_timeout = 60){
+get_edi_file <- function(edi_https, file, lake_directory){ #, curl_timeout = 60){
 
   if(!file.exists(file.path(lake_directory, "data_raw", file))){
     if(!dir.exists(dirname(file.path(lake_directory, "data_raw", file)))){
@@ -86,8 +86,8 @@ get_edi_file <- function(edi_https, file, lake_directory, curl_timeout = 60){
     }
     download.file(edi_https,
                   destfile = file.path(lake_directory, "data_raw", file),
-                  method="curl",
-                 extra = options(timeout = curl_timeout))
+                  method="curl")#,
+                 #extra = options(timeout = curl_timeout))
   }
 }
 
