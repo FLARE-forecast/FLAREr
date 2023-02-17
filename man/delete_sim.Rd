@@ -13,9 +13,6 @@ delete_sim(site_id, sim_name, config)
 
 \item{config}{FLARE configuration object (needed for s3 buckets and endpoit)}
 }
-\value{
-
-}
 \description{
 Title
 }

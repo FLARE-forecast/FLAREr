@@ -17,9 +17,6 @@ download_s3_objects(lake_directory, bucket, prefix, region, base_url)
 
 \item{base_url}{S3 endpoint}
 }
-\value{
-
-}
 \description{
 Download file from s3 bucket
 }

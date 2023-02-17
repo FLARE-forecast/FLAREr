@@ -24,9 +24,6 @@ put_targets(
 
 \item{use_s3}{logical; TRUE = use s3}
 }
-\value{
-
-}
 \description{
 Save target files to s3 bucket
 }

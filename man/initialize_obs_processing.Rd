@@ -13,9 +13,6 @@ initialize_obs_processing(
 \arguments{
 \item{lake_directory}{full path to repository directory}
 }
-\value{
-
-}
 \description{
 Set and create directories for observation configuration
 }

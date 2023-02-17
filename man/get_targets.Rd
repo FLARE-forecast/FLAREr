@@ -11,9 +11,6 @@ get_targets(lake_directory, config)
 
 \item{config}{flare configuration object}
 }
-\value{
-
-}
 \description{
 Download target data from s3
 }

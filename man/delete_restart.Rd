@@ -13,9 +13,6 @@ delete_restart(site_id, sim_name, bucket = "restart", endpoint)
 
 \item{site}{four letter code for site}
 }
-\value{
-
-}
 \description{
 Delete restart file on s3 bucket
 }

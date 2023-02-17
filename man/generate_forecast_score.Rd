@@ -4,15 +4,17 @@
 \alias{generate_forecast_score}
 \title{Score a forecast using score4cast package}
 \usage{
-generate_forecast_score(targets_file, forecast_file, output_directory)
+generate_forecast_score(
+  targets_file,
+  forecast_file,
+  output_directory,
+  variable_types = "state"
+)
 }
 \arguments{
 \item{targets_file}{observation file}
 
 \item{forecast_file}{forecast file}
-}
-\value{
-
 }
 \description{
 Score a forecast using score4cast package

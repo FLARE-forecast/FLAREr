@@ -13,9 +13,6 @@ get_driver_forecast_s3(lake_directory, forecast_path, config)
 
 \item{config}{flare configuration object}
 }
-\value{
-
-}
 \description{
 Download driver forecasts from s3 bucket
 }

@@ -13,9 +13,6 @@ put_forecast(saved_file, eml_file_name = NULL, config)
 
 \item{config}{flare configuration object}
 }
-\value{
-
-}
 \description{
 Upload forecast file and metadata to s3 bucket
 }

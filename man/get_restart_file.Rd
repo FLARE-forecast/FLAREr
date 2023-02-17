@@ -11,9 +11,6 @@ get_restart_file(config, lake_directory)
 
 \item{lake_directory}{full path to repository directory}
 }
-\value{
-
-}
 \description{
 Download restart file from s3 bucket
 }

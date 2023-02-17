@@ -19,9 +19,6 @@ generate_forecast_score_arrow(
 
 \item{forecast_df}{forecast file}
 }
-\value{
-
-}
 \description{
 Score a forecast using score4cast package and arrow
 }

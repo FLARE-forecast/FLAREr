@@ -13,9 +13,6 @@ get_git_repo(lake_directory, directory, git_repo)
 
 \item{git_repo}{https of the github repository}
 }
-\value{
-
-}
 \description{
 Get data from Github repository
 }

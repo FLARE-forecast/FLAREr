@@ -17,9 +17,6 @@ update_run_config_neon(
 
 \item{configure_run_file}{name of run configuration file (do not include full path)}
 }
-\value{
-
-}
 \description{
 Update run configuration and upload to s3 bucket
 }
