@@ -73,6 +73,7 @@ get_git_repo <- function(lake_directory, directory, git_repo){
 #' @param edi_https https of the EDI package
 #' @param file name of the file in the EDI package (not full path)
 #' @param lake_directory full path to repository directory
+#' @param curl_timeout length of time for curl download to run
 #'
 #' @return
 #' @export
