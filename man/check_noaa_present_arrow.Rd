@@ -17,9 +17,6 @@ check_noaa_present_arrow(
 
 \item{config_set_name}{FLARE configuration object (needed for s3 buckets and endpoit)}
 }
-\value{
-
-}
 \description{
 Check if NOAA forecasts have been downloaded and processed
 }

@@ -11,9 +11,6 @@ get_driver_forecast_path(config, forecast_model)
 
 \item{forecast_model}{name of forecast model (i.e "noaa/NOAAGEFS_1hr); path relative to driver directory.}
 }
-\value{
-
-}
 \description{
 Get file path for driver forecasts
 }

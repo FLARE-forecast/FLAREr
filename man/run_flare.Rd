@@ -9,9 +9,6 @@ run_flare(lake_directory, configure_run_file, config_set_name)
 \arguments{
 \item{config_set_name}{}
 }
-\value{
-
-}
 \description{
 Run flare workflow (experimental)
 }

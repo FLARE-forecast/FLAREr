@@ -11,9 +11,6 @@ put_score(saved_file, config)
 
 \item{score_file}{full path of saved FLARE netcdf}
 }
-\value{
-
-}
 \description{
 Upload score to s3 bucket
 }

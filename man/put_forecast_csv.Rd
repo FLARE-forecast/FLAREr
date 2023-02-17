@@ -11,9 +11,6 @@ put_forecast_csv(saved_file, config)
 
 \item{score_file}{full path of saved FLARE netcdf}
 }
-\value{
-
-}
 \description{
 Upload forecast csv to s3 bucket
 }

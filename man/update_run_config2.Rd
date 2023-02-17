@@ -25,9 +25,6 @@ update_run_config2(
 \arguments{
 \item{use_https}{}
 }
-\value{
-
-}
 \description{
 Update run configuration
 }

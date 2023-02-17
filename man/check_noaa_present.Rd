@@ -15,9 +15,6 @@ check_noaa_present(
 
 \item{configuration_file}{file name (no path) of run configuration file}
 }
-\value{
-
-}
 \description{
 Check if NOAA forecast is on s3 bucket
 }

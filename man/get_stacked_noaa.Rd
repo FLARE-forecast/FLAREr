@@ -13,9 +13,6 @@ get_stacked_noaa(lake_directory, config, averaged = TRUE)
 
 \item{averaged}{logistical; TRUE = download averaged stacked forecast}
 }
-\value{
-
-}
 \description{
 Download stacked NOAA data from s3 bucket
 }
