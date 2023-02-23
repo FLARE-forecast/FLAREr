@@ -177,6 +177,9 @@ generate_met_files_arrow <- function(obs_met_file = NULL,
                           Snowfall_millimeterPerHour = Snow)
         }
 
+        # check for bad data
+        missing_data_check(df)
+
         fn <- paste0("met_",stringr::str_pad(ens, width = 2, side = "left", pad = "0"),".csv")
         fn <- file.path(out_dir, fn)
         write.csv(df, file = fn, quote = FALSE, row.names = FALSE)
@@ -231,12 +234,12 @@ generate_met_files_arrow <- function(obs_met_file = NULL,
         dplyr::select(-ensemble) |>
         dplyr::bind_rows(target) |>
         dplyr::arrange(time)
-      
+
       if(max(forecast$time) < strftime(end_datetime - lubridate::hours(1), format="%Y-%m-%d %H:%M", tz = "UTC")){
          stop(paste0("Weather forecasts do not cover full forecast horizon: ", max(forecast$time), " ", strftime(end_datetime - lubridate::hours(1), format="%Y-%m-%d %H:%M", tz = "UTC")))
       }
 
-      
+
       if(use_ler_vars){
 
         df <- df |>
@@ -250,7 +253,8 @@ generate_met_files_arrow <- function(obs_met_file = NULL,
                         Snowfall_millimeterPerHour = Snow)
       }
 
-
+      # check for bad data
+      missing_data_check(df)
 
       fn <- paste0("met_",stringr::str_pad(ens, width = 2, side = "left", pad = "0"),".csv")
       fn <- file.path(out_dir, fn)
