@@ -73,7 +73,6 @@ get_git_repo <- function(lake_directory, directory, git_repo){
 #' @param edi_https https of the EDI package
 #' @param file name of the file in the EDI package (not full path)
 #' @param lake_directory full path to repository directory
-#' @param curl_timeout length of time for curl download to run
 #'
 #' @return
 #' @export
@@ -84,10 +83,9 @@ get_edi_file <- function(edi_https, file, lake_directory){ #, curl_timeout = 60)
     if(!dir.exists(dirname(file.path(lake_directory, "data_raw", file)))){
       dir.create(dirname(file.path(lake_directory, "data_raw", file)))
     }
-    download.file(edi_https,
-                  destfile = file.path(lake_directory, "data_raw", file),
-                  method="curl")#,
-                 #extra = options(timeout = curl_timeout))
+    url_download <- RETRY("GET",edi_https,timeout(120),times = 10, quiet = FALSE)
+    test_bin <- content(url_download,'raw')
+    writeBin(test_bin, file.path(lake_directory, "data_raw", file))
   }
 }
 
