@@ -83,7 +83,7 @@ get_edi_file <- function(edi_https, file, lake_directory){ #, curl_timeout = 60)
     if(!dir.exists(dirname(file.path(lake_directory, "data_raw", file)))){
       dir.create(dirname(file.path(lake_directory, "data_raw", file)))
     }
-    url_download <- RETRY("GET",edi_https,timeout(120),times = 3, quiet = FALSE)
+    url_download <- httr::RETRY("GET",edi_https,timeout(120),times = 3, quiet = FALSE)
     test_bin <- content(url_download,'raw')
     writeBin(test_bin, file.path(lake_directory, "data_raw", file))
   }
