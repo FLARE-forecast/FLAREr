@@ -22,8 +22,5 @@ missing_data_check <- function(met_df){
 
   if (na_check != 0){
     stop('NA or NaN value found in met forecast file')
-  }else{
-    message('no missing values found')
   }
-
 }
