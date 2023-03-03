@@ -134,13 +134,22 @@ generate_met_files_arrow <- function(obs_met_file = NULL,
                     RelHum = ifelse(RelHum > 100, 100, RelHum),
                     Rain = ifelse(use_ler_vars, Rain * (60 * 60), Rain * (60 * 60 * 24)/1000),
                     Snow = 0.0) |>
-      dplyr::mutate_at(dplyr::vars(all_of(c("AirTemp", "ShortWave","LongWave","RelHum","WindSpeed"))), list(~round(., 2))) |>
-      dplyr::mutate(Rain = round(Rain, 5),
-                    time = strftime(time, format="%Y-%m-%d %H:%M", tz = "UTC")) |>
+      dplyr::mutate_at(dplyr::vars(all_of(c("AirTemp", "ShortWave","LongWave","RelHum","WindSpeed"))),
+                       list(~round(., 2))) |>
+      dplyr::mutate(Rain = round(Rain, 5)) |>
       dplyr::select(ensemble, time, AirTemp,ShortWave, LongWave, RelHum, WindSpeed,Rain, Snow) |>
       dplyr::group_by(ensemble) |>
       dplyr::slice(-dplyr::n()) |>
-      dplyr::ungroup()
+      dplyr::ungroup() |>
+      # fill in any missed timesteps to ensure a continuous time series
+      dplyr::mutate(time = lubridate::as_datetime(time)) |>
+      tsibble::as_tsibble(index = time, key = ensemble) |>
+      tsibble::fill_gaps() |>
+      dplyr::mutate(across(AirTemp:Snow,imputeTS::na_interpolation)) |>
+      dplyr::as_tibble() |>
+      dplyr::mutate(time = format(time, format="%Y-%m-%d %H:%M", tz = "UTC"))
+
+
   }
 
 
