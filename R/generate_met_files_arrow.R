@@ -150,7 +150,7 @@ generate_met_files_arrow <- function(obs_met_file = NULL,
 
 
     if (nrow(n_gaps) > 0) {
-      n_gaps <- ngaps |>
+      n_gaps <- n_gaps |>
         dplyr::summarise(n_gaps = max(.n, na.rm = T)) |> pull()
       message('up to ', n_gaps, ' timesteps of missing data were interpolated per ensemble in stage 3 data')
     }
