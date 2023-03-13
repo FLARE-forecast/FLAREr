@@ -17,7 +17,8 @@ generate_met_files_arrow(
   endpoint = NULL,
   local_directory = NULL,
   use_forecast = TRUE,
-  use_ler_vars = FALSE
+  use_ler_vars = FALSE,
+  use_siteid_s3 = FALSE
 )
 }
 \arguments{

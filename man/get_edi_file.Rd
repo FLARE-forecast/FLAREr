@@ -4,7 +4,7 @@
 \alias{get_edi_file}
 \title{Download file from EDI data portal}
 \usage{
-get_edi_file(edi_https, file, lake_directory, curl_timeout = 60)
+get_edi_file(edi_https, file, lake_directory)
 }
 \arguments{
 \item{edi_https}{https of the EDI package}
@@ -12,8 +12,6 @@ get_edi_file(edi_https, file, lake_directory, curl_timeout = 60)
 \item{file}{name of the file in the EDI package (not full path)}
 
 \item{lake_directory}{full path to repository directory}
-
-\item{curl_timeout}{length of time for curl download to run}
 }
 \description{
 Download file from EDI data portal
