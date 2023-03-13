@@ -146,10 +146,12 @@ generate_met_files_arrow <- function(obs_met_file = NULL,
     n_gaps <- target |>
       dplyr::mutate(time = lubridate::ymd_hm(time)) |>
       tsibble::as_tsibble(index = time, key = ensemble) |>
-      tsibble::count_gaps() |>
-      dplyr::summarise(n_gaps = max(.n, na.rm = T)) |> pull()
+      tsibble::count_gaps()
 
-    if (n_gaps > 0) {
+
+    if (nrow(n_gaps) > 0) {
+      n_gaps <- n_gaps |>
+        dplyr::summarise(n_gaps = max(.n, na.rm = T)) |> pull()
       message('up to ', n_gaps, ' timesteps of missing data were interpolated per ensemble in stage 3 data')
     }
 
