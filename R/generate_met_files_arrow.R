@@ -27,7 +27,7 @@ generate_met_files_arrow <- function(obs_met_file = NULL,
                                      local_directory = NULL,
                                      use_forecast = TRUE,
                                      use_ler_vars = FALSE,
-                                     use_siteid_s3 = FALSE){
+                                     use_siteid_s3 = TRUE){
 
   lake_name_code <- site_id
 
@@ -76,6 +76,10 @@ generate_met_files_arrow <- function(obs_met_file = NULL,
 
   if(is.null(obs_met_file) & is.null(forecast_dir)){
     stop("missing files to convert")
+  }
+
+  if(!use_forecast){
+    forecast_dir <- NULL
   }
 
 
@@ -285,7 +289,7 @@ generate_met_files_arrow <- function(obs_met_file = NULL,
       }
 
       # check for bad data
-      missing_data_check(df)
+      FLAREr:::missing_data_check(df)
 
       fn <- paste0("met_",stringr::str_pad(ens, width = 2, side = "left", pad = "0"),".csv")
       fn <- file.path(out_dir, fn)
