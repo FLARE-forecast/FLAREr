@@ -27,7 +27,7 @@ generate_met_files_arrow <- function(obs_met_file = NULL,
                                      local_directory = NULL,
                                      use_forecast = TRUE,
                                      use_ler_vars = FALSE,
-                                     use_siteid_s3 = TRUE){
+                                     use_siteid_s3 = FALSE){
 
   lake_name_code <- site_id
 
