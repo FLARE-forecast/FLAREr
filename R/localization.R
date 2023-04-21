@@ -7,9 +7,9 @@
 #'
 #' @return matrix with localization applied
 #' @noRd
-localization <- function(mat,nstates,modeled_depths, localization_distance){
+localization <- function(mat,nstates,modeled_depths, localization_distance, num_single_states = 0){
 
-  distance_matrix <- matrix(NA,nrow = nstates, ncol = nstates)
+  distance_matrix <- matrix(NA, nrow = nstates*modeled_depths, ncol = nstates*modeled_depths)
 
   for(i in 1:dim(distance_matrix)[1]){
     index <- 1
@@ -27,8 +27,7 @@ localization <- function(mat,nstates,modeled_depths, localization_distance){
   for(i in 1:dim(distance_matrix)[1]){
   distance_differ_matrix[i, ] <- exp(-(distance_differ_matrix[i, ]/localization_distance)^2)
   }
-
-
+  
   mat_new <- mat * distance_differ_matrix
 
 
