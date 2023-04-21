@@ -736,13 +736,14 @@ run_da_forecast <- function(states_init,
         if(npars > 0){
           p_t_pars <- p_it_pars / (nmembers - 1)
         }
-
-        #if(!is.na(config$da_setup$localization_distance)){
-        #  p_t <- localization(p_t,
-        #                      nstates,
-        #                      modeled_depths = config$model_settings$modeled_depths,
-        #                      localization_distance = config$da_setup$localization_distance)
-        #}
+        if(!is.null(config$da_setup$localization_distance)){
+          if(!is.na(config$da_setup$localization_distance)){
+            p_t <- localization(p_t = p_it,
+                              nstates = nstates,
+                              modeled_depths = config$model_settings$modeled_depths,
+                              localization_distance = config$da_setup$localization_distance)
+          }
+        }
         #Kalman gain
         k_t <- p_t %*% t(h) %*% solve(h %*% p_t %*% t(h) + psi_t, tol = 1e-17)
         if(npars > 0){
