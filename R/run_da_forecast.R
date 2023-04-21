@@ -738,7 +738,7 @@ run_da_forecast <- function(states_init,
         }
         if(!is.null(config$da_setup$localization_distance)){
           if(!is.na(config$da_setup$localization_distance)){
-            p_t <- localization(p_t = p_it,
+            p_t <- localization(mat = p_it,
                               nstates = nstates,
                               modeled_depths = config$model_settings$modeled_depths,
                               localization_distance = config$da_setup$localization_distance)
