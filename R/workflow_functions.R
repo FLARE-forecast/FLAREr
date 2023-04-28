@@ -740,13 +740,13 @@ check_noaa_present_arrow <- function(lake_directory, configure_run_file = "confi
           summarize(sum = sum(over))
 
         if(forecast_horizon > 16){
-          if(avial_horizons$sum == 30){
+          if(avial_horizons$sum == 30 | avial_horizons$sum == 31){
             noaa_forecasts_ready <- TRUE
           }else{
             noaa_forecasts_ready <- FALSE
           }
         }else if(forecast_horizon <= 16){
-          if(avial_horizons$sum == 31){
+          if(avial_horizons$sum == 30 | avial_horizons$sum == 31){
             noaa_forecasts_ready <- TRUE
           }else{
             noaa_forecasts_ready <- FALSE
