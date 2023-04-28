@@ -40,7 +40,7 @@ generate_met_files_arrow <- function(obs_met_file = NULL,
     end_datetime <- forecast_start_datetime + lubridate::days(forecast_horizon) #- lubridate::hours(1)
   }
 
-  if(!is.na(forecast_start_datetime)){
+  if(!is.na(forecast_start_datetime) & forecast_horizon > 0){
 
     forecast_date <- lubridate::as_date(forecast_start_datetime)
     forecast_hour <- lubridate::hour(forecast_start_datetime)
@@ -74,15 +74,13 @@ generate_met_files_arrow <- function(obs_met_file = NULL,
     }
   }
 
-  if(is.null(obs_met_file) & is.null(forecast_dir)){
-    stop("missing files to convert")
-  }
-
-  if(!use_forecast){
+  if(!use_forecast | forecast_horizon == 0){
     forecast_dir <- NULL
   }
 
-
+  if(is.null(obs_met_file) & is.null(forecast_dir)){
+    stop("missing files to convert")
+  }
 
   full_time <- seq(start_datetime, end_datetime, by = "1 hour")
   if(use_forecast){
