@@ -68,8 +68,6 @@ run_flare <- function(lake_directory,
                                               use_forecast = config$met$use_forecasted_met,
                                               use_ler_vars = config$met$use_ler_vars)
 
-  met_out$filenames <- met_out$filenames[!stringr::str_detect(met_out$filenames, "31")]
-
   if(config$inflow$include_inflow){
   if(config$run_config$forecast_horizon > 0){
     inflow_forecast_dir = file.path(config$inflow$forecast_inflow_model, lubridate::as_date(config$run_config$forecast_start_datetime))
