@@ -136,6 +136,10 @@ run_flare <- function(lake_directory,
                                                 par_fit_method = config$da_setup$par_fit_method,
                                                 obs_secchi = NULL,
                                                 obs_depth = NULL)
+  
+  rm(init)
+  rm(obs)
+  gc()
 
   message("Writing netcdf")
   saved_file <- FLAREr::write_forecast_netcdf(da_forecast_output = da_forecast_output,
