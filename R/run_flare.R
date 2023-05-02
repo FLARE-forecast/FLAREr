@@ -148,6 +148,9 @@ run_flare <- function(lake_directory,
                                               bucket = config$s3$forecasts_parquet$bucket,
                                               endpoint = config$s3$forecasts_parquet$endpoint,
                                               local_directory = file.path(lake_directory, "forecasts/parquet"))
+  
+  rm(da_forecast_output)
+  gc()
 
   message("Scoring forecasts")
   if(config$output_settings$evaluate_past){
@@ -167,6 +170,10 @@ run_flare <- function(lake_directory,
   }
 
   combined_forecasts <- dplyr::bind_rows(forecast_df, past_forecasts)
+  
+  rm(forecast_df)
+  rm(past_forecasts)
+  gc()
 
   FLAREr::generate_forecast_score_arrow(targets_file = obs_insitu_file,
                                         forecast_df = combined_forecasts,
@@ -176,8 +183,6 @@ run_flare <- function(lake_directory,
                                         local_directory = file.path(lake_directory, "scores/parquet"),
                                         variable_types = config$output_settings$variables_in_scores)
 
-  #rm(da_forecast_output)
-  #gc()
   message("Generating plot")
   FLAREr::plotting_general_2(file_name = saved_file,
                              target_file = obs_insitu_file,
