@@ -260,7 +260,7 @@ run_model <- function(i,
   }
 
   if(list_index_phyto > 1){
-    phytos <- readr::read_csv(file.path(working_directory, "aed_phyto_pars.csv"))
+    phytos <- readr::read_csv(file.path(working_directory, "aed_phyto_pars.csv"),show_col_types = FALSE)
 
     for(k in 1:length(update_phyto_nml_names)){
       phytos[which(stringr::str_detect(phytos$`'p_name'`, update_phyto_nml_names[[k]])),2:ncol(phytos)] <- update_phyto_nml_list[[k]]
