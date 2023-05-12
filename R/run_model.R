@@ -263,7 +263,7 @@ run_model <- function(i,
     phytos <- readr::read_csv(file.path(working_directory, "aed_phyto_pars.csv"))
 
     for(k in 1:length(update_phyto_nml_names)){
-      phytos[which(phytos$`'p_name'` == update_phyto_nml_names[[k]]), ] <- update_aed_nml_list[[k]]
+      phytos[which(stringr::str_detect(phytos$`'p_name'`, update_phyto_nml_names[[k]])),2:ncol(phytos)] <- update_phyto_nml_list[[k]]
     }
 
     readr::write_csv(phytos, file.path(working_directory, "aed_phyto_pars.csv"))
