@@ -55,7 +55,13 @@ write_forecast_arrow <- function(da_forecast_output,
   indexes <- expand.grid(1:dim(x)[1], 1:dim(x)[2], 1:dim(x)[3])
   ensembles <- 1:dim(x)[4]
 
-  output_list <- purrr::map_dfr(1:nrow(indexes), function(i, indexes){
+  if(config$model_settings$ncore == 1){
+    future::plan("future::sequential", workers = config$model_settings$ncore)
+  }else{
+    future::plan("future::multisession", workers = config$model_settings$ncore)
+  }
+
+  output_list <- furrr::future_map_dfr(1:nrow(indexes), function(i, indexes){
     var1 <- indexes$Var1[i]
     var2 <- indexes$Var2[i]
     var3 <- indexes$Var3[i]
@@ -87,22 +93,22 @@ write_forecast_arrow <- function(da_forecast_output,
         }
       }
 
-    indexes <- expand.grid(1:dim(temp_var)[1], 1:dim(temp_var)[2])
+      indexes <- expand.grid(1:dim(temp_var)[1], 1:dim(temp_var)[2])
 
-    output_list_tmp <- purrr::map_dfr(1:nrow(indexes), function(i, indexes){
-      var1 <- indexes$Var1[i]
-      var3 <- indexes$Var2[i]
-      tibble::tibble(predicted = temp_var[var1, var3, ],
-                     time  = full_time[var1],
-                     depth = config$model_settings$modeled_depths[var3],
-                     variable = obs_config$target_variable[s],
-                     forecast = forecast_flag[var1],
-                     ensemble = ensembles,
-                     variable_type = "state")
-    },
-    indexes = indexes
-    )
-    output_list <- bind_rows(output_list, output_list_tmp)
+      output_list_tmp <- furrr::future_map_dfr(1:nrow(indexes), function(i, indexes){
+        var1 <- indexes$Var1[i]
+        var3 <- indexes$Var2[i]
+        tibble::tibble(predicted = temp_var[var1, var3, ],
+                       time  = full_time[var1],
+                       depth = config$model_settings$modeled_depths[var3],
+                       variable = obs_config$target_variable[s],
+                       forecast = forecast_flag[var1],
+                       ensemble = ensembles,
+                       variable_type = "state")
+      },
+      indexes = indexes
+      )
+      output_list <- bind_rows(output_list, output_list_tmp)
     }
   }
 
@@ -111,27 +117,27 @@ write_forecast_arrow <- function(da_forecast_output,
 
     indexes <- expand.grid(1:dim(diagnostics)[1], 1:dim(diagnostics)[2], 1:dim(diagnostics)[3])
 
-    output_list2 <- purrr::map_dfr(1:nrow(indexes), function(i, indexes){
+    tmp <- furrr::future_map_dfr(1:nrow(indexes), function(i, indexes){
       var1 <- indexes$Var1[i]
       var2 <- indexes$Var2[i]
       var3 <- indexes$Var3[i]
       tibble::tibble(predicted = diagnostics[var1, var2, var3, ],
-                     time  = full_time[var1],
+                     time  = full_time[var2],
                      depth = config$model_settings$modeled_depths[var3],
-                     variable = config$output_settings$diagnostics_names[var2],
-                     forecast = forecast_flag[var1],
+                     variable = config$output_settings$diagnostics_names[var1],
+                     forecast = forecast_flag[var2],
                      ensemble = ensembles,
                      variable_type = "diagnostic")
     },
     indexes = indexes
     )
-    output_list <- dplyr::bind_rows(output_list, output_list2)
+    output_list <- dplyr::bind_rows(output_list, tmp)
   }
 
   if(!is.null(pars)){
     indexes <- expand.grid(1:dim(pars)[1], 1:dim(pars)[2])
 
-    output_list3 <- purrr::map_dfr(1:nrow(indexes), function(i, indexes){
+    tmp <- furrr::future_map_dfr(1:nrow(indexes), function(i, indexes){
       var1 <- indexes$Var1[i]
       var2 <- indexes$Var2[i]
       tibble::tibble(predicted = pars[var1, var2, ],
@@ -144,52 +150,53 @@ write_forecast_arrow <- function(da_forecast_output,
     },
     indexes = indexes
     )
-    output_list <- dplyr::bind_rows(output_list, output_list3)
+    output_list <- dplyr::bind_rows(output_list, tmp)
   }
 
   if(!is.null(da_forecast_output$restart_list)){
     lake_depth <- da_forecast_output$restart_list$lake_depth
   }
-  for(i in 1:dim(lake_depth)[1]){
-    tmp <- tibble::tibble(predicted = lake_depth[i, ],
-                          time  = full_time[i],
-                          variable = "depth",
-                          depth = NA,
-                          forecast = forecast_flag[i],
-                          ensemble = 1:dim(lake_depth)[2],
-                          variable_type = "state")
-    output_list <- dplyr::bind_rows(output_list, tmp)
-  }
 
+  output_list3 <- furrr::future_map_dfr(1:dim(lake_depth)[1], function(i){
+    tibble::tibble(predicted = lake_depth[i, ],
+                   time  = full_time[i],
+                   variable = "depth",
+                   depth = NA,
+                   forecast = forecast_flag[i],
+                   ensemble = 1:dim(lake_depth)[2],
+                   variable_type = "state")
+  })
+  output_list <- dplyr::bind_rows(output_list, output_list3)
 
   if(length(config$output_settings$diagnostics_names) > 0){
-    for(i in 1:dim(diagnostics)[2]){
-      tmp <- tibble::tibble(predicted = 1.7 / diagnostics[1, i, which.min(abs(config$model_settings$modeled_depths-1.0)), ],
-                            time = full_time[i],
-                            variable = "secchi",
-                            depth = NA,
-                            forecast = forecast_flag[i],
-                            ensemble = 1:dim(diagnostics)[4],
-                            variable_type = "state")
-      output_list <- dplyr::bind_rows(output_list, tmp)
-    }
-  }
-
-  for(i in 1:dim(snow_ice_thickness)[2]){
-    tmp <- tibble::tibble(predicted = apply(snow_ice_thickness[2:3, i, ], 2, sum),
-                          time = full_time[i],
-                          variable = "ice_thickness",
-                          depth = NA,
-                          forecast = forecast_flag[i],
-                          ensemble = 1:dim(snow_ice_thickness)[3],
-                          variable_type = "state")
+    tmp <- furrr::future_map_dfr(1:dim(diagnostics)[2], function(i){
+      tibble::tibble(predicted = 1.7 / diagnostics[1, i, which.min(abs(config$model_settings$modeled_depths-1.0)), ],
+                     time = full_time[i],
+                     variable = "secchi",
+                     depth = NA,
+                     forecast = forecast_flag[i],
+                     ensemble = 1:dim(diagnostics)[4],
+                     variable_type = "state")
+    })
     output_list <- dplyr::bind_rows(output_list, tmp)
   }
+
+  tmp <- furrr::future_map_dfr(1:dim(snow_ice_thickness)[2], function(i){
+    tibble::tibble(predicted = apply(snow_ice_thickness[2:3, i, ], 2, sum),
+                   time = full_time[i],
+                   variable = "ice_thickness",
+                   depth = NA,
+                   forecast = forecast_flag[i],
+                   ensemble = 1:dim(snow_ice_thickness)[3],
+                   variable_type = "state")
+  })
+
+  output_list <- dplyr::bind_rows(output_list, tmp)
 
   time_of_forecast <- lubridate::with_tz(da_forecast_output$time_of_forecast, tzone = "UTC")
 
   output_list <- output_list %>%
-    dplyr::mutate(pub_time = time_of_forecast,
+    dplyr::mutate(pubDate = time_of_forecast,
                   reference_datetime = forecast_start_datetime,
                   site_id = config$location$site_id,
                   model_id = config$run_config$sim_name,
@@ -197,7 +204,7 @@ write_forecast_arrow <- function(da_forecast_output,
     rename(datetime = time,
            parameter = ensemble,
            prediction = predicted) %>%
-    dplyr::select(reference_datetime, datetime, pub_time, model_id, site_id, depth, family, parameter, variable, prediction, forecast, variable_type)
+    dplyr::select(reference_datetime, datetime, pubDate, model_id, site_id, depth, family, parameter, variable, prediction, forecast, variable_type)
 
   #Convert to target variable name
   for(i in 1:length(states_config$state_names)){

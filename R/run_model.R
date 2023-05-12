@@ -127,7 +127,7 @@ run_model <- function(i,
         update_aed_nml_list[[list_index_aed]] <- round(curr_pars[curr_par_set], 4)
         update_aed_nml_names[list_index_aed] <- unique_pars[par]
         list_index_aed <- list_index_aed + 1
-      }else if(curr_nml == "aed2_phyto_pars.nml"){
+      }else if(curr_nml == "aed_phyto_pars.csv"){
         update_phyto_nml_list[[list_index_phyto]] <- rep(round(curr_pars[curr_par_set],4), num_phytos)
         update_phyto_nml_names[list_index_phyto] <- unique_pars[par]
         list_index_phyto <- list_index_phyto + 1
