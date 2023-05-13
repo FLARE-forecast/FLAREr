@@ -40,7 +40,7 @@ generate_forecast_score_arrow <- function(targets_file,
   }
 
   df <- forecast_df %>%
-    dplyr::select(-pub_time) %>%
+    dplyr::select(-pubDate) %>%
     dplyr::filter(variable_type %in% variable_types) %>%
     dplyr::mutate(site_id = paste0(site_id,"-",depth)) %>%
     score4cast::standardize_forecast(reference_datetime_format = "%Y-%m-%d %H:%M:%S") %>%
