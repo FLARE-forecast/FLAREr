@@ -2,13 +2,23 @@
 % Please edit documentation in R/run_flare.R
 \name{run_flare}
 \alias{run_flare}
-\title{Run flare workflow (experimental)}
+\title{Run FLARE for a single forecast}
 \usage{
 run_flare(lake_directory, configure_run_file, config_set_name)
 }
 \arguments{
-\item{config_set_name}{}
+\item{lake_directory}{full path to repository directory}
+
+\item{configure_run_file}{flare configuration object}
+
+\item{config_set_name}{directory within configuration/workflow with run configuration files}
+}
+\value{
+the full path to save netcdf file that is used to restart following forecast
 }
 \description{
-Run flare workflow (experimental)
+Run FLARE for a single forecast
+}
+\details{
+Combines functions necessary to do a complete execution of FLARE
 }

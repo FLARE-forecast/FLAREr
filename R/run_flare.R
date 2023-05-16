@@ -1,13 +1,14 @@
-#' Run flare workflow (experimental)
+#' @title Run FLARE for a single forecast
 #'
-#' @param lake_directory
-#' @param configure_run_file
-#' @param config_set_name
+#' @details Combines functions necessary to do a complete execution of FLARE
 #'
-#' @return
+#' @param lake_directory full path to repository directory
+#' @param configure_run_file flare configuration object
+#' @param config_set_name directory within configuration/workflow with run configuration files
+#'
+#' @return the full path to save netcdf file that is used to restart following forecast
 #' @export
 #'
-#' @examples
 run_flare <- function(lake_directory,
                       configure_run_file,
                       config_set_name){
@@ -20,7 +21,6 @@ run_flare <- function(lake_directory,
 
   message(paste0("     Running forecast that starts on: ", config$run_config$start_datetime))
 
-  #Need to remove the 00 ensemble member because it only goes 16-days in the future
   pars_config <- readr::read_csv(file.path(config$file_path$configuration_directory, config$model_settings$par_config_file), col_types = readr::cols())
 
   if(!setequal(names(pars_config),c("par_names","par_names_save","par_file","par_init","par_init_lowerbound","par_init_upperbound","par_lowerbound","par_upperbound","inflat_pars","perturb_par","par_units"))){
@@ -54,6 +54,10 @@ run_flare <- function(lake_directory,
     }
   }
 
+  if(is.null(config$met$use_met_s3)){
+    config$met$use_met_s3 <- TRUE
+  }
+
   met_out <- FLAREr::generate_met_files_arrow(obs_met_file = obs_met_file,
                                               out_dir = config$file_path$execute_directory,
                                               start_datetime = met_start_datetime,
@@ -61,7 +65,7 @@ run_flare <- function(lake_directory,
                                               forecast_start_datetime = met_forecast_start_datetime,
                                               forecast_horizon =  config$run_config$forecast_horizon,
                                               site_id = config$location$site_id,
-                                              use_s3 = TRUE,
+                                              use_s3 = config$met$use_met_s3,
                                               bucket = config$s3$drivers$bucket,
                                               endpoint = config$s3$drivers$endpoint,
                                               local_directory = config$met$local_directory,
@@ -69,27 +73,27 @@ run_flare <- function(lake_directory,
                                               use_ler_vars = config$met$use_ler_vars)
 
   if(config$inflow$include_inflow){
-  if(config$run_config$forecast_horizon > 0){
-    inflow_forecast_dir = file.path(config$inflow$forecast_inflow_model, lubridate::as_date(config$run_config$forecast_start_datetime))
-  }else{
-    inflow_forecast_dir <- NULL
-  }
+    if(config$run_config$forecast_horizon > 0){
+      inflow_forecast_dir = file.path(config$inflow$forecast_inflow_model, lubridate::as_date(config$run_config$forecast_start_datetime))
+    }else{
+      inflow_forecast_dir <- NULL
+    }
 
-  inflow_outflow_files <- FLAREr::create_inflow_outflow_files_arrow(inflow_forecast_dir = inflow_forecast_dir,
-                                                                    inflow_obs = config$inflow$observed_filename,
-                                                                    variables = variables,
-                                                                    out_dir = config$file_path$execute_directory,
-                                                                    start_datetime = config$run_config$start_datetime,
-                                                                    end_datetime = config$run_config$end_datetime,
-                                                                    forecast_start_datetime = config$run_config$forecast_start_datetime,
-                                                                    forecast_horizon =  config$run_config$forecast_horizon,
-                                                                    site_id = config$location$site_id,
-                                                                    use_s3 = config$run_config$use_s3,
-                                                                    bucket = config$s3$inflow_drivers$bucket,
-                                                                    endpoint = config$s3$inflow_drivers$endpoint,
-                                                                    local_directory = file.path(lake_directory, "drivers", inflow_forecast_dir),
-                                                                    use_forecast = config$inflow$use_forecasted_inflow,
-                                                                    use_ler_vars = config$inflow$use_ler_vars)
+    inflow_outflow_files <- FLAREr::create_inflow_outflow_files_arrow(inflow_forecast_dir = inflow_forecast_dir,
+                                                                      inflow_obs = config$inflow$observed_filename,
+                                                                      variables = variables,
+                                                                      out_dir = config$file_path$execute_directory,
+                                                                      start_datetime = config$run_config$start_datetime,
+                                                                      end_datetime = config$run_config$end_datetime,
+                                                                      forecast_start_datetime = config$run_config$forecast_start_datetime,
+                                                                      forecast_horizon =  config$run_config$forecast_horizon,
+                                                                      site_id = config$location$site_id,
+                                                                      use_s3 = config$run_config$use_s3,
+                                                                      bucket = config$s3$inflow_drivers$bucket,
+                                                                      endpoint = config$s3$inflow_drivers$endpoint,
+                                                                      local_directory = file.path(lake_directory, "drivers", inflow_forecast_dir),
+                                                                      use_forecast = config$inflow$use_forecasted_inflow,
+                                                                      use_ler_vars = config$inflow$use_ler_vars)
 
   }else{
     inflow_outflow_files <- list()
@@ -134,9 +138,11 @@ run_flare <- function(lake_directory,
                                                 management = NULL,
                                                 da_method = config$da_setup$da_method,
                                                 par_fit_method = config$da_setup$par_fit_method,
+                                                debug = FALSE,
+                                                log_wq = FALSE,
                                                 obs_secchi = NULL,
                                                 obs_depth = NULL)
-  
+
   rm(init)
   rm(obs)
   gc()
@@ -152,7 +158,7 @@ run_flare <- function(lake_directory,
                                               bucket = config$s3$forecasts_parquet$bucket,
                                               endpoint = config$s3$forecasts_parquet$endpoint,
                                               local_directory = file.path(lake_directory, "forecasts/parquet"))
-  
+
   rm(da_forecast_output)
   gc()
 
@@ -174,7 +180,7 @@ run_flare <- function(lake_directory,
   }
 
   combined_forecasts <- dplyr::bind_rows(forecast_df, past_forecasts)
-  
+
   rm(forecast_df)
   rm(past_forecasts)
   gc()
@@ -195,8 +201,6 @@ run_flare <- function(lake_directory,
 
   message("Putting forecast")
   FLAREr::put_forecast(saved_file, eml_file_name = NULL, config)
-
-  #FLAREr::update_run_config(config, lake_directory, configure_run_file, saved_file, new_horizon = 16, day_advance = 1)
 
   message(paste0("successfully generated flare forecats for: ", basename(saved_file)))
 
