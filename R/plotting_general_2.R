@@ -17,23 +17,24 @@
 ##' @author Quinn Thomas
 ##' @examples
 ##' \dontrun{
-##' plotting_general_2(file_name = saved_file, target_file = target_file, ncore = config$model_settings$ncore, plot_profile = TRUE, obs_csv)
+##' plotting_general_2(file_name = saved_file, target_file = target_file,
+##'     ncore = config$model_settings$ncore, plot_profile = TRUE, obs_csv)
 ##' }
 
 plotting_general_2 <- function(file_name,
-                             target_file,
-                             ncore = 1,
-                             plot_profile = FALSE,
-                             obs_csv = FALSE){
+                               target_file,
+                               ncore = 1,
+                               plot_profile = FALSE,
+                               obs_csv = FALSE){
 
   pdf_file_name <- paste0(tools::file_path_sans_ext(file_name),".pdf")
   csv_file_name <- paste0(tools::file_path_sans_ext(file_name),".csv")
 
 
-  output <- FLAREr::combine_forecast_observations(file_name,
-                                                  target_file,
-                                                  extra_historical_days = 0,
-                                                  ncore = ncore)
+  output <- combine_forecast_observations(file_name,
+                                          target_file,
+                                          extra_historical_days = 0,
+                                          ncore = ncore)
 
   obs <- output$obs
   full_time_extended <- output$full_time_extended

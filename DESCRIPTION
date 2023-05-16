@@ -32,9 +32,7 @@ Imports:
     emld,
     tibble,
     tools,
-    plyr,
     ggplot2,
-    rMR,
     GLM3r,
     patchwork,
     parallel,
@@ -43,8 +41,19 @@ Imports:
     furrr,
     future,
     score4cast,
-    read4cast
-Remotes: FLARE-forecast/GLM3r, eco4cast/score4cast, eco4cast/read4cast
+    read4cast,
+    methods,
+    arrow,
+    aws.s3,
+    brio,
+    cpp11,
+    decor,
+    fs,
+    httr,
+    tidyr,
+    tsibble,
+    zoo
+Remotes: FLARE-forecast/GLM3r, eco4cast/score4cast
 Suggests: 
     knitr,
     rmarkdown,

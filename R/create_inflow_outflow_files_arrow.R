@@ -6,10 +6,7 @@
 #' @param state_names vector; vector of state names that will be included in the inflow files
 #' @return list with two vectors. One vector is the matrix of inflow_file_names and the other is the matrix of outflow_file_names
 #' @export
-#' @examples
-##' \dontrun{
-##' inflow_outflow_files <- create_glm_inflow_outflow_files(inflow_file_dir = inflow_forecast_path, inflow_obs = cleaned_inflow_file, working_directory = config$file_path$execute_directory, config, state_names = NULL)
-##' }
+
 create_inflow_outflow_files_arrow <- function(inflow_forecast_dir = NULL,
                                               inflow_obs,
                                               variables = c("time", "FLOW", "TEMP", "SALT"),
@@ -34,10 +31,10 @@ create_inflow_outflow_files_arrow <- function(inflow_forecast_dir = NULL,
       if(is.null(bucket) | is.null(endpoint)){
         stop("scoring function needs bucket and endpoint if use_s3=TRUE")
       }
-      vars <- FLAREr:::arrow_env_vars()
+      vars <- arrow_env_vars()
       inflow_s3 <- arrow::s3_bucket(bucket = file.path(bucket, inflow_forecast_dir),
                                     endpoint_override =  endpoint)
-      FLAREr:::unset_arrow_vars(vars)
+      unset_arrow_vars(vars)
     }else{
       if(is.null(local_directory)){
         stop("scoring function needs local_directory if use_s3=FALSE")

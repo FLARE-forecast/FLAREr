@@ -28,7 +28,9 @@ Function generates a netcdf file from the object that is returned by run_da_fore
 }
 \examples{
 \dontrun{
-write_forecast_csv(da_forecast_output = da_forecast_output, forecast_output_directory = config$file_path$forecast_output_directory, use_short_filename = TRUE)
+write_forecast_csv(da_forecast_output = da_forecast_output,
+   forecast_output_directory = config$file_path$forecast_output_directory,
+   use_short_filename = TRUE)
 }
 
 }

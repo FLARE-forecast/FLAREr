@@ -34,7 +34,9 @@ Function combines the netcdf output with the long-format observation file to pro
 }
 \examples{
 \dontrun{
-plotting_general(file_name = saved_file, qaqc_data_directory = config$file_path$qaqc_data_directory, ncore = config$model_settings$ncore, plot_profile = TRUE, obs_csv)
+plotting_general(file_name = saved_file,
+  qaqc_data_directory = config$file_path$qaqc_data_directory,
+  ncore = config$model_settings$ncore, plot_profile = TRUE, obs_csv)
 }
 }
 \author{

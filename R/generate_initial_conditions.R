@@ -13,7 +13,9 @@
 #' @author Quinn Thomas
 #' @examples
 #' \dontrun{
-#'   init <- generate_initial_conditions(states_config, obs_config, pars_config, obs, config, restart_file = config$run_config$restart_file, historical_met_error = met_out$historical_met_error)
+#'   init <- generate_initial_conditions(states_config, obs_config,
+#'     pars_config, obs, config, restart_file = config$run_config$restart_file,
+#'     historical_met_error = met_out$historical_met_error)
 #'   }
 generate_initial_conditions <- function(states_config,
                                         obs_config,
@@ -146,7 +148,7 @@ generate_initial_conditions <- function(states_config,
       warning("start_datetime for this simulation is missing from restart file")
     }
 
-    out <- FLAREr:::generate_restart_initial_conditions(
+    out <- generate_restart_initial_conditions(
       restart_file = config$run_config$restart_file,
       state_names = states_config$state_names,
       par_names = pars_config$par_names_save,

@@ -30,8 +30,3 @@ Combine forecast output with observations
 \details{
 Combines forecast output with observations
 }
-\examples{
-\dontrun{
- output <- FLAREr::combine_forecast_observations(file_name, qaqc_data_directory = qaqc_data_directory, extra_historical_days = 0, ncore = ncore)
-}
-}

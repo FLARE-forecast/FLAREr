@@ -2,7 +2,6 @@
 
 export(check_noaa_present)
 export(check_noaa_present_arrow)
-export(combine_forecast_observations)
 export(create_flare_metadata)
 export(create_glm_inflow_outflow_files)
 export(create_inflow_outflow_files_arrow)

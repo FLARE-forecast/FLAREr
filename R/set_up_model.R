@@ -19,18 +19,18 @@ set_up_model <- function(config,
 
   non_temp_names <- state_names[which(!(state_names %in% c("temp", "salt")))]
 
-  FLAREr:::update_var(length(non_temp_names), "num_wq_vars", ens_working_directory, "glm3.nml") #GLM SPECIFIC
+  update_var(length(non_temp_names), "num_wq_vars", ens_working_directory, "glm3.nml") #GLM SPECIFIC
 
   if(length(non_temp_names) > 1) {
-    FLAREr:::update_var(non_temp_names, "wq_names", ens_working_directory, "glm3.nml")
+    update_var(non_temp_names, "wq_names", ens_working_directory, "glm3.nml")
   }
 
   if(!is.null(ncol(inflow_file_names))) {
-    FLAREr:::update_var(ncol(inflow_file_names), "num_inflows", ens_working_directory, "glm3.nml")
-    FLAREr:::update_var(ncol(outflow_file_names), "num_outlet", ens_working_directory, "glm3.nml")
+    update_var(ncol(inflow_file_names), "num_inflows", ens_working_directory, "glm3.nml")
+    update_var(ncol(outflow_file_names), "num_outlet", ens_working_directory, "glm3.nml")
     inflow_var_names <- c("FLOW","TEMP","SALT", non_temp_names)
-    FLAREr:::update_var(inflow_var_names, "inflow_vars", ens_working_directory, "glm3.nml")
-    FLAREr:::update_var(length(inflow_var_names), "inflow_varnum", ens_working_directory, "glm3.nml")
+    update_var(inflow_var_names, "inflow_vars", ens_working_directory, "glm3.nml")
+    update_var(length(inflow_var_names), "inflow_varnum", ens_working_directory, "glm3.nml")
   }
 
 
@@ -48,7 +48,7 @@ set_up_model <- function(config,
   }
 
 
-  FLAREr:::update_var(length(config$modeled_depths), "num_depths", ens_working_directory, "glm3.nml") #GLM SPECIFIC
+  update_var(length(config$modeled_depths), "num_depths", ens_working_directory, "glm3.nml") #GLM SPECIFIC
 
 
   inflow_var_names <- c("FLOW","TEMP","SALT", non_temp_names)

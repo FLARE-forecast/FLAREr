@@ -1,0 +1,13 @@
+utils::globalVariables(c(".n", "AirTemp", "FLOW", "LongWave", "Rain", "RelHum", "SALT", "ShortWave",
+                         "Snow", "TEMP", "WindSpeed", "air_temperature", "approx", "approxfun",
+                         "data_assimilation", "datetime", "day_advance", "depth", "dev.off",
+                         "df_interp", "dnorm", "eastward_wind", "ensemble",
+                         "family", "flow_number", "flow_type", "forecast", "forecast_SSS_Oxy",
+                         "forecast_SSS_flow", "forecast_lower_95", "forecast_mean", "forecast_upper_95",
+                         "get_ice", "horizon", "hour_step", "inflow_num", "max_horizon", "model_id", "new_horizon",
+                         "northward_wind", "observation","observed", "outflow_num", "over", "parameter", "pdf",
+                         "precipitation_flux", "predicted", "prediction", "pubDate", "pub_time", "quantile",
+                         "reference_datetime", "relative_humidity", "rnorm", "runif", "saved_file",
+                         "sd", "set_nml", "site_id", "str_split_fixed", "surface_downwelling_longwave_flux_in_air",
+                         "surface_downwelling_shortwave_flux_in_air", "time", "time_precision",
+                         "variable", "variable_type", "wind_speed", "write.csv"))

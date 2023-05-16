@@ -5,15 +5,11 @@
 ##' @return list; vector of full path for the converted files and boolean flag if issues with historical meteorology files
 ##' @export
 ##' @import dplyr
-##' @import ncdf4
 ##' @importFrom stringr str_sub str_split str_detect
 ##' @importFrom tibble tibble
 ##' @importFrom lubridate as_datetime days hours ymd_hm
 ##' @author Quinn Thomas
-##' @examples
-##' \dontrun{
-##' met_out <- FLAREr::generate_glm_met_files(obs_met_file = observed_met_file, out_dir = config$file_path$execute_directory, forecast_dir = config$file_path$noaa_directory, config)
-##' }
+##'
 generate_met_files_arrow <- function(obs_met_file = NULL,
                                      out_dir,
                                      start_datetime,
@@ -53,7 +49,7 @@ generate_met_files_arrow <- function(obs_met_file = NULL,
       if(is.null(bucket) | is.null(endpoint)){
         stop("inflow forecast function needs bucket and endpoint if use_s3=TRUE")
       }
-      vars <- FLAREr:::arrow_env_vars()
+      vars <- arrow_env_vars()
 
       if(use_siteid_s3){
       forecast_dir <- arrow::s3_bucket(bucket = file.path(bucket, "stage2/parquet", forecast_hour,forecast_date, lake_name_code),
@@ -64,7 +60,7 @@ generate_met_files_arrow <- function(obs_met_file = NULL,
       }
       past_dir <- arrow::s3_bucket(bucket = file.path(bucket, "stage3/parquet", lake_name_code),
                                    endpoint_override =  endpoint, anonymous = TRUE)
-      FLAREr:::unset_arrow_vars(vars)
+      unset_arrow_vars(vars)
     }else{
       if(is.null(local_directory)){
         stop("inflow forecast function needs local_directory if use_s3=FALSE")
@@ -287,7 +283,7 @@ generate_met_files_arrow <- function(obs_met_file = NULL,
       }
 
       # check for bad data
-      FLAREr:::missing_data_check(df)
+      missing_data_check(df)
 
       fn <- paste0("met_",stringr::str_pad(ens, width = 2, side = "left", pad = "0"),".csv")
       fn <- file.path(out_dir, fn)

@@ -30,7 +30,7 @@ check_enkf_inputs <- function(states_init,
     npars <- 0
   }
 
-  if(class(states_init) == "numeric"){
+  if(methods::is(states_init, "numeric")){
     stop("states_initneeds to be an array [number of ensemble members, nstates, ndepths]")
   }else if(length(dim(states_init)) > 3){
     stop("states_init has too many dimensions (should be 2)")

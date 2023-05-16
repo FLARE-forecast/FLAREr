@@ -7,10 +7,7 @@
 ##' @export
 ##' @importFrom lubridate with_tz
 ##' @author Quinn Thomas
-##' @examples
-##' \dontrun{
-##' write_forecast_csv(da_forecast_output = da_forecast_output, forecast_output_directory = config$file_path$forecast_output_directory, use_short_filename = TRUE)
-##' }
+##'
 ##'
 
 write_forecast_arrow <- function(da_forecast_output,
@@ -25,7 +22,7 @@ write_forecast_arrow <- function(da_forecast_output,
       stop("scoring function needs bucket and endpoint if use_s3=TRUE")
     }
 
-    vars <- FLAREr:::arrow_env_vars()
+    vars <- arrow_env_vars()
     output_directory <- arrow::s3_bucket(bucket = bucket,
                                          endpoint_override =  endpoint)
     on.exit(unset_arrow_vars(vars))

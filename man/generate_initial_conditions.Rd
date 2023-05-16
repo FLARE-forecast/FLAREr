@@ -39,7 +39,9 @@ Function to generate initial conditions from either default values in the states
 }
 \examples{
 \dontrun{
-  init <- generate_initial_conditions(states_config, obs_config, pars_config, obs, config, restart_file = config$run_config$restart_file, historical_met_error = met_out$historical_met_error)
+  init <- generate_initial_conditions(states_config, obs_config,
+    pars_config, obs, config, restart_file = config$run_config$restart_file,
+    historical_met_error = met_out$historical_met_error)
   }
 }
 \author{

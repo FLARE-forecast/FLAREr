@@ -37,7 +37,14 @@
 #' @importFrom GLM3r glm_version
 #' @examples
 ##' \dontrun{
-#' da_forecast_output <- FLAREr::run_da_forecast(states_init = init$states, pars_init = init$pars, aux_states_init = init$aux_states_init, obs = obs, obs_sd = obs_config$obs_sd, model_sd = model_sd, working_directory = config$file_path$execute_directory, met_file_names = met_file_names, inflow_file_names = inflow_file_names, outflow_file_names = outflow_file_names, config = config, pars_config = pars_config, states_config = states_config, obs_config = obs_config)
+#' da_forecast_output <- FLAREr::run_da_forecast(states_init = init$states,
+#'     pars_init = init$pars, aux_states_init = init$aux_states_init,
+#'     obs = obs, obs_sd = obs_config$obs_sd, model_sd = model_sd,
+#'     working_directory = config$file_path$execute_directory,
+#'     met_file_names = met_file_names, inflow_file_names = inflow_file_names,
+#'     outflow_file_names = outflow_file_names, config = config,
+#'     pars_config = pars_config, states_config = states_config,
+#'     obs_config = obs_config)
 #' }
 
 run_da_forecast <- function(states_init,
@@ -167,11 +174,11 @@ run_da_forecast <- function(states_init,
       unlink(file.path(working_directory, "1"), recursive = TRUE)
       dir.create(file.path(working_directory, "1"), showWarnings = FALSE)
     }
-    FLAREr:::set_up_model(config,
-                          ens_working_directory = file.path(working_directory,"1"),
-                          state_names = states_config$state_names,
-                          inflow_file_names = inflow_file_names,
-                          outflow_file_names = outflow_file_names)
+    set_up_model(config,
+                 ens_working_directory = file.path(working_directory,"1"),
+                 state_names = states_config$state_names,
+                 inflow_file_names = inflow_file_names,
+                 outflow_file_names = outflow_file_names)
   } else {
     purrr::walk(1:nmembers, function(m){
       if(!dir.exists(file.path(working_directory, m))) {
@@ -180,11 +187,11 @@ run_da_forecast <- function(states_init,
         unlink(file.path(working_directory, m), recursive = TRUE)
         dir.create(file.path(working_directory, m), showWarnings = FALSE)
       }
-      FLAREr:::set_up_model(config,
-                            ens_working_directory = file.path(working_directory, m),
-                            state_names = states_config$state_names,
-                            inflow_file_names = inflow_file_names,
-                            outflow_file_names = outflow_file_names)
+      set_up_model(config,
+                   ens_working_directory = file.path(working_directory, m),
+                   state_names = states_config$state_names,
+                   inflow_file_names = inflow_file_names,
+                   outflow_file_names = outflow_file_names)
     })
   }
 
@@ -344,39 +351,39 @@ run_da_forecast <- function(states_init,
           inflow_file_name <- NULL
           outflow_file_name <- NULL
         }
-        out <-FLAREr:::run_model(i,
-                                 m,
-                                 mixing_vars_start = mixing_vars[,i-1 , m],
-                                 curr_start,
-                                 curr_stop,
-                                 par_names,
-                                 curr_pars = curr_pars_ens,
-                                 working_directory = file.path(working_directory, ens_dir_index),
-                                 par_nml = par_file,
-                                 num_phytos,
-                                 glm_depths_start = model_internal_depths[i-1, ,m ],
-                                 lake_depth_start = lake_depth[i-1, m],
-                                 x_start = x[i-1, , ,m ],
-                                 full_time,
-                                 wq_start = NULL,
-                                 wq_end = NULL,
-                                 management = management,
-                                 hist_days,
-                                 modeled_depths = config$model_settings$modeled_depths,
-                                 ndepths_modeled,
-                                 curr_met_file,
-                                 inflow_file_name = inflow_file_name,
-                                 outflow_file_name = outflow_file_name,
-                                 glm_output_vars = output_vars,
-                                 diagnostics_names = config$output_settings$diagnostics_names,
-                                 npars,
-                                 num_wq_vars,
-                                 snow_ice_thickness_start = snow_ice_thickness[, i-1, m ],
-                                 avg_surf_temp_start = avg_surf_temp[i-1, m],
-                                 nstates,
-                                 state_names = states_config$state_names,
-                                 include_wq = config$include_wq,
-                                 debug = debug)
+        out <- run_model(i,
+                         m,
+                         mixing_vars_start = mixing_vars[,i-1 , m],
+                         curr_start,
+                         curr_stop,
+                         par_names,
+                         curr_pars = curr_pars_ens,
+                         working_directory = file.path(working_directory, ens_dir_index),
+                         par_nml = par_file,
+                         num_phytos,
+                         glm_depths_start = model_internal_depths[i-1, ,m ],
+                         lake_depth_start = lake_depth[i-1, m],
+                         x_start = x[i-1, , ,m ],
+                         full_time,
+                         wq_start = NULL,
+                         wq_end = NULL,
+                         management = management,
+                         hist_days,
+                         modeled_depths = config$model_settings$modeled_depths,
+                         ndepths_modeled,
+                         curr_met_file,
+                         inflow_file_name = inflow_file_name,
+                         outflow_file_name = outflow_file_name,
+                         glm_output_vars = output_vars,
+                         diagnostics_names = config$output_settings$diagnostics_names,
+                         npars,
+                         num_wq_vars,
+                         snow_ice_thickness_start = snow_ice_thickness[, i-1, m ],
+                         avg_surf_temp_start = avg_surf_temp[i-1, m],
+                         nstates,
+                         state_names = states_config$state_names,
+                         include_wq = config$include_wq,
+                         debug = debug)
 
       }, .options = furrr::furrr_options(seed = TRUE))
 
@@ -738,11 +745,11 @@ run_da_forecast <- function(states_init,
         }
         if(!is.null(config$da_setup$localization_distance)){
           if(!is.na(config$da_setup$localization_distance)){
-            p_t <- FLAREr:::localization(mat = p_t,
-                              nstates = nstates,
-                              modeled_depths = config$model_settings$modeled_depths,
-                              localization_distance = config$da_setup$localization_distance,
-                              num_single_states = dim(p_t)[1] - nstates * length(config$model_settings$modeled_depths))
+            p_t <- localization(mat = p_t,
+                                nstates = nstates,
+                                modeled_depths = config$model_settings$modeled_depths,
+                                localization_distance = config$da_setup$localization_distance,
+                                num_single_states = dim(p_t)[1] - nstates * length(config$model_settings$modeled_depths))
           }
         }
         #Kalman gain

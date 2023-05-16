@@ -13,7 +13,9 @@
 ##' @author Quinn Thomas
 ##' @examples
 ##' \dontrun{
-##' met_out <- FLAREr::generate_glm_met_files(obs_met_file = observed_met_file, out_dir = config$file_path$execute_directory, forecast_dir = config$file_path$noaa_directory, config)
+##' met_out <- FLAREr::generate_glm_met_files(obs_met_file = observed_met_file,
+##'   out_dir = config$file_path$execute_directory,
+##'   forecast_dir = config$file_path$noaa_directory, config)
 ##' }
 generate_glm_met_files <- function(obs_met_file = NULL,
                                    out_dir,

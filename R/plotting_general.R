@@ -17,7 +17,9 @@
 ##' @author Quinn Thomas
 ##' @examples
 ##' \dontrun{
-##' plotting_general(file_name = saved_file, qaqc_data_directory = config$file_path$qaqc_data_directory, ncore = config$model_settings$ncore, plot_profile = TRUE, obs_csv)
+##' plotting_general(file_name = saved_file,
+##'   qaqc_data_directory = config$file_path$qaqc_data_directory,
+##'   ncore = config$model_settings$ncore, plot_profile = TRUE, obs_csv)
 ##' }
 
 plotting_general <- function(file_name,
@@ -32,10 +34,10 @@ plotting_general <- function(file_name,
   target_file <- paste0(qaqc_data_directory,"/observations_postQAQC_long.csv")
 
 
-  output <- FLAREr::combine_forecast_observations(file_name,
-                                                  target_file,
-                                                  extra_historical_days = 0,
-                                                  ncore = ncore)
+  output <- combine_forecast_observations(file_name,
+                                          target_file,
+                                          extra_historical_days = 0,
+                                          ncore = ncore)
   obs <- output$obs
   full_time_extended <- output$full_time_extended
   diagnostic_list <- output$diagnostic_list

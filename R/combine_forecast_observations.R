@@ -4,17 +4,13 @@
 ##' @param qaqc_data_directory string; full path to processed long-format observation file
 ##' @param extra_historical_days integer; number of days prior to the days in the file_name file to include in the plot
 ##' @param ncore integer; number of computer cores for parallel processing
-##' @export
 ##' @return list
 ##' @import ncdf4
 ##' @import lubridate
 ##' @import parallel
 ##' @import readr
 ##' @importFrom stringr str_split str_detect
-##'@examples
-##'\dontrun{
-##'  output <- FLAREr::combine_forecast_observations(file_name, qaqc_data_directory = qaqc_data_directory, extra_historical_days = 0, ncore = ncore)
-##'}
+
 combine_forecast_observations <- function(file_name,
                                           target_file,
                                           extra_historical_days,

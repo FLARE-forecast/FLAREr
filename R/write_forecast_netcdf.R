@@ -11,7 +11,9 @@
 ##' @author Quinn Thomas
 ##' @examples
 ##' \dontrun{
-##' write_forecast_netcdf(da_forecast_output = da_forecast_output, forecast_output_directory = config$file_path$forecast_output_directory, use_short_filename = TRUE)
+##' write_forecast_netcdf(da_forecast_output = da_forecast_output,
+##'     forecast_output_directory = config$file_path$forecast_output_directory,
+##'     use_short_filename = TRUE)
 ##' }
 ##'
 

@@ -597,7 +597,7 @@ check_noaa_present <- function(lake_directory, configure_run_file = "configure_r
 
 check_noaa_present_arrow <- function(lake_directory, configure_run_file = "configure_run.yml", config_set_name = "default"){
 
-  config <- FLAREr:::set_configuration(configure_run_file,lake_directory, config_set_name = config_set_name)
+  config <- set_configuration(configure_run_file,lake_directory, config_set_name = config_set_name)
 
   if(config$run_config$forecast_horizon > 0 & config$met$use_forecasted_met){
 
@@ -617,10 +617,10 @@ check_noaa_present_arrow <- function(lake_directory, configure_run_file = "confi
     site <- config$location$site_id
     forecast_horizon <- config$run_config$forecast_horizon
 
-    vars <- FLAREr:::arrow_env_vars()
+    vars <- arrow_env_vars()
     forecast_dir <- arrow::s3_bucket(bucket = file.path(config$s3$drivers$bucket, "stage2/parquet", forecast_hour),
                                      endpoint_override =  config$s3$drivers$endpoint, anonymous = TRUE)
-    FLAREr:::unset_arrow_vars(vars)
+    unset_arrow_vars(vars)
     avail_dates <- forecast_dir$ls()
 
     if(forecast_date %in% lubridate::as_date(avail_dates)){

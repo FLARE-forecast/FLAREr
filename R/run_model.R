@@ -156,22 +156,22 @@ run_model <- function(i,
 
     if(simulate_sss){
       if(is.na(management$specified_sss_inflow_file)){
-        FLAREr:::create_sss_input_output(x = x_start,
-                                         i,
-                                         m,
-                                         full_time,
-                                         working_directory,
-                                         wq_start,
-                                         management$management_input,
-                                         hist_days,
-                                         management$forecast_sss_on,
-                                         management$sss_depth,
-                                         management$use_specified_sss,
-                                         state_names,
-                                         modeled_depths = modeled_depths,
-                                         forecast_sss_flow = management$forecast_sss_flow,
-                                         forecast_sss_oxy = management$forecast_sss_oxy,
-                                         salt = salt_start)
+        create_sss_input_output(x = x_start,
+                                i,
+                                m,
+                                full_time,
+                                working_directory,
+                                wq_start,
+                                management$management_input,
+                                hist_days,
+                                management$forecast_sss_on,
+                                management$sss_depth,
+                                management$use_specified_sss,
+                                state_names,
+                                modeled_depths = modeled_depths,
+                                forecast_sss_flow = management$forecast_sss_flow,
+                                forecast_sss_oxy = management$forecast_sss_oxy,
+                                salt = salt_start)
       }else{
         file.copy(file.path(working_directory, management$specified_sss_inflow_file), paste0(working_directory,"/sss_inflow.csv"))
         if(!is.na(management$specified_sss_outflow_file)){
@@ -246,16 +246,16 @@ run_model <- function(i,
   }
 
 
-  FLAREr:::update_nml(var_list = update_glm_nml_list,
-                      var_name_list = update_glm_nml_names,
-                      working_directory,
-                      nml = "glm3.nml")
+  update_nml(var_list = update_glm_nml_list,
+             var_name_list = update_glm_nml_names,
+             working_directory,
+             nml = "glm3.nml")
 
   if(list_index_aed > 1){
-    FLAREr:::update_nml(update_aed_nml_list,
-                        update_aed_nml_names,
-                        working_directory,
-                        "aed2.nml")
+    update_nml(update_aed_nml_list,
+               update_aed_nml_names,
+               working_directory,
+               "aed2.nml")
   }
 
   if(list_index_phyto > 1){
@@ -344,12 +344,12 @@ run_model <- function(i,
       output_vars_multi_depth <- state_names
       output_vars_no_depth <- NA
 
-      GLM_temp_wq_out <-  FLAREr:::get_glm_nc_var_all_wq(ncFile = "/output.nc",
-                                                         working_dir = working_directory,
-                                                         z_out = modeled_depths,
-                                                         vars_depth = output_vars_multi_depth,
-                                                         vars_no_depth = output_vars_no_depth,
-                                                         diagnostic_vars = diagnostics_names)
+      GLM_temp_wq_out <-  get_glm_nc_var_all_wq(ncFile = "/output.nc",
+                                                working_dir = working_directory,
+                                                z_out = modeled_depths,
+                                                vars_depth = output_vars_multi_depth,
+                                                vars_no_depth = output_vars_no_depth,
+                                                diagnostic_vars = diagnostics_names)
 
       if(!debug){
         unlink(paste0(working_directory, "/output.nc"))
@@ -370,7 +370,7 @@ run_model <- function(i,
       x_star_end[2, ] <- approx(glm_depths_mid, glm_salt, modeled_depths, rule = 2)$y
 
       if(include_wq){
-      start_index <- 2
+        start_index <- 2
         for(wq in 1:num_wq_vars){
           glm_wq <-  rev(GLM_temp_wq_out$output[ ,start_index+wq])
           #if(length(is.na(glm_wq)) > 0){next}

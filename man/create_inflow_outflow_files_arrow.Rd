@@ -40,8 +40,3 @@ Generating inflow and output files in the GLM format using arrow
 \details{
 Processes historical inflow data from inflow_obs and from files in the inflow_file_dir into the GLM format
 }
-\examples{
-\dontrun{
-inflow_outflow_files <- create_glm_inflow_outflow_files(inflow_file_dir = inflow_forecast_path, inflow_obs = cleaned_inflow_file, working_directory = config$file_path$execute_directory, config, state_names = NULL)
-}
-}

@@ -184,14 +184,14 @@ run_flare <- function(lake_directory,
     reference_datetime_format <- "%Y-%m-%d %H:%M:%S"
     past_days <- strftime(lubridate::as_datetime(forecast_df$reference_datetime[1]) - lubridate::days(config$run_config$forecast_horizon), tz = "UTC")
 
-    vars <- FLAREr:::arrow_env_vars()
+    vars <- arrow_env_vars()
     s3 <- arrow::s3_bucket(bucket = config$s3$forecasts_parquet$bucket, endpoint_override = config$s3$forecasts_parquet$endpoint)
     past_forecasts <- arrow::open_dataset(s3) |>
       dplyr::filter(model_id == forecast_df$model_id[1],
                     site_id == forecast_df$site_id[1],
                     reference_datetime > past_days) |>
       dplyr::collect()
-    FLAREr:::unset_arrow_vars(vars)
+    unset_arrow_vars(vars)
   }else{
     past_forecasts <- NULL
   }

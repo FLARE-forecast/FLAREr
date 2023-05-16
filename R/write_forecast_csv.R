@@ -9,7 +9,9 @@
 ##' @author Quinn Thomas
 ##' @examples
 ##' \dontrun{
-##' write_forecast_csv(da_forecast_output = da_forecast_output, forecast_output_directory = config$file_path$forecast_output_directory, use_short_filename = TRUE)
+##' write_forecast_csv(da_forecast_output = da_forecast_output,
+##'    forecast_output_directory = config$file_path$forecast_output_directory,
+##'    use_short_filename = TRUE)
 ##' }
 ##'
 
@@ -194,7 +196,7 @@ write_forecast_csv <- function(da_forecast_output,
         dplyr::mutate(variable = ifelse(variable == states_config$state_names[i], obs_name, variable))
     }
   }
-  
+
    reference_datetime_format <- "%Y-%m-%d %H:%M:%S"
 
    output_list <- output_list |> mutate(reference_datetime = strftime(lubridate::as_datetime(reference_datetime),format=reference_datetime_format,tz = "UTC"))

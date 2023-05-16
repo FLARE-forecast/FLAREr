@@ -87,6 +87,13 @@ in first time column of the \code{obs} array.
 }
 \examples{
 \dontrun{
-da_forecast_output <- FLAREr::run_da_forecast(states_init = init$states, pars_init = init$pars, aux_states_init = init$aux_states_init, obs = obs, obs_sd = obs_config$obs_sd, model_sd = model_sd, working_directory = config$file_path$execute_directory, met_file_names = met_file_names, inflow_file_names = inflow_file_names, outflow_file_names = outflow_file_names, config = config, pars_config = pars_config, states_config = states_config, obs_config = obs_config)
+da_forecast_output <- FLAREr::run_da_forecast(states_init = init$states,
+    pars_init = init$pars, aux_states_init = init$aux_states_init,
+    obs = obs, obs_sd = obs_config$obs_sd, model_sd = model_sd,
+    working_directory = config$file_path$execute_directory,
+    met_file_names = met_file_names, inflow_file_names = inflow_file_names,
+    outflow_file_names = outflow_file_names, config = config,
+    pars_config = pars_config, states_config = states_config,
+    obs_config = obs_config)
 }
 }

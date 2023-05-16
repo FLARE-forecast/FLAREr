@@ -35,11 +35,6 @@ Convert historical meteorology and NOAA forecasts to GLM format via arrow connec
 \details{
 Function combines historical meteorology and NOAA forecasts to create meteorology input files in the GLM format.  A file is generated for each ensemble member.
 }
-\examples{
-\dontrun{
-met_out <- FLAREr::generate_glm_met_files(obs_met_file = observed_met_file, out_dir = config$file_path$execute_directory, forecast_dir = config$file_path$noaa_directory, config)
-}
-}
 \author{
 Quinn Thomas
 }

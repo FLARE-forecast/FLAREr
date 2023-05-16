@@ -19,10 +19,10 @@ generate_forecast_score_arrow <- function(targets_file,
     if(is.null(bucket) | is.null(endpoint)){
       stop("scoring function needs bucket and endpoint if use_s3=TRUE")
     }
-    vars <- FLAREr:::arrow_env_vars()
+    vars <- arrow_env_vars()
     output_directory <- arrow::s3_bucket(bucket = bucket,
                                          endpoint_override =  endpoint)
-    FLAREr:::unset_arrow_vars(vars)
+    unset_arrow_vars(vars)
   }else{
     if(is.null(local_directory)){
       stop("scoring function needs local_directory if use_s3=FALSE")
@@ -43,7 +43,7 @@ generate_forecast_score_arrow <- function(targets_file,
     forecast_df <- forecast_df |>
       dplyr::select(-pub_time)
   }
-  
+
     if("pubDate" %in% colnames(forecast_df)){
     forecast_df <- forecast_df |>
       dplyr::select(-pubDate)
