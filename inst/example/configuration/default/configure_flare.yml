@@ -1,64 +1,19 @@
-file_path:
-   qaqc_data_directory: .na
-   noaa_directory: .na
-   inflow_directory: .na
-   configuration_directory: .na
-   execute_directory: .na
-   forecast_output_directory: .na
-s3:
-  drivers:
-    endpoint: s3.flare-forecast.org
-    bucket: drivers
-  analysis:
-    endpoint: s3.flare-forecast.org
-    bucket: analysis
-  targets:
-    endpoint: s3.flare-forecast.org
-    bucket: targets
-  forecasts:
-    endpoint: s3.flare-forecast.org
-    bucket: forecasts
-  forecasts_csv:
-    endpoint: s3.flare-forecast.org
-    bucket: forecasts-csv
-  warm_start:
-    endpoint: s3.flare-forecast.org
-    bucket: restart
-  scores:
-    endpoint: s3.flare-forecast.org
-    bucket: scores
 location:
    site_id: fcre
    name: Falling Creek Reservoir
    latitude: 37.307   #Degrees North
    longitude: -79.837  #Degrees East
-metadata:
-   generate_eml: TRUE
-   forecast_project_id: test
-   abstract: "This is where a longer description of the forecast can be added"
-   forecast_title: FLARE
-   intellectualRights: MIT
-   model_description:
-      forecast_model_id: https://github.com/rqthomas/flare/commit/d1ddcb07b9d28863890597503fc4aa4a4496de56
-      name: General Lake Model
-      type: process-based
-      repository: https://github.com/AquaticEcoDynamics/GLM/releases/tag/v3.1.0
-   me:
-      individualName:
-         givenName: "Quinn"
-         surName: "Thomas"
-      electronicMailAddress:  "INSERT"
-      id: INSERT ORCID
 da_setup:
     da_method: enkf
-    par_fit_method: inflate
-    ensemble_size:  200
+    par_fit_method: perturb_const
+    ensemble_size:  31
     localization_distance: .na #distance in meters were covariances in the model error are used
     no_negative_states: TRUE
     assimilate_first_step: FALSE
     use_obs_constraint: TRUE
+    obs_filename: fcre-targets-insitu.csv
 model_settings:
-   ncore: 2
+   ncore: 4
    model_name: glm
    base_GLM_nml: glm3.nml
    modeled_depths:
@@ -105,7 +60,7 @@ model_settings:
    states_config_file: states_config.csv
    depth_model_sd_config_file: depth_model_sd.csv
 default_init:
-   lake_depth: 9.4  #not a modeled state
+   lake_depth: 9.4
    temp: [25.667, 24.9101, 23.067, 21.8815, 19.6658, 16.5739, 12.9292, 12.8456, 12.8127, 12.8079, 12.778]
    temp_depths: [0.127, 1.004, 2.005, 3.021, 4.002, 5.004, 6.004, 7.01, 8.001, 9.015, 9.518]
    salinity: 0.0
@@ -113,19 +68,26 @@ default_init:
    white_ice_thickness: 0.0
    blue_ice_thickness: 0.0
 inflow:
+   include_inflow: TRUE
    use_forecasted_inflow: TRUE
-   forecast_inflow_model: inflow/FLOWS-NOAAGEFS-AR1
+   forecast_inflow_model: FLOWS-NOAAGEFS-AR1
+   observed_filename: fcre-targets-inflow.csv
+   local_directory: drivers/inflow
+   use_ler_vars: FALSE
 met:
    use_forecasted_met: TRUE
-   forecast_met_model: noaa/NOAAGEFS_1hr-debias
-   historical_met: observed
+   use_met_s3: FALSE
+   use_observed_met: FALSE
+   use_ler_vars: FALSE
+   local_directory: drivers/noaa/gefs-v12-reprocess
 uncertainty:
    observation: TRUE
    process: TRUE
    weather: TRUE
    initial_condition: TRUE
    parameter: TRUE
-   met_downscale: TRUE
    inflow_process: TRUE
 output_settings:
    diagnostics_names:  [extc]
+   evaluate_past: FALSE
+   variables_in_scores: [state, parameter, diagnostic]

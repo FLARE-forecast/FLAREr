@@ -21,11 +21,16 @@ run_flare <- function(lake_directory,
 
   message(paste0("     Running forecast that starts on: ", config$run_config$start_datetime))
 
-  pars_config <- readr::read_csv(file.path(config$file_path$configuration_directory, config$model_settings$par_config_file), col_types = readr::cols())
-
-  if(!setequal(names(pars_config),c("par_names","par_names_save","par_file","par_init","par_init_lowerbound","par_init_upperbound","par_lowerbound","par_upperbound","inflat_pars","perturb_par","par_units"))){
-    stop(" par configuraiton file does not have the correct columns")
+  if(!is.null(config$model_settings$par_config_file)){
+    if(!is.na(config$model_settings$par_config_file)){
+      pars_config <- readr::read_csv(file.path(config$file_path$configuration_directory, config$model_settings$par_config_file), col_types = readr::cols())
+      if(!setequal(names(pars_config),c("par_names","par_names_save","par_file","par_init","par_init_lowerbound","par_init_upperbound","par_lowerbound","par_upperbound","inflat_pars","perturb_par","par_units"))){
+        stop(" par configuraiton file does not have the correct columns")
+      }
+    }
   }
+
+
 
   obs_config <- readr::read_csv(file.path(config$file_path$configuration_directory, config$model_settings$obs_config_file), col_types = readr::cols())
   states_config <- readr::read_csv(file.path(config$file_path$configuration_directory, config$model_settings$states_config_file), col_types = readr::cols())
@@ -68,19 +73,31 @@ run_flare <- function(lake_directory,
                                               use_s3 = config$met$use_met_s3,
                                               bucket = config$s3$drivers$bucket,
                                               endpoint = config$s3$drivers$endpoint,
-                                              local_directory = config$met$local_directory,
+                                              local_directory = file.path(lake_directory,config$met$local_directory),
                                               use_forecast = config$met$use_forecasted_met,
-                                              use_ler_vars = config$met$use_ler_vars)
+                                              use_ler_vars = config$met$use_ler_vars,
+                                              use_siteid_s3 = TRUE)
+
+  if(is.null(config$inflow$use_inflow_s3)){
+    config$inflow$use_inflow_s3 <- TRUE
+  }
 
   if(config$inflow$include_inflow){
     if(config$run_config$forecast_horizon > 0){
-      inflow_forecast_dir = file.path(config$inflow$forecast_inflow_model, lubridate::as_date(config$run_config$forecast_start_datetime))
+      inflow_forecast_dir <- file.path(config$inflow$forecast_inflow_model, config$location$site_id, "0", lubridate::as_date(config$run_config$forecast_start_datetime))
     }else{
       inflow_forecast_dir <- NULL
     }
 
+    if(length(states_config$state_names) > 2){
+      stop("run_flare currently not configured for using inflows with GLM-AED")
+    }else{
+      variables <- c("time", "FLOW", "TEMP", "SALT")
+    }
+
+
     inflow_outflow_files <- FLAREr::create_inflow_outflow_files_arrow(inflow_forecast_dir = inflow_forecast_dir,
-                                                                      inflow_obs = config$inflow$observed_filename,
+                                                                      inflow_obs = file.path(lake_directory, "targets",config$location$site_id, config$inflow$observed_filename),
                                                                       variables = variables,
                                                                       out_dir = config$file_path$execute_directory,
                                                                       start_datetime = config$run_config$start_datetime,
@@ -91,7 +108,7 @@ run_flare <- function(lake_directory,
                                                                       use_s3 = config$run_config$use_s3,
                                                                       bucket = config$s3$inflow_drivers$bucket,
                                                                       endpoint = config$s3$inflow_drivers$endpoint,
-                                                                      local_directory = file.path(lake_directory, "drivers", inflow_forecast_dir),
+                                                                      local_directory = file.path(lake_directory, config$inflow$local_directory, inflow_forecast_dir),
                                                                       use_forecast = config$inflow$use_forecasted_inflow,
                                                                       use_ler_vars = config$inflow$use_ler_vars)
 

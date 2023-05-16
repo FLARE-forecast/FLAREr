@@ -38,14 +38,14 @@
    timefmt = 2
    start = '2013-05-15 12:00'
    stop = '2018-12-31 12:00'
-   dt = 1800
+   dt = 3600
    num_days = 1
    timezone = -5
 /
 &output
    out_dir = "./"
    out_fn = "output"
-   nsave = 48
+   nsave = 24
 /
 &init_profiles
    num_depths = 28
@@ -107,9 +107,12 @@
    outflow_factor = 1.0
 /
 &snowice
-   snow_albedo_factor = 1
-   snow_rho_max = 500
-   snow_rho_min = 100
+   snow_albedo_factor = 0.8
+   snow_rho_max = 300
+   snow_rho_min = 50
+   min_ice_thickness = 0.001
+   dt_iceon_avg = 0.01
+   avg_surf_temp_thres = 0.5
 /
 &sediment
    benthic_mode = 2

@@ -58,9 +58,9 @@ A guide to the variables in `configure_flare.yml` and in the `observations_confi
 * `modeled_depths`: Vector of depths are that represented in the data assimilation
 
 ## Data assimilation description
-* `da_method`: method for data assimilation (`enkf` or `pf` or `none`)
+* `da_method`: method for data assimilation (`enkf` or `none`)
 * `par_fit_method`: method for parameter fitting
-  * if `da_method` = `enkf`, then `inflate` or `perturb` are options
+  * if `da_method` = `enkf`, then `inflate`, `perturb`, or `perturb_const` are options
   * if `da_method` = `pf`, then only `perturb` is an option
 * `ensemble_size`: Total number of ensemble members
 * `vert_decorr_length`: The length in meters where process uncertainty becomes
@@ -142,20 +142,3 @@ A guide to the variables in `configure_flare.yml` and in the `observations_confi
 * `default_snow_thickness_init`: initial snow thickness (cm)
 * `default_white_ice_thickness_init`:  initial white ice thickness (cm)
 * `default_blue_ice_thickness_init`: initial blue ice thickness (cm)
-
-## Management specific variables
-
-* `simulate_SSS`: include SSS (bottom-water oxygenation) in simulations with 
-  observed drivers (i.e., data assimilation simulations)
-  * `TRUE`: include
-  * `FALSE`: don't include
-* `forecast_no_SSS`: Include SSS in forecast
-  * `TRUE`: include
-  * `FALSE`: don't include
-* `use_specified_sss`: Use sss inflow and oxygen from file in forecast.  If 
-  `FALSE` then provide `forecast_SSS_flow` and `forecast_SSS_Oxy`.
-* `forecast_SSS_flow`: Flow rate of SSS in forecast (m3/day)
-* `forecast_SSS_Oxy`: Oxygen concentration of SSS in forecast (mmol/m3)
-* `sss_fname`: full path to the file that has the SSS Flow and oxygen data
-* `sss_inflow_factor`: a scalar to multiply FLOW rate of SSS
-* `sss_depth`: The depth (meters) of the SSS inflow/outflow

@@ -19,6 +19,8 @@
 <![endif]-->
 </head>
 <body data-spy="scroll" data-target="#toc">
+    
+
     <div class="container template-article">
       <header><div class="navbar navbar-default navbar-fixed-top" role="navigation">
   <div class="container">
@@ -31,23 +33,17 @@
       </button>
       <span class="navbar-brand">
         <a class="navbar-link" href="../index.html">FLAREr</a>
-        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="Released version">2.1.0</span>
+        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="">2.2.21</span>
       </span>
     </div>
 
     <div id="navbar" class="navbar-collapse collapse">
       <ul class="nav navbar-nav">
 <li>
-  <a href="../index.html">
-    <span class="fas fa-home fa-lg"></span>
-     
-  </a>
-</li>
-<li>
   <a href="../reference/index.html">Reference</a>
 </li>
 <li class="dropdown">
-  <a href="#" class="dropdown-toggle" data-toggle="dropdown" role="button" aria-expanded="false">
+  <a href="#" class="dropdown-toggle" data-toggle="dropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
     Articles
      
     <span class="caret"></span>
@@ -75,7 +71,7 @@
 
       
 
-      </header><script src="flare-config-vignette_files/header-attrs-2.8/header-attrs.js"></script><div class="row">
+      </header><div class="row">
   <div class="col-md-9 contents">
     <div class="page-header toc-ignore">
       <h1 data-toc-skip>FLAREr configurations</h1>
@@ -88,18 +84,22 @@
 
     
     
-<p>A guide to the variables in <code>configure_flare.yml</code> and in the <code>observations_config.csv</code>, <code>parameter_calibration_config.csv</code>, and <code>states_config.csv</code>.</p>
-<div id="general-set-up" class="section level2">
-<h2 class="hasAnchor">
-<a href="#general-set-up" class="anchor"></a>General set-up</h2>
+<p>A guide to the variables in <code>configure_flare.yml</code> and in
+the <code>observations_config.csv</code>,
+<code>parameter_calibration_config.csv</code>, and
+<code>states_config.csv</code>.</p>
+<div class="section level2">
+<h2 id="general-set-up">General set-up<a class="anchor" aria-label="anchor" href="#general-set-up"></a>
+</h2>
 <ul>
 <li>
-<code>model_name</code>: specific ID of the model (<code>glm_aed</code> and <code>null</code> are the only</li>
+<code>model_name</code>: specific ID of the model
+(<code>glm_aed</code> and <code>null</code> are the only</li>
 </ul>
 </div>
-<div id="lake-specific-variables" class="section level2">
-<h2 class="hasAnchor">
-<a href="#lake-specific-variables" class="anchor"></a>Lake specific variables</h2>
+<div class="section level2">
+<h2 id="lake-specific-variables">Lake specific variables<a class="anchor" aria-label="anchor" href="#lake-specific-variables"></a>
+</h2>
 <ul>
 <li>
 <code>lake_name_code</code>: four letter code name for lake.</li>
@@ -110,12 +110,13 @@
 <li>
 <code>lake_longitude</code>: Degrees West</li>
 <li>
-<code>local_tzone</code>: In standard time. Must be recognized by R.</li>
+<code>local_tzone</code>: In standard time. Must be recognized by
+R.</li>
 </ul>
 </div>
-<div id="weather-forcing-options" class="section level2">
-<h2 class="hasAnchor">
-<a href="#weather-forcing-options" class="anchor"></a>Weather forcing options</h2>
+<div class="section level2">
+<h2 id="weather-forcing-options">Weather forcing options<a class="anchor" aria-label="anchor" href="#weather-forcing-options"></a>
+</h2>
 <ul>
 <li>
 <code>use_future_met</code>
@@ -123,19 +124,23 @@
 <li>
 <code>TRUE</code>: use NOAA forecast for “Future”</li>
 <li>
-<code>FALSE</code> = use observed weather for “Future”; only works if “forecasting” past dates</li>
+<code>FALSE</code> = use observed weather for “Future”; only works
+if “forecasting” past dates</li>
 </ul>
 </li>
 <li>
-<code>forecast_met_model</code>: directory name within the data_location that contains the NOAA model output (i.e., NOAAGEFS_1hr-debias)</li>
+<code>forecast_met_model</code>: directory name within the
+data_location that contains the NOAA model output (i.e.,
+NOAAGEFS_1hr-debias)</li>
 </ul>
 </div>
-<div id="inflow-options" class="section level2">
-<h2 class="hasAnchor">
-<a href="#inflow-options" class="anchor"></a>Inflow options</h2>
+<div class="section level2">
+<h2 id="inflow-options">Inflow options<a class="anchor" aria-label="anchor" href="#inflow-options"></a>
+</h2>
 <ul>
 <li>
-<code>use_future_inflow</code>: Use forecast inflow vs. observed inflow (if available)
+<code>use_future_inflow</code>: Use forecast inflow vs. observed
+inflow (if available)
 <ul>
 <li>
 <code>TRUE</code>: Future inflow</li>
@@ -144,94 +149,120 @@
 </ul>
 </li>
 <li>
-<code>forecast_inflow_model</code>: directory name within the data_location that contains the inflow model output (i.e., FLOWS-NOAAGEFS-AR1)</li>
+<code>forecast_inflow_model</code>: directory name within the
+data_location that contains the inflow model output (i.e.,
+FLOWS-NOAAGEFS-AR1)</li>
 </ul>
 </div>
-<div id="glm-namelist-files" class="section level2">
-<h2 class="hasAnchor">
-<a href="#glm-namelist-files" class="anchor"></a>GLM namelist files</h2>
+<div class="section level2">
+<h2 id="glm-namelist-files">GLM namelist files<a class="anchor" aria-label="anchor" href="#glm-namelist-files"></a>
+</h2>
 <ul>
 <li>
-<code>base_GLM_nml</code>: full path to the glm namelist or path relative to forecast directory</li>
+<code>base_GLM_nml</code>: full path to the glm namelist or path
+relative to forecast directory</li>
 <li>
-<code>base_AED_nml</code>: full path to the aed namelist or path relative to forecast directory</li>
+<code>base_AED_nml</code>: full path to the aed namelist or path
+relative to forecast directory</li>
 <li>
-<code>base_AED_phyto_pars_nml</code>: full path to the phyto_pars namelist or path relative to forecast directory</li>
+<code>base_AED_phyto_pars_nml</code>: full path to the phyto_pars
+namelist or path relative to forecast directory</li>
 <li>
-<code>base_AED_zoop_pars_nml</code>: full path to the zoop_pars namelist or path relative to forecast directory</li>
+<code>base_AED_zoop_pars_nml</code>: full path to the zoop_pars
+namelist or path relative to forecast directory</li>
 </ul>
 </div>
-<div id="depth-information" class="section level2">
-<h2 class="hasAnchor">
-<a href="#depth-information" class="anchor"></a>Depth information</h2>
+<div class="section level2">
+<h2 id="depth-information">Depth information<a class="anchor" aria-label="anchor" href="#depth-information"></a>
+</h2>
 <ul>
 <li>
-<code>modeled_depths</code>: Vector of depths are that represented in the data assimilation</li>
+<code>modeled_depths</code>: Vector of depths are that represented
+in the data assimilation</li>
 </ul>
 </div>
-<div id="data-assimilation-description" class="section level2">
-<h2 class="hasAnchor">
-<a href="#data-assimilation-description" class="anchor"></a>Data assimilation description</h2>
+<div class="section level2">
+<h2 id="data-assimilation-description">Data assimilation description<a class="anchor" aria-label="anchor" href="#data-assimilation-description"></a>
+</h2>
 <ul>
 <li>
-<code>da_method</code>: method for data assimilation (<code>enkf</code> or <code>pf</code> or <code>none</code>)</li>
+<code>da_method</code>: method for data assimilation
+(<code>enkf</code> or <code>none</code>)</li>
 <li>
 <code>par_fit_method</code>: method for parameter fitting
 <ul>
-<li>if <code>da_method</code> = <code>enkf</code>, then <code>inflate</code> or <code>perturb</code> are options</li>
-<li>if <code>da_method</code> = <code>pf</code>, then only <code>perturb</code> is an option</li>
+<li>if <code>da_method</code> = <code>enkf</code>, then
+<code>inflate</code>, <code>perturb</code>, or
+<code>perturb_const</code> are options</li>
+<li>if <code>da_method</code> = <code>pf</code>, then only
+<code>perturb</code> is an option</li>
 </ul>
 </li>
 <li>
 <code>ensemble_size</code>: Total number of ensemble members</li>
 <li>
-<code>vert_decorr_length</code>: The length in meters where process uncertainty becomes decoupled.</li>
+<code>vert_decorr_length</code>: The length in meters where process
+uncertainty becomes decoupled.</li>
 <li>
-<code>no_negative_states</code>: Set any states that become negative do to the addition of process uncertainty or from EnKF update to zero</li>
+<code>no_negative_states</code>: Set any states that become negative
+do to the addition of process uncertainty or from EnKF update to
+zero</li>
 <li>
-<code>localization_distance</code>: distance in meters were covariances in the model error are used</li>
+<code>localization_distance</code>: distance in meters were
+covariances in the model error are used</li>
 <li>
 <code>assimilate_first_step</code>: TRUE or FALSE</li>
 <li>
-<code>ncore</code>: number of computer cores to use for parrallel processing</li>
+<code>ncore</code>: number of computer cores to use for parrallel
+processing</li>
 </ul>
 </div>
-<div id="parameter-calibration-information" class="section level2">
-<h2 class="hasAnchor">
-<a href="#parameter-calibration-information" class="anchor"></a>Parameter calibration information</h2>
+<div class="section level2">
+<h2 id="parameter-calibration-information">Parameter calibration information<a class="anchor" aria-label="anchor" href="#parameter-calibration-information"></a>
+</h2>
 <ul>
 <li>
 <code>par_file</code>:
 <ul>
 <li>
-<code>par_names</code>: vector of GLM names of parameter values estimated</li>
+<code>par_names</code>: vector of GLM names of parameter values
+estimated</li>
 <li>
-<code>par_names_save</code>: vector of names of parameter values estimated that are desired in output and plots</li>
+<code>par_names_save</code>: vector of names of parameter values
+estimated that are desired in output and plots</li>
 <li>
-<code>par_nml</code>: vector of nml file names that contains the parameter that is being estimated</li>
+<code>par_nml</code>: vector of nml file names that contains the
+parameter that is being estimated</li>
 <li>
-<code>par_init_mean</code>: vector of initial mean value for parameters</li>
+<code>par_init_mean</code>: vector of initial mean value for
+parameters</li>
 <li>
-<code>par_init_lowerbound</code>: vector of lower bound for the initial uniform distribution of the parameters</li>
+<code>par_init_lowerbound</code>: vector of lower bound for the
+initial uniform distribution of the parameters</li>
 <li>
-<code>par_init_upperbound</code>: vector of upper bound for the initial uniform distribution of the parameters</li>
+<code>par_init_upperbound</code>: vector of upper bound for the
+initial uniform distribution of the parameters</li>
 <li>
-<code>par_lowerbound</code>: vector of lower bounds that a parameter can have</li>
+<code>par_lowerbound</code>: vector of lower bounds that a parameter
+can have</li>
 <li>
-<code>par_upperbound</code>: vector of upper bounds that a parameter can have</li>
+<code>par_upperbound</code>: vector of upper bounds that a parameter
+can have</li>
 <li>
-<code>inflat_pars</code>: The variance inflation factor applied to the parameter component of the ensemble. Value greater than 1.</li>
+<code>inflat_pars</code>: The variance inflation factor applied to
+the parameter component of the ensemble. Value greater than 1.</li>
 <li>
-<code>pertrub_par</code>: The standard deviation of the normally distributed random noise that is added to parameters</li>
+<code>pertrub_par</code>: The standard deviation of the normally
+distributed random noise that is added to parameters</li>
 <li>
 <code>par_units</code>: Units of parameter for plotting</li>
 </ul>
 </li>
 </ul>
 </div>
-<div id="state-information" class="section level2">
-<h2 class="hasAnchor">
-<a href="#state-information" class="anchor"></a>State information</h2>
+<div class="section level2">
+<h2 id="state-information">State information<a class="anchor" aria-label="anchor" href="#state-information"></a>
+</h2>
 <ul>
 <li>
 <code>states_config.csv</code>:
@@ -240,15 +271,27 @@
 <code>state_names</code>: name of states.<br>
 </li>
 <li>
-<code>initial_conditions</code>: The initial conditions for the state if observations are not available to initialize. Assumes the initial conditions are constant over all depths, except for temperature which uses the <code>default_temp_init</code> variable in <code>configure_flare.R</code> to set the depth profile when observations are lacking</li>
+<code>initial_conditions</code>: The initial conditions for the
+state if observations are not available to initialize. Assumes the
+initial conditions are constant over all depths, except for temperature
+which uses the <code>default_temp_init</code> variable in
+<code>configure_flare.R</code> to set the depth profile when
+observations are lacking</li>
 <li>
-<code>model_sd</code>: the standard deviation of the process error for the tate</li>
+<code>model_sd</code>: the standard deviation of the process error
+for the tate</li>
 <li>
-<code>initial_model_sd</code>: the standard deviation on the initial distribution of the state</li>
+<code>initial_model_sd</code>: the standard deviation on the initial
+distribution of the state</li>
 <li>
-<code>states_to_obs_mapping</code>: a multiplier on the state to convert to the observation. In most cases this is 1. However, in the case of phytoplankton, the model predicts mmol/m3 biomass but the observations are ug/L chla. Therefore the multiplier is the biomass to chla conversion</li>
+<code>states_to_obs_mapping</code>: a multiplier on the state to
+convert to the observation. In most cases this is 1. However, in the
+case of phytoplankton, the model predicts mmol/m3 biomass but the
+observations are ug/L chla. Therefore the multiplier is the biomass to
+chla conversion</li>
 <li>
-<code>states_to_obs_1</code>: The observation that the state contributes to
+<code>states_to_obs_1</code>: The observation that the state
+contributes to
 <ul>
 <li>
 <code>NA</code> is required if no matching observations</li>
@@ -256,7 +299,8 @@
 </ul>
 </li>
 <li>
-<code>states_to_obs_2</code>: A second observation that the state contributes to
+<code>states_to_obs_2</code>: A second observation that the state
+contributes to
 <ul>
 <li>
 <code>NA</code> is required if no matching observations</li>
@@ -264,23 +308,28 @@
 </ul>
 </li>
 <li>
-<code>init_obs_name</code>: the name of observation that is used to initialize the state if there is an observation</li>
+<code>init_obs_name</code>: the name of observation that is used to
+initialize the state if there is an observation</li>
 <li>
-<code>init_obs_mapping</code>: a multiplier on the observation when used to initialize. For example, if using a combined DOC measurement to initialize two DOC states, you need to provide the proportion of the observation that is assigned to each state.</li>
+<code>init_obs_mapping</code>: a multiplier on the observation when
+used to initialize. For example, if using a combined DOC measurement to
+initialize two DOC states, you need to provide the proportion of the
+observation that is assigned to each state.</li>
 </ul>
 </li>
 <li>
 <code>states_process_error.csv</code>:
 <ul>
 <li><code>depth</code></li>
-<li>column name = variable name for states that have depth varying process uncertainity</li>
+<li>column name = variable name for states that have depth varying
+process uncertainity</li>
 </ul>
 </li>
 </ul>
 </div>
-<div id="observation-information" class="section level2">
-<h2 class="hasAnchor">
-<a href="#observation-information" class="anchor"></a>Observation information</h2>
+<div class="section level2">
+<h2 id="observation-information">Observation information<a class="anchor" aria-label="anchor" href="#observation-information"></a>
+</h2>
 <ul>
 <li>
 <code>obs_config_file</code>:
@@ -288,69 +337,42 @@
 <li>
 <code>state_names_obs</code>: names of states with observations</li>
 <li>
-<code>obs_sd</code>: the standard deviation of the observation uncertainty</li>
+<code>obs_sd</code>: the standard deviation of the observation
+uncertainty</li>
 <li>
-<code>target_variable</code>: the name of variable in the data file that is used for the observed state.</li>
+<code>target_variable</code>: the name of variable in the data file
+that is used for the observed state.</li>
 <li>
-<code>distance_threshold</code>: this is the distances in meters that an observation has to be within to be matched to a value in <code>modeled_depths</code>..</li>
+<code>distance_threshold</code>: this is the distances in meters
+that an observation has to be within to be matched to a value in
+<code>modeled_depths</code>..</li>
 </ul>
 </li>
 </ul>
 </div>
-<div id="initial-conditions-glm" class="section level2">
-<h2 class="hasAnchor">
-<a href="#initial-conditions-glm" class="anchor"></a>Initial Conditions (GLM)</h2>
+<div class="section level2">
+<h2 id="initial-conditions-glm">Initial Conditions (GLM)<a class="anchor" aria-label="anchor" href="#initial-conditions-glm"></a>
+</h2>
 <ul>
 <li>
 <code>lake_depth_init</code>: initial lake depth (meters)</li>
 <li>
-<code>default_temp_init</code>: vector of initial temperature profile</li>
+<code>default_temp_init</code>: vector of initial temperature
+profile</li>
 <li>
-<code>default_temp_init_depths</code>: vector of depths in initial temperature profile</li>
+<code>default_temp_init_depths</code>: vector of depths in initial
+temperature profile</li>
 <li>
 <code>the_sals_init</code>: vector of initial salinty values</li>
 <li>
-<code>default_snow_thickness_init</code>: initial snow thickness (cm)</li>
+<code>default_snow_thickness_init</code>: initial snow thickness
+(cm)</li>
 <li>
-<code>default_white_ice_thickness_init</code>: initial white ice thickness (cm)</li>
+<code>default_white_ice_thickness_init</code>: initial white ice
+thickness (cm)</li>
 <li>
-<code>default_blue_ice_thickness_init</code>: initial blue ice thickness (cm)</li>
-</ul>
-</div>
-<div id="management-specific-variables" class="section level2">
-<h2 class="hasAnchor">
-<a href="#management-specific-variables" class="anchor"></a>Management specific variables</h2>
-<ul>
-<li>
-<code>simulate_SSS</code>: include SSS (bottom-water oxygenation) in simulations with observed drivers (i.e., data assimilation simulations)
-<ul>
-<li>
-<code>TRUE</code>: include</li>
-<li>
-<code>FALSE</code>: don’t include</li>
-</ul>
-</li>
-<li>
-<code>forecast_no_SSS</code>: Include SSS in forecast
-<ul>
-<li>
-<code>TRUE</code>: include</li>
-<li>
-<code>FALSE</code>: don’t include</li>
-</ul>
-</li>
-<li>
-<code>use_specified_sss</code>: Use sss inflow and oxygen from file in forecast. If <code>FALSE</code> then provide <code>forecast_SSS_flow</code> and <code>forecast_SSS_Oxy</code>.</li>
-<li>
-<code>forecast_SSS_flow</code>: Flow rate of SSS in forecast (m3/day)</li>
-<li>
-<code>forecast_SSS_Oxy</code>: Oxygen concentration of SSS in forecast (mmol/m3)</li>
-<li>
-<code>sss_fname</code>: full path to the file that has the SSS Flow and oxygen data</li>
-<li>
-<code>sss_inflow_factor</code>: a scalar to multiply FLOW rate of SSS</li>
-<li>
-<code>sss_depth</code>: The depth (meters) of the SSS inflow/outflow</li>
+<code>default_blue_ice_thickness_init</code>: initial blue ice
+thickness (cm)</li>
 </ul>
 </div>
   </div>
@@ -366,11 +388,13 @@
 
 
       <footer><div class="copyright">
-  <p>Developed by R. Quinn Thomas.</p>
+  <p></p>
+<p>Developed by R. Quinn Thomas.</p>
 </div>
 
 <div class="pkgdown">
-  <p>Site built with <a href="https://pkgdown.r-lib.org/">pkgdown</a> 1.6.1.</p>
+  <p></p>
+<p>Site built with <a href="https://pkgdown.r-lib.org/" class="external-link">pkgdown</a> 2.0.7.</p>
 </div>
 
       </footer>
@@ -378,6 +402,8 @@
 
   
 
+
+  
 
   </body>
 </html>
