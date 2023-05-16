@@ -13,6 +13,8 @@ check_noaa_present(
 \arguments{
 \item{lake_directory}{full path to repository directory}
 
+\item{config_set_name}{FLARE configuration object (needed for s3 buckets and endpoit)}
+
 \item{configuration_file}{file name (no path) of run configuration file}
 }
 \description{
