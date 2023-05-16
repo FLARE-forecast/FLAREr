@@ -41,7 +41,6 @@ Imports:
     furrr,
     future,
     score4cast,
-    read4cast,
     methods,
     arrow,
     aws.s3,
