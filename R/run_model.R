@@ -35,7 +35,6 @@
 #' @param debug boolen; TRUE = turn on more messages for debugging
 #'
 #' @return list of output variables
-#' @export
 #' @noRd
 
 run_model <- function(i,

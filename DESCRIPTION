@@ -14,7 +14,7 @@ Authors@R:
            family = "Moore",
            role = c("ctb")))       
 Description: This package uses the Ensemble Kalman Filter (EnKF) or the Particle Filter to assimilate observations and generate forecasts of lake water quality using the General Lake Model - Aquatic Ecosystem Dynamics.  The package includes functions to generate the weather and inflow forcing files, organize observations in the form required by the EnKF, and visualize output.
-License: MIT
+License: MIT + file LICENSE
 Encoding: UTF-8
 LazyData: true
 Roxygen: list(markdown = TRUE)
@@ -51,3 +51,4 @@ Suggests:
     testthat (>= 3.0.0)
 VignetteBuilder: rmarkdown
 Config/testthat/edition: 3
+URL: http://flare-forecast.org/FLAREr/
