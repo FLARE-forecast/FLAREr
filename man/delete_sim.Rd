@@ -2,7 +2,7 @@
 % Please edit documentation in R/workflow_functions.R
 \name{delete_sim}
 \alias{delete_sim}
-\title{Title}
+\title{Delete simulation on s3 bucket}
 \usage{
 delete_sim(site_id, sim_name, config)
 }
@@ -14,5 +14,5 @@ delete_sim(site_id, sim_name, config)
 \item{config}{FLARE configuration object (needed for s3 buckets and endpoit)}
 }
 \description{
-Title
+Delete simulation on s3 bucket
 }

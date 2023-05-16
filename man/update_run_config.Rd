@@ -27,6 +27,9 @@ update_run_config(
 
 \item{day_advance}{number of days between forecast forecast generation (defaults to 1)}
 }
+\value{
+configuration list
+}
 \description{
 Update run configuration and upload to s3 bucket
 }
