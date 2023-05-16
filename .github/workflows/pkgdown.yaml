@@ -35,6 +35,10 @@ jobs:
           extra-packages: any::pkgdown, local::.
           needs: website
           
+      - name: Install system dependencies
+        run: |
+          sudo apt-get install libnetcdf-dev
+          
       - name: install packages
         run: R -e 'install.packages("tidyverse")'
 
