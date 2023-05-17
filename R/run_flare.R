@@ -40,9 +40,9 @@ run_flare <- function(lake_directory,
 
 
   if(!config$met$use_observed_met){
-    obs_met_file = NULL
+    obs_met_file <- NULL
   }else{
-    obs_met_file <- file.path(config$file_path$qaqc_data_directory, config$met$observed_met_filename)
+    obs_met_file <- file.path(config$file_path$qaqc_data_directory, config$met$observed_filename)
     if(!fs::file_exists(obs_met_file)){
       stop(paste0(obs_met_file, " is not found"))
     }
