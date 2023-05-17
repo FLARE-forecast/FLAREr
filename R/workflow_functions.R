@@ -549,8 +549,10 @@ initialize_obs_processing <- function(lake_directory, observation_yml = NA, conf
 #' @param configure_run_file file name (no path) of run configuration file
 #' @param config_set_name FLARE configuration object (needed for s3 buckets and endpoit)
 #'
-#' @return
-#' @export
+#' @return logical
+#'
+#' @noRd
+#'
 #'
 check_noaa_present <- function(lake_directory, configure_run_file = "configure_run.yml", config_set_name = "default"){
 

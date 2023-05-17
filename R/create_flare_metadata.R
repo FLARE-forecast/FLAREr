@@ -3,7 +3,7 @@
 ##' @param file_name string; full path to FLARE netcdf output file
 ##' @param da_forecast_output list; variable name of object returned by run_da_forecast()
 ##' @return None
-##' @export
+##' @noRd
 ##' @import ncdf4
 ##' @importFrom emld eml_version
 ##' @importFrom lubridate as_date as_datetime

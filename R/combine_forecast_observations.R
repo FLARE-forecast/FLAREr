@@ -10,6 +10,7 @@
 ##' @import parallel
 ##' @import readr
 ##' @importFrom stringr str_split str_detect
+##' @noRd
 
 combine_forecast_observations <- function(file_name,
                                           target_file,
