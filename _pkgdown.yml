@@ -1,4 +1,33 @@
 url: http://flare-forecast.org/FLAREr/
 template:
   bootstrap: 5
-
+reference:
+- title:
+- subtitle: High level function
+  desc: Function for default application of FLARE
+- contents:
+  - run_flare
+- subtitle: FLARE
+  desc: Functions used to build a custom FLARE workflow
+  contents:
+  - create_inflow_outflow_files_arrow
+  - create_obs_matrix
+  - generate_met_files_arrow
+  - generate_states_to_obs_mapping
+  - run_da_forecast
+  - set_configuration
+  - write_forecast_netcdf
+  - write_forecast_arrow
+  - generate_forecast_score_arrow
+- subtitle: Iteration
+  desc: Functions for automation and interation
+  contents:
+  - check_noaa_present_arrow
+  - update_run_config2
+- subtitle: S3 intergration
+  desc: Functions used for S3 intergration
+  contents:
+  - delete_restart
+  - delete_sim
+  - get_driver_forecast_path
+  - get_targets

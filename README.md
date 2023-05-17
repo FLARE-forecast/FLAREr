@@ -5,7 +5,7 @@
 
 # FLAREr
 
-The [FLARE project](Forecasting Lake and Reservoir Ecosystems)(https://flare-forecast.org/) creates open-source software for flexible, scalable, robust, and near-real time iterative ecological forecasts in lakes and reservoirs. It uses data assimilation to update the initial starting point for a forecast and the model parameters based a real-time statistical comparisons to observations. It has been developed, tested, and evaluated for Falling  Creek Reservoir in Vinton, VA ([Thomas et al. 2020](https://agupubs.onlinelibrary.wiley.com/doi/abs/10.1029/2019WR026138)).
+This document serves as a users guide and a tutorial for the FLARE (Forecasting Lake and Reservoir Ecosystems) system ([Thomas et al. 2020](https://agupubs.onlinelibrary.wiley.com/doi/abs/10.1029/2019WR026138)). FLARE generates forecasts and forecast uncertainty of water temperature and water quality for 1 to 35-dau ahead time horizon at multiple depths of a lake or reservoir. It uses data assimilation to update the initial starting point for a forecast and the model parameters based a real-time statistical comparisons to observations.  It has been developed, tested, and evaluated for Falling  Creek Reservoir in Vinton,VA ([Thomas et al. 2020](https://agupubs.onlinelibrary.wiley.com/doi/abs/10.1029/2019WR026138)) and National Ecological Observatory Network lakes ([Thomas et al. 2023](https://doi.org/10.1002/fee.2623)
 
 FLAREr is a set of R scripts that
 
