@@ -62,7 +62,7 @@
 <div class="section level1">
 <div class="page-header"><h1 id="flarer">FLAREr<a class="anchor" aria-label="anchor" href="#flarer"></a>
 </h1></div>
-<p>The <a href="Forecasting%20Lake%20and%20Reservoir%20Ecosystems">FLARE project</a>(<a href="https://flare-forecast.org/" class="external-link uri">https://flare-forecast.org/</a>) creates open-source software for flexible, scalable, robust, and near-real time iterative ecological forecasts in lakes and reservoirs. It uses data assimilation to update the initial starting point for a forecast and the model parameters based a real-time statistical comparisons to observations. It has been developed, tested, and evaluated for Falling Creek Reservoir in Vinton, VA (<a href="https://agupubs.onlinelibrary.wiley.com/doi/abs/10.1029/2019WR026138" class="external-link">Thomas et al. 2020</a>).</p>
+<p>This document serves as a users guide and a tutorial for the FLARE (Forecasting Lake and Reservoir Ecosystems) system (<a href="https://agupubs.onlinelibrary.wiley.com/doi/abs/10.1029/2019WR026138" class="external-link">Thomas et al. 2020</a>). FLARE generates forecasts and forecast uncertainty of water temperature and water quality for 1 to 35-dau ahead time horizon at multiple depths of a lake or reservoir. It uses data assimilation to update the initial starting point for a forecast and the model parameters based a real-time statistical comparisons to observations. It has been developed, tested, and evaluated for Falling Creek Reservoir in Vinton,VA (<a href="https://agupubs.onlinelibrary.wiley.com/doi/abs/10.1029/2019WR026138" class="external-link">Thomas et al. 2020</a>) and National Ecological Observatory Network lakes (<a href="https://doi.org/10.1002/fee.2623" class="external-link">Thomas et al. 2023</a></p>
 <p>FLAREr is a set of R scripts that</p>
 <ul>
 <li>Generating the inputs and configuration files required by the General Lake Model (GLM)</li>
@@ -98,7 +98,7 @@
 <div class="section level3">
 <h3 id="set-up">Set up<a class="anchor" aria-label="anchor" href="#set-up"></a>
 </h3>
-<p><code><a href="reference/create_glm_inflow_outflow_files.html">create_glm_inflow_outflow_files()</a></code>: generates inflow and output files in GLM format.<br><code><a href="reference/create_obs_matrix.html">create_obs_matrix()</a></code>: generate the matrix of observations require in data assimilation. <code><a href="reference/generate_glm_met_files.html">generate_glm_met_files()</a></code>: generates meteorology inputs (both past and future) in the GLM format.<br><code><a href="reference/generate_initial_conditions.html">generate_initial_conditions()</a></code>: generates initial condition for data assimilation and forecasting.<br><code><a href="reference/initiate_model_error.html">initiate_model_error()</a></code>: generates the standard deviations for the model error.</p>
+<p><code>create_glm_inflow_outflow_files()</code>: generates inflow and output files in GLM format.<br><code><a href="reference/create_obs_matrix.html">create_obs_matrix()</a></code>: generate the matrix of observations require in data assimilation. <code>generate_glm_met_files()</code>: generates meteorology inputs (both past and future) in the GLM format.<br><code><a href="reference/generate_initial_conditions.html">generate_initial_conditions()</a></code>: generates initial condition for data assimilation and forecasting.<br><code><a href="reference/initiate_model_error.html">initiate_model_error()</a></code>: generates the standard deviations for the model error.</p>
 </div>
 <div class="section level3">
 <h3 id="run">Run<a class="anchor" aria-label="anchor" href="#run"></a>
@@ -108,7 +108,7 @@
 <div class="section level3">
 <h3 id="processing">Processing<a class="anchor" aria-label="anchor" href="#processing"></a>
 </h3>
-<p><code><a href="reference/write_forecast_netcdf.html">write_forecast_netcdf()</a></code>: write output in Ecological Forecasting Initiative standards.<br><code>create_flare_metadata()</code>: write metadata in Ecological Forecasting Initiative standards.<br><code><a href="reference/plotting_general.html">plotting_general()</a></code>: generates a PDF with default visualizations.</p>
+<p><code><a href="reference/write_forecast_netcdf.html">write_forecast_netcdf()</a></code>: write output in Ecological Forecasting Initiative standards.<br><code>create_flare_metadata()</code>: write metadata in Ecological Forecasting Initiative standards.<br><code>plotting_general()</code>: generates a PDF with default visualizations.</p>
 </div>
 </div>
 </div>

@@ -42,10 +42,103 @@
       <img src="" class="logo" alt=""><h1>Function reference</h1>
     </div>
 
-    <div class="section level2">
-      <h2 id="all-functions">All functions<a class="anchor" aria-label="anchor" href="#all-functions"></a></h2>
+    <div id="" class="section level2">
       
       
+      
+
+      
+    </div><div class="section level2">
+      
+      <h3 id="high-level-function">High level function<a class="anchor" aria-label="anchor" href="#high-level-function"></a></h3>
+      <p class="section-desc"></p><p>Function for default application of FLARE</p>
+
+      
+    </div><div id="" class="section level2">
+      
+      
+      
+
+      <dl><dt>
+          
+          <code><a href="run_flare.html">run_flare()</a></code> 
+        </dt>
+        <dd>Run FLARE for a single forecast</dd>
+      </dl></div><div class="section level2">
+      
+      <h3 id="flare">FLARE<a class="anchor" aria-label="anchor" href="#flare"></a></h3>
+      <p class="section-desc"></p><p>Functions used to build a custom FLARE workflow</p>
+
+      
+    </div><div id="" class="section level2">
+      
+      
+      
+
+      <dl><dt>
+          
+          <code><a href="create_inflow_outflow_files_arrow.html">create_inflow_outflow_files_arrow()</a></code> 
+        </dt>
+        <dd>Generating inflow and output files in the GLM format using arrow</dd>
+      </dl><dl><dt>
+          
+          <code><a href="create_obs_matrix.html">create_obs_matrix()</a></code> 
+        </dt>
+        <dd>Create matrix of observations in the format required by run_da_forecast</dd>
+      </dl><dl><dt>
+          
+          <code><a href="generate_met_files_arrow.html">generate_met_files_arrow()</a></code> 
+        </dt>
+        <dd>Convert historical meteorology and NOAA forecasts to GLM format via arrow connection</dd>
+      </dl><dl><dt>
+          
+          <code><a href="generate_states_to_obs_mapping.html">generate_states_to_obs_mapping()</a></code> 
+        </dt>
+        <dd>Map the states to the observations</dd>
+      </dl><dl><dt>
+          
+          <code><a href="generate_initial_conditions.html">generate_initial_conditions()</a></code> 
+        </dt>
+        <dd>Generate initial conditions for FLARE</dd>
+      </dl><dl><dt>
+          
+          <code><a href="initiate_model_error.html">initiate_model_error()</a></code> 
+        </dt>
+        <dd>Generate model error matrix from configuration files</dd>
+      </dl><dl><dt>
+          
+          <code><a href="run_da_forecast.html">run_da_forecast()</a></code> 
+        </dt>
+        <dd>Run ensemble data assimilation and/or produce forecasts</dd>
+      </dl><dl><dt>
+          
+          <code><a href="set_configuration.html">set_configuration()</a></code> 
+        </dt>
+        <dd>Set and create directories in the configuration file</dd>
+      </dl><dl><dt>
+          
+          <code><a href="write_forecast_netcdf.html">write_forecast_netcdf()</a></code> 
+        </dt>
+        <dd>Generate netcdf output file</dd>
+      </dl><dl><dt>
+          
+          <code><a href="write_forecast_arrow.html">write_forecast_arrow()</a></code> 
+        </dt>
+        <dd>Generate parquet output file</dd>
+      </dl><dl><dt>
+          
+          <code><a href="generate_forecast_score_arrow.html">generate_forecast_score_arrow()</a></code> 
+        </dt>
+        <dd>Score a forecast using score4cast package and arrow</dd>
+      </dl><dl><dt>
+          
+          <code><a href="plotting_general_2.html">plotting_general_2()</a></code> 
+        </dt>
+        <dd>Generate diagnostic plot of FLARE output with observations</dd>
+      </dl></div><div class="section level2">
+      
+      <h3 id="iteration">Iteration<a class="anchor" aria-label="anchor" href="#iteration"></a></h3>
+      <p class="section-desc"></p><p>Functions for automation and interation</p>
 
       
     </div><div id="" class="section level2">
@@ -60,20 +153,36 @@
         <dd>Check if NOAA forecasts have been downloaded and processed</dd>
       </dl><dl><dt>
           
-          <code><a href="create_glm_inflow_outflow_files.html">create_glm_inflow_outflow_files()</a></code> 
+          <code><a href="get_run_config.html">get_run_config()</a></code> 
         </dt>
-        <dd>Generating inflow and output files in the GLM format</dd>
+        <dd>Get run configuration from s3 bucket</dd>
       </dl><dl><dt>
           
-          <code><a href="create_inflow_outflow_files_arrow.html">create_inflow_outflow_files_arrow()</a></code> 
+          <code><a href="update_run_config2.html">update_run_config2()</a></code> 
         </dt>
-        <dd>Generating inflow and output files in the GLM format using arrow</dd>
+        <dd>Update run configuration</dd>
       </dl><dl><dt>
           
-          <code><a href="create_obs_matrix.html">create_obs_matrix()</a></code> 
+          <code><a href="get_git_repo.html">get_git_repo()</a></code> 
         </dt>
-        <dd>Create matrix of observations in the format required by run_da_forecast</dd>
+        <dd>Get data from Github repository</dd>
       </dl><dl><dt>
+          
+          <code><a href="get_edi_file.html">get_edi_file()</a></code> 
+        </dt>
+        <dd>Download file from EDI data portal</dd>
+      </dl></div><div class="section level2">
+      
+      <h3 id="s-intergration">S3 intergration<a class="anchor" aria-label="anchor" href="#s-intergration"></a></h3>
+      <p class="section-desc"></p><p>Functions used for S3 intergration</p>
+
+      
+    </div><div id="" class="section level2">
+      
+      
+      
+
+      <dl><dt>
           
           <code><a href="delete_restart.html">delete_restart()</a></code> 
         </dt>
@@ -85,69 +194,9 @@
         <dd>Delete simulation on s3 bucket</dd>
       </dl><dl><dt>
           
-          <code><a href="download_s3_objects.html">download_s3_objects()</a></code> 
-        </dt>
-        <dd>Download file from s3 bucket</dd>
-      </dl><dl><dt>
-          
-          <code><a href="generate_forecast_score.html">generate_forecast_score()</a></code> 
-        </dt>
-        <dd>Score a forecast using score4cast package</dd>
-      </dl><dl><dt>
-          
-          <code><a href="generate_forecast_score_arrow.html">generate_forecast_score_arrow()</a></code> 
-        </dt>
-        <dd>Score a forecast using score4cast package and arrow</dd>
-      </dl><dl><dt>
-          
-          <code><a href="generate_glm_met_files.html">generate_glm_met_files()</a></code> 
-        </dt>
-        <dd>Convert historical meteorology and NOAA forecasts to GLM format</dd>
-      </dl><dl><dt>
-          
-          <code><a href="generate_initial_conditions.html">generate_initial_conditions()</a></code> 
-        </dt>
-        <dd>Generate initial conditions for FLARE</dd>
-      </dl><dl><dt>
-          
-          <code><a href="generate_met_files_arrow.html">generate_met_files_arrow()</a></code> 
-        </dt>
-        <dd>Convert historical meteorology and NOAA forecasts to GLM format via arrow connection</dd>
-      </dl><dl><dt>
-          
-          <code><a href="generate_oxygen_management.html">generate_oxygen_management()</a></code> 
-        </dt>
-        <dd>Generate diagnostic plot of FLARE output with observations</dd>
-      </dl><dl><dt>
-          
-          <code><a href="generate_states_to_obs_mapping.html">generate_states_to_obs_mapping()</a></code> 
-        </dt>
-        <dd>Map the states to the observations</dd>
-      </dl><dl><dt>
-          
           <code><a href="get_driver_forecast_path.html">get_driver_forecast_path()</a></code> 
         </dt>
         <dd>Get file path for driver forecasts</dd>
-      </dl><dl><dt>
-          
-          <code><a href="get_edi_file.html">get_edi_file()</a></code> 
-        </dt>
-        <dd>Download file from EDI data portal</dd>
-      </dl><dl><dt>
-          
-          <code><a href="get_git_repo.html">get_git_repo()</a></code> 
-        </dt>
-        <dd>Get data from Github repository</dd>
-      </dl><dl><dt>
-          
-          <code><a href="get_restart_file.html">get_restart_file()</a></code> 
-        </dt>
-        <dd>Download restart file from s3 bucket</dd>
-      </dl><dl><dt>
-          
-          <code><a href="get_run_config.html">get_run_config()</a></code> 
-        </dt>
-        <dd>Get run configuration from s3 bucket</dd>
       </dl><dl><dt>
           
           <code><a href="get_targets.html">get_targets()</a></code> 
@@ -155,29 +204,14 @@
         <dd>Download target data from s3</dd>
       </dl><dl><dt>
           
+          <code><a href="put_targets.html">put_targets()</a></code> 
+        </dt>
+        <dd>Save target files to s3 bucket</dd>
+      </dl><dl><dt>
+          
           <code><a href="ignore_sigpipe.html">ignore_sigpipe()</a></code> 
         </dt>
         <dd>ignore sigpipe</dd>
-      </dl><dl><dt>
-          
-          <code><a href="initialize_obs_processing.html">initialize_obs_processing()</a></code> 
-        </dt>
-        <dd>Set and create directories for observation configuration</dd>
-      </dl><dl><dt>
-          
-          <code><a href="initiate_model_error.html">initiate_model_error()</a></code> 
-        </dt>
-        <dd>Generate model error matrix from configuration files</dd>
-      </dl><dl><dt>
-          
-          <code><a href="plotting_general.html">plotting_general()</a></code> 
-        </dt>
-        <dd>Generate diagnostic plot of FLARE output with observations</dd>
-      </dl><dl><dt>
-          
-          <code><a href="plotting_general_2.html">plotting_general_2()</a></code> 
-        </dt>
-        <dd>Generate diagnostic plot of FLARE output with observations</dd>
       </dl><dl><dt>
           
           <code><a href="put_forecast.html">put_forecast()</a></code> 
@@ -185,61 +219,12 @@
         <dd>Upload forecast file and metadata to s3 bucket</dd>
       </dl><dl><dt>
           
-          <code><a href="put_forecast_csv.html">put_forecast_csv()</a></code> 
+          <code><a href="get_restart_file.html">get_restart_file()</a></code> 
         </dt>
-        <dd>Upload forecast csv to s3 bucket</dd>
-      </dl><dl><dt>
-          
-          <code><a href="put_score.html">put_score()</a></code> 
-        </dt>
-        <dd>Upload score to s3 bucket</dd>
-      </dl><dl><dt>
-          
-          <code><a href="put_targets.html">put_targets()</a></code> 
-        </dt>
-        <dd>Save target files to s3 bucket</dd>
-      </dl><dl><dt>
-          
-          <code><a href="run_da_forecast.html">run_da_forecast()</a></code> 
-        </dt>
-        <dd>Run ensemble data assimilation and/or produce forecasts</dd>
-      </dl><dl><dt>
-          
-          <code><a href="run_flare.html">run_flare()</a></code> 
-        </dt>
-        <dd>Run FLARE for a single forecast</dd>
-      </dl><dl><dt>
-          
-          <code><a href="set_configuration.html">set_configuration()</a></code> 
-        </dt>
-        <dd>Set and create directories in the configuration file</dd>
-      </dl><dl><dt>
-          
-          <code><a href="update_run_config.html">update_run_config()</a></code> 
-        </dt>
-        <dd>Update run configuration and upload to s3 bucket</dd>
-      </dl><dl><dt>
-          
-          <code><a href="update_run_config2.html">update_run_config2()</a></code> 
-        </dt>
-        <dd>Update run configuration</dd>
-      </dl><dl><dt>
-          
-          <code><a href="write_forecast_arrow.html">write_forecast_arrow()</a></code> 
-        </dt>
-        <dd>Generate parquet output file</dd>
-      </dl><dl><dt>
-          
-          <code><a href="write_forecast_csv.html">write_forecast_csv()</a></code> 
-        </dt>
-        <dd>Generate csv output file</dd>
-      </dl><dl><dt>
-          
-          <code><a href="write_forecast_netcdf.html">write_forecast_netcdf()</a></code> 
-        </dt>
-        <dd>Generate netcdf output file</dd>
+        <dd>Download restart file from s3 bucket</dd>
       </dl></div>
-  </main></div>
+  </main><aside class="col-md-3"><nav id="toc"><h2>On this page</h2>
+    </nav></aside></div>
 
 
     <footer><div class="pkgdown-footer-left">
