@@ -25,16 +25,7 @@
     <loc>http://flare-forecast.org/FLAREr/index.html</loc>
   </url>
   <url>
-    <loc>http://flare-forecast.org/FLAREr/reference/check_noaa_present.html</loc>
-  </url>
-  <url>
     <loc>http://flare-forecast.org/FLAREr/reference/check_noaa_present_arrow.html</loc>
-  </url>
-  <url>
-    <loc>http://flare-forecast.org/FLAREr/reference/combine_forecast_observations.html</loc>
-  </url>
-  <url>
-    <loc>http://flare-forecast.org/FLAREr/reference/create_flare_metadata.html</loc>
   </url>
   <url>
     <loc>http://flare-forecast.org/FLAREr/reference/create_glm_inflow_outflow_files.html</loc>
