@@ -3,11 +3,11 @@ template:
   bootstrap: 5
 reference:
 - title:
-- subtitle: High level function
+- subtitle: Out-of-box workflow
   desc: Function for default application of FLARE
 - contents:
   - run_flare
-- subtitle: FLARE
+- subtitle: Building custom workflow
   desc: Functions used to build a custom FLARE workflow
   contents:
   - create_inflow_outflow_files_arrow

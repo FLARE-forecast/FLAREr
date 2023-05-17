@@ -1,5 +1,5 @@
 ---
-title: "Example Workflow"
+title: "Common Workflow"
 output: rmarkdown::html_vignette
 vignette: >
   %\VignetteIndexEntry{Example Workflow}
@@ -15,9 +15,9 @@ knitr::opts_chunk$set(
 ```
 
 
-## Workflow
+## Base for custom workflow
 
-Here is a workflow example that combines all the functions in FLAREr to generate a forecast.  See the FLARE example vignette for more details
+Here is a workflow example that combines all the functions in FLAREr to generate a forecast.  You can modify this example to customize your implimentation of FLARE
 
 ```{r eval=FALSE}
 tmp <- tempdir()
