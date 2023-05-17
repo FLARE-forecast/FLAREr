@@ -187,7 +187,7 @@ The example includes files for application to FCR.</p>
 <p>First, FLAREr requires the observation file to have a specific name
 (observations_postQAQC_long.csv) and format.</p>
 <div class="sourceCode" id="cb7"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/utils/head.html" class="external-link">head</a></span><span class="op">(</span><span class="fu">read_csv</span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/file.path.html" class="external-link">file.path</a></span><span class="op">(</span><span class="va">lake_directory</span>,<span class="st">"targets/fcre/fcre-targets-insitu.csv"</span><span class="op">)</span>, show_col_types <span class="op">=</span> <span class="cn">FALSE</span><span class="op">)</span><span class="op">)</span></span>
+<code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/utils/head.html" class="external-link">head</a></span><span class="op">(</span><span class="fu"><a href="https://readr.tidyverse.org/reference/read_delim.html" class="external-link">read_csv</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/file.path.html" class="external-link">file.path</a></span><span class="op">(</span><span class="va">lake_directory</span>,<span class="st">"targets/fcre/fcre-targets-insitu.csv"</span><span class="op">)</span>, show_col_types <span class="op">=</span> <span class="cn">FALSE</span><span class="op">)</span><span class="op">)</span></span>
 <span><span class="co">#&gt; <span style="color: #949494;"># A tibble: 6 × 5</span></span></span>
 <span><span class="co">#&gt;   datetime            site_id depth observation variable   </span></span>
 <span><span class="co">#&gt;   <span style="color: #949494; font-style: italic;">&lt;dttm&gt;</span>              <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>   <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span>       <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span> <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>      </span></span>
@@ -318,83 +318,83 @@ file and not overwrite them.</p>
 <span><span class="co">#&gt;   method            from</span></span>
 <span><span class="co">#&gt;   as.zoo.data.frame zoo</span></span>
 <span><span class="co">#&gt; Using GLM Version 3.3.0a9</span></span>
-<span><span class="co">#&gt; Running time step 1/20 : 2022-09-28 00:00 - 2022-09-29 00:00 [2023-05-17 15:26:52.833942]</span></span>
+<span><span class="co">#&gt; Running time step 1/20 : 2022-09-28 00:00 - 2022-09-29 00:00 [2023-05-17 16:01:05.335881]</span></span>
 <span><span class="co">#&gt; zone1temp: mean 11.0835 sd 1</span></span>
 <span><span class="co">#&gt; zone2temp: mean 14.1078 sd 1</span></span>
 <span><span class="co">#&gt; lw_factor: mean 1.014 sd 0.02</span></span>
-<span><span class="co">#&gt; Running time step 2/20 : 2022-09-29 00:00 - 2022-09-30 00:00 [2023-05-17 15:26:59.449335]</span></span>
+<span><span class="co">#&gt; Running time step 2/20 : 2022-09-29 00:00 - 2022-09-30 00:00 [2023-05-17 16:01:11.080106]</span></span>
 <span><span class="co">#&gt; zone1temp: mean 11.4355 sd 1</span></span>
 <span><span class="co">#&gt; zone2temp: mean 14.3982 sd 1</span></span>
 <span><span class="co">#&gt; lw_factor: mean 1.0153 sd 0.02</span></span>
-<span><span class="co">#&gt; Running time step 3/20 : 2022-09-30 00:00 - 2022-10-01 00:00 [2023-05-17 15:27:06.057084]</span></span>
+<span><span class="co">#&gt; Running time step 3/20 : 2022-09-30 00:00 - 2022-10-01 00:00 [2023-05-17 16:01:16.674719]</span></span>
 <span><span class="co">#&gt; zone1temp: mean 11.5912 sd 1</span></span>
 <span><span class="co">#&gt; zone2temp: mean 14.1471 sd 1</span></span>
 <span><span class="co">#&gt; lw_factor: mean 1.015 sd 0.02</span></span>
-<span><span class="co">#&gt; Running time step 4/20 : 2022-10-01 00:00 - 2022-10-02 00:00 [2023-05-17 15:27:12.51433]</span></span>
+<span><span class="co">#&gt; Running time step 4/20 : 2022-10-01 00:00 - 2022-10-02 00:00 [2023-05-17 16:01:22.155507]</span></span>
 <span><span class="co">#&gt; zone1temp: mean 14.3844 sd 1</span></span>
 <span><span class="co">#&gt; zone2temp: mean 14.8046 sd 1</span></span>
 <span><span class="co">#&gt; lw_factor: mean 0.9922 sd 0.02</span></span>
-<span><span class="co">#&gt; Running time step 5/20 : 2022-10-02 00:00 - 2022-10-03 00:00 [2023-05-17 15:27:18.842247]</span></span>
+<span><span class="co">#&gt; Running time step 5/20 : 2022-10-02 00:00 - 2022-10-03 00:00 [2023-05-17 16:01:27.594337]</span></span>
 <span><span class="co">#&gt; zone1temp: mean 15.125 sd 1</span></span>
 <span><span class="co">#&gt; zone2temp: mean 14.5865 sd 1</span></span>
 <span><span class="co">#&gt; lw_factor: mean 0.9837 sd 0.02</span></span>
-<span><span class="co">#&gt; Running time step 6/20 : 2022-10-03 00:00 - 2022-10-04 00:00 [2023-05-17 15:27:25.503263]</span></span>
+<span><span class="co">#&gt; Running time step 6/20 : 2022-10-03 00:00 - 2022-10-04 00:00 [2023-05-17 16:01:32.938603]</span></span>
 <span><span class="co">#&gt; zone1temp: mean 15.125 sd 1</span></span>
 <span><span class="co">#&gt; zone2temp: mean 14.5865 sd 1</span></span>
 <span><span class="co">#&gt; lw_factor: mean 0.9837 sd 0.02</span></span>
-<span><span class="co">#&gt; Running time step 7/20 : 2022-10-04 00:00 - 2022-10-05 00:00 [2023-05-17 15:27:32.268598]</span></span>
+<span><span class="co">#&gt; Running time step 7/20 : 2022-10-04 00:00 - 2022-10-05 00:00 [2023-05-17 16:01:38.626217]</span></span>
 <span><span class="co">#&gt; zone1temp: mean 15.125 sd 1</span></span>
 <span><span class="co">#&gt; zone2temp: mean 14.5865 sd 1</span></span>
 <span><span class="co">#&gt; lw_factor: mean 0.9837 sd 0.02</span></span>
-<span><span class="co">#&gt; Running time step 8/20 : 2022-10-05 00:00 - 2022-10-06 00:00 [2023-05-17 15:27:38.631443]</span></span>
+<span><span class="co">#&gt; Running time step 8/20 : 2022-10-05 00:00 - 2022-10-06 00:00 [2023-05-17 16:01:44.296163]</span></span>
 <span><span class="co">#&gt; zone1temp: mean 15.125 sd 1</span></span>
 <span><span class="co">#&gt; zone2temp: mean 14.5865 sd 1</span></span>
 <span><span class="co">#&gt; lw_factor: mean 0.9837 sd 0.02</span></span>
-<span><span class="co">#&gt; Running time step 9/20 : 2022-10-06 00:00 - 2022-10-07 00:00 [2023-05-17 15:27:45.157477]</span></span>
+<span><span class="co">#&gt; Running time step 9/20 : 2022-10-06 00:00 - 2022-10-07 00:00 [2023-05-17 16:01:50.019553]</span></span>
 <span><span class="co">#&gt; zone1temp: mean 15.125 sd 1</span></span>
 <span><span class="co">#&gt; zone2temp: mean 14.5865 sd 1</span></span>
 <span><span class="co">#&gt; lw_factor: mean 0.9837 sd 0.02</span></span>
-<span><span class="co">#&gt; Running time step 10/20 : 2022-10-07 00:00 - 2022-10-08 00:00 [2023-05-17 15:27:51.760466]</span></span>
+<span><span class="co">#&gt; Running time step 10/20 : 2022-10-07 00:00 - 2022-10-08 00:00 [2023-05-17 16:01:55.821522]</span></span>
 <span><span class="co">#&gt; zone1temp: mean 15.125 sd 1</span></span>
 <span><span class="co">#&gt; zone2temp: mean 14.5865 sd 1</span></span>
 <span><span class="co">#&gt; lw_factor: mean 0.9837 sd 0.02</span></span>
-<span><span class="co">#&gt; Running time step 11/20 : 2022-10-08 00:00 - 2022-10-09 00:00 [2023-05-17 15:27:58.194586]</span></span>
+<span><span class="co">#&gt; Running time step 11/20 : 2022-10-08 00:00 - 2022-10-09 00:00 [2023-05-17 16:02:01.565063]</span></span>
 <span><span class="co">#&gt; zone1temp: mean 15.125 sd 1</span></span>
 <span><span class="co">#&gt; zone2temp: mean 14.5865 sd 1</span></span>
 <span><span class="co">#&gt; lw_factor: mean 0.9837 sd 0.02</span></span>
-<span><span class="co">#&gt; Running time step 12/20 : 2022-10-09 00:00 - 2022-10-10 00:00 [2023-05-17 15:28:04.796034]</span></span>
+<span><span class="co">#&gt; Running time step 12/20 : 2022-10-09 00:00 - 2022-10-10 00:00 [2023-05-17 16:02:07.269687]</span></span>
 <span><span class="co">#&gt; zone1temp: mean 15.125 sd 1</span></span>
 <span><span class="co">#&gt; zone2temp: mean 14.5865 sd 1</span></span>
 <span><span class="co">#&gt; lw_factor: mean 0.9837 sd 0.02</span></span>
-<span><span class="co">#&gt; Running time step 13/20 : 2022-10-10 00:00 - 2022-10-11 00:00 [2023-05-17 15:28:11.517886]</span></span>
+<span><span class="co">#&gt; Running time step 13/20 : 2022-10-10 00:00 - 2022-10-11 00:00 [2023-05-17 16:02:12.9085]</span></span>
 <span><span class="co">#&gt; zone1temp: mean 15.125 sd 1</span></span>
 <span><span class="co">#&gt; zone2temp: mean 14.5865 sd 1</span></span>
 <span><span class="co">#&gt; lw_factor: mean 0.9837 sd 0.02</span></span>
-<span><span class="co">#&gt; Running time step 14/20 : 2022-10-11 00:00 - 2022-10-12 00:00 [2023-05-17 15:28:18.076326]</span></span>
+<span><span class="co">#&gt; Running time step 14/20 : 2022-10-11 00:00 - 2022-10-12 00:00 [2023-05-17 16:02:18.379472]</span></span>
 <span><span class="co">#&gt; zone1temp: mean 15.125 sd 1</span></span>
 <span><span class="co">#&gt; zone2temp: mean 14.5865 sd 1</span></span>
 <span><span class="co">#&gt; lw_factor: mean 0.9837 sd 0.02</span></span>
-<span><span class="co">#&gt; Running time step 15/20 : 2022-10-12 00:00 - 2022-10-13 00:00 [2023-05-17 15:28:24.521034]</span></span>
+<span><span class="co">#&gt; Running time step 15/20 : 2022-10-12 00:00 - 2022-10-13 00:00 [2023-05-17 16:02:23.852983]</span></span>
 <span><span class="co">#&gt; zone1temp: mean 15.125 sd 1</span></span>
 <span><span class="co">#&gt; zone2temp: mean 14.5865 sd 1</span></span>
 <span><span class="co">#&gt; lw_factor: mean 0.9837 sd 0.02</span></span>
-<span><span class="co">#&gt; Running time step 16/20 : 2022-10-13 00:00 - 2022-10-14 00:00 [2023-05-17 15:28:31.030973]</span></span>
+<span><span class="co">#&gt; Running time step 16/20 : 2022-10-13 00:00 - 2022-10-14 00:00 [2023-05-17 16:02:29.382333]</span></span>
 <span><span class="co">#&gt; zone1temp: mean 15.125 sd 1</span></span>
 <span><span class="co">#&gt; zone2temp: mean 14.5865 sd 1</span></span>
 <span><span class="co">#&gt; lw_factor: mean 0.9837 sd 0.02</span></span>
-<span><span class="co">#&gt; Running time step 17/20 : 2022-10-14 00:00 - 2022-10-15 00:00 [2023-05-17 15:28:37.683276]</span></span>
+<span><span class="co">#&gt; Running time step 17/20 : 2022-10-14 00:00 - 2022-10-15 00:00 [2023-05-17 16:02:34.940996]</span></span>
 <span><span class="co">#&gt; zone1temp: mean 15.125 sd 1</span></span>
 <span><span class="co">#&gt; zone2temp: mean 14.5865 sd 1</span></span>
 <span><span class="co">#&gt; lw_factor: mean 0.9837 sd 0.02</span></span>
-<span><span class="co">#&gt; Running time step 18/20 : 2022-10-15 00:00 - 2022-10-16 00:00 [2023-05-17 15:28:44.33328]</span></span>
+<span><span class="co">#&gt; Running time step 18/20 : 2022-10-15 00:00 - 2022-10-16 00:00 [2023-05-17 16:02:40.499773]</span></span>
 <span><span class="co">#&gt; zone1temp: mean 15.125 sd 1</span></span>
 <span><span class="co">#&gt; zone2temp: mean 14.5865 sd 1</span></span>
 <span><span class="co">#&gt; lw_factor: mean 0.9837 sd 0.02</span></span>
-<span><span class="co">#&gt; Running time step 19/20 : 2022-10-16 00:00 - 2022-10-17 00:00 [2023-05-17 15:28:50.800329]</span></span>
+<span><span class="co">#&gt; Running time step 19/20 : 2022-10-16 00:00 - 2022-10-17 00:00 [2023-05-17 16:02:46.148997]</span></span>
 <span><span class="co">#&gt; zone1temp: mean 15.125 sd 1</span></span>
 <span><span class="co">#&gt; zone2temp: mean 14.5865 sd 1</span></span>
 <span><span class="co">#&gt; lw_factor: mean 0.9837 sd 0.02</span></span>
-<span><span class="co">#&gt; Running time step 20/20 : 2022-10-17 00:00 - 2022-10-18 00:00 [2023-05-17 15:28:57.429756]</span></span>
+<span><span class="co">#&gt; Running time step 20/20 : 2022-10-17 00:00 - 2022-10-18 00:00 [2023-05-17 16:02:51.83978]</span></span>
 <span><span class="co">#&gt; zone1temp: mean 15.125 sd 1</span></span>
 <span><span class="co">#&gt; zone2temp: mean 14.5865 sd 1</span></span>
 <span><span class="co">#&gt; lw_factor: mean 0.9837 sd 0.02</span></span>
@@ -424,31 +424,31 @@ file and not overwrite them.</p>
 <span><span class="co">#&gt; successfully generated flare forecats for: fcre-2022-10-02-test.nc</span></span></code></pre></div>
 <p>Visualizing output</p>
 <div class="sourceCode" id="cb9"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="va">df</span> <span class="op">&lt;-</span> <span class="fu">arrow</span><span class="fu">::</span><span class="fu"><a href="https://arrow.apache.org/docs/r/reference/open_dataset.html" class="external-link">open_dataset</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/file.path.html" class="external-link">file.path</a></span><span class="op">(</span><span class="va">lake_directory</span>,<span class="st">"forecasts/parquet"</span><span class="op">)</span><span class="op">)</span> <span class="op">|&gt;</span> <span class="fu">collect</span><span class="op">(</span><span class="op">)</span></span></code></pre></div>
+<code class="sourceCode R"><span><span class="va">df</span> <span class="op">&lt;-</span> <span class="fu">arrow</span><span class="fu">::</span><span class="fu"><a href="https://arrow.apache.org/docs/r/reference/open_dataset.html" class="external-link">open_dataset</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/file.path.html" class="external-link">file.path</a></span><span class="op">(</span><span class="va">lake_directory</span>,<span class="st">"forecasts/parquet"</span><span class="op">)</span><span class="op">)</span> <span class="op">|&gt;</span> <span class="fu"><a href="https://dplyr.tidyverse.org/reference/compute.html" class="external-link">collect</a></span><span class="op">(</span><span class="op">)</span></span></code></pre></div>
 <div class="sourceCode" id="cb10"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/utils/head.html" class="external-link">head</a></span><span class="op">(</span><span class="va">df</span><span class="op">)</span></span>
 <span><span class="co">#&gt; <span style="color: #949494;"># A tibble: 6 × 12</span></span></span>
 <span><span class="co">#&gt;   datetime            pubDate             depth family   parameter variable   </span></span>
 <span><span class="co">#&gt;   <span style="color: #949494; font-style: italic;">&lt;dttm&gt;</span>              <span style="color: #949494; font-style: italic;">&lt;dttm&gt;</span>              <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span> <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>        <span style="color: #949494; font-style: italic;">&lt;int&gt;</span> <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>      </span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;">1</span> 2022-09-28 <span style="color: #949494;">00:00:00</span> 2023-05-17 <span style="color: #949494;">15:29:04</span>     0 ensemble         1 temperature</span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;">2</span> 2022-09-28 <span style="color: #949494;">00:00:00</span> 2023-05-17 <span style="color: #949494;">15:29:04</span>     0 ensemble         2 temperature</span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;">3</span> 2022-09-28 <span style="color: #949494;">00:00:00</span> 2023-05-17 <span style="color: #949494;">15:29:04</span>     0 ensemble         3 temperature</span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;">4</span> 2022-09-28 <span style="color: #949494;">00:00:00</span> 2023-05-17 <span style="color: #949494;">15:29:04</span>     0 ensemble         4 temperature</span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;">5</span> 2022-09-28 <span style="color: #949494;">00:00:00</span> 2023-05-17 <span style="color: #949494;">15:29:04</span>     0 ensemble         5 temperature</span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;">6</span> 2022-09-28 <span style="color: #949494;">00:00:00</span> 2023-05-17 <span style="color: #949494;">15:29:04</span>     0 ensemble         6 temperature</span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;">1</span> 2022-09-28 <span style="color: #949494;">00:00:00</span> 2023-05-17 <span style="color: #949494;">16:02:57</span>     0 ensemble         1 temperature</span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;">2</span> 2022-09-28 <span style="color: #949494;">00:00:00</span> 2023-05-17 <span style="color: #949494;">16:02:57</span>     0 ensemble         2 temperature</span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;">3</span> 2022-09-28 <span style="color: #949494;">00:00:00</span> 2023-05-17 <span style="color: #949494;">16:02:57</span>     0 ensemble         3 temperature</span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;">4</span> 2022-09-28 <span style="color: #949494;">00:00:00</span> 2023-05-17 <span style="color: #949494;">16:02:57</span>     0 ensemble         4 temperature</span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;">5</span> 2022-09-28 <span style="color: #949494;">00:00:00</span> 2023-05-17 <span style="color: #949494;">16:02:57</span>     0 ensemble         5 temperature</span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;">6</span> 2022-09-28 <span style="color: #949494;">00:00:00</span> 2023-05-17 <span style="color: #949494;">16:02:57</span>     0 ensemble         6 temperature</span></span>
 <span><span class="co">#&gt; <span style="color: #949494;"># ℹ 6 more variables: prediction &lt;dbl&gt;, forecast &lt;dbl&gt;, variable_type &lt;chr&gt;,</span></span></span>
 <span><span class="co">#&gt; <span style="color: #949494;">#   site_id &lt;chr&gt;, model_id &lt;chr&gt;, reference_datetime &lt;chr&gt;</span></span></span></code></pre></div>
 <div class="sourceCode" id="cb11"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">df</span> <span class="op">|&gt;</span> </span>
-<span>  <span class="fu"><a href="https://rdrr.io/r/stats/filter.html" class="external-link">filter</a></span><span class="op">(</span><span class="va">variable</span> <span class="op">==</span> <span class="st">"temperature"</span>,</span>
+<span>  <span class="fu"><a href="https://dplyr.tidyverse.org/reference/filter.html" class="external-link">filter</a></span><span class="op">(</span><span class="va">variable</span> <span class="op">==</span> <span class="st">"temperature"</span>,</span>
 <span>         <span class="va">depth</span> <span class="op">==</span> <span class="fl">1</span><span class="op">)</span> <span class="op">|&gt;</span> </span>
-<span>  <span class="fu">ggplot</span><span class="op">(</span><span class="fu">aes</span><span class="op">(</span>x <span class="op">=</span> <span class="va">datetime</span>, y <span class="op">=</span> <span class="va">prediction</span>, group <span class="op">=</span> <span class="va">parameter</span><span class="op">)</span><span class="op">)</span> <span class="op">+</span></span>
-<span>  <span class="fu">geom_line</span><span class="op">(</span><span class="op">)</span> <span class="op">+</span></span>
-<span>  <span class="fu">geom_vline</span><span class="op">(</span><span class="fu">aes</span><span class="op">(</span>xintercept <span class="op">=</span> <span class="fu">as_datetime</span><span class="op">(</span><span class="va">reference_datetime</span><span class="op">)</span><span class="op">)</span><span class="op">)</span> <span class="op">+</span></span>
-<span>  <span class="fu">labs</span><span class="op">(</span>title <span class="op">=</span> <span class="st">"1 m water temperature forecast"</span><span class="op">)</span></span></code></pre></div>
+<span>  <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/ggplot.html" class="external-link">ggplot</a></span><span class="op">(</span><span class="fu"><a href="https://ggplot2.tidyverse.org/reference/aes.html" class="external-link">aes</a></span><span class="op">(</span>x <span class="op">=</span> <span class="va">datetime</span>, y <span class="op">=</span> <span class="va">prediction</span>, group <span class="op">=</span> <span class="va">parameter</span><span class="op">)</span><span class="op">)</span> <span class="op">+</span></span>
+<span>  <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/geom_path.html" class="external-link">geom_line</a></span><span class="op">(</span><span class="op">)</span> <span class="op">+</span></span>
+<span>  <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/geom_abline.html" class="external-link">geom_vline</a></span><span class="op">(</span><span class="fu"><a href="https://ggplot2.tidyverse.org/reference/aes.html" class="external-link">aes</a></span><span class="op">(</span>xintercept <span class="op">=</span> <span class="fu"><a href="https://lubridate.tidyverse.org/reference/as_date.html" class="external-link">as_datetime</a></span><span class="op">(</span><span class="va">reference_datetime</span><span class="op">)</span><span class="op">)</span><span class="op">)</span> <span class="op">+</span></span>
+<span>  <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/labs.html" class="external-link">labs</a></span><span class="op">(</span>title <span class="op">=</span> <span class="st">"1 m water temperature forecast"</span><span class="op">)</span></span></code></pre></div>
 <p><img src="flare-example-vignette_files/figure-html/unnamed-chunk-12-1.png" width="700"></p>
 <div class="sourceCode" id="cb12"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="va">df</span> <span class="op">&lt;-</span> <span class="fu">arrow</span><span class="fu">::</span><span class="fu"><a href="https://arrow.apache.org/docs/r/reference/open_dataset.html" class="external-link">open_dataset</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/file.path.html" class="external-link">file.path</a></span><span class="op">(</span><span class="va">lake_directory</span>,<span class="st">"scores/parquet"</span><span class="op">)</span><span class="op">)</span> <span class="op">|&gt;</span> <span class="fu">collect</span><span class="op">(</span><span class="op">)</span></span></code></pre></div>
+<code class="sourceCode R"><span><span class="va">df</span> <span class="op">&lt;-</span> <span class="fu">arrow</span><span class="fu">::</span><span class="fu"><a href="https://arrow.apache.org/docs/r/reference/open_dataset.html" class="external-link">open_dataset</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/file.path.html" class="external-link">file.path</a></span><span class="op">(</span><span class="va">lake_directory</span>,<span class="st">"scores/parquet"</span><span class="op">)</span><span class="op">)</span> <span class="op">|&gt;</span> <span class="fu"><a href="https://dplyr.tidyverse.org/reference/compute.html" class="external-link">collect</a></span><span class="op">(</span><span class="op">)</span></span></code></pre></div>
 <div class="sourceCode" id="cb13"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/utils/head.html" class="external-link">head</a></span><span class="op">(</span><span class="va">df</span><span class="op">)</span></span>
 <span><span class="co">#&gt; <span style="color: #949494;"># A tibble: 6 × 18</span></span></span>
@@ -465,14 +465,14 @@ file and not overwrite them.</p>
 <span><span class="co">#&gt; <span style="color: #949494;">#   site_id &lt;chr&gt;, model_id &lt;chr&gt;, reference_datetime &lt;chr&gt;</span></span></span></code></pre></div>
 <div class="sourceCode" id="cb14"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">df</span> <span class="op">|&gt;</span> </span>
-<span>  <span class="fu"><a href="https://rdrr.io/r/stats/filter.html" class="external-link">filter</a></span><span class="op">(</span><span class="va">variable</span> <span class="op">==</span> <span class="st">"temperature"</span>,</span>
+<span>  <span class="fu"><a href="https://dplyr.tidyverse.org/reference/filter.html" class="external-link">filter</a></span><span class="op">(</span><span class="va">variable</span> <span class="op">==</span> <span class="st">"temperature"</span>,</span>
 <span>         <span class="va">depth</span> <span class="op">==</span> <span class="fl">1</span><span class="op">)</span> <span class="op">|&gt;</span> </span>
-<span>  <span class="fu">ggplot</span><span class="op">(</span><span class="fu">aes</span><span class="op">(</span>x <span class="op">=</span> <span class="va">datetime</span><span class="op">)</span><span class="op">)</span> <span class="op">+</span></span>
-<span>  <span class="fu">geom_ribbon</span><span class="op">(</span><span class="fu">aes</span><span class="op">(</span>ymin <span class="op">=</span> <span class="va">quantile10</span>, ymax <span class="op">=</span> <span class="va">quantile90</span><span class="op">)</span>, alpha <span class="op">=</span> <span class="fl">0.5</span>, fill <span class="op">=</span> <span class="st">"lightblue"</span><span class="op">)</span> <span class="op">+</span></span>
-<span>  <span class="fu">geom_line</span><span class="op">(</span><span class="fu">aes</span><span class="op">(</span>y <span class="op">=</span> <span class="va">median</span><span class="op">)</span><span class="op">)</span> <span class="op">+</span></span>
-<span>  <span class="fu">geom_point</span><span class="op">(</span><span class="fu">aes</span><span class="op">(</span>y <span class="op">=</span> <span class="va">observation</span><span class="op">)</span>, color <span class="op">=</span> <span class="st">"red"</span><span class="op">)</span> <span class="op">+</span></span>
-<span>  <span class="fu">geom_vline</span><span class="op">(</span><span class="fu">aes</span><span class="op">(</span>xintercept <span class="op">=</span> <span class="fu">as_datetime</span><span class="op">(</span><span class="va">reference_datetime</span><span class="op">)</span><span class="op">)</span><span class="op">)</span> <span class="op">+</span></span>
-<span>  <span class="fu">labs</span><span class="op">(</span>title <span class="op">=</span> <span class="st">"1 m water temperature forecast"</span><span class="op">)</span></span></code></pre></div>
+<span>  <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/ggplot.html" class="external-link">ggplot</a></span><span class="op">(</span><span class="fu"><a href="https://ggplot2.tidyverse.org/reference/aes.html" class="external-link">aes</a></span><span class="op">(</span>x <span class="op">=</span> <span class="va">datetime</span><span class="op">)</span><span class="op">)</span> <span class="op">+</span></span>
+<span>  <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/geom_ribbon.html" class="external-link">geom_ribbon</a></span><span class="op">(</span><span class="fu"><a href="https://ggplot2.tidyverse.org/reference/aes.html" class="external-link">aes</a></span><span class="op">(</span>ymin <span class="op">=</span> <span class="va">quantile10</span>, ymax <span class="op">=</span> <span class="va">quantile90</span><span class="op">)</span>, alpha <span class="op">=</span> <span class="fl">0.5</span>, fill <span class="op">=</span> <span class="st">"lightblue"</span><span class="op">)</span> <span class="op">+</span></span>
+<span>  <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/geom_path.html" class="external-link">geom_line</a></span><span class="op">(</span><span class="fu"><a href="https://ggplot2.tidyverse.org/reference/aes.html" class="external-link">aes</a></span><span class="op">(</span>y <span class="op">=</span> <span class="va">median</span><span class="op">)</span><span class="op">)</span> <span class="op">+</span></span>
+<span>  <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/geom_point.html" class="external-link">geom_point</a></span><span class="op">(</span><span class="fu"><a href="https://ggplot2.tidyverse.org/reference/aes.html" class="external-link">aes</a></span><span class="op">(</span>y <span class="op">=</span> <span class="va">observation</span><span class="op">)</span>, color <span class="op">=</span> <span class="st">"red"</span><span class="op">)</span> <span class="op">+</span></span>
+<span>  <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/geom_abline.html" class="external-link">geom_vline</a></span><span class="op">(</span><span class="fu"><a href="https://ggplot2.tidyverse.org/reference/aes.html" class="external-link">aes</a></span><span class="op">(</span>xintercept <span class="op">=</span> <span class="fu"><a href="https://lubridate.tidyverse.org/reference/as_date.html" class="external-link">as_datetime</a></span><span class="op">(</span><span class="va">reference_datetime</span><span class="op">)</span><span class="op">)</span><span class="op">)</span> <span class="op">+</span></span>
+<span>  <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/labs.html" class="external-link">labs</a></span><span class="op">(</span>title <span class="op">=</span> <span class="st">"1 m water temperature forecast"</span><span class="op">)</span></span></code></pre></div>
 <p><img src="flare-example-vignette_files/figure-html/unnamed-chunk-15-1.png" width="700"></p>
 </div>
 <div class="section level2">
