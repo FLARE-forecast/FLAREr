@@ -21,8 +21,8 @@ Here is a workflow example that combines all the functions in FLAREr to generate
 
 ```{r eval=FALSE}
 tmp <- tempdir()
-file.copy(system.file("example", package = "FLAREr"), tmp, recursive = TRUE)
-lake_directory <- file.path(tmp, "example")
+file.copy(system.file("extdata", package = "FLAREr"), tmp, recursive = TRUE)
+lake_directory <- file.path(tmp, "extdata")
 ```
 
 ```{r eval=FALSE}

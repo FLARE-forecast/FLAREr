@@ -1,0 +1,93 @@
+location:
+   site_id: fcre
+   name: Falling Creek Reservoir
+   latitude: 37.307   #Degrees North
+   longitude: -79.837  #Degrees East
+da_setup:
+    da_method: enkf
+    par_fit_method: perturb_const
+    ensemble_size:  31
+    localization_distance: .na #distance in meters were covariances in the model error are used
+    no_negative_states: TRUE
+    assimilate_first_step: FALSE
+    use_obs_constraint: TRUE
+    obs_filename: fcre-targets-insitu.csv
+model_settings:
+   ncore: 4
+   model_name: glm
+   base_GLM_nml: glm3.nml
+   modeled_depths:
+   - 0.00
+   - 0.25
+   - 0.50
+   - 0.75
+   - 1.00
+   - 1.25
+   - 1.50
+   - 1.75
+   - 2.00
+   - 2.25
+   - 2.50
+   - 2.75
+   - 3.00
+   - 3.25
+   - 3.50
+   - 3.75
+   - 4.00
+   - 4.25
+   - 4.50
+   - 4.75
+   - 5.00
+   - 5.25
+   - 5.50
+   - 5.75
+   - 6.00
+   - 6.25
+   - 6.50
+   - 6.75
+   - 7.00
+   - 7.25
+   - 7.50
+   - 7.75
+   - 8.00
+   - 8.25
+   - 8.50
+   - 8.75
+   - 9.00
+   - 9.25
+   par_config_file: parameter_calibration_config.csv
+   obs_config_file: observations_config.csv
+   states_config_file: states_config.csv
+   depth_model_sd_config_file: depth_model_sd.csv
+default_init:
+   lake_depth: 9.4
+   temp: [25.667, 24.9101, 23.067, 21.8815, 19.6658, 16.5739, 12.9292, 12.8456, 12.8127, 12.8079, 12.778]
+   temp_depths: [0.127, 1.004, 2.005, 3.021, 4.002, 5.004, 6.004, 7.01, 8.001, 9.015, 9.518]
+   salinity: 0.0
+   snow_thickness: 0.0
+   white_ice_thickness: 0.0
+   blue_ice_thickness: 0.0
+inflow:
+   include_inflow: TRUE
+   use_forecasted_inflow: TRUE
+   forecast_inflow_model: FLOWS-NOAAGEFS-AR1
+   observed_filename: fcre-targets-inflow.csv
+   local_directory: drivers/inflow
+   use_ler_vars: FALSE
+met:
+   use_forecasted_met: TRUE
+   use_met_s3: FALSE
+   use_observed_met: FALSE
+   use_ler_vars: FALSE
+   local_directory: drivers/noaa/gefs-v12-reprocess
+uncertainty:
+   observation: TRUE
+   process: TRUE
+   weather: TRUE
+   initial_condition: TRUE
+   parameter: TRUE
+   inflow_process: TRUE
+output_settings:
+   diagnostics_names:  [extc]
+   evaluate_past: FALSE
+   variables_in_scores: [state, parameter, diagnostic]

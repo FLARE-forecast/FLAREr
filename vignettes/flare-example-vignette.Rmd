@@ -69,23 +69,23 @@ dir.create(file.path(lake_directory, "drivers")) # Weather and inflow forecasts
 First, `FLAREr` requires two configuration yaml files.  The code below copies examples from the `FLAREr` package.
 
 ```{r}
-file.copy(system.file("example", "configuration", "default", "configure_flare.yml", package = "FLAREr"), file.path(lake_directory, "configuration", "default", "configure_flare.yml"))
-file.copy(system.file("example", "configuration", "default", "configure_run.yml", package = "FLAREr"), file.path(lake_directory, "configuration", "default", "configure_run.yml"))
+file.copy(system.file("extdata", "configuration", "default", "configure_flare.yml", package = "FLAREr"), file.path(lake_directory, "configuration", "default", "configure_flare.yml"))
+file.copy(system.file("extdata", "configuration", "default", "configure_run.yml", package = "FLAREr"), file.path(lake_directory, "configuration", "default", "configure_run.yml"))
 ```
 
 Second, `FLAREr` requires a set of configuration CSV files.  The CSV files are used to define the states that are simulated and the parameters that are calibrated. The code below copies examples from the `FLAREr` package
 
 ```{r}
-file.copy(system.file("example", "configuration", "default", "parameter_calibration_config.csv", package = "FLAREr"), file.path(lake_directory, "configuration", "default", "parameter_calibration_config.csv"))
-file.copy(system.file("example", "configuration", "default", "states_config.csv", package = "FLAREr"), file.path(lake_directory, "configuration", "default", "states_config.csv"))
-file.copy(system.file("example", "configuration", "default", "depth_model_sd.csv", package = "FLAREr"), file.path(lake_directory, "configuration", "default", "depth_model_sd.csv"))
-file.copy(system.file("example", "configuration", "default", "observations_config.csv", package = "FLAREr"), file.path(lake_directory, "configuration", "default", "observations_config.csv"))
+file.copy(system.file("extdata", "configuration", "default", "parameter_calibration_config.csv", package = "FLAREr"), file.path(lake_directory, "configuration", "default", "parameter_calibration_config.csv"))
+file.copy(system.file("extdata", "configuration", "default", "states_config.csv", package = "FLAREr"), file.path(lake_directory, "configuration", "default", "states_config.csv"))
+file.copy(system.file("extdata", "configuration", "default", "depth_model_sd.csv", package = "FLAREr"), file.path(lake_directory, "configuration", "default", "depth_model_sd.csv"))
+file.copy(system.file("extdata", "configuration", "default", "observations_config.csv", package = "FLAREr"), file.path(lake_directory, "configuration", "default", "observations_config.csv"))
 ```
 
 Third, FLAREr requires GLM specific configurations files.  For applications that require on water temperature, only the GLM namelist file is needed.  Applications that require other water quality variables will require additional namelist files that are associated with the AED model.
 
 ```{r}
-file.copy(system.file("example", "configuration", "default", "glm3.nml", package = "FLAREr"), file.path(lake_directory, "configuration", "default", "glm3.nml"))
+file.copy(system.file("extdata", "configuration", "default", "glm3.nml", package = "FLAREr"), file.path(lake_directory, "configuration", "default", "glm3.nml"))
 ```
 
 ## 3: Observation and driver files
@@ -93,8 +93,8 @@ file.copy(system.file("example", "configuration", "default", "glm3.nml", package
 Since the FLAREr package for general application, scripts to download and process observation and drivers are not included in the package.  Therefore the application of FLARE to a lake will require a set of additional scripts that are specific to the data formats for the lakes.  The example includes files for application to FCR.  
 
 ```{r}
-file.copy(from = system.file("example/targets", package = "FLAREr"), to = lake_directory, recursive = TRUE)
-file.copy(from = system.file("example/drivers", package = "FLAREr"), to = lake_directory, recursive = TRUE)
+file.copy(from = system.file("extdata/targets", package = "FLAREr"), to = lake_directory, recursive = TRUE)
+file.copy(from = system.file("extdata/drivers", package = "FLAREr"), to = lake_directory, recursive = TRUE)
 ```
 
 First, FLAREr requires the observation file to have a specific name (observations_postQAQC_long.csv) and format.

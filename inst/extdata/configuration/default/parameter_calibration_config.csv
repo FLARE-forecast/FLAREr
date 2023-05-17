@@ -1,0 +1,4 @@
+par_names,par_names_save,par_file,par_init,par_init_lowerbound,par_init_upperbound,par_lowerbound,par_upperbound,inflat_pars,perturb_par,par_units
+sed_temp_mean,zone1temp,glm3.nml,12,10,12,-100,100,1.1,1.0,deg_C
+sed_temp_mean,zone2temp,glm3.nml,15,12,16,-100,100,1.1,1.0,deg_C
+lw_factor,lw_factor,glm3.nml,1,0.9,1.1,-10,10,2,0.02,unitless

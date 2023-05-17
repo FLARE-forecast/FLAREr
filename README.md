@@ -49,7 +49,7 @@ library(tidyverse)
 library(FLAREr)
 
 tmp <- tempdir()
-file.copy(system.file("example", package = "FLAREr"), tmp, recursive = TRUE)
+file.copy(system.file("extdata", package = "FLAREr"), tmp, recursive = TRUE)
 lake_directory <- file.path(tmp, "example")
 run_flare(lake_directory = lake_directory,configure_run_file = "configure_run.yml", config_set_name = "default")
 

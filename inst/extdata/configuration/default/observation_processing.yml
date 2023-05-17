@@ -1,0 +1,174 @@
+##########################
+# Lake information
+###########################
+
+site_id: fcre
+lake_name: Falling Creek Reservoir
+lake_latitude: 37.307   #Degrees North
+lake_longitude: 79.837  #Degrees West
+
+#Time zone that GLM is run in
+#Currently needed to be GMT so that it interfaces with the NOAA forecast
+#reference_tzone <<- "GMT"
+#Local time zone of the lake
+local_tzone: "EST"
+
+sss_fname: fcre-manual-data/FCR_SSS_inflow_2013_2020.csv
+#specified_sss_inflow_file: .na #manual-data/FCR_SSS_inflow_2013_2019_20200701_allfractions_2DOCpools.csv
+#specified_sss_outflow_file: .na
+
+noaa_location: FCRE
+
+met_raw_obs_fname:
+    - fcre-metstation-data/FCRmet_L1.csv
+    - Met_final_2015_2022.csv
+#specified_metfile: .na #NA #paste0(manual_data_location, "/met_full_postQAQC.csv")
+
+downscaling_coeff: fcre-manual-data/debiased.coefficients.2018_07_12_2019_07_11.RData
+
+nldas: fcre-manual-data/FCR_GLM_NLDAS_010113_123119_GMTadjusted.csv
+
+#####################
+#### INFLOW AND OUTFLOW
+#####################
+
+#specified_inflow1: .na #manual-data/FCR_weir_inflow_2013_2019_20200624_allfractions_2poolsDOC.csv
+inflow_raw_file1:
+    - fcre-weir-data/FCRWeir_L1.csv
+    - inflow_for_EDI_2013_10Jan2021.csv
+#specified_inflow2: .na #manual-data/FCR_wetland_inflow_2013_2019_20200713_allfractions_2DOCpools.csv
+#specified_outflow1: .na #manual-data/FCR_spillway_outflow_SUMMED_WeirWetland_2013_2019_20200615.csv
+
+#########################
+### Depth information
+#########################
+#Depths used in the EnKF
+#This are the depths that are saved between days
+#Init depth of lake
+lake_depth_init: 9.4  #not a modeled state
+
+depths_bins_top:
+  - 0.00
+  - 0.25
+  - 0.50
+  - 0.75
+  - 1.00
+  - 1.25
+  - 1.50
+  - 1.75
+  - 2.00
+  - 2.25
+  - 2.50
+  - 2.75
+  - 3.00
+  - 3.25
+  - 3.50
+  - 3.75
+  - 4.00
+  - 4.25
+  - 4.50
+  - 4.75
+  - 5.00
+  - 5.25
+  - 5.50
+  - 5.75
+  - 6.00
+  - 6.25
+  - 6.50
+  - 6.75
+  - 7.00
+  - 7.25
+  - 7.50
+  - 7.75
+  - 8.00
+  - 8.25
+  - 8.50
+  - 8.75
+  - 9.00
+  - 9.25
+
+obs_config_file: observations_config_ch4_dic.csv
+
+realtime_insitu_location: fcre-catwalk-data
+realtime_met_station_location: fcre-metstation-data
+manual_data_location: fcre-manual-data
+realtime_inflow_data_location: fcre-weir-data
+
+specified_inflow1: fcre-manual-data/FCR_weir_inflow_2013_2019_20200624_allfractions_2poolsDOC.csv
+specified_outflow1: fcre-manual-data/FCR_spillway_outflow_SUMMED_WeirWetland_2013_2019_20200615.csv
+
+insitu_obs_fname:
+    - fcre-catwalk-data/fcre-waterquality_L1.csv
+    - FCR_Catwalk_2018_2022.csv
+secchi_fname: Secchi_depth_2013-2020.csv
+ctd_fname: CTD_final_2013_2021.csv
+ch4_fname: Dissolved_CO2_CH4_Virginia_Reservoirs.csv
+silica_fname: silica_master_df.csv
+nutrients_fname: chemistry.csv
+variable_obsevation_depths: FALSE
+exo_sensor_2_ctd_chla: [0, 1]  #c(-2.0430, 2.5314) #c(1.8795, 0.6662)
+exo_sensor_2_ctd_do: [0, 1] #c(8.3670, 0.7152)
+do_sensor_2_ctd_do_5: [0, 1] #c(19.6254, 0.8636)
+do_sensor_2_ctd_do_9: [0, 1] #c(11.0971, 0.9156)
+ctd_2_exo_sensor_chla: [0, 1]  #c(-2.0430, 2.5314) #c(-1.582, 1.335)
+ctd_2_exo_sensor_do: [0, 1] #c(-10.770, 1.061)
+exo_sensor_2_grab_sample_fdom: [-151.3407, 29.62654]
+focal_depths: .na #1.6
+maintenance_file: fcre-catwalk-data/CAT_MaintenanceLog.txt
+
+pull_from_git: TRUE
+
+target_variables:
+    - temperature
+    - oxygen
+    - NH4
+    - NO3NO2
+    - TN
+    - SRP
+    - TP
+    - fdom
+    - chla
+    - depth
+    - salt
+
+averaging_period:
+    - "1 hour"
+    - "1 hour"
+    - "1 day"
+    - "1 day"
+    - "1 day"
+    - "1 day"
+    - "1 day"
+    - "1 hour"
+    - "1 hour"
+    - "1 hour"
+    - "1 hour"
+
+averaging_period_starting_hour: "00:00:00"
+
+measurement_methods:
+    temperature:
+        - thermistor
+        - do_sensor
+        - exo_sensor
+    oxygen:
+        - do_sensor
+        - exo_sensor
+    NH4:
+        - grab_sample
+    NO3NO2:
+        - grab_sample
+    TN:
+        - grab_sample
+    SRP:
+        - grab_sample
+    TP:
+        - grab_sample
+    fdom:
+        - exo_sensor
+    chla:
+        - exo_sensor
+    depth:
+        - pres_trans
+    salt:
+        - exo_sensor

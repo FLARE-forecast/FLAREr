@@ -1,0 +1,9 @@
+restart_file: .na
+start_datetime: 2022-09-28 00:00:00
+end_datetime: .na
+forecast_start_datetime: 2022-10-02 00:00:00
+forecast_horizon: 16
+sim_name: test
+configure_flare: configure_flare.yml
+configure_obs: observation_processing.yml
+use_s3: FALSE
