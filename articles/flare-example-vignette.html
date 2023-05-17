@@ -145,22 +145,22 @@ your FLARE run</p>
 <p>First, <code>FLAREr</code> requires two configuration yaml files. The
 code below copies examples from the <code>FLAREr</code> package.</p>
 <div class="sourceCode" id="cb3"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/base/files.html" class="external-link">file.copy</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/system.file.html" class="external-link">system.file</a></span><span class="op">(</span><span class="st">"example"</span>, <span class="st">"configuration"</span>, <span class="st">"default"</span>, <span class="st">"configure_flare.yml"</span>, package <span class="op">=</span> <span class="st">"FLAREr"</span><span class="op">)</span>, <span class="fu"><a href="https://rdrr.io/r/base/file.path.html" class="external-link">file.path</a></span><span class="op">(</span><span class="va">lake_directory</span>, <span class="st">"configuration"</span>, <span class="st">"default"</span>, <span class="st">"configure_flare.yml"</span><span class="op">)</span><span class="op">)</span></span>
+<code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/base/files.html" class="external-link">file.copy</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/system.file.html" class="external-link">system.file</a></span><span class="op">(</span><span class="st">"extdata"</span>, <span class="st">"configuration"</span>, <span class="st">"default"</span>, <span class="st">"configure_flare.yml"</span>, package <span class="op">=</span> <span class="st">"FLAREr"</span><span class="op">)</span>, <span class="fu"><a href="https://rdrr.io/r/base/file.path.html" class="external-link">file.path</a></span><span class="op">(</span><span class="va">lake_directory</span>, <span class="st">"configuration"</span>, <span class="st">"default"</span>, <span class="st">"configure_flare.yml"</span><span class="op">)</span><span class="op">)</span></span>
 <span><span class="co">#&gt; [1] TRUE</span></span>
-<span><span class="fu"><a href="https://rdrr.io/r/base/files.html" class="external-link">file.copy</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/system.file.html" class="external-link">system.file</a></span><span class="op">(</span><span class="st">"example"</span>, <span class="st">"configuration"</span>, <span class="st">"default"</span>, <span class="st">"configure_run.yml"</span>, package <span class="op">=</span> <span class="st">"FLAREr"</span><span class="op">)</span>, <span class="fu"><a href="https://rdrr.io/r/base/file.path.html" class="external-link">file.path</a></span><span class="op">(</span><span class="va">lake_directory</span>, <span class="st">"configuration"</span>, <span class="st">"default"</span>, <span class="st">"configure_run.yml"</span><span class="op">)</span><span class="op">)</span></span>
+<span><span class="fu"><a href="https://rdrr.io/r/base/files.html" class="external-link">file.copy</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/system.file.html" class="external-link">system.file</a></span><span class="op">(</span><span class="st">"extdata"</span>, <span class="st">"configuration"</span>, <span class="st">"default"</span>, <span class="st">"configure_run.yml"</span>, package <span class="op">=</span> <span class="st">"FLAREr"</span><span class="op">)</span>, <span class="fu"><a href="https://rdrr.io/r/base/file.path.html" class="external-link">file.path</a></span><span class="op">(</span><span class="va">lake_directory</span>, <span class="st">"configuration"</span>, <span class="st">"default"</span>, <span class="st">"configure_run.yml"</span><span class="op">)</span><span class="op">)</span></span>
 <span><span class="co">#&gt; [1] TRUE</span></span></code></pre></div>
 <p>Second, <code>FLAREr</code> requires a set of configuration CSV
 files. The CSV files are used to define the states that are simulated
 and the parameters that are calibrated. The code below copies examples
 from the <code>FLAREr</code> package</p>
 <div class="sourceCode" id="cb4"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/base/files.html" class="external-link">file.copy</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/system.file.html" class="external-link">system.file</a></span><span class="op">(</span><span class="st">"example"</span>, <span class="st">"configuration"</span>, <span class="st">"default"</span>, <span class="st">"parameter_calibration_config.csv"</span>, package <span class="op">=</span> <span class="st">"FLAREr"</span><span class="op">)</span>, <span class="fu"><a href="https://rdrr.io/r/base/file.path.html" class="external-link">file.path</a></span><span class="op">(</span><span class="va">lake_directory</span>, <span class="st">"configuration"</span>, <span class="st">"default"</span>, <span class="st">"parameter_calibration_config.csv"</span><span class="op">)</span><span class="op">)</span></span>
+<code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/base/files.html" class="external-link">file.copy</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/system.file.html" class="external-link">system.file</a></span><span class="op">(</span><span class="st">"extdata"</span>, <span class="st">"configuration"</span>, <span class="st">"default"</span>, <span class="st">"parameter_calibration_config.csv"</span>, package <span class="op">=</span> <span class="st">"FLAREr"</span><span class="op">)</span>, <span class="fu"><a href="https://rdrr.io/r/base/file.path.html" class="external-link">file.path</a></span><span class="op">(</span><span class="va">lake_directory</span>, <span class="st">"configuration"</span>, <span class="st">"default"</span>, <span class="st">"parameter_calibration_config.csv"</span><span class="op">)</span><span class="op">)</span></span>
 <span><span class="co">#&gt; [1] TRUE</span></span>
-<span><span class="fu"><a href="https://rdrr.io/r/base/files.html" class="external-link">file.copy</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/system.file.html" class="external-link">system.file</a></span><span class="op">(</span><span class="st">"example"</span>, <span class="st">"configuration"</span>, <span class="st">"default"</span>, <span class="st">"states_config.csv"</span>, package <span class="op">=</span> <span class="st">"FLAREr"</span><span class="op">)</span>, <span class="fu"><a href="https://rdrr.io/r/base/file.path.html" class="external-link">file.path</a></span><span class="op">(</span><span class="va">lake_directory</span>, <span class="st">"configuration"</span>, <span class="st">"default"</span>, <span class="st">"states_config.csv"</span><span class="op">)</span><span class="op">)</span></span>
+<span><span class="fu"><a href="https://rdrr.io/r/base/files.html" class="external-link">file.copy</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/system.file.html" class="external-link">system.file</a></span><span class="op">(</span><span class="st">"extdata"</span>, <span class="st">"configuration"</span>, <span class="st">"default"</span>, <span class="st">"states_config.csv"</span>, package <span class="op">=</span> <span class="st">"FLAREr"</span><span class="op">)</span>, <span class="fu"><a href="https://rdrr.io/r/base/file.path.html" class="external-link">file.path</a></span><span class="op">(</span><span class="va">lake_directory</span>, <span class="st">"configuration"</span>, <span class="st">"default"</span>, <span class="st">"states_config.csv"</span><span class="op">)</span><span class="op">)</span></span>
 <span><span class="co">#&gt; [1] TRUE</span></span>
-<span><span class="fu"><a href="https://rdrr.io/r/base/files.html" class="external-link">file.copy</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/system.file.html" class="external-link">system.file</a></span><span class="op">(</span><span class="st">"example"</span>, <span class="st">"configuration"</span>, <span class="st">"default"</span>, <span class="st">"depth_model_sd.csv"</span>, package <span class="op">=</span> <span class="st">"FLAREr"</span><span class="op">)</span>, <span class="fu"><a href="https://rdrr.io/r/base/file.path.html" class="external-link">file.path</a></span><span class="op">(</span><span class="va">lake_directory</span>, <span class="st">"configuration"</span>, <span class="st">"default"</span>, <span class="st">"depth_model_sd.csv"</span><span class="op">)</span><span class="op">)</span></span>
+<span><span class="fu"><a href="https://rdrr.io/r/base/files.html" class="external-link">file.copy</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/system.file.html" class="external-link">system.file</a></span><span class="op">(</span><span class="st">"extdata"</span>, <span class="st">"configuration"</span>, <span class="st">"default"</span>, <span class="st">"depth_model_sd.csv"</span>, package <span class="op">=</span> <span class="st">"FLAREr"</span><span class="op">)</span>, <span class="fu"><a href="https://rdrr.io/r/base/file.path.html" class="external-link">file.path</a></span><span class="op">(</span><span class="va">lake_directory</span>, <span class="st">"configuration"</span>, <span class="st">"default"</span>, <span class="st">"depth_model_sd.csv"</span><span class="op">)</span><span class="op">)</span></span>
 <span><span class="co">#&gt; [1] TRUE</span></span>
-<span><span class="fu"><a href="https://rdrr.io/r/base/files.html" class="external-link">file.copy</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/system.file.html" class="external-link">system.file</a></span><span class="op">(</span><span class="st">"example"</span>, <span class="st">"configuration"</span>, <span class="st">"default"</span>, <span class="st">"observations_config.csv"</span>, package <span class="op">=</span> <span class="st">"FLAREr"</span><span class="op">)</span>, <span class="fu"><a href="https://rdrr.io/r/base/file.path.html" class="external-link">file.path</a></span><span class="op">(</span><span class="va">lake_directory</span>, <span class="st">"configuration"</span>, <span class="st">"default"</span>, <span class="st">"observations_config.csv"</span><span class="op">)</span><span class="op">)</span></span>
+<span><span class="fu"><a href="https://rdrr.io/r/base/files.html" class="external-link">file.copy</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/system.file.html" class="external-link">system.file</a></span><span class="op">(</span><span class="st">"extdata"</span>, <span class="st">"configuration"</span>, <span class="st">"default"</span>, <span class="st">"observations_config.csv"</span>, package <span class="op">=</span> <span class="st">"FLAREr"</span><span class="op">)</span>, <span class="fu"><a href="https://rdrr.io/r/base/file.path.html" class="external-link">file.path</a></span><span class="op">(</span><span class="va">lake_directory</span>, <span class="st">"configuration"</span>, <span class="st">"default"</span>, <span class="st">"observations_config.csv"</span><span class="op">)</span><span class="op">)</span></span>
 <span><span class="co">#&gt; [1] TRUE</span></span></code></pre></div>
 <p>Third, FLAREr requires GLM specific configurations files. For
 applications that require on water temperature, only the GLM namelist
@@ -168,7 +168,7 @@ file is needed. Applications that require other water quality variables
 will require additional namelist files that are associated with the AED
 model.</p>
 <div class="sourceCode" id="cb5"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/base/files.html" class="external-link">file.copy</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/system.file.html" class="external-link">system.file</a></span><span class="op">(</span><span class="st">"example"</span>, <span class="st">"configuration"</span>, <span class="st">"default"</span>, <span class="st">"glm3.nml"</span>, package <span class="op">=</span> <span class="st">"FLAREr"</span><span class="op">)</span>, <span class="fu"><a href="https://rdrr.io/r/base/file.path.html" class="external-link">file.path</a></span><span class="op">(</span><span class="va">lake_directory</span>, <span class="st">"configuration"</span>, <span class="st">"default"</span>, <span class="st">"glm3.nml"</span><span class="op">)</span><span class="op">)</span></span>
+<code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/base/files.html" class="external-link">file.copy</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/system.file.html" class="external-link">system.file</a></span><span class="op">(</span><span class="st">"extdata"</span>, <span class="st">"configuration"</span>, <span class="st">"default"</span>, <span class="st">"glm3.nml"</span>, package <span class="op">=</span> <span class="st">"FLAREr"</span><span class="op">)</span>, <span class="fu"><a href="https://rdrr.io/r/base/file.path.html" class="external-link">file.path</a></span><span class="op">(</span><span class="va">lake_directory</span>, <span class="st">"configuration"</span>, <span class="st">"default"</span>, <span class="st">"glm3.nml"</span><span class="op">)</span><span class="op">)</span></span>
 <span><span class="co">#&gt; [1] TRUE</span></span></code></pre></div>
 </div>
 <div class="section level2">
@@ -180,9 +180,9 @@ Therefore the application of FLARE to a lake will require a set of
 additional scripts that are specific to the data formats for the lakes.
 The example includes files for application to FCR.</p>
 <div class="sourceCode" id="cb6"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/base/files.html" class="external-link">file.copy</a></span><span class="op">(</span>from <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/system.file.html" class="external-link">system.file</a></span><span class="op">(</span><span class="st">"example/targets"</span>, package <span class="op">=</span> <span class="st">"FLAREr"</span><span class="op">)</span>, to <span class="op">=</span> <span class="va">lake_directory</span>, recursive <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span></span>
+<code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/base/files.html" class="external-link">file.copy</a></span><span class="op">(</span>from <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/system.file.html" class="external-link">system.file</a></span><span class="op">(</span><span class="st">"extdata/targets"</span>, package <span class="op">=</span> <span class="st">"FLAREr"</span><span class="op">)</span>, to <span class="op">=</span> <span class="va">lake_directory</span>, recursive <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span></span>
 <span><span class="co">#&gt; [1] TRUE</span></span>
-<span><span class="fu"><a href="https://rdrr.io/r/base/files.html" class="external-link">file.copy</a></span><span class="op">(</span>from <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/system.file.html" class="external-link">system.file</a></span><span class="op">(</span><span class="st">"example/drivers"</span>, package <span class="op">=</span> <span class="st">"FLAREr"</span><span class="op">)</span>, to <span class="op">=</span> <span class="va">lake_directory</span>, recursive <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span></span>
+<span><span class="fu"><a href="https://rdrr.io/r/base/files.html" class="external-link">file.copy</a></span><span class="op">(</span>from <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/system.file.html" class="external-link">system.file</a></span><span class="op">(</span><span class="st">"extdata/drivers"</span>, package <span class="op">=</span> <span class="st">"FLAREr"</span><span class="op">)</span>, to <span class="op">=</span> <span class="va">lake_directory</span>, recursive <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span></span>
 <span><span class="co">#&gt; [1] TRUE</span></span></code></pre></div>
 <p>First, FLAREr requires the observation file to have a specific name
 (observations_postQAQC_long.csv) and format.</p>
@@ -191,12 +191,12 @@ The example includes files for application to FCR.</p>
 <span><span class="co">#&gt; <span style="color: #949494;"># A tibble: 6 × 5</span></span></span>
 <span><span class="co">#&gt;   datetime            site_id depth observation variable   </span></span>
 <span><span class="co">#&gt;   <span style="color: #949494; font-style: italic;">&lt;dttm&gt;</span>              <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>   <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span>       <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span> <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>      </span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;">1</span> 2018-07-06 <span style="color: #949494;">00:00:00</span> fcre        0        30.4 temperature</span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;">2</span> 2018-07-07 <span style="color: #949494;">00:00:00</span> fcre        0        29.1 temperature</span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;">3</span> 2018-07-08 <span style="color: #949494;">00:00:00</span> fcre        0        28.5 temperature</span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;">4</span> 2018-07-09 <span style="color: #949494;">00:00:00</span> fcre        0        28.5 temperature</span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;">5</span> 2018-07-10 <span style="color: #949494;">00:00:00</span> fcre        0        29.0 temperature</span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;">6</span> 2018-07-11 <span style="color: #949494;">00:00:00</span> fcre        0        29.3 temperature</span></span></code></pre></div>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;">1</span> 2022-09-02 <span style="color: #949494;">00:00:00</span> fcre        0        27.0 temperature</span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;">2</span> 2022-09-03 <span style="color: #949494;">00:00:00</span> fcre        0        26.5 temperature</span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;">3</span> 2022-09-04 <span style="color: #949494;">00:00:00</span> fcre        0        26.2 temperature</span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;">4</span> 2022-09-05 <span style="color: #949494;">00:00:00</span> fcre        0        25.8 temperature</span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;">5</span> 2022-09-06 <span style="color: #949494;">00:00:00</span> fcre        0        25.2 temperature</span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;">6</span> 2022-09-07 <span style="color: #949494;">00:00:00</span> fcre        0        26.7 temperature</span></span></code></pre></div>
 </div>
 <div class="section level2">
 <h2 id="configure-simulation-glm">2: Configure simulation (GLM)<a class="anchor" aria-label="anchor" href="#configure-simulation-glm"></a>
@@ -318,83 +318,83 @@ file and not overwrite them.</p>
 <span><span class="co">#&gt;   method            from</span></span>
 <span><span class="co">#&gt;   as.zoo.data.frame zoo</span></span>
 <span><span class="co">#&gt; Using GLM Version 3.3.0a9</span></span>
-<span><span class="co">#&gt; Running time step 1/20 : 2022-09-28 00:00 - 2022-09-29 00:00 [2023-05-17 16:01:05.335881]</span></span>
+<span><span class="co">#&gt; Running time step 1/20 : 2022-09-28 00:00 - 2022-09-29 00:00 [2023-05-17 20:26:01.99464]</span></span>
 <span><span class="co">#&gt; zone1temp: mean 11.0835 sd 1</span></span>
 <span><span class="co">#&gt; zone2temp: mean 14.1078 sd 1</span></span>
 <span><span class="co">#&gt; lw_factor: mean 1.014 sd 0.02</span></span>
-<span><span class="co">#&gt; Running time step 2/20 : 2022-09-29 00:00 - 2022-09-30 00:00 [2023-05-17 16:01:11.080106]</span></span>
+<span><span class="co">#&gt; Running time step 2/20 : 2022-09-29 00:00 - 2022-09-30 00:00 [2023-05-17 20:26:06.904462]</span></span>
 <span><span class="co">#&gt; zone1temp: mean 11.4355 sd 1</span></span>
 <span><span class="co">#&gt; zone2temp: mean 14.3982 sd 1</span></span>
 <span><span class="co">#&gt; lw_factor: mean 1.0153 sd 0.02</span></span>
-<span><span class="co">#&gt; Running time step 3/20 : 2022-09-30 00:00 - 2022-10-01 00:00 [2023-05-17 16:01:16.674719]</span></span>
+<span><span class="co">#&gt; Running time step 3/20 : 2022-09-30 00:00 - 2022-10-01 00:00 [2023-05-17 20:26:11.628023]</span></span>
 <span><span class="co">#&gt; zone1temp: mean 11.5912 sd 1</span></span>
 <span><span class="co">#&gt; zone2temp: mean 14.1471 sd 1</span></span>
 <span><span class="co">#&gt; lw_factor: mean 1.015 sd 0.02</span></span>
-<span><span class="co">#&gt; Running time step 4/20 : 2022-10-01 00:00 - 2022-10-02 00:00 [2023-05-17 16:01:22.155507]</span></span>
+<span><span class="co">#&gt; Running time step 4/20 : 2022-10-01 00:00 - 2022-10-02 00:00 [2023-05-17 20:26:16.392005]</span></span>
 <span><span class="co">#&gt; zone1temp: mean 14.3844 sd 1</span></span>
 <span><span class="co">#&gt; zone2temp: mean 14.8046 sd 1</span></span>
 <span><span class="co">#&gt; lw_factor: mean 0.9922 sd 0.02</span></span>
-<span><span class="co">#&gt; Running time step 5/20 : 2022-10-02 00:00 - 2022-10-03 00:00 [2023-05-17 16:01:27.594337]</span></span>
+<span><span class="co">#&gt; Running time step 5/20 : 2022-10-02 00:00 - 2022-10-03 00:00 [2023-05-17 20:26:21.141505]</span></span>
 <span><span class="co">#&gt; zone1temp: mean 15.125 sd 1</span></span>
 <span><span class="co">#&gt; zone2temp: mean 14.5865 sd 1</span></span>
 <span><span class="co">#&gt; lw_factor: mean 0.9837 sd 0.02</span></span>
-<span><span class="co">#&gt; Running time step 6/20 : 2022-10-03 00:00 - 2022-10-04 00:00 [2023-05-17 16:01:32.938603]</span></span>
+<span><span class="co">#&gt; Running time step 6/20 : 2022-10-03 00:00 - 2022-10-04 00:00 [2023-05-17 20:26:25.899089]</span></span>
 <span><span class="co">#&gt; zone1temp: mean 15.125 sd 1</span></span>
 <span><span class="co">#&gt; zone2temp: mean 14.5865 sd 1</span></span>
 <span><span class="co">#&gt; lw_factor: mean 0.9837 sd 0.02</span></span>
-<span><span class="co">#&gt; Running time step 7/20 : 2022-10-04 00:00 - 2022-10-05 00:00 [2023-05-17 16:01:38.626217]</span></span>
+<span><span class="co">#&gt; Running time step 7/20 : 2022-10-04 00:00 - 2022-10-05 00:00 [2023-05-17 20:26:30.664049]</span></span>
 <span><span class="co">#&gt; zone1temp: mean 15.125 sd 1</span></span>
 <span><span class="co">#&gt; zone2temp: mean 14.5865 sd 1</span></span>
 <span><span class="co">#&gt; lw_factor: mean 0.9837 sd 0.02</span></span>
-<span><span class="co">#&gt; Running time step 8/20 : 2022-10-05 00:00 - 2022-10-06 00:00 [2023-05-17 16:01:44.296163]</span></span>
+<span><span class="co">#&gt; Running time step 8/20 : 2022-10-05 00:00 - 2022-10-06 00:00 [2023-05-17 20:26:35.4078]</span></span>
 <span><span class="co">#&gt; zone1temp: mean 15.125 sd 1</span></span>
 <span><span class="co">#&gt; zone2temp: mean 14.5865 sd 1</span></span>
 <span><span class="co">#&gt; lw_factor: mean 0.9837 sd 0.02</span></span>
-<span><span class="co">#&gt; Running time step 9/20 : 2022-10-06 00:00 - 2022-10-07 00:00 [2023-05-17 16:01:50.019553]</span></span>
+<span><span class="co">#&gt; Running time step 9/20 : 2022-10-06 00:00 - 2022-10-07 00:00 [2023-05-17 20:26:40.185632]</span></span>
 <span><span class="co">#&gt; zone1temp: mean 15.125 sd 1</span></span>
 <span><span class="co">#&gt; zone2temp: mean 14.5865 sd 1</span></span>
 <span><span class="co">#&gt; lw_factor: mean 0.9837 sd 0.02</span></span>
-<span><span class="co">#&gt; Running time step 10/20 : 2022-10-07 00:00 - 2022-10-08 00:00 [2023-05-17 16:01:55.821522]</span></span>
+<span><span class="co">#&gt; Running time step 10/20 : 2022-10-07 00:00 - 2022-10-08 00:00 [2023-05-17 20:26:45.02294]</span></span>
 <span><span class="co">#&gt; zone1temp: mean 15.125 sd 1</span></span>
 <span><span class="co">#&gt; zone2temp: mean 14.5865 sd 1</span></span>
 <span><span class="co">#&gt; lw_factor: mean 0.9837 sd 0.02</span></span>
-<span><span class="co">#&gt; Running time step 11/20 : 2022-10-08 00:00 - 2022-10-09 00:00 [2023-05-17 16:02:01.565063]</span></span>
+<span><span class="co">#&gt; Running time step 11/20 : 2022-10-08 00:00 - 2022-10-09 00:00 [2023-05-17 20:26:49.89041]</span></span>
 <span><span class="co">#&gt; zone1temp: mean 15.125 sd 1</span></span>
 <span><span class="co">#&gt; zone2temp: mean 14.5865 sd 1</span></span>
 <span><span class="co">#&gt; lw_factor: mean 0.9837 sd 0.02</span></span>
-<span><span class="co">#&gt; Running time step 12/20 : 2022-10-09 00:00 - 2022-10-10 00:00 [2023-05-17 16:02:07.269687]</span></span>
+<span><span class="co">#&gt; Running time step 12/20 : 2022-10-09 00:00 - 2022-10-10 00:00 [2023-05-17 20:26:54.708599]</span></span>
 <span><span class="co">#&gt; zone1temp: mean 15.125 sd 1</span></span>
 <span><span class="co">#&gt; zone2temp: mean 14.5865 sd 1</span></span>
 <span><span class="co">#&gt; lw_factor: mean 0.9837 sd 0.02</span></span>
-<span><span class="co">#&gt; Running time step 13/20 : 2022-10-10 00:00 - 2022-10-11 00:00 [2023-05-17 16:02:12.9085]</span></span>
+<span><span class="co">#&gt; Running time step 13/20 : 2022-10-10 00:00 - 2022-10-11 00:00 [2023-05-17 20:26:59.441847]</span></span>
 <span><span class="co">#&gt; zone1temp: mean 15.125 sd 1</span></span>
 <span><span class="co">#&gt; zone2temp: mean 14.5865 sd 1</span></span>
 <span><span class="co">#&gt; lw_factor: mean 0.9837 sd 0.02</span></span>
-<span><span class="co">#&gt; Running time step 14/20 : 2022-10-11 00:00 - 2022-10-12 00:00 [2023-05-17 16:02:18.379472]</span></span>
+<span><span class="co">#&gt; Running time step 14/20 : 2022-10-11 00:00 - 2022-10-12 00:00 [2023-05-17 20:27:04.256656]</span></span>
 <span><span class="co">#&gt; zone1temp: mean 15.125 sd 1</span></span>
 <span><span class="co">#&gt; zone2temp: mean 14.5865 sd 1</span></span>
 <span><span class="co">#&gt; lw_factor: mean 0.9837 sd 0.02</span></span>
-<span><span class="co">#&gt; Running time step 15/20 : 2022-10-12 00:00 - 2022-10-13 00:00 [2023-05-17 16:02:23.852983]</span></span>
+<span><span class="co">#&gt; Running time step 15/20 : 2022-10-12 00:00 - 2022-10-13 00:00 [2023-05-17 20:27:09.086643]</span></span>
 <span><span class="co">#&gt; zone1temp: mean 15.125 sd 1</span></span>
 <span><span class="co">#&gt; zone2temp: mean 14.5865 sd 1</span></span>
 <span><span class="co">#&gt; lw_factor: mean 0.9837 sd 0.02</span></span>
-<span><span class="co">#&gt; Running time step 16/20 : 2022-10-13 00:00 - 2022-10-14 00:00 [2023-05-17 16:02:29.382333]</span></span>
+<span><span class="co">#&gt; Running time step 16/20 : 2022-10-13 00:00 - 2022-10-14 00:00 [2023-05-17 20:27:14.006773]</span></span>
 <span><span class="co">#&gt; zone1temp: mean 15.125 sd 1</span></span>
 <span><span class="co">#&gt; zone2temp: mean 14.5865 sd 1</span></span>
 <span><span class="co">#&gt; lw_factor: mean 0.9837 sd 0.02</span></span>
-<span><span class="co">#&gt; Running time step 17/20 : 2022-10-14 00:00 - 2022-10-15 00:00 [2023-05-17 16:02:34.940996]</span></span>
+<span><span class="co">#&gt; Running time step 17/20 : 2022-10-14 00:00 - 2022-10-15 00:00 [2023-05-17 20:27:18.949887]</span></span>
 <span><span class="co">#&gt; zone1temp: mean 15.125 sd 1</span></span>
 <span><span class="co">#&gt; zone2temp: mean 14.5865 sd 1</span></span>
 <span><span class="co">#&gt; lw_factor: mean 0.9837 sd 0.02</span></span>
-<span><span class="co">#&gt; Running time step 18/20 : 2022-10-15 00:00 - 2022-10-16 00:00 [2023-05-17 16:02:40.499773]</span></span>
+<span><span class="co">#&gt; Running time step 18/20 : 2022-10-15 00:00 - 2022-10-16 00:00 [2023-05-17 20:27:23.745094]</span></span>
 <span><span class="co">#&gt; zone1temp: mean 15.125 sd 1</span></span>
 <span><span class="co">#&gt; zone2temp: mean 14.5865 sd 1</span></span>
 <span><span class="co">#&gt; lw_factor: mean 0.9837 sd 0.02</span></span>
-<span><span class="co">#&gt; Running time step 19/20 : 2022-10-16 00:00 - 2022-10-17 00:00 [2023-05-17 16:02:46.148997]</span></span>
+<span><span class="co">#&gt; Running time step 19/20 : 2022-10-16 00:00 - 2022-10-17 00:00 [2023-05-17 20:27:28.482766]</span></span>
 <span><span class="co">#&gt; zone1temp: mean 15.125 sd 1</span></span>
 <span><span class="co">#&gt; zone2temp: mean 14.5865 sd 1</span></span>
 <span><span class="co">#&gt; lw_factor: mean 0.9837 sd 0.02</span></span>
-<span><span class="co">#&gt; Running time step 20/20 : 2022-10-17 00:00 - 2022-10-18 00:00 [2023-05-17 16:02:51.83978]</span></span>
+<span><span class="co">#&gt; Running time step 20/20 : 2022-10-17 00:00 - 2022-10-18 00:00 [2023-05-17 20:27:33.261367]</span></span>
 <span><span class="co">#&gt; zone1temp: mean 15.125 sd 1</span></span>
 <span><span class="co">#&gt; zone2temp: mean 14.5865 sd 1</span></span>
 <span><span class="co">#&gt; lw_factor: mean 0.9837 sd 0.02</span></span>
@@ -430,12 +430,12 @@ file and not overwrite them.</p>
 <span><span class="co">#&gt; <span style="color: #949494;"># A tibble: 6 × 12</span></span></span>
 <span><span class="co">#&gt;   datetime            pubDate             depth family   parameter variable   </span></span>
 <span><span class="co">#&gt;   <span style="color: #949494; font-style: italic;">&lt;dttm&gt;</span>              <span style="color: #949494; font-style: italic;">&lt;dttm&gt;</span>              <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span> <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>        <span style="color: #949494; font-style: italic;">&lt;int&gt;</span> <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>      </span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;">1</span> 2022-09-28 <span style="color: #949494;">00:00:00</span> 2023-05-17 <span style="color: #949494;">16:02:57</span>     0 ensemble         1 temperature</span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;">2</span> 2022-09-28 <span style="color: #949494;">00:00:00</span> 2023-05-17 <span style="color: #949494;">16:02:57</span>     0 ensemble         2 temperature</span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;">3</span> 2022-09-28 <span style="color: #949494;">00:00:00</span> 2023-05-17 <span style="color: #949494;">16:02:57</span>     0 ensemble         3 temperature</span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;">4</span> 2022-09-28 <span style="color: #949494;">00:00:00</span> 2023-05-17 <span style="color: #949494;">16:02:57</span>     0 ensemble         4 temperature</span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;">5</span> 2022-09-28 <span style="color: #949494;">00:00:00</span> 2023-05-17 <span style="color: #949494;">16:02:57</span>     0 ensemble         5 temperature</span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;">6</span> 2022-09-28 <span style="color: #949494;">00:00:00</span> 2023-05-17 <span style="color: #949494;">16:02:57</span>     0 ensemble         6 temperature</span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;">1</span> 2022-09-28 <span style="color: #949494;">00:00:00</span> 2023-05-17 <span style="color: #949494;">20:27:38</span>     0 ensemble         1 temperature</span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;">2</span> 2022-09-28 <span style="color: #949494;">00:00:00</span> 2023-05-17 <span style="color: #949494;">20:27:38</span>     0 ensemble         2 temperature</span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;">3</span> 2022-09-28 <span style="color: #949494;">00:00:00</span> 2023-05-17 <span style="color: #949494;">20:27:38</span>     0 ensemble         3 temperature</span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;">4</span> 2022-09-28 <span style="color: #949494;">00:00:00</span> 2023-05-17 <span style="color: #949494;">20:27:38</span>     0 ensemble         4 temperature</span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;">5</span> 2022-09-28 <span style="color: #949494;">00:00:00</span> 2023-05-17 <span style="color: #949494;">20:27:38</span>     0 ensemble         5 temperature</span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;">6</span> 2022-09-28 <span style="color: #949494;">00:00:00</span> 2023-05-17 <span style="color: #949494;">20:27:38</span>     0 ensemble         6 temperature</span></span>
 <span><span class="co">#&gt; <span style="color: #949494;"># ℹ 6 more variables: prediction &lt;dbl&gt;, forecast &lt;dbl&gt;, variable_type &lt;chr&gt;,</span></span></span>
 <span><span class="co">#&gt; <span style="color: #949494;">#   site_id &lt;chr&gt;, model_id &lt;chr&gt;, reference_datetime &lt;chr&gt;</span></span></span></code></pre></div>
 <div class="sourceCode" id="cb11"><pre class="downlit sourceCode r">
