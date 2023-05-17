@@ -221,5 +221,5 @@ run_flare <- function(lake_directory,
 
   message(paste0("successfully generated flare forecats for: ", basename(saved_file)))
 
-  return(list(restart_file = saved_file))
+  invisible(list(restart_file = saved_file))
 }

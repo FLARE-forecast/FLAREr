@@ -1,6 +1,10 @@
 url: http://flare-forecast.org/FLAREr/
 template:
   bootstrap: 5
+navbar:
+  structure:
+    left:  [intro, reference, articles]
+    right: [search, github]
 reference:
 - title:
 - subtitle: Out-of-box workflow
@@ -41,3 +45,4 @@ reference:
   - ignore_sigpipe
   - put_forecast
   - get_restart_file
+
