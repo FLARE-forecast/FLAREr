@@ -129,23 +129,6 @@ A guide to the variables in `configure_flare.yml` and in the
 
 -   **blue_ice_thickness:** initial blue ice thickness (m)
 
-### inflow:
-
--   **include_inflow:** Include inflows in simulations (`TRUE` or
-    `FALSE`)
-
--   **use_forecasted_inflow:** Use forecast met during forecasting
-    (`TRUE` or `FALSE`)
-
--   **forecast_inflow_model:** name of inflow model
-
--   **observed_filename:** name of inflow targets file name
-
--   **use_ler_vars:** use LER standardized met names (`TRUE` or `FALSE`)
-
--   **local_directory:** directory where inflow forcasts are saved if
-    not using s3 access. Relative to the lake_directory.
-
 ### met:
 
 -   **use_forecasted_met:** Use forecast met during forecasting (`TRUE`
@@ -162,6 +145,23 @@ A guide to the variables in `configure_flare.yml` and in the
 
 -   **local_directory:** directory where meterology forcasts are saved
     if not using s3 access. Relative to the lake_directory.
+
+### inflow:
+
+-   **include_inflow:** Include inflows in simulations (`TRUE` or
+    `FALSE`)
+
+-   **use_forecasted_inflow:** Use forecast met during forecasting
+    (`TRUE` or `FALSE`)
+
+-   **forecast_inflow_model:** name of inflow model
+
+-   **observed_filename:** name of inflow targets file name
+
+-   **use_ler_vars:** use LER standardized met names (`TRUE` or `FALSE`)
+
+-   **local_directory:** directory where inflow forcasts are saved if
+    not using s3 access. Relative to the lake_directory.
 
 ### uncertainty:
 
