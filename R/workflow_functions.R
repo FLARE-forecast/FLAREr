@@ -138,6 +138,7 @@ put_targets <- function(site_id, cleaned_insitu_file = NA, cleaned_met_file = NA
 #'
 #' @return
 #' @export
+#' @noRd
 #'
 get_targets <- function(lake_directory, config){
   if(config$run_config$use_s3){
@@ -409,7 +410,7 @@ put_forecast <- function(saved_file, eml_file_name = NULL, config){
 #'
 #' @param score_file full path of saved FLARE netcdf
 #' @param config flare configuration object
-#'
+#' @noRd
 #' @return
 #' @export
 #'
@@ -431,7 +432,7 @@ put_score <- function(saved_file, config){
 #'
 #' @param score_file full path of saved FLARE netcdf
 #' @param config flare configuration object
-#'
+#' @noRd
 #' @return
 #' @export
 #'
@@ -458,7 +459,7 @@ put_forecast_csv <- function(saved_file, config){
 #' @param prefix relative path directory within bucket
 #' @param region S3 region
 #' @param base_url S3 endpoint
-#'
+#' @noRd
 #' @return
 #' @export
 #'
@@ -516,7 +517,7 @@ delete_restart <- function(site_id, sim_name, bucket = "restart", endpoint){
 #' Set and create directories for observation configuration
 #'
 #' @param lake_directory full path to repository directory
-#'
+#' @noRd
 #' @return
 #' @export
 #'

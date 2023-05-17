@@ -2,14 +2,10 @@
 ##' @details Function combines the netcdf output with the long-format observation file to produce a set of plots for each state variable, calibrated parameter, and diagnostic variable
 ##' @param config list; list from reading in configuration yaml
 ##' @return list of variables necessary for running oxygen management in the GLM AED
-##' @export
 ##' @import readr
 ##' @importFrom lubridate as_datetime days as_date
 ##' @author Quinn Thomas
-##' @examples
-##' \dontrun{
-##' management <- generate_oxygen_management(config = config)
-##' }
+##' @noRd
 generate_oxygen_management <- function(config){
 
 

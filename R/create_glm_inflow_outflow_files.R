@@ -6,6 +6,7 @@
 #' @param state_names vector; vector of state names that will be included in the inflow files
 #' @return list with two vectors. One vector is the matrix of inflow_file_names and the other is the matrix of outflow_file_names
 #' @export
+#' @noRd
 
 create_glm_inflow_outflow_files <- function(inflow_file_dir = NULL,
                                             inflow_obs,

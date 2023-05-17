@@ -15,6 +15,7 @@
 ##' @importFrom readr write_csv
 ##' @importFrom patchwork wrap_plots
 ##' @author Quinn Thomas
+##' @noRd
 ##' @examples
 ##' \dontrun{
 ##' plotting_general(file_name = saved_file,

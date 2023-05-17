@@ -11,6 +11,7 @@
 ##' @importFrom tibble tibble
 ##' @importFrom lubridate as_datetime days hours ymd_hm
 ##' @author Quinn Thomas
+##' @noRd
 ##' @examples
 ##' \dontrun{
 ##' met_out <- FLAREr::generate_glm_met_files(obs_met_file = observed_met_file,
