@@ -138,7 +138,6 @@ put_targets <- function(site_id, cleaned_insitu_file = NA, cleaned_met_file = NA
 #'
 #' @return
 #' @export
-#' @noRd
 #'
 get_targets <- function(lake_directory, config){
   if(config$run_config$use_s3){
@@ -261,7 +260,7 @@ get_restart_file <- function(config, lake_directory){
 #' @param saved_file full path of saved FLARE netcdf
 #' @param new_horizon horizon (in days) to update the run configuration with
 #' @param day_advance number of days between forecast forecast generation (defaults to 1)
-#'
+#' @noRd
 #' @return configuration list
 #' @export
 #'

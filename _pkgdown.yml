@@ -28,7 +28,6 @@ reference:
   - check_noaa_present_arrow
   - get_run_config
   - update_run_config2
-  - get_restart_file
   - get_git_repo
   - get_edi_file
 - subtitle: S3 intergration
@@ -40,3 +39,5 @@ reference:
   - get_targets
   - put_targets
   - ignore_sigpipe
+  - put_forecast
+  - get_restart_file
