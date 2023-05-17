@@ -29,9 +29,7 @@ FLARE development has been supported by grants from the U.S. National Science Fo
 You will need to download the necessary packages prior to running.
 
 ```
-remotes::install_github("FLARE-forecast/GLM3r")
 remotes::install_github("FLARE-forecast/FLAREr")
-
 ```
 ## Use
 
@@ -46,12 +44,16 @@ User generated *insitu* observations, meteorology, and inflow/outflow in a speci
 The code below will produce a single forecast for Falling Creek Reservoir using configuration files included with the package.
 
 ```
+library(arrow)
+library(tidyverse)
+library(FLAREr)
+
 tmp <- tempdir()
 file.copy(system.file("example", package = "FLAREr"), tmp, recursive = TRUE)
 lake_directory <- file.path(tmp, "example")
-FLAREr::run_flare(lake_directory = lake_directory,configure_run_file = "configure_run.yml", config_set_name = "default")
+run_flare(lake_directory = lake_directory,configure_run_file = "configure_run.yml", config_set_name = "default")
 
-arrow::open_dataset(file.path(lake_directory,"forecasts/parquet")) |> 
+open_dataset(file.path(lake_directory,"forecasts/parquet")) |> 
   filter(variable == "temperature",
          depth == 1) |> 
   collect() |> 
