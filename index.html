@@ -63,7 +63,7 @@
 <div class="section level1">
 <div class="page-header"><h1 id="flarer">FLAREr<a class="anchor" aria-label="anchor" href="#flarer"></a>
 </h1></div>
-<p>This document serves as a users guide and a tutorial for the FLARE (Forecasting Lake and Reservoir Ecosystems) system (<a href="https://agupubs.onlinelibrary.wiley.com/doi/abs/10.1029/2019WR026138" class="external-link">Thomas et al. 2020</a>). FLARE generates forecasts and forecast uncertainty of water temperature and water quality for 1 to 35-dau ahead time horizon at multiple depths of a lake or reservoir. It uses data assimilation to update the initial starting point for a forecast and the model parameters based a real-time statistical comparisons to observations. It has been developed, tested, and evaluated for Falling Creek Reservoir in Vinton,VA (<a href="https://agupubs.onlinelibrary.wiley.com/doi/abs/10.1029/2019WR026138" class="external-link">Thomas et al. 2020</a>) and National Ecological Observatory Network lakes (<a href="https://doi.org/10.1002/fee.2623" class="external-link">Thomas et al. 2023</a></p>
+<p>This document serves as a users guide and a tutorial for the FLARE (Forecasting Lake and Reservoir Ecosystems) system (<a href="https://agupubs.onlinelibrary.wiley.com/doi/abs/10.1029/2019WR026138" class="external-link">Thomas et al. 2020</a>). FLARE generates forecasts and forecast uncertainty of water temperature and water quality for 1 to 35-day ahead time horizon at multiple depths of a lake or reservoir. It uses data assimilation to update the initial starting point for a forecast and the model parameters based a real-time statistical comparisons to observations. It has been developed, tested, and evaluated for Falling Creek Reservoir in Vinton,VA (<a href="https://agupubs.onlinelibrary.wiley.com/doi/abs/10.1029/2019WR026138" class="external-link">Thomas et al. 2020</a>) and National Ecological Observatory Network lakes (<a href="https://doi.org/10.1002/fee.2623" class="external-link">Thomas et al. 2023</a></p>
 <p>FLAREr is a set of R scripts that</p>
 <ul>
 <li>Generating the inputs and configuration files required by the General Lake Model (GLM)</li>
@@ -71,13 +71,12 @@
 <li>Processing and archiving forecast output</li>
 <li>Visualizing forecast output</li>
 </ul>
-<p>FLARE uses the 1-D General Lake Model (<a href="https://www.geosci-model-dev.net/12/473/2019/" class="external-link">Hipsey et al. 2019</a>) as the mechanistic process model that predicts hydrodynamics of the lake or reservoir. For forecasts of water quality, it uses GLM with the Aquatic Ecosystem Dynamics library. The binaries for GLM and GLM-AED are included in the FLARE code that is available on GitHub. FLARE requires GLM version 3.1 or higher.</p>
+<p>FLARE uses the 1-D General Lake Model (<a href="https://www.geosci-model-dev.net/12/473/2019/" class="external-link">Hipsey et al. 2019</a>) as the mechanistic process model that predicts hydrodynamics of the lake or reservoir. For forecasts of water quality, it uses GLM with the Aquatic Ecosystem Dynamics library. The binaries for GLM and GLM-AED are included in the FLARE code that is available on GitHub. FLARE requires GLM version 3.3 or higher.</p>
 <p>More information about the GLM can be found here:</p>
 <ul>
-<li><a href="https://aed.see.uwa.edu.au/research/models/GLM/index.html" class="external-link">GLM users guide</a></li>
 <li><a href="https://www.geosci-model-dev.net/12/473/2019/" class="external-link">GLM 3.0.0 manuscript</a></li>
-<li><a href="https://github.com/AquaticEcoDynamics/GLM" class="external-link">GLM on GitHub</a></li>
-<li><a href="https://github.com/AquaticEcoDynamics/libaed2" class="external-link">AED on GitHub</a></li>
+<li><a href="https://github.com/AquaticEcoDynamics/glm-aed" class="external-link">GLM on GitHub</a></li>
+<li><a href="https://aquaticecodynamics.github.io/glm-workbook/" class="external-link">GLM users guide</a></li>
 </ul>
 <p>FLARE development has been supported by grants from the U.S. National Science Foundation (CNS-1737424, DBI-1933016, DBI-1933102)</p>
 <div class="section level2">
@@ -94,22 +93,25 @@
 <div class="section level3">
 <h3 id="requires">Requires<a class="anchor" aria-label="anchor" href="#requires"></a>
 </h3>
-<p>User generated <em>in situ</em> observations, meteorology, and inflow/outflow in a specified format. See FLARE example vignette for format specification.</p>
+<p>User generated <em>insitu</em> observations, meteorology, and inflow/outflow in a specified format. See FLARE example vignette for format specification.</p>
 </div>
 <div class="section level3">
-<h3 id="set-up">Set up<a class="anchor" aria-label="anchor" href="#set-up"></a>
+<h3 id="quick-run">Quick Run<a class="anchor" aria-label="anchor" href="#quick-run"></a>
 </h3>
-<p><code>create_glm_inflow_outflow_files()</code>: generates inflow and output files in GLM format.<br><code><a href="reference/create_obs_matrix.html">create_obs_matrix()</a></code>: generate the matrix of observations require in data assimilation. <code>generate_glm_met_files()</code>: generates meteorology inputs (both past and future) in the GLM format.<br><code><a href="reference/generate_initial_conditions.html">generate_initial_conditions()</a></code>: generates initial condition for data assimilation and forecasting.<br><code><a href="reference/initiate_model_error.html">initiate_model_error()</a></code>: generates the standard deviations for the model error.</p>
-</div>
-<div class="section level3">
-<h3 id="run">Run<a class="anchor" aria-label="anchor" href="#run"></a>
-</h3>
-<p><code><a href="reference/run_da_forecast.html">run_da_forecast()</a></code>: runs data assimilation and forecasting.</p>
-</div>
-<div class="section level3">
-<h3 id="processing">Processing<a class="anchor" aria-label="anchor" href="#processing"></a>
-</h3>
-<p><code><a href="reference/write_forecast_netcdf.html">write_forecast_netcdf()</a></code>: write output in Ecological Forecasting Initiative standards.<br><code>create_flare_metadata()</code>: write metadata in Ecological Forecasting Initiative standards.<br><code>plotting_general()</code>: generates a PDF with default visualizations.</p>
+<p>The code below will produce a single forecast for Falling Creek Reservoir using configuration files included with the package.</p>
+<pre><code><span><span class="va">tmp</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/tempfile.html" class="external-link">tempdir</a></span><span class="op">(</span><span class="op">)</span></span>
+<span><span class="fu"><a href="https://rdrr.io/r/base/files.html" class="external-link">file.copy</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/system.file.html" class="external-link">system.file</a></span><span class="op">(</span><span class="st">"example"</span>, package <span class="op">=</span> <span class="st">"FLAREr"</span><span class="op">)</span>, <span class="va">tmp</span>, recursive <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span></span>
+<span><span class="va">lake_directory</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/file.path.html" class="external-link">file.path</a></span><span class="op">(</span><span class="va">tmp</span>, <span class="st">"example"</span><span class="op">)</span></span>
+<span><span class="fu">FLAREr</span><span class="fu">::</span><span class="fu"><a href="reference/run_flare.html">run_flare</a></span><span class="op">(</span>lake_directory <span class="op">=</span> <span class="va">lake_directory</span>,configure_run_file <span class="op">=</span> <span class="st">"configure_run.yml"</span>, config_set_name <span class="op">=</span> <span class="st">"default"</span><span class="op">)</span></span>
+<span></span>
+<span><span class="fu">arrow</span><span class="fu">::</span><span class="fu"><a href="https://arrow.apache.org/docs/r/reference/open_dataset.html" class="external-link">open_dataset</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/file.path.html" class="external-link">file.path</a></span><span class="op">(</span><span class="va">lake_directory</span>,<span class="st">"forecasts/parquet"</span><span class="op">)</span><span class="op">)</span> <span class="op">|&gt;</span> </span>
+<span>  <span class="fu"><a href="https://rdrr.io/r/stats/filter.html" class="external-link">filter</a></span><span class="op">(</span><span class="va">variable</span> <span class="op">==</span> <span class="st">"temperature"</span>,</span>
+<span>         <span class="va">depth</span> <span class="op">==</span> <span class="fl">1</span><span class="op">)</span> <span class="op">|&gt;</span> </span>
+<span>  <span class="fu">collect</span><span class="op">(</span><span class="op">)</span> <span class="op">|&gt;</span> </span>
+<span>  <span class="fu">ggplot</span><span class="op">(</span><span class="fu">aes</span><span class="op">(</span>x <span class="op">=</span> <span class="va">datetime</span>, y <span class="op">=</span> <span class="va">prediction</span>, group <span class="op">=</span> <span class="va">parameter</span><span class="op">)</span><span class="op">)</span> <span class="op">+</span></span>
+<span>  <span class="fu">geom_line</span><span class="op">(</span><span class="op">)</span> <span class="op">+</span></span>
+<span>  <span class="fu">geom_vline</span><span class="op">(</span><span class="fu">aes</span><span class="op">(</span>xintercept <span class="op">=</span> <span class="fu">as_datetime</span><span class="op">(</span><span class="va">reference_datetime</span><span class="op">)</span><span class="op">)</span><span class="op">)</span> <span class="op">+</span></span>
+<span>  <span class="fu">labs</span><span class="op">(</span>title <span class="op">=</span> <span class="st">"1 m water temperature forecast"</span><span class="op">)</span></span></code></pre>
 </div>
 </div>
 </div>

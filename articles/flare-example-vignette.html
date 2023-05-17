@@ -99,17 +99,15 @@ al. 2019</a>) as the mechanistic process model that predicts
 hydrodynamics of the lake or reservoir. For forecasts of water quality,
 it uses GLM with the Aquatic Ecosystem Dynamics library. The binaries
 for GLM and GLM-AED are included in the FLARE code that is available on
-GitHub. FLARE requires GLM version 3.1 or higher.</p>
+GitHub. FLARE requires GLM version 3.3 or higher.</p>
 <p>More information about the GLM can be found here:</p>
 <ul>
-<li><a href="https://aed.see.uwa.edu.au/research/models/GLM/index.html" class="external-link">GLM
-users guide</a></li>
 <li><a href="https://www.geosci-model-dev.net/12/473/2019/" class="external-link">GLM 3.0.0
 manuscript</a></li>
-<li><a href="https://github.com/AquaticEcoDynamics/GLM" class="external-link">GLM on
+<li><a href="https://github.com/AquaticEcoDynamics/glm-aed" class="external-link">GLM on
 GitHub</a></li>
-<li><a href="https://github.com/AquaticEcoDynamics/libaed2" class="external-link">AED on
-GitHub</a></li>
+<li><a href="https://aquaticecodynamics.github.io/glm-workbook/" class="external-link">GLM
+users guide</a></li>
 </ul>
 <p>FLARE development has been supported by grants from National Science
 Foundation (CNS-1737424, DEB-1753639, EF-1702506, DBI-1933016,
@@ -320,83 +318,83 @@ file and not overwrite them.</p>
 <span><span class="co">#&gt;   method            from</span></span>
 <span><span class="co">#&gt;   as.zoo.data.frame zoo</span></span>
 <span><span class="co">#&gt; Using GLM Version 3.3.0a9</span></span>
-<span><span class="co">#&gt; Running time step 1/20 : 2022-09-28 00:00 - 2022-09-29 00:00 [2023-05-17 15:01:57.517612]</span></span>
+<span><span class="co">#&gt; Running time step 1/20 : 2022-09-28 00:00 - 2022-09-29 00:00 [2023-05-17 15:26:52.833942]</span></span>
 <span><span class="co">#&gt; zone1temp: mean 11.0835 sd 1</span></span>
 <span><span class="co">#&gt; zone2temp: mean 14.1078 sd 1</span></span>
 <span><span class="co">#&gt; lw_factor: mean 1.014 sd 0.02</span></span>
-<span><span class="co">#&gt; Running time step 2/20 : 2022-09-29 00:00 - 2022-09-30 00:00 [2023-05-17 15:02:02.654667]</span></span>
+<span><span class="co">#&gt; Running time step 2/20 : 2022-09-29 00:00 - 2022-09-30 00:00 [2023-05-17 15:26:59.449335]</span></span>
 <span><span class="co">#&gt; zone1temp: mean 11.4355 sd 1</span></span>
 <span><span class="co">#&gt; zone2temp: mean 14.3982 sd 1</span></span>
 <span><span class="co">#&gt; lw_factor: mean 1.0153 sd 0.02</span></span>
-<span><span class="co">#&gt; Running time step 3/20 : 2022-09-30 00:00 - 2022-10-01 00:00 [2023-05-17 15:02:07.630449]</span></span>
+<span><span class="co">#&gt; Running time step 3/20 : 2022-09-30 00:00 - 2022-10-01 00:00 [2023-05-17 15:27:06.057084]</span></span>
 <span><span class="co">#&gt; zone1temp: mean 11.5912 sd 1</span></span>
 <span><span class="co">#&gt; zone2temp: mean 14.1471 sd 1</span></span>
 <span><span class="co">#&gt; lw_factor: mean 1.015 sd 0.02</span></span>
-<span><span class="co">#&gt; Running time step 4/20 : 2022-10-01 00:00 - 2022-10-02 00:00 [2023-05-17 15:02:12.571608]</span></span>
+<span><span class="co">#&gt; Running time step 4/20 : 2022-10-01 00:00 - 2022-10-02 00:00 [2023-05-17 15:27:12.51433]</span></span>
 <span><span class="co">#&gt; zone1temp: mean 14.3844 sd 1</span></span>
 <span><span class="co">#&gt; zone2temp: mean 14.8046 sd 1</span></span>
 <span><span class="co">#&gt; lw_factor: mean 0.9922 sd 0.02</span></span>
-<span><span class="co">#&gt; Running time step 5/20 : 2022-10-02 00:00 - 2022-10-03 00:00 [2023-05-17 15:02:17.612243]</span></span>
+<span><span class="co">#&gt; Running time step 5/20 : 2022-10-02 00:00 - 2022-10-03 00:00 [2023-05-17 15:27:18.842247]</span></span>
 <span><span class="co">#&gt; zone1temp: mean 15.125 sd 1</span></span>
 <span><span class="co">#&gt; zone2temp: mean 14.5865 sd 1</span></span>
 <span><span class="co">#&gt; lw_factor: mean 0.9837 sd 0.02</span></span>
-<span><span class="co">#&gt; Running time step 6/20 : 2022-10-03 00:00 - 2022-10-04 00:00 [2023-05-17 15:02:22.594345]</span></span>
+<span><span class="co">#&gt; Running time step 6/20 : 2022-10-03 00:00 - 2022-10-04 00:00 [2023-05-17 15:27:25.503263]</span></span>
 <span><span class="co">#&gt; zone1temp: mean 15.125 sd 1</span></span>
 <span><span class="co">#&gt; zone2temp: mean 14.5865 sd 1</span></span>
 <span><span class="co">#&gt; lw_factor: mean 0.9837 sd 0.02</span></span>
-<span><span class="co">#&gt; Running time step 7/20 : 2022-10-04 00:00 - 2022-10-05 00:00 [2023-05-17 15:02:27.576704]</span></span>
+<span><span class="co">#&gt; Running time step 7/20 : 2022-10-04 00:00 - 2022-10-05 00:00 [2023-05-17 15:27:32.268598]</span></span>
 <span><span class="co">#&gt; zone1temp: mean 15.125 sd 1</span></span>
 <span><span class="co">#&gt; zone2temp: mean 14.5865 sd 1</span></span>
 <span><span class="co">#&gt; lw_factor: mean 0.9837 sd 0.02</span></span>
-<span><span class="co">#&gt; Running time step 8/20 : 2022-10-05 00:00 - 2022-10-06 00:00 [2023-05-17 15:02:32.462997]</span></span>
+<span><span class="co">#&gt; Running time step 8/20 : 2022-10-05 00:00 - 2022-10-06 00:00 [2023-05-17 15:27:38.631443]</span></span>
 <span><span class="co">#&gt; zone1temp: mean 15.125 sd 1</span></span>
 <span><span class="co">#&gt; zone2temp: mean 14.5865 sd 1</span></span>
 <span><span class="co">#&gt; lw_factor: mean 0.9837 sd 0.02</span></span>
-<span><span class="co">#&gt; Running time step 9/20 : 2022-10-06 00:00 - 2022-10-07 00:00 [2023-05-17 15:02:37.447385]</span></span>
+<span><span class="co">#&gt; Running time step 9/20 : 2022-10-06 00:00 - 2022-10-07 00:00 [2023-05-17 15:27:45.157477]</span></span>
 <span><span class="co">#&gt; zone1temp: mean 15.125 sd 1</span></span>
 <span><span class="co">#&gt; zone2temp: mean 14.5865 sd 1</span></span>
 <span><span class="co">#&gt; lw_factor: mean 0.9837 sd 0.02</span></span>
-<span><span class="co">#&gt; Running time step 10/20 : 2022-10-07 00:00 - 2022-10-08 00:00 [2023-05-17 15:02:42.355884]</span></span>
+<span><span class="co">#&gt; Running time step 10/20 : 2022-10-07 00:00 - 2022-10-08 00:00 [2023-05-17 15:27:51.760466]</span></span>
 <span><span class="co">#&gt; zone1temp: mean 15.125 sd 1</span></span>
 <span><span class="co">#&gt; zone2temp: mean 14.5865 sd 1</span></span>
 <span><span class="co">#&gt; lw_factor: mean 0.9837 sd 0.02</span></span>
-<span><span class="co">#&gt; Running time step 11/20 : 2022-10-08 00:00 - 2022-10-09 00:00 [2023-05-17 15:02:47.407429]</span></span>
+<span><span class="co">#&gt; Running time step 11/20 : 2022-10-08 00:00 - 2022-10-09 00:00 [2023-05-17 15:27:58.194586]</span></span>
 <span><span class="co">#&gt; zone1temp: mean 15.125 sd 1</span></span>
 <span><span class="co">#&gt; zone2temp: mean 14.5865 sd 1</span></span>
 <span><span class="co">#&gt; lw_factor: mean 0.9837 sd 0.02</span></span>
-<span><span class="co">#&gt; Running time step 12/20 : 2022-10-09 00:00 - 2022-10-10 00:00 [2023-05-17 15:02:52.398189]</span></span>
+<span><span class="co">#&gt; Running time step 12/20 : 2022-10-09 00:00 - 2022-10-10 00:00 [2023-05-17 15:28:04.796034]</span></span>
 <span><span class="co">#&gt; zone1temp: mean 15.125 sd 1</span></span>
 <span><span class="co">#&gt; zone2temp: mean 14.5865 sd 1</span></span>
 <span><span class="co">#&gt; lw_factor: mean 0.9837 sd 0.02</span></span>
-<span><span class="co">#&gt; Running time step 13/20 : 2022-10-10 00:00 - 2022-10-11 00:00 [2023-05-17 15:02:57.379905]</span></span>
+<span><span class="co">#&gt; Running time step 13/20 : 2022-10-10 00:00 - 2022-10-11 00:00 [2023-05-17 15:28:11.517886]</span></span>
 <span><span class="co">#&gt; zone1temp: mean 15.125 sd 1</span></span>
 <span><span class="co">#&gt; zone2temp: mean 14.5865 sd 1</span></span>
 <span><span class="co">#&gt; lw_factor: mean 0.9837 sd 0.02</span></span>
-<span><span class="co">#&gt; Running time step 14/20 : 2022-10-11 00:00 - 2022-10-12 00:00 [2023-05-17 15:03:02.314217]</span></span>
+<span><span class="co">#&gt; Running time step 14/20 : 2022-10-11 00:00 - 2022-10-12 00:00 [2023-05-17 15:28:18.076326]</span></span>
 <span><span class="co">#&gt; zone1temp: mean 15.125 sd 1</span></span>
 <span><span class="co">#&gt; zone2temp: mean 14.5865 sd 1</span></span>
 <span><span class="co">#&gt; lw_factor: mean 0.9837 sd 0.02</span></span>
-<span><span class="co">#&gt; Running time step 15/20 : 2022-10-12 00:00 - 2022-10-13 00:00 [2023-05-17 15:03:07.407027]</span></span>
+<span><span class="co">#&gt; Running time step 15/20 : 2022-10-12 00:00 - 2022-10-13 00:00 [2023-05-17 15:28:24.521034]</span></span>
 <span><span class="co">#&gt; zone1temp: mean 15.125 sd 1</span></span>
 <span><span class="co">#&gt; zone2temp: mean 14.5865 sd 1</span></span>
 <span><span class="co">#&gt; lw_factor: mean 0.9837 sd 0.02</span></span>
-<span><span class="co">#&gt; Running time step 16/20 : 2022-10-13 00:00 - 2022-10-14 00:00 [2023-05-17 15:03:12.346754]</span></span>
+<span><span class="co">#&gt; Running time step 16/20 : 2022-10-13 00:00 - 2022-10-14 00:00 [2023-05-17 15:28:31.030973]</span></span>
 <span><span class="co">#&gt; zone1temp: mean 15.125 sd 1</span></span>
 <span><span class="co">#&gt; zone2temp: mean 14.5865 sd 1</span></span>
 <span><span class="co">#&gt; lw_factor: mean 0.9837 sd 0.02</span></span>
-<span><span class="co">#&gt; Running time step 17/20 : 2022-10-14 00:00 - 2022-10-15 00:00 [2023-05-17 15:03:17.292912]</span></span>
+<span><span class="co">#&gt; Running time step 17/20 : 2022-10-14 00:00 - 2022-10-15 00:00 [2023-05-17 15:28:37.683276]</span></span>
 <span><span class="co">#&gt; zone1temp: mean 15.125 sd 1</span></span>
 <span><span class="co">#&gt; zone2temp: mean 14.5865 sd 1</span></span>
 <span><span class="co">#&gt; lw_factor: mean 0.9837 sd 0.02</span></span>
-<span><span class="co">#&gt; Running time step 18/20 : 2022-10-15 00:00 - 2022-10-16 00:00 [2023-05-17 15:03:22.295394]</span></span>
+<span><span class="co">#&gt; Running time step 18/20 : 2022-10-15 00:00 - 2022-10-16 00:00 [2023-05-17 15:28:44.33328]</span></span>
 <span><span class="co">#&gt; zone1temp: mean 15.125 sd 1</span></span>
 <span><span class="co">#&gt; zone2temp: mean 14.5865 sd 1</span></span>
 <span><span class="co">#&gt; lw_factor: mean 0.9837 sd 0.02</span></span>
-<span><span class="co">#&gt; Running time step 19/20 : 2022-10-16 00:00 - 2022-10-17 00:00 [2023-05-17 15:03:27.267594]</span></span>
+<span><span class="co">#&gt; Running time step 19/20 : 2022-10-16 00:00 - 2022-10-17 00:00 [2023-05-17 15:28:50.800329]</span></span>
 <span><span class="co">#&gt; zone1temp: mean 15.125 sd 1</span></span>
 <span><span class="co">#&gt; zone2temp: mean 14.5865 sd 1</span></span>
 <span><span class="co">#&gt; lw_factor: mean 0.9837 sd 0.02</span></span>
-<span><span class="co">#&gt; Running time step 20/20 : 2022-10-17 00:00 - 2022-10-18 00:00 [2023-05-17 15:03:32.287107]</span></span>
+<span><span class="co">#&gt; Running time step 20/20 : 2022-10-17 00:00 - 2022-10-18 00:00 [2023-05-17 15:28:57.429756]</span></span>
 <span><span class="co">#&gt; zone1temp: mean 15.125 sd 1</span></span>
 <span><span class="co">#&gt; zone2temp: mean 14.5865 sd 1</span></span>
 <span><span class="co">#&gt; lw_factor: mean 0.9837 sd 0.02</span></span>
@@ -432,12 +430,12 @@ file and not overwrite them.</p>
 <span><span class="co">#&gt; <span style="color: #949494;"># A tibble: 6 × 12</span></span></span>
 <span><span class="co">#&gt;   datetime            pubDate             depth family   parameter variable   </span></span>
 <span><span class="co">#&gt;   <span style="color: #949494; font-style: italic;">&lt;dttm&gt;</span>              <span style="color: #949494; font-style: italic;">&lt;dttm&gt;</span>              <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span> <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>        <span style="color: #949494; font-style: italic;">&lt;int&gt;</span> <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>      </span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;">1</span> 2022-09-28 <span style="color: #949494;">00:00:00</span> 2023-05-17 <span style="color: #949494;">15:03:37</span>     0 ensemble         1 temperature</span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;">2</span> 2022-09-28 <span style="color: #949494;">00:00:00</span> 2023-05-17 <span style="color: #949494;">15:03:37</span>     0 ensemble         2 temperature</span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;">3</span> 2022-09-28 <span style="color: #949494;">00:00:00</span> 2023-05-17 <span style="color: #949494;">15:03:37</span>     0 ensemble         3 temperature</span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;">4</span> 2022-09-28 <span style="color: #949494;">00:00:00</span> 2023-05-17 <span style="color: #949494;">15:03:37</span>     0 ensemble         4 temperature</span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;">5</span> 2022-09-28 <span style="color: #949494;">00:00:00</span> 2023-05-17 <span style="color: #949494;">15:03:37</span>     0 ensemble         5 temperature</span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;">6</span> 2022-09-28 <span style="color: #949494;">00:00:00</span> 2023-05-17 <span style="color: #949494;">15:03:37</span>     0 ensemble         6 temperature</span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;">1</span> 2022-09-28 <span style="color: #949494;">00:00:00</span> 2023-05-17 <span style="color: #949494;">15:29:04</span>     0 ensemble         1 temperature</span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;">2</span> 2022-09-28 <span style="color: #949494;">00:00:00</span> 2023-05-17 <span style="color: #949494;">15:29:04</span>     0 ensemble         2 temperature</span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;">3</span> 2022-09-28 <span style="color: #949494;">00:00:00</span> 2023-05-17 <span style="color: #949494;">15:29:04</span>     0 ensemble         3 temperature</span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;">4</span> 2022-09-28 <span style="color: #949494;">00:00:00</span> 2023-05-17 <span style="color: #949494;">15:29:04</span>     0 ensemble         4 temperature</span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;">5</span> 2022-09-28 <span style="color: #949494;">00:00:00</span> 2023-05-17 <span style="color: #949494;">15:29:04</span>     0 ensemble         5 temperature</span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;">6</span> 2022-09-28 <span style="color: #949494;">00:00:00</span> 2023-05-17 <span style="color: #949494;">15:29:04</span>     0 ensemble         6 temperature</span></span>
 <span><span class="co">#&gt; <span style="color: #949494;"># ℹ 6 more variables: prediction &lt;dbl&gt;, forecast &lt;dbl&gt;, variable_type &lt;chr&gt;,</span></span></span>
 <span><span class="co">#&gt; <span style="color: #949494;">#   site_id &lt;chr&gt;, model_id &lt;chr&gt;, reference_datetime &lt;chr&gt;</span></span></span></code></pre></div>
 <div class="sourceCode" id="cb11"><pre class="downlit sourceCode r">
