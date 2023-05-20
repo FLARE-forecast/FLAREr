@@ -37,9 +37,7 @@ generate_met_files_arrow <- function(obs_met_file = NULL,
   }
   
   
-  if(use_s3){
-    
-    
+
     if(!is.na(forecast_start_datetime) & forecast_horizon > 0){
       
       forecast_date <- lubridate::as_date(forecast_start_datetime)
@@ -48,6 +46,8 @@ generate_met_files_arrow <- function(obs_met_file = NULL,
       if(forecast_hour != 0){
         stop("Only forecasts that start at 00:00:00 UTC are currently supported")
       }
+      
+      if(use_s3){
       
       if(is.null(bucket) | is.null(endpoint)){
         stop("inflow forecast function needs bucket and endpoint if use_s3=TRUE")
@@ -76,10 +76,8 @@ generate_met_files_arrow <- function(obs_met_file = NULL,
   
   if(is.null(obs_met_file)){
     if(use_s3){
-      vars <- arrow_env_vars()
       past_dir <- arrow::s3_bucket(bucket = file.path(bucket, "stage3/parquet", lake_name_code),
                                    endpoint_override =  endpoint, anonymous = TRUE)
-      unset_arrow_vars(vars)
     }else{
       past_dir <-  arrow::SubTreeFileSystem$create(file.path(local_directory, "stage3/parquet", lake_name_code))
     }
@@ -219,7 +217,7 @@ generate_met_files_arrow <- function(obs_met_file = NULL,
         }
         
         # check for bad data
-        FLAREr:::missing_data_check(df)
+        missing_data_check(df)
         
         fn <- paste0("met_",stringr::str_pad(ens, width = 2, side = "left", pad = "0"),".csv")
         fn <- file.path(out_dir, fn)
