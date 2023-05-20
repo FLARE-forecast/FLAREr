@@ -76,8 +76,10 @@ generate_met_files_arrow <- function(obs_met_file = NULL,
   
   if(is.null(obs_met_file)){
     if(use_s3){
+      vars <- arrow_env_vars()
       past_dir <- arrow::s3_bucket(bucket = file.path(bucket, "stage3/parquet", lake_name_code),
                                    endpoint_override =  endpoint, anonymous = TRUE)
+      unset_arrow_vars(vars)
     }else{
       past_dir <-  arrow::SubTreeFileSystem$create(file.path(local_directory, "stage3/parquet", lake_name_code))
     }
