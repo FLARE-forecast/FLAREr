@@ -210,6 +210,9 @@ run_flare <- function(lake_directory,
                                         local_directory = file.path(lake_directory, "scores/parquet"),
                                         variable_types = config$output_settings$variables_in_scores)
 
+  rm(combined_forecasts)
+  gc()
+  
   message("Generating plot")
   FLAREr::plotting_general_2(file_name = saved_file,
                              target_file = obs_insitu_file,
