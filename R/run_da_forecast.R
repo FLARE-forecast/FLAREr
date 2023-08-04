@@ -313,11 +313,11 @@ run_da_forecast <- function(states_init,
               }
 
             }else{
-              if(i <= (hist_days + 1)){
+              #if(i <= (hist_days + 1)){
                 curr_pars_ens <- pars[i-1, , m] + rnorm(npars, mean = rep(0, npars), sd = pars_config$perturb_par)
-              }else{
-                curr_pars_ens <- pars[i-1, , m]
-              }
+              #}else{
+              #  curr_pars_ens <- pars[i-1, , m]
+              #}
 
               if(i > (hist_days + 1) & !config$uncertainty$parameter){
                 curr_pars_ens <- apply(pars[i-1, , ], 1, mean)
