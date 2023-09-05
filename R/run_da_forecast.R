@@ -738,11 +738,16 @@ run_da_forecast <- function(states_init,
           }
         }
 
-        #estimate covariance
-        p_t <- p_it / (nmembers - 1)
-        if(npars > 0){
-          p_t_pars <- p_it_pars / (nmembers - 1)
+        if(is.null(config$da_setup$inflation_factor)){
+          config$da_setup$inflation_factor <- 1.0
         }
+
+        #estimate covariance
+        p_t <- config$da_setup$inflation_factor * (p_it / (nmembers - 1))
+        if(npars > 0){
+          p_t_pars <- config$da_setup$inflation_factor * (p_it_pars / (nmembers - 1))
+        }
+        
         if(!is.null(config$da_setup$localization_distance)){
           if(!is.na(config$da_setup$localization_distance)){
             p_t <- localization(mat = p_t,
