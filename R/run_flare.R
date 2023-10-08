@@ -13,7 +13,7 @@ run_flare <- function(lake_directory,
                       configure_run_file,
                       config_set_name){
 
-  ignore_sigpipe()
+  FLAREr::ignore_sigpipe()
 
   config <- FLAREr::set_configuration(configure_run_file, lake_directory, config_set_name = config_set_name)
 
@@ -29,8 +29,6 @@ run_flare <- function(lake_directory,
       }
     }
   }
-
-
 
   obs_config <- readr::read_csv(file.path(config$file_path$configuration_directory, config$model_settings$obs_config_file), col_types = readr::cols())
   states_config <- readr::read_csv(file.path(config$file_path$configuration_directory, config$model_settings$states_config_file), col_types = readr::cols())
@@ -48,10 +46,12 @@ run_flare <- function(lake_directory,
     }
   }
 
+  if(is.null(config$met$use_openmeteo)) config$met$use_openmeteo <- FALSE
+
   met_start_datetime <- lubridate::as_datetime(config$run_config$start_datetime)
   met_forecast_start_datetime <- lubridate::as_datetime(config$run_config$forecast_start_datetime)
 
-  if(config$run_config$forecast_horizon > 16 & config$met$use_forecasted_met){
+  if(config$run_config$forecast_horizon > 16 & config$met$use_forecasted_met & !config$met$use_openmeteo){
     met_forecast_start_datetime <- met_forecast_start_datetime - lubridate::days(config$met$forecast_lag_days)
     if(met_forecast_start_datetime < met_start_datetime){
       met_start_datetime <- met_forecast_start_datetime
@@ -63,20 +63,38 @@ run_flare <- function(lake_directory,
     config$met$use_met_s3 <- TRUE
   }
 
-  met_out <- FLAREr::generate_met_files_arrow(obs_met_file = obs_met_file,
-                                              out_dir = config$file_path$execute_directory,
-                                              start_datetime = met_start_datetime,
-                                              end_datetime = config$run_config$end_datetime,
-                                              forecast_start_datetime = met_forecast_start_datetime,
-                                              forecast_horizon =  config$run_config$forecast_horizon,
-                                              site_id = config$location$site_id,
-                                              use_s3 = config$met$use_met_s3,
-                                              bucket = config$s3$drivers$bucket,
-                                              endpoint = config$s3$drivers$endpoint,
-                                              local_directory = file.path(lake_directory,config$met$local_directory),
-                                              use_forecast = config$met$use_forecasted_met,
-                                              use_ler_vars = config$met$use_ler_vars,
-                                              use_siteid_s3 = TRUE)
+  if(config$met$use_openmeteo){
+
+    met_out <- generate_met_files_openmet(out_dir = config$file_path$execute_directory,
+                                          start_datetime = met_start_datetime,
+                                          end_datetime = config$run_config$end_datetime,
+                                          forecast_start_datetime = met_forecast_start_datetime,
+                                          forecast_horizon =  config$run_config$forecast_horizon,
+                                          latitude = config$location$latitude,
+                                          longitude = config$location$longitude,
+                                          site_id = config$location$site_id,
+                                          openmeteo_api = config$met$openmeteo_api,
+                                          model = config$met$openmeteo_model,
+                                          use_archive = config$met$use_openmeteo_archive,
+                                          bucket = config$s3$drivers$bucket,
+                                          endpoint = config$s3$drivers$endpoint)
+  }else{
+
+    met_out <- FLAREr::generate_met_files_arrow(obs_met_file = obs_met_file,
+                                                out_dir = config$file_path$execute_directory,
+                                                start_datetime = met_start_datetime,
+                                                end_datetime = config$run_config$end_datetime,
+                                                forecast_start_datetime = met_forecast_start_datetime,
+                                                forecast_horizon =  config$run_config$forecast_horizon,
+                                                site_id = config$location$site_id,
+                                                use_s3 = config$met$use_met_s3,
+                                                bucket = config$s3$drivers$bucket,
+                                                endpoint = config$s3$drivers$endpoint,
+                                                local_directory = file.path(lake_directory,config$met$local_directory),
+                                                use_forecast = config$met$use_forecasted_met,
+                                                use_ler_vars = config$met$use_ler_vars,
+                                                use_siteid_s3 = TRUE)
+  }
 
   if(is.null(config$inflow$use_inflow_s3)){
     config$inflow$use_inflow_s3 <- TRUE
@@ -212,7 +230,7 @@ run_flare <- function(lake_directory,
 
   rm(combined_forecasts)
   gc()
-  
+
   message("Generating plot")
   FLAREr::plotting_general_2(file_name = saved_file,
                              target_file = obs_insitu_file,
