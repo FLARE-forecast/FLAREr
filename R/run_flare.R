@@ -74,10 +74,10 @@ run_flare <- function(lake_directory,
                                           longitude = config$location$longitude,
                                           site_id = config$location$site_id,
                                           openmeteo_api = config$met$openmeteo_api,
-                                          openmeteo_model = config$met$openmeteo_model,
-                                          use_archive = config$met$openmeteo_archive,
+                                          model = config$met$openmeteo_model,
+                                          use_archive = config$met$use_openmeteo_archive,
                                           bucket = config$s3$drivers$bucket,
-                                          endpoint config$s3$drivers$endpoint)
+                                          endpoint = config$s3$drivers$endpoint)
   }else{
 
     met_out <- FLAREr::generate_met_files_arrow(obs_met_file = obs_met_file,

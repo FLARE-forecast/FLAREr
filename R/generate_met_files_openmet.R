@@ -28,8 +28,7 @@ generate_met_files_openmet <- function(out_dir,
                                        model = NULL,
                                        use_archive = FALSE,
                                        bucket = NULL,
-                                       endpoint = NULL,
-){
+                                       endpoint = NULL){
 
   if(openmeteo_api == "seasonal"){
 
