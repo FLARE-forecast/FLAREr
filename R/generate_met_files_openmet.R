@@ -166,7 +166,11 @@ generate_met_files_openmet <- function(out_dir,
 
   }else if(openmeteo_api == "historical"){
 
-    warning("Not tested")
+    if(is.na(end_datetime)){
+      end_datetime <- lubridate::as_date(lubridate::as_datetime(forecast_start_datetime) + lubridate::days(forecast_horizon + 1))
+    }
+
+    #warning("Not tested")
 
     RopenMeteo::get_historical_weather(
       latitude = latitude,
@@ -176,13 +180,12 @@ generate_met_files_openmet <- function(out_dir,
       end_date = end_datetime,
       variables = RopenMeteo::glm_variables(product = "historical",
                                             time_step = "hourly")) |>
-      arrange(datetime) |>
       RopenMeteo::add_longwave() |>
       RopenMeteo::write_glm_format(path = out_dir)
 
   }else if(openmeteo_api == "climate"){
 
-    if(is.null(model)) warning
+    if(is.null(model)) warning("no model provided for climate projection and no default is assumed")
 
     RopenMeteo::get_climate_projections(
       latitude = latitude,
