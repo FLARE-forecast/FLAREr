@@ -92,10 +92,6 @@ create_inflow_outflow_files_arrow <- function(inflow_forecast_dir = NULL,
 
   }
 
-
-
-
-
   inflow_file_names <- array(NA, dim = c(max(c(1, length(ensemble_members))), num_inflows))
 
   for(j in 1:num_inflows){
@@ -122,7 +118,7 @@ create_inflow_outflow_files_arrow <- function(inflow_forecast_dir = NULL,
           tidyr::pivot_wider(names_from = variable, values_from = prediction) |>
           dplyr::rename(time = datetime) |>
           dplyr::select(dplyr::all_of(variables)) %>%
-          dplyr::mutate_at(dplyr::vars(dplyr::all_of(variables)), list(~round(., 4)))
+          dplyr::mutate_if(where(is.numeric), list(~round(., 4)))
 
         obs_inflow_tmp <- obs_inflow %>%
           dplyr::filter(datetime < lubridate::as_date(forecast_start_datetime))
@@ -153,6 +149,9 @@ create_inflow_outflow_files_arrow <- function(inflow_forecast_dir = NULL,
                           Water_Temperature_celsius = TEMP,
                           Salinity_practicalSalinityUnits = SALT)
 
+        }else{
+          inflow <- inflow |>
+            mutate(time = lubridate::as_date(time))
         }
 
         inflow_file_name <- file.path(out_dir, paste0("inflow",j,"_ens",i,".csv"))
@@ -184,6 +183,9 @@ create_inflow_outflow_files_arrow <- function(inflow_forecast_dir = NULL,
         obs_outflow_tmp <- obs_outflow_tmp |>
           dplyr::rename(datetime = time,
                         Flow_metersCubedPerSecond = FLOW)
+      }else{
+        obs_outflow_tmp <- obs_outflow_tmp |>
+          mutate(time = lubridate::as_date(time))
       }
 
       outflow_file_name <- file.path(out_dir, paste0("outflow",j,".csv"))

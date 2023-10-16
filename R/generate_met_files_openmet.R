@@ -201,7 +201,7 @@ generate_met_files_openmet <- function(out_dir,
       RopenMeteo::write_glm_format(path = out_dir)
   }
 
-  current_filenames <- fs::dir_ls(path = out_dir, glob = "*met*.csv")
+  current_filenames <- fs::dir_ls(path = out_dir, glob = "*/met*.csv")
 
   return(list(filenames = current_filenames))
 }
