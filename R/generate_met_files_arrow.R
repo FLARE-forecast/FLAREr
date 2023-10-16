@@ -24,9 +24,9 @@ generate_met_files_arrow <- function(obs_met_file = NULL,
                                      use_forecast = TRUE,
                                      use_ler_vars = FALSE,
                                      use_siteid_s3 = FALSE){
-  
+
   lake_name_code <- site_id
-  
+
   start_datetime <- lubridate::as_datetime(start_datetime)
   if(is.na(forecast_start_datetime)){
     end_datetime <- lubridate::as_datetime(end_datetime) #- lubridate::hours(1)
@@ -35,25 +35,25 @@ generate_met_files_arrow <- function(obs_met_file = NULL,
     forecast_start_datetime <- lubridate::as_datetime(forecast_start_datetime)
     end_datetime <- forecast_start_datetime + lubridate::days(forecast_horizon) #- lubridate::hours(1)
   }
-  
-  
+
+
 
     if(!is.na(forecast_start_datetime) & forecast_horizon > 0){
-      
+
       forecast_date <- lubridate::as_date(forecast_start_datetime)
       forecast_hour <- lubridate::hour(forecast_start_datetime)
-      
+
       if(forecast_hour != 0){
         stop("Only forecasts that start at 00:00:00 UTC are currently supported")
       }
-      
+
       if(use_s3){
-      
+
       if(is.null(bucket) | is.null(endpoint)){
         stop("inflow forecast function needs bucket and endpoint if use_s3=TRUE")
       }
-      vars <- arrow_env_vars()
-      
+      vars <- FLAREr:::arrow_env_vars()
+
       if(use_siteid_s3){
         forecast_dir <- arrow::s3_bucket(bucket = file.path(bucket, "stage2/parquet", forecast_hour,forecast_date, lake_name_code),
                                          endpoint_override =  endpoint, anonymous = TRUE)
@@ -69,11 +69,11 @@ generate_met_files_arrow <- function(obs_met_file = NULL,
       forecast_dir <- arrow::SubTreeFileSystem$create(file.path(local_directory, "stage2/parquet", forecast_hour,forecast_date))
     }
   }
-  
+
   if(!use_forecast | forecast_horizon == 0){
     forecast_dir <- NULL
   }
-  
+
   if(is.null(obs_met_file)){
     if(use_s3){
       past_dir <- arrow::s3_bucket(bucket = file.path(bucket, "stage3/parquet", lake_name_code),
@@ -82,12 +82,12 @@ generate_met_files_arrow <- function(obs_met_file = NULL,
       past_dir <-  arrow::SubTreeFileSystem$create(file.path(local_directory, "stage3/parquet", lake_name_code))
     }
   }
-  
-  
+
+
   #if(is.null(obs_met_file) & is.null(forecast_dir)){
   #  stop("missing files to convert")
   #}
-  
+
   full_time <- seq(start_datetime, end_datetime, by = "1 hour")
   if(use_forecast){
     if(forecast_start_datetime > start_datetime){
@@ -98,9 +98,9 @@ generate_met_files_arrow <- function(obs_met_file = NULL,
   }else{
     full_time_hist <- seq(start_datetime, end_datetime, by = "1 hour")
   }
-  
+
   if(!is.null(obs_met_file)){
-    
+
     target <- readr::read_csv(obs_met_file, show_col_types = FALSE) |>
       tidyr::pivot_wider(names_from = variable, values_from = observation) |>
       dplyr::arrange(datetime) |>
@@ -121,13 +121,13 @@ generate_met_files_arrow <- function(obs_met_file = NULL,
       dplyr::mutate(Rain = round(Rain, 5),
                     time = strftime(time, format="%Y-%m-%d %H:%M", tz = "UTC")) |>
       dplyr::select(time, AirTemp,ShortWave, LongWave, RelHum, WindSpeed,Rain, Snow)
-    
+
     if( any(target$RelHum <= 0.0)) {
       idx <- which(target$RelHum <= 0.0)
       target$RelHum[idx] <- NA
       target$RelHum <- zoo::na.approx(target$RelHum, rule = 2)
     }
-    
+
   }else{
     target <- arrow::open_dataset(past_dir) |>
       dplyr::filter(site_id == lake_name_code) |>
@@ -157,19 +157,19 @@ generate_met_files_arrow <- function(obs_met_file = NULL,
       dplyr::group_by(ensemble) |>
       dplyr::slice(-dplyr::n()) |>
       dplyr::ungroup()
-    
+
     n_gaps <- target |>
       dplyr::mutate(time = lubridate::ymd_hm(time)) |>
       tsibble::as_tsibble(index = time, key = ensemble) |>
       tsibble::count_gaps()
-    
-    
+
+
     if (nrow(n_gaps) > 0) {
       n_gaps <- n_gaps |>
         dplyr::summarise(n_gaps = max(.n, na.rm = T)) |> pull()
       message('up to ', n_gaps, ' timesteps of missing data were interpolated per ensemble in stage 3 data')
     }
-    
+
     # fill in any missed timesteps to ensure a continuous time series
     target <-  target |>
       dplyr::mutate(time = lubridate::ymd_hm(time)) |>
@@ -178,33 +178,33 @@ generate_met_files_arrow <- function(obs_met_file = NULL,
       dplyr::mutate(across(AirTemp:Snow,imputeTS::na_interpolation)) |>
       dplyr::as_tibble() |>
       dplyr::mutate(time = format(time, format="%Y-%m-%d %H:%M", tz = "UTC"))
-    
-    
+
+
   }
-  
-  
-  
+
+
+
   if(is.null(forecast_dir)){
-    
+
     if(!is.null(obs_met_file)){
-      
+
       current_filename <- "met.csv"
       current_filename <- file.path(out_dir, current_filename)
-      
-      
+
+
       write.csv(target, file = current_filename, quote = FALSE, row.names = FALSE)
     }else{
-      
+
       ensemble_members <- unique(target$ensemble)
-      
+
       current_filename <- purrr::map_chr(ensemble_members, function(ens, out_dir, target){
         df <- target |>
           dplyr::filter(ensemble == ens) |>
           dplyr::select(-ensemble) |>
           dplyr::arrange(time)
-        
+
         if(use_ler_vars){
-          
+
           df <- df |>
             dplyr::rename(datetime = time,
                           Air_Temperature_celsius = AirTemp,
@@ -215,10 +215,10 @@ generate_met_files_arrow <- function(obs_met_file = NULL,
                           Precipitation_millimeterPerHour = Rain,
                           Snowfall_millimeterPerHour = Snow)
         }
-        
+
         # check for bad data
         missing_data_check(df)
-        
+
         fn <- paste0("met_",stringr::str_pad(ens, width = 2, side = "left", pad = "0"),".csv")
         fn <- file.path(out_dir, fn)
         write.csv(df, file = fn, quote = FALSE, row.names = FALSE)
@@ -228,7 +228,7 @@ generate_met_files_arrow <- function(obs_met_file = NULL,
       target)
     }
   }else{
-    
+
     forecast <- arrow::open_dataset(forecast_dir) |>
       dplyr::filter(site_id == lake_name_code) |>
       dplyr::select(datetime, parameter,variable,prediction) |>
@@ -255,31 +255,31 @@ generate_met_files_arrow <- function(obs_met_file = NULL,
       dplyr::group_by(ensemble) |>
       dplyr::slice(-dplyr::n()) |>
       dplyr::ungroup()
-    
+
     ensemble_members <- unique(forecast$ensemble)
-    
+
     current_filename <- purrr::map_chr(ensemble_members, function(ens, out_dir, forecast, target){
-      
+
       if("ensemble" %in% names(target)){
         target <- target |>
           dplyr::filter(ensemble == ens) |>
           dplyr::select(-ensemble)
       }
-      
-      
+
+
       df <- forecast |>
         dplyr::filter(ensemble == ens) |>
         dplyr::select(-ensemble) |>
         dplyr::bind_rows(target) |>
         dplyr::arrange(time)
-      
+
       if(max(forecast$time) < strftime(end_datetime - lubridate::hours(1), format="%Y-%m-%d %H:%M", tz = "UTC")){
         stop(paste0("Weather forecasts do not cover full forecast horizon. Current max time: ", max(forecast$time), " ; Requested max time: ", strftime(end_datetime - lubridate::hours(1), format="%Y-%m-%d %H:%M", tz = "UTC")))
       }
-      
-      
+
+
       if(use_ler_vars){
-        
+
         df <- df |>
           dplyr::rename(datetime = time,
                         Air_Temperature_celsius = AirTemp,
@@ -290,10 +290,10 @@ generate_met_files_arrow <- function(obs_met_file = NULL,
                         Precipitation_millimeterPerHour = Rain,
                         Snowfall_millimeterPerHour = Snow)
       }
-      
+
       # check for bad data
       FLAREr:::missing_data_check(df)
-      
+
       fn <- paste0("met_",stringr::str_pad(ens, width = 2, side = "left", pad = "0"),".csv")
       fn <- file.path(out_dir, fn)
       write.csv(df, file = fn, quote = FALSE, row.names = FALSE)
