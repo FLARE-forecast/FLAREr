@@ -116,8 +116,9 @@ create_inflow_outflow_files_arrow <- function(inflow_forecast_dir = NULL,
           dplyr::filter(flow_number == j,
                         parameter == ensemble_members[i]) %>%
           tidyr::pivot_wider(names_from = variable, values_from = prediction) |>
-          dplyr::rename(time = datetime) |>
+          #dplyr::rename(time = datetime) |>
           dplyr::select(dplyr::all_of(variables)) %>%
+          dplyr::rename(time = datetime) |>
           dplyr::mutate_if(where(is.numeric), list(~round(., 4)))
 
         obs_inflow_tmp <- obs_inflow %>%
@@ -126,8 +127,8 @@ create_inflow_outflow_files_arrow <- function(inflow_forecast_dir = NULL,
         if(nrow(obs_inflow_tmp) > 0){
           obs_inflow_tmp <- obs_inflow_tmp |>
           tidyr::pivot_wider(names_from = variable, values_from = observation) |>
-          dplyr::rename(time = datetime) |>
-          dplyr::select(dplyr::all_of(variables))
+          dplyr::select(dplyr::all_of(variables)) |>
+          dplyr::rename(time = datetime)
         }else{
           obs_inflow_tmp <- NULL
         }
