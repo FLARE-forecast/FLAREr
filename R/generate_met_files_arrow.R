@@ -128,7 +128,7 @@ generate_met_files_arrow <- function(obs_met_file = NULL,
       target$RelHum <- zoo::na.approx(target$RelHum, rule = 2)
     }
 
-  }else{
+  }else if(!is.null(full_time_hist)){
     target <- arrow::open_dataset(past_dir) |>
       dplyr::filter(site_id == lake_name_code) |>
       dplyr::select(datetime, parameter,variable,prediction) |>
@@ -180,6 +180,8 @@ generate_met_files_arrow <- function(obs_met_file = NULL,
       dplyr::mutate(time = format(time, format="%Y-%m-%d %H:%M", tz = "UTC"))
 
 
+  }else{
+    target <- NULL
   }
 
 
