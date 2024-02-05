@@ -394,7 +394,9 @@ run_model <- function(i,
     }
     num_reruns <- num_reruns + 1
     if(num_reruns > 100){
-      stop(paste0("Too many re-runs (> 1000) due to issues generating output"))
+      stop(paste0("Too many re-runs (> 100) due to issues generating output",
+      '\n Suggest testing specific GLM execution with the following code:',
+      '\n GLM3r::run_glm(','"' ,working_directory,'/[insert ensemble number]")'))
     }
 
   }

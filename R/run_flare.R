@@ -198,7 +198,7 @@ run_flare <- function(lake_directory,
   gc()
 
   message("Scoring forecasts")
-  if(config$output_settings$evaluate_past){
+  if(config$output_settings$evaluate_past & config$run_config$use_s3){
     reference_datetime_format <- "%Y-%m-%d %H:%M:%S"
     past_days <- strftime(lubridate::as_datetime(forecast_df$reference_datetime[1]) - lubridate::days(config$run_config$forecast_horizon), tz = "UTC")
 

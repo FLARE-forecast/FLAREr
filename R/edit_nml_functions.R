@@ -79,7 +79,7 @@ update_var <- function(var_value,var_name,working_directory, nml){
 }
 
 update_nml <- function(var_list,var_name_list,working_directory, nml){
-  orig_nml <- read_nml(paste0(working_directory,'/',nml))
+  orig_nml <- FLAREr:::read_nml(paste0(working_directory,'/',nml))
 
   for(k in 1:length(var_list)){
     index1 = NA; index2 = NA
@@ -103,6 +103,10 @@ update_nml <- function(var_list,var_name_list,working_directory, nml){
     holder2 <- unlist(orig_nml[[index1]][index2])
     holder2[1:length(var_list[[k]])] <- var_list[[k]]
     holder2 <- list(holder2[1:length(var_list[[k]])])
+    if(is.na(index1) | is.na(index2)){
+      stop(paste('Base nml missing the following variable name: ',var_name_list[k],
+                 '\nSee working example for section where variable is located in nml file'))
+    }
     orig_nml[[index1]][index2] <- holder2
   }
 
