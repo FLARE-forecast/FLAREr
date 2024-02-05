@@ -219,7 +219,7 @@ generate_met_files_arrow <- function(obs_met_file = NULL,
         }
 
         # check for bad data
-        FLAREr:::missing_data_check(df)
+        missing_data_check(df)
 
         fn <- paste0("met_",stringr::str_pad(ens, width = 2, side = "left", pad = "0"),".csv")
         fn <- file.path(out_dir, fn)

@@ -79,7 +79,7 @@ update_var <- function(var_value,var_name,working_directory, nml){
 }
 
 update_nml <- function(var_list,var_name_list,working_directory, nml){
-  orig_nml <- FLAREr:::read_nml(paste0(working_directory,'/',nml))
+  orig_nml <- read_nml(paste0(working_directory,'/',nml))
 
   for(k in 1:length(var_list)){
     index1 = NA; index2 = NA
