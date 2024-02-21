@@ -63,20 +63,20 @@ create_obs_matrix <- function(cleaned_observations_file_long,
         for(j in 1:length(config$model_settings$modeled_depths)){
           d1 <- d %>%
             dplyr::filter(variable == obs_config$target_variable[i])
-          if(nrow(d1) == 0){
-            warning("No observations for ", obs_config$target_variable[i])
-          }
+          # if(nrow(d1) == 0){
+          #   warning("No observations for ", obs_config$target_variable[i])
+          # }
           d1 <- d1 %>%
             dplyr::filter(date == lubridate::as_date(full_time[k]))
-          if(nrow(d1) == 0){
-            warning("No observations for ", obs_config$target_variable[i], " on ", lubridate::as_date(full_time[k]))
-          }
+          # if(nrow(d1) == 0){
+          #   warning("No observations for ", obs_config$target_variable[i], " on ", lubridate::as_date(full_time[k]))
+          # }
           d1 <- d1 %>%
             dplyr::filter((is.na(hour) | hour == lubridate::hour(full_time[k])))
-          if(nrow(d1) == 0){
-            warning("No observations for ", obs_config$target_variable[i], " on ", lubridate::as_date(full_time[k]),
-                    " at ", lubridate::hour(full_time[k]), ":00:00")
-          }
+          # if(nrow(d1) == 0){
+          #   warning("No observations for ", obs_config$target_variable[i], " on ", lubridate::as_date(full_time[k]),
+          #           " at ", lubridate::hour(full_time[k]), ":00:00")
+          # }
 
           d1 <- d1 %>%
             dplyr::filter(abs(d1$depth-config$model_settings$modeled_depths[j]) < obs_config$distance_threshold[i])
