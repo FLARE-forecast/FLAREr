@@ -31,10 +31,10 @@ create_inflow_outflow_files_arrow <- function(inflow_forecast_dir = NULL,
       if(is.null(bucket) | is.null(endpoint)){
         stop("scoring function needs bucket and endpoint if use_s3=TRUE")
       }
-      vars <- FLAREr:::arrow_env_vars()
+      vars <- arrow_env_vars()
       inflow_s3 <- arrow::s3_bucket(bucket = file.path(bucket, inflow_forecast_dir),
                                     endpoint_override =  endpoint)
-      FLAREr:::unset_arrow_vars(vars)
+      unset_arrow_vars(vars)
     }else{
       if(is.null(local_directory)){
         stop("scoring function needs local_directory if use_s3=FALSE")
@@ -100,7 +100,7 @@ create_inflow_outflow_files_arrow <- function(inflow_forecast_dir = NULL,
 
       obs_inflow_tmp <- obs_inflow %>%
         tidyr::pivot_wider(names_from = variable, values_from = observation) |>
-        #dplyr::rename(time = datetime) |>
+        dplyr::rename(time = datetime) |>
         dplyr::select(dplyr::all_of(variables))
 
       inflow_file_name <- file.path(out_dir, paste0("inflow",j,".csv"))
@@ -116,7 +116,7 @@ create_inflow_outflow_files_arrow <- function(inflow_forecast_dir = NULL,
           dplyr::filter(flow_number == j,
                         parameter == ensemble_members[i]) %>%
           tidyr::pivot_wider(names_from = variable, values_from = prediction) |>
-          #dplyr::rename(time = datetime) |>
+          dplyr::rename(time = datetime) |>
           dplyr::select(dplyr::all_of(variables)) %>%
           #dplyr::rename(time = datetime) |>
           dplyr::mutate_if(where(is.numeric), list(~round(., 4)))
@@ -127,8 +127,8 @@ create_inflow_outflow_files_arrow <- function(inflow_forecast_dir = NULL,
         if(nrow(obs_inflow_tmp) > 0){
           obs_inflow_tmp <- obs_inflow_tmp |>
             tidyr::pivot_wider(names_from = variable, values_from = observation) |>
-            dplyr::select(dplyr::all_of(variables)) #|>
-          #dplyr::rename(time = datetime)
+            dplyr::rename(time = datetime) %>%
+            dplyr::select(dplyr::all_of(variables))
         }else{
           obs_inflow_tmp <- NULL
         }
@@ -145,13 +145,14 @@ create_inflow_outflow_files_arrow <- function(inflow_forecast_dir = NULL,
 
           inflow <- inflow |>
             dplyr::select(c("time","FLOW", "TEMP", "SALT")) |>
-            dplyr::rename(Flow_metersCubedPerSecond = FLOW,
+            dplyr::rename(datetime = time,
+                          Flow_metersCubedPerSecond = FLOW,
                           Water_Temperature_celsius = TEMP,
                           Salinity_practicalSalinityUnits = SALT)
 
         }else{
-          inflow <- inflow #|>
-          #mutate(time = lubridate::as_date(time))
+          inflow <- inflow |>
+            mutate(time = lubridate::as_date(time))
         }
 
         inflow_file_name <- file.path(out_dir, paste0("inflow",j,"_ens",i,".csv"))
@@ -174,15 +175,15 @@ create_inflow_outflow_files_arrow <- function(inflow_forecast_dir = NULL,
 
       obs_outflow_tmp <- obs_outflow %>%
         tidyr::pivot_wider(names_from = variable, values_from = observation) |>
-        # dplyr::rename(time = datetime) |>
-        # dplyr::select(time, FLOW)
-        dplyr::select(datetime, FLOW)
+        dplyr::rename(time = datetime) |>
+        dplyr::select(time, FLOW)
 
       if(use_ler_vars){
         obs_outflow_tmp <- as.data.frame(obs_outflow_tmp)
         obs_outflow_tmp[, 1] <- format(obs_outflow_tmp[, 1], format="%Y-%m-%d %H:%M:%S")
         obs_outflow_tmp <- obs_outflow_tmp |>
-          dplyr::rename(Flow_metersCubedPerSecond = FLOW)
+          dplyr::rename(datetime = time,
+                        Flow_metersCubedPerSecond = FLOW)
       }else{
         obs_outflow_tmp <- obs_outflow_tmp |>
           mutate(time = lubridate::as_date(time))
@@ -202,8 +203,8 @@ create_inflow_outflow_files_arrow <- function(inflow_forecast_dir = NULL,
           dplyr::filter(flow_number == j,
                         parameter == ensemble_members[i]) %>%
           tidyr::pivot_wider(names_from = variable, values_from = prediction) |>
-          #dplyr::rename(time = datetime) |>
-          dplyr::select(datetime,FLOW)
+          dplyr::rename(time = datetime) |>
+          dplyr::select(time,FLOW)
 
         obs_outflow_tmp <- obs_outflow %>%
           dplyr::filter( datetime < lubridate::as_date(forecast_start_datetime))
@@ -211,8 +212,8 @@ create_inflow_outflow_files_arrow <- function(inflow_forecast_dir = NULL,
         if(nrow(obs_outflow_tmp) > 0){
           obs_outflow_tmp <- obs_outflow_tmp |>
             tidyr::pivot_wider(names_from = variable, values_from = observation) |>
-            #dplyr::rename(time = datetime) |>
-            dplyr::select(datetime, FLOW)
+            dplyr::rename(time = datetime) |>
+            dplyr::select(time, FLOW)
 
         }else{
           obs_outflow_tmp <- NULL
@@ -224,7 +225,8 @@ create_inflow_outflow_files_arrow <- function(inflow_forecast_dir = NULL,
           outflow <- as.data.frame(outflow)
           outflow[, 1] <- format(outflow[, 1], format="%Y-%m-%d %H:%M:%S")
           outflow <- outflow |>
-            dplyr::rename(Flow_metersCubedPerSecond = FLOW)
+            dplyr::rename(datetime = time,
+                          Flow_metersCubedPerSecond = FLOW)
         }
 
         outflow_file_name <- file.path(out_dir, paste0("outflow",j,"_ens",i,".csv"))
