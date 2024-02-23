@@ -23,7 +23,7 @@ generate_met_files_arrow <- function(obs_met_file = NULL,
                                      local_directory = NULL,
                                      use_forecast = TRUE,
                                      use_ler_vars = FALSE,
-                                     use_hive_met = FALSE){
+                                     use_hive_met = TRUE){
 
   lake_name_code <- site_id
 
