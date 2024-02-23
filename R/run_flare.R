@@ -207,7 +207,7 @@ run_flare <- function(lake_directory,
     past_forecasts <- arrow::open_dataset(s3) |>
       dplyr::filter(model_id == forecast_df$model_id[1],
                     site_id == forecast_df$site_id[1],
-                    reference_datetime > past_days) |>
+                    reference_date > past_days) |>
       dplyr::collect()
     unset_arrow_vars(vars)
   }else{
