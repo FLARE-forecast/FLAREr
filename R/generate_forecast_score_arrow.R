@@ -41,12 +41,12 @@ generate_forecast_score_arrow <- function(targets_file,
 
   if("pub_time" %in% colnames(forecast_df)){
     forecast_df <- forecast_df |>
-      dplyr::select(-pub_time)
+      dplyr::rename(pub_datetime = pub_time)
   }
 
     if("pubDate" %in% colnames(forecast_df)){
     forecast_df <- forecast_df |>
-      dplyr::select(-pubDate)
+      dplyr::rename(pub_datetime = pubDate)
   }
 
   df <- forecast_df %>%
@@ -54,19 +54,18 @@ generate_forecast_score_arrow <- function(targets_file,
     dplyr::mutate(site_id = paste0(site_id,"-",depth)) %>%
     score4cast::standardize_forecast(reference_datetime_format = "%Y-%m-%d %H:%M:%S") %>%
     dplyr::mutate(family = as.character(family)) |>
-    score4cast::crps_logs_score(target) %>%
+    score4cast::crps_logs_score(target, extra_groups = c('depth') %>%
     dplyr::mutate(horizon = datetime-lubridate::as_datetime(reference_datetime)) %>%
     dplyr::mutate(horizon = as.numeric(lubridate::as.duration(horizon),
                                 units = "seconds"),
-           horizon = horizon / 86400) %>%
-    dplyr::mutate(depth = as.numeric(str_split_fixed(site_id, "-", 2)[,2]),
-           site_id = str_split_fixed(site_id, "-", 2)[,1])
+           horizon = horizon / 86400)
 
 
   reference_datetime_format <- "%Y-%m-%d %H:%M:%S"
 
-  df <- df |> dplyr::mutate(reference_datetime = strftime(lubridate::as_datetime(reference_datetime),format=reference_datetime_format,tz = "UTC"))
+  df <- df |> dplyr::mutate(reference_datetime = strftime(lubridate::as_datetime(reference_datetime),format=reference_datetime_format,tz = "UTC"),
+                           date = lubridate::as_date(datetime))
 
-  arrow::write_dataset(df, path = output_directory, partitioning = c("site_id","model_id","reference_datetime"))
+  arrow::write_dataset(df, path = output_directory, partitioning = c("site_id","model_id","date"))
 
 }
