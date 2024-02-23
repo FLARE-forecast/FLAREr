@@ -203,15 +203,15 @@ run_flare <- function(lake_directory,
 
   message("Scoring forecasts")
   if(config$output_settings$evaluate_past & config$run_config$use_s3){
-    reference_datetime_format <- "%Y-%m-%d %H:%M:%S"
-    past_days <- strftime(lubridate::as_datetime(forecast_df$reference_datetime[1]) - lubridate::days(config$run_config$forecast_horizon), tz = "UTC")
+    past_days <- lubridate::as_date(forecast_df$reference_datetime[1]) - lubridate::days(config$run_config$forecast_horizon)
 
     vars <- arrow_env_vars()
     s3 <- arrow::s3_bucket(bucket = config$s3$forecasts_parquet$bucket, endpoint_override = config$s3$forecasts_parquet$endpoint)
     past_forecasts <- arrow::open_dataset(s3) |>
+      dplyr::mutate(reference_date = lubridate::as_date(reference_date)) |>
       dplyr::filter(model_id == forecast_df$model_id[1],
                     site_id == forecast_df$site_id[1],
-                    reference_date > past_days) |>
+                    reference_date == past_days) |>
       dplyr::collect()
     unset_arrow_vars(vars)
   }else{
