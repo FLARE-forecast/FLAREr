@@ -63,6 +63,10 @@ run_flare <- function(lake_directory,
     config$met$use_met_s3 <- TRUE
   }
 
+  if(is.null(config$met$use_hive_met)){
+    config$met$use_hive_met <- TRUE
+  }
+
   if(config$met$use_openmeteo){
 
     met_out <- generate_met_files_openmet(out_dir = config$file_path$execute_directory,
@@ -93,7 +97,7 @@ run_flare <- function(lake_directory,
                                                 local_directory = file.path(lake_directory,config$met$local_directory),
                                                 use_forecast = config$met$use_forecasted_met,
                                                 use_ler_vars = config$met$use_ler_vars,
-                                                use_hive_met = TRUE)
+                                                use_hive_met = config$met$use_hive_met)
   }
 
   if(is.null(config$inflow$use_inflow_s3)){
