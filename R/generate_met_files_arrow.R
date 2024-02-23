@@ -23,7 +23,7 @@ generate_met_files_arrow <- function(obs_met_file = NULL,
                                      local_directory = NULL,
                                      use_forecast = TRUE,
                                      use_ler_vars = FALSE,
-                                     use_siteid_s3 = FALSE){
+                                     use_hive_met = FALSE){
 
   lake_name_code <- site_id
 
@@ -54,13 +54,14 @@ generate_met_files_arrow <- function(obs_met_file = NULL,
       }
       vars <- FLAREr:::arrow_env_vars()
 
-      if(use_siteid_s3){
-        forecast_dir <- arrow::s3_bucket(bucket = file.path(bucket, "stage2/parquet", forecast_hour,forecast_date, lake_name_code),
+      if(use_hive_met){
+        forecast_dir <- arrow::s3_bucket(bucket = file.path(bucket, "stage2/reference_datetime=",forecast_date,"/site_id=", lake_name_code),
                                          endpoint_override =  endpoint, anonymous = TRUE)
       }else{
-        forecast_dir <- arrow::s3_bucket(bucket = file.path(bucket, "stage2/parquet", forecast_hour,forecast_date),
+        forecast_dir <- arrow::s3_bucket(bucket = file.path(bucket, "stage2/parquet", forecast_hour,forecast_date, lake_name_code),
                                          endpoint_override =  endpoint, anonymous = TRUE)
       }
+
       unset_arrow_vars(vars)
     }else{
       if(is.null(local_directory)){
