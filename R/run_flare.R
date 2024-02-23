@@ -93,7 +93,7 @@ run_flare <- function(lake_directory,
                                                 local_directory = file.path(lake_directory,config$met$local_directory),
                                                 use_forecast = config$met$use_forecasted_met,
                                                 use_ler_vars = config$met$use_ler_vars,
-                                                use_siteid_s3 = TRUE)
+                                                use_hive_met = TRUE)
   }
 
   if(is.null(config$inflow$use_inflow_s3)){
