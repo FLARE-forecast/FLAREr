@@ -1,7 +1,7 @@
 ##' @title Generate parquet output file
 ##' @details Function generates a netcdf file from the object that is returned by run_da_forecast()
 ##' @param da_forecast_output list; object that is returned by run_da_forecast()
-##' @param forecast_output_directory string; full path of directory where the csv file will be written
+##' @param forecast_output_directory string; full path of the directory where the csv file will be written
 ##' @param use_short_filename use shortened file name; this results in less information in the file name and potentially overwriting existing files
 ##' @return None
 ##' @export
@@ -193,7 +193,7 @@ write_forecast_arrow <- function(da_forecast_output,
   time_of_forecast <- lubridate::with_tz(da_forecast_output$time_of_forecast, tzone = "UTC")
 
   output_list <- output_list %>%
-    dplyr::mutate(pubDate = time_of_forecast,
+    dplyr::mutate(pub_date = time_of_forecast,
                   reference_datetime = forecast_start_datetime,
                   site_id = config$location$site_id,
                   model_id = config$run_config$sim_name,
@@ -201,7 +201,7 @@ write_forecast_arrow <- function(da_forecast_output,
     rename(datetime = time,
            parameter = ensemble,
            prediction = predicted) %>%
-    dplyr::select(reference_datetime, datetime, pubDate, model_id, site_id, depth, family, parameter, variable, prediction, forecast, variable_type)
+    dplyr::select(reference_datetime, datetime, pub_date, model_id, site_id, depth, family, parameter, variable, prediction, forecast, variable_type)
 
   #Convert to target variable name
   for(i in 1:length(states_config$state_names)){
@@ -216,11 +216,12 @@ write_forecast_arrow <- function(da_forecast_output,
 
   reference_datetime_format <- "%Y-%m-%d %H:%M:%S"
 
-  output_list <- output_list |> mutate(reference_datetime = strftime(lubridate::as_datetime(reference_datetime),format=reference_datetime_format,tz = "UTC"))
+  output_list <- output_list |> mutate(reference_datetime = lubridate::as_datetime(reference_datetime),format=reference_datetime_format,tz = "UTC"),
+                                      reference_date = lubridate::as_date(reference_datetime))
   message("starting writing dataset")
   arrow::write_dataset(dataset = output_list,
                        path = output_directory,
-                       partitioning = c("site_id", "model_id","reference_datetime"))
+                       partitioning = c("site_id", "model_id","reference_date"))
   message("ending writing dataset")
   return(output_list)
 }
