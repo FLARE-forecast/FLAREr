@@ -55,14 +55,14 @@ generate_met_files_arrow <- function(obs_met_file = NULL,
       vars <- FLAREr:::arrow_env_vars()
 
       if(use_hive_met){
-        forecast_dir <- arrow::s3_bucket(bucket = file.path(bucket, "stage2/reference_datetime=",forecast_date,"/site_id=", lake_name_code),
+        forecast_dir <- arrow::s3_bucket(bucket = file.path(bucket, paste0("stage2/reference_datetime=",forecast_date),paste0("site_id=",lake_name_code)),
                                          endpoint_override =  endpoint, anonymous = TRUE)
       }else{
         forecast_dir <- arrow::s3_bucket(bucket = file.path(bucket, "stage2/parquet", forecast_hour,forecast_date, lake_name_code),
                                          endpoint_override =  endpoint, anonymous = TRUE)
       }
 
-      unset_arrow_vars(vars)
+      FLAREr:::unset_arrow_vars(vars)
     }else{
       if(is.null(local_directory)){
         stop("inflow forecast function needs local_directory if use_s3=FALSE")
@@ -77,8 +77,15 @@ generate_met_files_arrow <- function(obs_met_file = NULL,
 
   if(is.null(obs_met_file)){
     if(use_s3){
-      past_dir <- arrow::s3_bucket(bucket = file.path(bucket, "stage3/parquet", lake_name_code),
-                                   endpoint_override =  endpoint, anonymous = TRUE)
+
+      if(use_hive_met){
+        past_dir <- arrow::s3_bucket(bucket = file.path(bucket, paste0("stage3/site_id=",lake_name_code)),
+                                     endpoint_override =  endpoint, anonymous = TRUE)
+      }else{
+        past_dir <- arrow::s3_bucket(bucket = file.path(bucket, "stage3/parquet",lake_name_code),
+                                     endpoint_override =  endpoint, anonymous = TRUE)
+      }
+
     }else{
       past_dir <-  arrow::SubTreeFileSystem$create(file.path(local_directory, "stage3/parquet", lake_name_code))
     }
