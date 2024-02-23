@@ -31,8 +31,7 @@ generate_forecast_score_arrow <- function(targets_file,
   }
 
 
-  target <- readr::read_csv(targets_file, show_col_types = FALSE) |>
-    dplyr::mutate(site_id = paste0(site_id,"-",depth))
+  target <- readr::read_csv(targets_file, show_col_types = FALSE)
 
   if("time" %in% colnames(target)){
     target <- target |>
@@ -44,18 +43,16 @@ generate_forecast_score_arrow <- function(targets_file,
       dplyr::rename(pub_datetime = pub_time)
   }
 
-    if("pubDate" %in% colnames(forecast_df)){
+  if("pubDate" %in% colnames(forecast_df)){
     forecast_df <- forecast_df |>
       dplyr::rename(pub_datetime = pubDate)
   }
 
   df <- forecast_df %>%
-    dplyr::filter(variable_type %in% variable_types) %>%
-    dplyr::mutate(site_id = paste0(site_id,"-",depth)) %>%
-    score4cast::standardize_forecast(reference_datetime_format = "%Y-%m-%d %H:%M:%S") %>%
+    dplyr::filter(variable_type %in% variable_types) |>
     dplyr::mutate(family = as.character(family)) |>
-    score4cast::crps_logs_score(target, extra_groups = c('depth') %>%
-    dplyr::mutate(horizon = datetime-lubridate::as_datetime(reference_datetime)) %>%
+    score4cast::crps_logs_score(target, extra_groups = c('depth') |>
+    dplyr::mutate(horizon = datetime-lubridate::as_datetime(reference_datetime)) |>
     dplyr::mutate(horizon = as.numeric(lubridate::as.duration(horizon),
                                 units = "seconds"),
            horizon = horizon / 86400)
