@@ -57,7 +57,7 @@ generate_forecast_score_arrow <- function(targets_file,
                                 units = "seconds"),
            horizon = horizon / 86400)
 
-  df <- df |> dplyr::mutate(reference_date = lubridate::as_date(datetime))
+  df <- df |> dplyr::mutate(reference_date = lubridate::as_date(reference_datetime))
 
   arrow::write_dataset(df, path = output_directory, partitioning = c("site_id","model_id","reference_date"))
 
