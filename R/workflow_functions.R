@@ -648,11 +648,8 @@ check_noaa_present_arrow <- function(lake_directory, configure_run_file = "confi
         noaa_forecasts_ready <- FALSE
       }
     }else{
-      noaa_forecasts_ready <- FALSE
+      noaa_forecasts_ready <- TRUE
     }
-  }else{
-    noaa_forecasts_ready <- TRUE
-  }
 
   if(!noaa_forecasts_ready){
     message(paste0("waiting for NOAA forecast: ", config$run_config$forecast_start_datetime))
