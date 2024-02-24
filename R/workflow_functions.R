@@ -622,7 +622,7 @@ check_noaa_present_arrow <- function(lake_directory, configure_run_file = "confi
     
     vars <- arrow_env_vars()
     
-    forecast_dir <- arrow::s3_bucket(bucket = file.path(config$s3$drivers$bucket, paste0("stage2/reference_datetime=",forecast_date),paste0("site_id=",lake_name_code)),
+    forecast_dir <- arrow::s3_bucket(bucket = file.path(config$s3$drivers$bucket, paste0("stage2/reference_datetime=",forecast_date),paste0("site_id=",site)),
                                          endpoint_override =  endpoint, anonymous = TRUE)
         avail_dates <- gsub("reference_datetime=", "", forecast_dir$ls())
         avail_dates <- forecast_dir$ls()
