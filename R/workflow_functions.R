@@ -590,7 +590,7 @@ check_noaa_present <- function(lake_directory, configure_run_file = "configure_r
 
 #' Check if NOAA forecasts have been downloaded and processed
 #'
-#' @param lake_directory four letter code for site
+#' @param lake_directory four-letter code for site
 #' @param configure_run_file name of simulation
 #' @param config_set_name FLARE configuration object (needed for s3 buckets and endpoit)
 #'
@@ -619,16 +619,17 @@ check_noaa_present_arrow <- function(lake_directory, configure_run_file = "confi
     forecast_hour <- lubridate::hour(met_forecast_start_datetime)
     site <- config$location$site_id
     forecast_horizon <- config$run_config$forecast_horizon
-
+    
     vars <- arrow_env_vars()
-    forecast_dir <- arrow::s3_bucket(bucket = file.path(config$s3$drivers$bucket, "stage2/parquet", forecast_hour),
-                                     endpoint_override =  config$s3$drivers$endpoint, anonymous = TRUE)
+    forecast_dir <- arrow::s3_bucket(bucket = file.path(bucket, paste0("stage2/reference_datetime=",forecast_date),paste0("site_id=",lake_name_code)),
+                                         endpoint_override =  endpoint, anonymous = TRUE)
+        avail_dates <- gsub("reference_datetime=", "", forecast_dir$ls())
+        avail_dates <- forecast_dir$ls()
+
     unset_arrow_vars(vars)
-    avail_dates <- forecast_dir$ls()
 
     if(forecast_date %in% lubridate::as_date(avail_dates)){
-      if (length(forecast_dir$ls(forecast_date)) > 0){
-        avial_horizons <- arrow::open_dataset(forecast_dir$path(as.character(forecast_date))) %>%
+        avial_horizons <- arrow::open_dataset(forecast_dir$path(paste0("reference_date=",as.character(forecast_date)))) %>%
           filter(variable == "air_temperature",
                  site_id == site) %>%
           group_by(parameter) %>%
@@ -637,20 +638,12 @@ check_noaa_present_arrow <- function(lake_directory, configure_run_file = "confi
           ungroup() %>%
           mutate(over = ifelse(max_horizon >= forecast_horizon * 24, 1, 0)) %>%
           summarize(sum = sum(over))
-
-        if(forecast_horizon > 16){
-          if(avial_horizons$sum == 30 | avial_horizons$sum == 31){
+      
+          if(avial_horizons$sum == 31){
             noaa_forecasts_ready <- TRUE
           }else{
             noaa_forecasts_ready <- FALSE
           }
-        }else if(forecast_horizon <= 16){
-          if(avial_horizons$sum == 30 | avial_horizons$sum == 31){
-            noaa_forecasts_ready <- TRUE
-          }else{
-            noaa_forecasts_ready <- FALSE
-          }
-        }
       }else{
         noaa_forecasts_ready <- FALSE
       }
