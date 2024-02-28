@@ -632,6 +632,7 @@ check_noaa_present_arrow <- function(lake_directory, configure_run_file = "confi
         avial_horizons <- arrow::open_dataset(forecast_dir$path(paste0("reference_datetime=",as.character(forecast_date)))) %>%
           filter(variable == "air_temperature",
                  site_id == site) %>%
+          mutate(horizon = as.numeric(datetime - lubridate::as_datetime(forecast_date)) / (60 * 60)) %>% 
           group_by(parameter) %>%
           summarize(max_horizon = max(horizon)) %>%
           collect() %>%
