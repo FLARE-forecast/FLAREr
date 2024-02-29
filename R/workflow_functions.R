@@ -619,9 +619,9 @@ check_noaa_present_arrow <- function(lake_directory, configure_run_file = "confi
     forecast_hour <- lubridate::hour(met_forecast_start_datetime)
     site <- config$location$site_id
     forecast_horizon <- config$run_config$forecast_horizon
-    
+
     vars <- arrow_env_vars()
-    
+
     forecast_dir <- arrow::s3_bucket(bucket = file.path(config$s3$drivers$bucket,  "stage2"),
                                          endpoint_override =  config$s3$drivers$endpoint, anonymous = TRUE)
     avail_dates <- gsub("reference_datetime=", "", forecast_dir$ls())
@@ -632,14 +632,14 @@ check_noaa_present_arrow <- function(lake_directory, configure_run_file = "confi
         avial_horizons <- arrow::open_dataset(forecast_dir$path(paste0("reference_datetime=",as.character(forecast_date)))) %>%
           filter(variable == "air_temperature",
                  site_id == site) %>%
-          mutate(horizon = as.numeric(datetime - lubridate::as_datetime(forecast_date)) / (60 * 60)) %>% 
+          collect() %>%
+          mutate(horizon = as.numeric(datetime - lubridate::as_datetime(forecast_date)) / (60 * 60)) %>%
           group_by(parameter) %>%
           summarize(max_horizon = max(horizon)) %>%
-          collect() %>%
           ungroup() %>%
           mutate(over = ifelse(max_horizon >= forecast_horizon * 24, 1, 0)) %>%
           summarize(sum = sum(over))
-      
+
           if(avial_horizons$sum == 31){
             noaa_forecasts_ready <- TRUE
           }else{
