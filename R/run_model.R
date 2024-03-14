@@ -303,13 +303,14 @@ run_model <- function(i,
 
       if(!is.null(nc)){
         tallest_layer <- ncdf4::ncvar_get(nc, "NS")[1]
+        z <- ncdf4::ncvar_get(nc, "z")[1]
         ncdf4::nc_close(nc)
         if(!is.na(tallest_layer)){
-          if(tallest_layer > 1) {
+          if(!is.nan(z)) {
             success <- TRUE
           } else {
             # Catch for if the output has more than one layer
-            message(paste0("'output.nc' file generated but has one layer in the file. Re-running simulation: ensemble ", m))
+            message(paste0("'output.nc' file generated but the height (z) is NaN. Re-running simulation: ensemble ", m))
             success <- FALSE
             if(debug){
               verbose <- TRUE
@@ -396,7 +397,7 @@ run_model <- function(i,
     if(num_reruns > 100){
       stop(paste0("Too many re-runs (> 100) due to issues generating output",
       '\n Suggest testing specific GLM execution with the following code:',
-      '\n GLM3r::run_glm(','"' ,working_directory,'/[insert ensemble number]")'))
+      '\n GLM3r::run_glm(','"' ,working_directory,'")'))
     }
 
   }

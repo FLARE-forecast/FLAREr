@@ -145,9 +145,6 @@ get_glm_nc_var_all_wq <- function(ncFile,working_dir, z_out,vars_depth, vars_no_
   }
   avg_surf_temp <- matrix(ncdf4::ncvar_get(glm_nc, "avg_surf_temp"), ncol = final_time_step)[final_time_step]
 
-
-  glm_temps <- matrix(ncdf4::ncvar_get(glm_nc, "temp"), ncol = final_time_step)[1:tallest_layer,final_time_step]
-
   output <- array(NA,dim=c(tallest_layer,length(vars_depth)))
   for(v in 1:length(vars_depth)){
     var_modeled <-  matrix(ncdf4::ncvar_get(glm_nc, vars_depth[v]), ncol = final_time_step)
@@ -171,6 +168,14 @@ get_glm_nc_var_all_wq <- function(ncFile,working_dir, z_out,vars_depth, vars_no_
   salt <- matrix(ncdf4::ncvar_get(glm_nc, "salt"), ncol = final_time_step)[1:tallest_layer, final_time_step]
 
   ncdf4::nc_close(glm_nc)
+
+
+  if(length(heights) == 1){
+    output <- rbind(output, output)
+    heights <- c(heights/2, heights)
+    diagnostics_output <- rbind(diagnostics_output, diagnostics_output)
+    salt <- c(salt, salt)
+  }
 
 
   return(list(output = output,
