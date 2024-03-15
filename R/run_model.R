@@ -7,7 +7,7 @@
 #' @param curr_stop datetime of end of run
 #' @param par_names names of parameters that are being calibrated
 #' @param curr_pars value for the parameters
-#' @param working_directory full path to the directory where the model is executed
+#' @param ens_working_directory full path to the directory where the model is executed
 #' @param par_nml vector of namelist names associated with each parameter being calibrated
 #' @param num_phytos number of phytoplankton groups
 #' @param glm_depths_start depth from the last GLM run
@@ -44,7 +44,7 @@ run_model <- function(i,
                       curr_stop,
                       par_names,
                       curr_pars,
-                      working_directory,
+                      ens_working_directory,
                       par_nml,
                       num_phytos,
                       glm_depths_start,
@@ -160,7 +160,7 @@ run_model <- function(i,
                                 i,
                                 m,
                                 full_time,
-                                working_directory,
+                                working_directory = ens_working_directory,
                                 wq_start,
                                 management$management_input,
                                 hist_days,
@@ -173,9 +173,9 @@ run_model <- function(i,
                                 forecast_sss_oxy = management$forecast_sss_oxy,
                                 salt = salt_start)
       }else{
-        file.copy(file.path(working_directory, management$specified_sss_inflow_file), paste0(working_directory,"/sss_inflow.csv"))
+        file.copy(file.path(ens_working_directory, management$specified_sss_inflow_file), paste0(ens_working_directory,"/sss_inflow.csv"))
         if(!is.na(management$specified_sss_outflow_file)){
-          file.copy(file.path(working_directory, management$specified_sss_outflow_file), paste0(working_directory,"/sss_outflow.csv"))
+          file.copy(file.path(ens_working_directory, management$specified_sss_outflow_file), paste0(ens_working_directory,"/sss_outflow.csv"))
         }
       }
     }
@@ -248,24 +248,24 @@ run_model <- function(i,
 
   update_nml(var_list = update_glm_nml_list,
              var_name_list = update_glm_nml_names,
-             working_directory,
+             working_directory = ens_working_directory,
              nml = "glm3.nml")
 
   if(list_index_aed > 1){
     update_nml(update_aed_nml_list,
                update_aed_nml_names,
-               working_directory,
+               working_directory = ens_working_directory,
                "aed2.nml")
   }
 
   if(list_index_phyto > 1){
-    phytos <- readr::read_csv(file.path(working_directory, "aed_phyto_pars.csv"),show_col_types = FALSE)
+    phytos <- readr::read_csv(file.path(ens_working_directory, "aed_phyto_pars.csv"),show_col_types = FALSE)
 
     for(k in 1:length(update_phyto_nml_names)){
       phytos[which(stringr::str_detect(phytos$`'p_name'`, update_phyto_nml_names[[k]])),2:ncol(phytos)] <- update_phyto_nml_list[[k]]
     }
 
-    readr::write_csv(phytos, file.path(working_directory, "aed_phyto_pars.csv"))
+    readr::write_csv(phytos, file.path(ens_working_directory, "aed_phyto_pars.csv"))
   }
 
   #Use GLM NML files to run GLM for a day
@@ -276,24 +276,24 @@ run_model <- function(i,
   verbose <- FALSE
 
   if(i == 2 & m == 1 & debug){
-    file.copy(from = paste0(working_directory, "/", "glm3.nml"), #GLM SPECIFIC
-              to = paste0(working_directory, "/", "glm3_initial.nml"),
+    file.copy(from = paste0(ens_working_directory, "/", "glm3.nml"), #GLM SPECIFIC
+              to = paste0(ens_working_directory, "/", "glm3_initial.nml"),
               overwrite = TRUE) #GLM SPECIFIC
   }
 
   while(!pass){
-    unlink(paste0(working_directory, "/output.nc"))
+    unlink(paste0(ens_working_directory, "/output.nc"))
 
     if(machine %in% c("unix", "mac", "windows")){
-      GLM3r::run_glm(sim_folder = working_directory, verbose = verbose)
+      GLM3r::run_glm(sim_folder = ens_working_directory, verbose = verbose)
     }else{
       message("Machine not identified")
       stop()
     }
 
-    if(file.exists(paste0(working_directory, "/output.nc"))){
+    if(file.exists(paste0(ens_working_directory, "/output.nc"))){
 
-      nc <- tryCatch(ncdf4::nc_open(paste0(working_directory, "/output.nc")),
+      nc <- tryCatch(ncdf4::nc_open(paste0(ens_working_directory, "/output.nc")),
                      error = function(e){
                        warning(paste0(e$message, " error in output.nc regenration: ensemble ", m),
                                call. = FALSE)
@@ -346,14 +346,14 @@ run_model <- function(i,
       output_vars_no_depth <- NA
 
       GLM_temp_wq_out <-  get_glm_nc_var_all_wq(ncFile = "/output.nc",
-                                                working_dir = working_directory,
+                                                working_dir = ens_working_directory,
                                                 z_out = modeled_depths,
                                                 vars_depth = output_vars_multi_depth,
                                                 vars_no_depth = output_vars_no_depth,
                                                 diagnostic_vars = diagnostics_names)
 
       if(!debug){
-        unlink(paste0(working_directory, "/output.nc"))
+        unlink(paste0(ens_working_directory, "/output.nc"))
       }
 
       num_glm_depths <- length(GLM_temp_wq_out$depths_enkf)
@@ -397,7 +397,7 @@ run_model <- function(i,
     if(num_reruns > 100){
       stop(paste0("Too many re-runs (> 100) due to issues generating output",
       '\n Suggest testing specific GLM execution with the following code:',
-      '\n GLM3r::run_glm(','"' ,working_directory,'")'))
+      '\n GLM3r::run_glm(','"' ,ens_working_directory,'")'))
     }
 
   }

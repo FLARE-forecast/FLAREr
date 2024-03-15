@@ -358,7 +358,7 @@ run_da_forecast <- function(states_init,
                          curr_stop,
                          par_names,
                          curr_pars = curr_pars_ens,
-                         working_directory = file.path(working_directory, ens_dir_index),
+                         ens_working_directory = file.path(working_directory, ens_dir_index),
                          par_nml = par_file,
                          num_phytos,
                          glm_depths_start = model_internal_depths[i-1, ,m ],
@@ -747,7 +747,7 @@ run_da_forecast <- function(states_init,
         if(npars > 0){
           p_t_pars <- config$da_setup$inflation_factor * (p_it_pars / (nmembers - 1))
         }
-        
+
         if(!is.null(config$da_setup$localization_distance)){
           if(!is.na(config$da_setup$localization_distance)){
             p_t <- localization(mat = p_t,

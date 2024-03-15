@@ -57,10 +57,10 @@ create_inflow_outflow_files_arrow <- function(inflow_forecast_dir = NULL,
   obs_inflow <- readr::read_csv(inflow_obs, show_col_types = FALSE)
 
   if(use_forecast){
-    obs_inflow <- obs_inflow %>%
+    obs_inflow <- obs_inflow |>
       dplyr::filter(datetime >= lubridate::as_date(start_datetime) & datetime <= lubridate::as_date(forecast_start_datetime))
   }else{
-    obs_inflow <- obs_inflow %>%
+    obs_inflow <- obs_inflow |>
       dplyr::filter(datetime >= lubridate::as_date(start_datetime) & datetime <= lubridate::as_date(end_datetime))
   }
 
@@ -98,7 +98,7 @@ create_inflow_outflow_files_arrow <- function(inflow_forecast_dir = NULL,
 
     if(length(inflow_files) == 0 | end_datetime == forecast_start_datetime){
 
-      obs_inflow_tmp <- obs_inflow %>%
+      obs_inflow_tmp <- obs_inflow |>
         tidyr::pivot_wider(names_from = variable, values_from = observation) |>
         dplyr::rename(time = datetime) |>
         dplyr::select(dplyr::all_of(variables))
@@ -112,29 +112,32 @@ create_inflow_outflow_files_arrow <- function(inflow_forecast_dir = NULL,
     }else{
 
       for(i in 1:length(ensemble_members)){
-        curr_ens <- inflow_files %>%
+        curr_ens <- inflow_files |>
           dplyr::filter(flow_number == j,
-                        parameter == ensemble_members[i]) %>%
+                        parameter == ensemble_members[i],
+                        datetime >= lubridate::as_date(forecast_start_datetime)) |>
           tidyr::pivot_wider(names_from = variable, values_from = prediction) |>
           dplyr::rename(time = datetime) |>
-          dplyr::select(dplyr::all_of(variables)) %>%
+          dplyr::select(dplyr::all_of(variables)) |>
           #dplyr::rename(time = datetime) |>
           dplyr::mutate_if(where(is.numeric), list(~round(., 4)))
 
-        obs_inflow_tmp <- obs_inflow %>%
-          dplyr::filter(datetime < lubridate::as_date(forecast_start_datetime))
+        obs_inflow_tmp <- obs_inflow |>
+          dplyr::filter(datetime < lubridate::as_date(forecast_start_datetime)) |>
+          dplyr::mutate_if(where(is.numeric), list(~round(., 4)))
 
         if(nrow(obs_inflow_tmp) > 0){
           obs_inflow_tmp <- obs_inflow_tmp |>
             tidyr::pivot_wider(names_from = variable, values_from = observation) |>
-            dplyr::rename(time = datetime) %>%
+            dplyr::rename(time = datetime) |>
             dplyr::select(dplyr::all_of(variables))
         }else{
           obs_inflow_tmp <- NULL
         }
 
 
-        inflow <- dplyr::bind_rows(obs_inflow_tmp, curr_ens)
+        inflow <- dplyr::bind_rows(obs_inflow_tmp, curr_ens) |>
+          arrange(time)
 
         if(use_ler_vars){
           inflow <- as.data.frame(inflow)
@@ -173,7 +176,7 @@ create_inflow_outflow_files_arrow <- function(inflow_forecast_dir = NULL,
 
     if(length(outflow_files) == 0 | end_datetime == forecast_start_datetime){
 
-      obs_outflow_tmp <- obs_outflow %>%
+      obs_outflow_tmp <- obs_outflow |>
         tidyr::pivot_wider(names_from = variable, values_from = observation) |>
         dplyr::rename(time = datetime) |>
         dplyr::select(time, FLOW)
@@ -199,15 +202,18 @@ create_inflow_outflow_files_arrow <- function(inflow_forecast_dir = NULL,
 
       for(i in 1:length(ensemble_members)){
 
-        d <- outflow_files %>%
+        d <- outflow_files |>
           dplyr::filter(flow_number == j,
-                        parameter == ensemble_members[i]) %>%
+                        parameter == ensemble_members[i],
+                        datetime >= lubridate::as_date(forecast_start_datetime)) |>
           tidyr::pivot_wider(names_from = variable, values_from = prediction) |>
           dplyr::rename(time = datetime) |>
-          dplyr::select(time,FLOW)
+          dplyr::select(time,FLOW) |>
+          dplyr::mutate_if(where(is.numeric), list(~round(., 4)))
 
-        obs_outflow_tmp <- obs_outflow %>%
-          dplyr::filter( datetime < lubridate::as_date(forecast_start_datetime))
+        obs_outflow_tmp <- obs_outflow |>
+          dplyr::filter( datetime < lubridate::as_date(forecast_start_datetime)) |>
+          dplyr::mutate_if(where(is.numeric), list(~round(., 4)))
 
         if(nrow(obs_outflow_tmp) > 0){
           obs_outflow_tmp <- obs_outflow_tmp |>
@@ -219,7 +225,8 @@ create_inflow_outflow_files_arrow <- function(inflow_forecast_dir = NULL,
           obs_outflow_tmp <- NULL
         }
 
-        outflow <- dplyr::bind_rows(obs_outflow_tmp, d)
+        outflow <- dplyr::bind_rows(obs_outflow_tmp, d) |>
+          arrange(time)
 
         if(use_ler_vars){
           outflow <- as.data.frame(outflow)
