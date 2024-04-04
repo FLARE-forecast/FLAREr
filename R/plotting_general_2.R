@@ -31,7 +31,7 @@ plotting_general_2 <- function(file_name,
   csv_file_name <- paste0(tools::file_path_sans_ext(file_name),".csv")
 
 
-  output <- combine_forecast_observations(file_name,
+  output <- FLAREr:::combine_forecast_observations(file_name,
                                           target_file,
                                           extra_historical_days = 0,
                                           ncore = ncore)
@@ -273,7 +273,8 @@ plotting_general_2 <- function(file_name,
       distinct()
 
     if(nrow(obs_secchi) > 0){
-      obs_curr <- dplyr::left_join(obs_date, obs_secchi, by = "date")
+      obs_curr <- dplyr::left_join(obs_date, obs_secchi, by = "date") |>
+        summarise(value = mean(value, na.rm = TRUE), .by = "date")
 
       obs_curr <- obs_curr$value
     }else{
