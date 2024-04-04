@@ -49,6 +49,13 @@ write_forecast_arrow <- function(da_forecast_output,
 
   forecast_flag[which(is.na(forecast_flag))] <- 0
 
+  if(!("multi_depth" %in% names(obs_config))){
+    obs_config <- obs_config |> dplyr::mutate(multi_depth = 1)
+  }
+
+  obs_config <- obs_config |>
+    dplyr::filter(multi_depth == 1)
+
   indexes <- expand.grid(1:dim(x)[1], 1:dim(x)[2], 1:dim(x)[3])
   ensembles <- 1:dim(x)[4]
 
@@ -75,7 +82,8 @@ write_forecast_arrow <- function(da_forecast_output,
 
   tmp_index <- 0
   for(s in 1:length(obs_config$state_names_obs)){
-    if(!obs_config$state_names_obs[s] %in% states_config$state_names){
+    if(!(obs_config$state_names_obs[s] %in% states_config$state_names) &
+       obs_config$multi_depth[s] == 1){
       tmp_index <- tmp_index + 1
       first_index <- 1
       for(ii in 1:length(states_config$state_names)){
@@ -212,8 +220,9 @@ write_forecast_arrow <- function(da_forecast_output,
     }
   }
 
-  output_list <- output_list |> mutate(reference_date = lubridate::as_date(reference_datetime))
-  
+  output_list <- output_list |>
+    mutate(reference_date = lubridate::as_date(reference_datetime))
+
   message("starting writing dataset")
   arrow::write_dataset(dataset = output_list,
                        path = output_directory,

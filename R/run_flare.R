@@ -149,6 +149,14 @@ run_flare <- function(lake_directory,
                                    obs_config = obs_config,
                                    config)
 
+
+  obs_non_vertical <- FLAREr::create_obs_non_vertical(cleaned_observations_file_long = file.path(config$file_path$qaqc_data_directory,paste0(config$location$site_id, "-targets-insitu.csv")),
+                                           obs_config,
+                                           start_datetime = config$run_config$start_datetime,
+                                           end_datetime = config$run_config$end_datetime,
+                                           forecast_start_datetime = config$run_config$forecast_start_datetime,
+                                           forecast_horizon =  config$run_config$forecast_horizon)
+
   states_config <- FLAREr::generate_states_to_obs_mapping(states_config, obs_config)
 
   model_sd <- FLAREr::initiate_model_error(config, states_config)
@@ -179,8 +187,8 @@ run_flare <- function(lake_directory,
                                                 par_fit_method = config$da_setup$par_fit_method,
                                                 debug = FALSE,
                                                 log_wq = FALSE,
-                                                obs_secchi = NULL,
-                                                obs_depth = NULL)
+                                                obs_secchi = obs_non_vertical$obs_secchi,
+                                                obs_depth = obs_non_vertical$obs_depth)
 
   rm(init)
   rm(obs)

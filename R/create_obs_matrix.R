@@ -41,13 +41,20 @@ create_obs_matrix <- function(cleaned_observations_file_long,
     }
     if("time" %in% names(d)){
       d <- d |>
-        mutate(hour = lubridate::hour(time),
+        dplyr::mutate(hour = lubridate::hour(time),
                date = lubridate::as_date(time))
     }else if("datetime" %in% names(d)){
       d <- d |>
-        mutate(hour = lubridate::hour(datetime),
-               date = lubridate::as_date(datetime))
+        dplyr::mutate(hour = lubridate::hour(datetime),
+                      date = lubridate::as_date(datetime))
     }
+
+    if(!("multi_depth" %in% names(obs_config))){
+      obs_config <- obs_config |> dplyr::mutate(multi_depth = 1)
+    }
+
+    obs_config <- obs_config |>
+      dplyr::filter(multi_depth == 1)
 
     if(config$model_settings$ncore == 1){
       future::plan("future::sequential", workers = config$model_settings$ncore)

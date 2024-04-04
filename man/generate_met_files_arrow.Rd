@@ -18,7 +18,7 @@ generate_met_files_arrow(
   local_directory = NULL,
   use_forecast = TRUE,
   use_ler_vars = FALSE,
-  use_siteid_s3 = FALSE
+  use_hive_met = TRUE
 )
 }
 \arguments{

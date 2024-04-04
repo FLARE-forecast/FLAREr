@@ -1,4 +1,3 @@
-##' @title Generate netcdf output file
 ##' @details Function generates a netcdf file from the object that is returned by run_da_forecast()
 ##' @param da_forecast_output list; object that is returned by run_da_forecast()
 ##' @param forecast_output_directory string; full path of directory where the netcdf file will be written
@@ -40,6 +39,13 @@ write_forecast_netcdf <- function(da_forecast_output,
   obs_config <- da_forecast_output$obs_config
   pars_config <- da_forecast_output$pars_config
   obs <- da_forecast_output$obs
+
+  if(!("multi_depth" %in% names(obs_config))){
+    obs_config <- obs_config |> dplyr::mutate(multi_depth = 1)
+  }
+
+  obs_config <- obs_config |>
+    dplyr::filter(multi_depth == 1)
 
   diagnostics <- da_forecast_output$diagnostics
 
@@ -167,7 +173,8 @@ write_forecast_netcdf <- function(da_forecast_output,
 
   tmp_index <- index+npars+length(states_config$state_names)+length(config$output_settings$diagnostics_names)-1
   for(s in 1:length(obs_config$state_names_obs)){
-    if(!obs_config$state_names_obs[s] %in% states_config$state_names){
+    if(!(obs_config$state_names_obs[s] %in% states_config$state_names) &
+       obs_config$multi_depth[s] == 1){
       tmp_index <- tmp_index + 1
       first_index <- 1
       for(ii in 1:length(states_config$state_names)){

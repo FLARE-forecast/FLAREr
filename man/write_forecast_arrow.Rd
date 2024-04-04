@@ -15,7 +15,7 @@ write_forecast_arrow(
 \arguments{
 \item{da_forecast_output}{list; object that is returned by run_da_forecast()}
 
-\item{forecast_output_directory}{string; full path of directory where the csv file will be written}
+\item{forecast_output_directory}{string; full path of the directory where the csv file will be written}
 
 \item{use_short_filename}{use shortened file name; this results in less information in the file name and potentially overwriting existing files}
 }

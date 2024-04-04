@@ -11,7 +11,7 @@ check_noaa_present_arrow(
 )
 }
 \arguments{
-\item{lake_directory}{four letter code for site}
+\item{lake_directory}{four-letter code for site}
 
 \item{configure_run_file}{name of simulation}
 
