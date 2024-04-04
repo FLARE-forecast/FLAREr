@@ -30,6 +30,10 @@ create_obs_non_vertical <- function(cleaned_observations_file_long,
     end_datetime <- forecast_start_datetime + lubridate::days(forecast_horizon)
   }
 
+  if(!("multi_depth" %in% names(obs_config))){
+    obs_config <- obs_config |> dplyr::mutate(multi_depth = 1)
+  }
+
   obs_config <- obs_config |>
     dplyr::filter(multi_depth == 0)
 
