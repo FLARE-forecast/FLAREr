@@ -540,7 +540,7 @@ run_da_forecast <- function(states_init,
         }
       }
 
-      if(!is.null(obs_depth)){
+      if(!is.null(obs_depth) & da_method == "pf"){
         x_matrix <- rbind(x_matrix, lake_depth[i, ])
       }
 
@@ -551,8 +551,6 @@ run_da_forecast <- function(states_init,
       curr_obs <- obs[,i,]
 
       vertical_obs <- length(which(obs_config$multi_depth == 1))
-
-      obs_config$multi_depth
 
       if(dim(obs)[1] > 1){
         zt <- c(aperm(curr_obs, perm = c(2,1)))
@@ -724,7 +722,7 @@ run_da_forecast <- function(states_init,
 
         if(!is.null(config$da_setup$localization_distance)){
           if(!is.na(config$da_setup$localization_distance)){
-            p_t <- localization(mat = p_t,
+            p_t <- FLAREr:::localization(mat = p_t,
                                 nstates = nstates,
                                 modeled_depths = config$model_settings$modeled_depths,
                                 localization_distance = config$da_setup$localization_distance,
@@ -744,8 +742,8 @@ run_da_forecast <- function(states_init,
         update <- aperm(array(c(update), dim = c(ndepths_modeled, nstates, nmembers)), perm = c(2,1,3))
 
         if(!is.null(obs_depth)){
-          if(!is.na(obs_depth[i])){
-            lake_depth[i, ] <- rnorm(nmembers, obs_depth[i], sd = 0.05)
+          if(!is.na(obs_depth$obs[i])){
+            lake_depth[i, ] <- rnorm(nmembers, obs_depth$obs[i], sd = obs_depth$depth_sd)
             for(m in 1:nmembers){
               depth_index <- which(model_internal_depths[i, , m] > lake_depth[i, m])
               model_internal_depths[i,depth_index , m] <- NA
