@@ -1,3 +1,4 @@
+##' @title Generate netcdf output file
 ##' @details Function generates a netcdf file from the object that is returned by run_da_forecast()
 ##' @param da_forecast_output list; object that is returned by run_da_forecast()
 ##' @param forecast_output_directory string; full path of directory where the netcdf file will be written

@@ -243,7 +243,7 @@ run_da_forecast <- function(states_init,
                    curr_start, " - ",
                    curr_stop, " [", Sys.time(), "]"))
 
-    setwd(working_directory)
+    #setwd(working_directory)
 
     met_index <- rep(1:length(met_file_names), times = nmembers)
     if(!is.null(ncol(inflow_file_names))) {
@@ -280,7 +280,7 @@ run_da_forecast <- function(states_init,
         ens_dir_index <- m
         if(config$model_settings$ncore == 1) ens_dir_index <- 1
 
-        setwd(file.path(working_directory, ens_dir_index))
+        #setwd(file.path(working_directory, ens_dir_index))
 
         if(!config$uncertainty$weather & i >= (hist_days + 1)){
           curr_met_file <- met_file_names[met_index[1]]
@@ -288,54 +288,14 @@ run_da_forecast <- function(states_init,
           curr_met_file <- met_file_names[met_index[m]]
         }
 
-
-
-        if(npars > 0){
-          if(par_fit_method == "inflate" & da_method == "enkf"){
-            curr_pars_ens <-  pars[i-1, , m]
-            if(i > (hist_days + 1) & !config$uncertainty$parameter){
-              curr_pars_ens <- mean(pars[i-1, , m])
-            }
-          }else if(par_fit_method %in% c("perturb","perturb_const") & da_method != "none"){
-            if(par_fit_method == "perturb_const"){
-              if(npars > 1){
-                par_mean <- apply(pars[i-1, , ], 1, mean)
-                par_sd <- apply(pars[i-1, , ], 1, sd)
-              }else{
-                par_mean <- mean(pars[i-1, , ])
-                par_sd <- sd(pars[i-1, , ])
-              }
-
-              par_z <- (pars[i-1, ,m] - par_mean)/par_sd
-
-              curr_pars_ens <- par_z * pars_config$perturb_par + par_mean
-
-              if(i > (hist_days + 1) & !config$uncertainty$parameter){
-                curr_pars_ens <- apply(pars[i-1, , ], 1, mean)
-              }
-
-            }else{
-
-              curr_pars_ens <- pars[i-1, , m] + rnorm(npars, mean = rep(0, npars), sd = pars_config$perturb_par)
-
-              if(i > (hist_days + 1) & !config$uncertainty$parameter){
-                curr_pars_ens <- apply(pars[i-1, , ], 1, mean)
-              }
-            }
-
-          }else if(da_method == "none" | par_fit_method == "perturb_init"){
-            curr_pars_ens <- pars[i-1, , m]
-
-            if(i > (hist_days + 1) & !config$uncertainty$parameter){
-              curr_pars_ens <- apply(pars[i-1, , ], 1, mean)
-            }
-
-          }else{
-            message("parameter fitting method not supported.  inflate or perturb are supported. only inflate is supported for enkf")
-          }
-        }else{
-          curr_pars_ens <- NULL
-        }
+        curr_pars_ens <- FLAREr:::propose_parameters(m,
+                                                    pars,
+                                                    pars_config,
+                                                    npars,
+                                                    par_fit_method,
+                                                    da_method,
+                                                    hist_days,
+                                                    include_uncertainty = config$uncertainty$parameter)
 
         if(!is.null(ncol(inflow_file_names))){
           if(!config$uncertainty$inflow & i > (hist_days + 1)){
@@ -349,6 +309,7 @@ run_da_forecast <- function(states_init,
           inflow_file_name <- NULL
           outflow_file_name <- NULL
         }
+
         out <- FLAREr:::run_model(i,
                                   m,
                                   mixing_vars_start = mixing_vars[,i-1 , m],
