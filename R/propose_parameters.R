@@ -8,7 +8,7 @@
 #' @param da_method data assimilation method
 #' @param hist_days number of simulation days before forecasting
 #' @param include_uncertainty include parameter uncertainty in forecasts
-#'
+#' @noRd
 #' @return
 #'
 #' @examples
