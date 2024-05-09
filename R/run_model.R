@@ -119,15 +119,15 @@ run_model <- function(i,
       curr_par_set <- which(par_names == unique_pars[par])
       curr_nml <- par_nml[curr_par_set[1]]
       if(curr_nml == "glm3.nml"){
-        update_glm_nml_list[[list_index]] <- round(curr_pars[curr_par_set], 4)
+        update_glm_nml_list[[list_index]] <- round(curr_pars[curr_par_set], 2)
         update_glm_nml_names[list_index] <- unique_pars[par]
         list_index <- list_index + 1
       }else if(curr_nml == "aed2.nml"){
-        update_aed_nml_list[[list_index_aed]] <- round(curr_pars[curr_par_set], 4)
+        update_aed_nml_list[[list_index_aed]] <- round(curr_pars[curr_par_set], 2)
         update_aed_nml_names[list_index_aed] <- unique_pars[par]
         list_index_aed <- list_index_aed + 1
       }else if(curr_nml == "aed_phyto_pars.csv"){
-        update_phyto_nml_list[[list_index_phyto]] <- rep(round(curr_pars[curr_par_set],4), num_phytos)
+        update_phyto_nml_list[[list_index_phyto]] <- rep(round(curr_pars[curr_par_set],2), num_phytos)
         update_phyto_nml_names[list_index_phyto] <- unique_pars[par]
         list_index_phyto <- list_index_phyto + 1
       }
@@ -150,7 +150,7 @@ run_model <- function(i,
       wq_init_vals <- c(wq_init_vals,
                         approx(modeled_depths,wq_enkf_tmp, glm_depths_mid, rule = 2)$y)
     }
-    update_glm_nml_list[[list_index]] <- round(wq_init_vals, 4)
+    update_glm_nml_list[[list_index]] <- round(wq_init_vals, 2)
     update_glm_nml_names[list_index] <- "wq_init_vals"
     list_index <- list_index + 1
 
@@ -183,17 +183,17 @@ run_model <- function(i,
 
   the_temps_enkf_tmp <- x_start[1, ]
   the_temps_glm <- approx(modeled_depths,the_temps_enkf_tmp, glm_depths_mid, rule = 2)$y
-  update_glm_nml_list[[list_index]] <- round(the_temps_glm, 4)
+  update_glm_nml_list[[list_index]] <- round(the_temps_glm, 2)
   update_glm_nml_names[list_index] <- "the_temps"
   list_index <- list_index + 1
 
   salt_start <- x_start[2, ]
   the_sals_glm <- approx(modeled_depths,salt_start, glm_depths_mid, rule = 2)$y
-  update_glm_nml_list[[list_index]] <- round(the_sals_glm, 4)
+  update_glm_nml_list[[list_index]] <- round(the_sals_glm, 2)
   update_glm_nml_names[list_index] <- "the_sals"
   list_index <- list_index + 1
 
-  update_glm_nml_list[[list_index]] <- round(glm_depths_tmp, 4)
+  update_glm_nml_list[[list_index]] <- round(glm_depths_tmp, 2)
   update_glm_nml_names[list_index] <- "the_depths"
   list_index <- list_index + 1
 
@@ -201,7 +201,7 @@ run_model <- function(i,
   update_glm_nml_names[list_index] <- "num_depths"
   list_index <- list_index + 1
 
-  update_glm_nml_list[[list_index]] <- round(lake_depth_start, 4)
+  update_glm_nml_list[[list_index]] <- round(lake_depth_start, 2)
   update_glm_nml_names[list_index] <- "lake_depth"
   list_index <- list_index + 1
 
@@ -209,15 +209,15 @@ run_model <- function(i,
   update_glm_nml_names[list_index] <- "snow_thickness"
   list_index <- list_index + 1
 
-  update_glm_nml_list[[list_index]] <- round(snow_ice_thickness_start[2], 4)
+  update_glm_nml_list[[list_index]] <- round(snow_ice_thickness_start[2], 2)
   update_glm_nml_names[list_index] <- "white_ice_thickness"
   list_index <- list_index + 1
 
-  update_glm_nml_list[[list_index]] <- round(snow_ice_thickness_start[3], 4)
+  update_glm_nml_list[[list_index]] <- round(snow_ice_thickness_start[3], 2)
   update_glm_nml_names[list_index] <- "blue_ice_thickness"
   list_index <- list_index + 1
 
-  update_glm_nml_list[[list_index]] <- round(avg_surf_temp_start, 4)
+  update_glm_nml_list[[list_index]] <- round(avg_surf_temp_start, 2)
   update_glm_nml_names[list_index] <- "avg_surf_temp"
   list_index <- list_index + 1
 
@@ -275,7 +275,7 @@ run_model <- function(i,
   num_reruns <- 0
   verbose <- FALSE
 
-  if(i == 2 & m == 1 & debug){
+  if(i == 2){
     file.copy(from = paste0(ens_working_directory, "/", "glm3.nml"), #GLM SPECIFIC
               to = paste0(ens_working_directory, "/", "glm3_initial.nml"),
               overwrite = TRUE) #GLM SPECIFIC
@@ -396,8 +396,8 @@ run_model <- function(i,
     num_reruns <- num_reruns + 1
     if(num_reruns > 100){
       stop(paste0("Too many re-runs (> 100) due to issues generating output",
-      '\n Suggest testing specific GLM execution with the following code:',
-      '\n GLM3r::run_glm(','"' ,ens_working_directory,'")'))
+                  '\n Suggest testing specific GLM execution with the following code:',
+                  '\n GLM3r::run_glm(','"' ,ens_working_directory,'")'))
     }
 
   }

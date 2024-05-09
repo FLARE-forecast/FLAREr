@@ -288,7 +288,7 @@ run_da_forecast <- function(states_init,
           curr_met_file <- met_file_names[met_index[m]]
         }
 
-        curr_pars_ens <- FLAREr:::propose_parameters(m,
+        curr_pars_ens <- propose_parameters(m,
                                                     pars,
                                                     pars_config,
                                                     npars,

@@ -53,7 +53,4 @@ set_up_model <- function(config,
 
   inflow_var_names <- c("FLOW","TEMP","SALT", non_temp_names)
 
-  #Create a copy of the NML to record starting initial conditions
-  file.copy(from = paste0(ens_working_directory, "/", "glm3.nml"), #GLM SPECIFIC
-            to = paste0(ens_working_directory, "/", "glm3_initial.nml"), overwrite = TRUE) #GLM SPECIFIC
 }
