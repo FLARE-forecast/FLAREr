@@ -75,6 +75,8 @@ run_model <- function(i,
                       max_layers = 500,
                       use_native_glm_layers = TRUE){
 
+  rounding_level <- 4
+
   if(is.null(management)){
     simulate_sss <- FALSE
   }else{
@@ -121,15 +123,15 @@ run_model <- function(i,
       curr_par_set <- which(par_names == unique_pars[par])
       curr_nml <- par_nml[curr_par_set[1]]
       if(curr_nml == "glm3.nml"){
-        update_glm_nml_list[[list_index]] <- round(curr_pars[curr_par_set], 4)
+        update_glm_nml_list[[list_index]] <- round(curr_pars[curr_par_set], rounding_level)
         update_glm_nml_names[list_index] <- unique_pars[par]
         list_index <- list_index + 1
       }else if(curr_nml == "aed2.nml"){
-        update_aed_nml_list[[list_index_aed]] <- round(curr_pars[curr_par_set], 4)
+        update_aed_nml_list[[list_index_aed]] <- round(curr_pars[curr_par_set], rounding_level)
         update_aed_nml_names[list_index_aed] <- unique_pars[par]
         list_index_aed <- list_index_aed + 1
       }else if(curr_nml == "aed_phyto_pars.csv"){
-        update_phyto_nml_list[[list_index_phyto]] <- rep(round(curr_pars[curr_par_set],4), num_phytos)
+        update_phyto_nml_list[[list_index_phyto]] <- rep(round(curr_pars[curr_par_set],rounding_level), num_phytos)
         update_phyto_nml_names[list_index_phyto] <- unique_pars[par]
         list_index_phyto <- list_index_phyto + 1
       }
@@ -146,7 +148,7 @@ run_model <- function(i,
         wq_init_vals <- c(wq_init_vals, wq_tmp)
     }
 
-    update_glm_nml_list[[list_index]] <- round(wq_init_vals, 4)
+    update_glm_nml_list[[list_index]] <- round(wq_init_vals, rounding_level)
     update_glm_nml_names[list_index] <- "wq_init_vals"
     list_index <- list_index + 1
 
@@ -178,24 +180,26 @@ run_model <- function(i,
   }
 
   the_temps_glm <- glm_native_x_start[1, native_depth_index]
-  update_glm_nml_list[[list_index]] <- round(the_temps_glm, 4)
+  update_glm_nml_list[[list_index]] <- round(the_temps_glm, rounding_level)
   update_glm_nml_names[list_index] <- "the_temps"
   list_index <- list_index + 1
 
   the_sals_glm <- glm_native_x_start[2, native_depth_index]
-  update_glm_nml_list[[list_index]] <- round(the_sals_glm, 4)
+  update_glm_nml_list[[list_index]] <- round(the_sals_glm, rounding_level)
   update_glm_nml_names[list_index] <- "the_sals"
   list_index <- list_index + 1
 
-  update_glm_nml_list[[list_index]] <- round(glm_depths_tmp, 4)
+  the_depths <- glm_depths_start[native_depth_index]
+  update_glm_nml_list[[list_index]] <- round(the_depths, rounding_level)
   update_glm_nml_names[list_index] <- "the_depths"
   list_index <- list_index + 1
 
-  update_glm_nml_list[[list_index]] <- length(glm_depths_tmp)
+
+  update_glm_nml_list[[list_index]] <- length(the_depths)
   update_glm_nml_names[list_index] <- "num_depths"
   list_index <- list_index + 1
 
-  update_glm_nml_list[[list_index]] <- round(lake_depth_start, 4)
+  update_glm_nml_list[[list_index]] <- round(lake_depth_start, rounding_level)
   update_glm_nml_names[list_index] <- "lake_depth"
   list_index <- list_index + 1
 
@@ -203,15 +207,15 @@ run_model <- function(i,
   update_glm_nml_names[list_index] <- "snow_thickness"
   list_index <- list_index + 1
 
-  update_glm_nml_list[[list_index]] <- round(snow_ice_thickness_start[2], 4)
+  update_glm_nml_list[[list_index]] <- round(snow_ice_thickness_start[2], rounding_level)
   update_glm_nml_names[list_index] <- "white_ice_thickness"
   list_index <- list_index + 1
 
-  update_glm_nml_list[[list_index]] <- round(snow_ice_thickness_start[3], 4)
+  update_glm_nml_list[[list_index]] <- round(snow_ice_thickness_start[3], rounding_level)
   update_glm_nml_names[list_index] <- "blue_ice_thickness"
   list_index <- list_index + 1
 
-  update_glm_nml_list[[list_index]] <- round(avg_surf_temp_start, 4)
+  update_glm_nml_list[[list_index]] <- round(avg_surf_temp_start, rounding_level)
   update_glm_nml_names[list_index] <- "avg_surf_temp"
   list_index <- list_index + 1
 

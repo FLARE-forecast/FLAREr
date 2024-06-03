@@ -127,14 +127,18 @@ run_da_forecast <- function(states_init,
   da_qc_flag <- rep(NA, nsteps)
 
   x <- array(NA, dim=c(nsteps, nstates, ndepths_modeled, nmembers))
-  x[1, , , ]  <- states_init
-
   max_layers <- 500
   glm_native_x <- array(NA, dim=c(nsteps, nstates, max_layers, nmembers))
 
   for(m in 1:nmembers){
-    index <- which(!is.na(aux_states_init$model_internal_depths[ ,m]))
-    glm_native_x[1, ,index ,] <- x[1, , ,m ]
+    for(s in 1:nstates){
+      non_na_depths <- which(!is.na(aux_states_init$model_internal_depths[ ,m]))
+      glm_native_x[1,s ,non_na_depths ,] <- states_init[s , ,m ]
+
+      glm_depths_tmp <- c(aux_states_init$model_internal_depths[non_na_depths ,m], aux_states_init$lake_depth[m])
+      glm_depths_mid <- glm_depths_tmp[1:(length(glm_depths_tmp)-1)] + diff(glm_depths_tmp)/2
+      x[1,s, , m] <- approx(glm_depths_mid,glm_native_x[1, s, non_na_depths, m], config$model_settings$modeled_depths, rule = 2)$y
+    }
   }
 
   if(npars > 0){
@@ -213,7 +217,7 @@ run_da_forecast <- function(states_init,
   avg_surf_temp <- array(NA, dim = c(nsteps, nmembers))
 
   mixing_vars[,1, ] <- aux_states_init$mixing_vars
-  mixer_count[1, ] <- NA
+  mixer_count[1, ] <- aux_states_init$mixer_count
   model_internal_depths[1, ,] <- aux_states_init$model_internal_depths
   lake_depth[1, ] <- aux_states_init$lake_depth
   snow_ice_thickness[,1 , ] <- aux_states_init$snow_ice_thickness
@@ -263,13 +267,6 @@ run_da_forecast <- function(states_init,
     x_star <- array(NA, dim = c(nstates, ndepths_modeled, nmembers))
     x_corr <- array(NA, dim = c(nstates, ndepths_modeled, nmembers))
     curr_pars <- array(NA, dim = c(npars, nmembers))
-
-    # if i = start_step set up cluster for parallelization
-    # Switch for
-    switch(Sys.info() [["sysname"]],
-           Linux = { machine <- "unix" },
-           Darwin = { machine <- "mac" },
-           Windows = { machine <- "windows"})
 
     #If i == 1 then assimilate the first time step without running the process
     #model (i.e., use yesterday's forecast of today as initial conditions and
@@ -363,29 +360,29 @@ run_da_forecast <- function(states_init,
         snow_ice_thickness[,i ,m] <- out[[m]]$snow_ice_thickness_end
         avg_surf_temp[i , m] <- out[[m]]$avg_surf_temp_end
         mixing_vars[, i, m] <- out[[m]]$mixing_vars_end
-        mixer_count[i, m] <- out[[m]]$mixing_count_end
+        mixer_count[i, m] <- out[[m]]$mixer_count
 
         curr_pars[, m] <- out[[m]]$curr_pars
 
         num_out_depths <- length(out[[m]]$model_internal_depths)
-
         model_internal_depths[i,1:num_out_depths ,m] <- out[[m]]$model_internal_depths
         non_na_depths_index <- 1:num_out_depths
 
 
-        glm_depths_tmp <- c(model_internal_depths[i,non_na_depths ,m], lake_depth[i ,m ])
+        glm_depths_tmp <- c(model_internal_depths[i,non_na_depths_index ,m], lake_depth[i ,m ])
         glm_depths_mid <- glm_depths_tmp[1:(length(glm_depths_tmp)-1)] + diff(glm_depths_tmp)/2
-        x_star[, , m] <- approx(glm_depths_mid,glm_native_x[i, jj, non_na_depths, m], modeled_depths, rule = 2)$y
-
+        for(s in 1:nstates){
+          x_star[s, , m] <- approx(glm_depths_mid,glm_native_x[i,s , non_na_depths_index, m], config$model_settings$modeled_depths, rule = 2)$y
+        }
         if(length(config$output_settings$diagnostics_names) > 0){
           for(d in 1:dim(diagnostics)[1]){
-            diagnostics[d, i, , m] <- approx(glm_depths_mid,out[[m]]$diagnostics_end[d,non_na_depths_index], modeled_depths, rule = 2)$y
+            diagnostics[d, i, , m] <- approx(glm_depths_mid,out[[m]]$diagnostics_end[d,non_na_depths_index], config$model_settings$modeled_depths, rule = 2)$y
           }
         }
 
-        q_v <- rep(NA, num_depths_internal)
-        w <- rep(NA, num_depths_internal)
-        w_new <- rep(NA, num_depths_internal)
+        q_v <- rep(NA, num_out_depths)
+        w <- rep(NA, num_out_depths)
+        w_new <- rep(NA, num_out_depths)
         #Add process noise
 
         for(jj in 1:nrow(model_sd)){
@@ -394,24 +391,24 @@ run_da_forecast <- function(states_init,
                                    xout = model_internal_depths[i, non_na_depths_index,m],
                                    rule = 2)$y
 
-          w[] <- rnorm(num_depths_internal, 0, 1)
+          w[] <- rnorm(num_out_depths, 0, 1)
           if(config$uncertainty$process == FALSE & i > (hist_days + 1)){
             w[] <- 0.0
           }
-          for(kk in 1:num_depths_internal){
-             if(kk == 1){
-               w_new[kk] <- w[kk]
-             }else{
-               alpha <- exp(-states_config$vert_decorr_length[jj] / (model_internal_depths[i,kk ,m]-model_internal_depths[i,kk-1 ,m]))
-               w_new[kk] <- ((1 - alpha) * w_new[kk-1] +  alpha * w[kk])
+          for(kk in 1:num_out_depths){
+            if(kk == 1){
+              w_new[kk] <- w[kk]
+            }else{
+              alpha <- exp(-states_config$vert_decorr_length[jj] / (model_internal_depths[i,kk ,m]-model_internal_depths[i,kk-1 ,m]))
+              w_new[kk] <- ((1 - alpha) * w_new[kk-1] +  alpha * w[kk])
 
-               #w_new[kk] <- (alpha_v[jj] * w_new[kk-1] + sqrt(1 - alpha_v[jj]^2) * w[kk])
-             }
-             q_v[kk] <- w_new[kk] * model_sd[jj, kk]
-             glm_native_x[i, jj, kk, m] <- glm_native_x[i, jj, kk, m] + q_v[kk]
+              #w_new[kk] <- (alpha_v[jj] * w_new[kk-1] + sqrt(1 - alpha_v[jj]^2) * w[kk])
+            }
+            q_v[kk] <- w_new[kk] * model_sd[jj, kk]
+            glm_native_x[i, jj, kk, m] <- glm_native_x[i, jj, kk, m] + q_v[kk]
           }
-             x_corr[jj, ,m] <- approx(glm_depths_mid,glm_native_x[i, jj, non_na_depths, m], modeled_depths, rule = 2)$y
-          }
+          x_corr[jj, ,m] <- approx(glm_depths_mid,glm_native_x[i, jj, non_na_depths_index, m], config$model_settings$modeled_depths, rule = 2)$y
+        }
       } # END ENSEMBLE LOOP
 
       #Correct any negative water quality states
@@ -928,6 +925,7 @@ run_da_forecast <- function(states_init,
   return(list(full_time = full_time,
               forecast_start_datetime = forecast_start_datetime,
               x = x,
+              glm_native_x,
               pars = pars,
               obs = obs,
               save_file_name = save_file_name,

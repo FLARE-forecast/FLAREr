@@ -33,11 +33,11 @@ generate_restart_initial_conditions <- function(restart_file, state_names, par_n
   mixing_restart <- ncdf4::ncvar_get(nc, "mixing_vars")[ ,restart_index, ]
   mixer_count <- ncdf4::ncvar_get(nc, "mixer_count")[restart_index, ]
 
-  model_internal_depths  <- ncdf4::ncvar_get(nc, "model_internal_depths")[restart_index, , ]
+  model_internal_depths  <- ncdf4::ncvar_get(nc, "model_internal_depth")[restart_index, , ]
 
-  states_restart <- array(NA, dim = c(length(state_names), length(modeled_depths), restart_nmembers))
+  states_restart <- array(NA, dim = c(length(state_names), length(model_internal_depths), restart_nmembers))
   for(i in 1:length(state_names)){
-    states_restart[i, , ] <- ncdf4::ncvar_get(nc,state_names[i])[restart_index, , ]
+    states_restart[i, , ] <- ncdf4::ncvar_get(nc,paste0(state_names[i],"_heights"))[restart_index, , ]
   }
 
   if(!is.null(par_names)){
