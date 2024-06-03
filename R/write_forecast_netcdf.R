@@ -40,6 +40,7 @@ write_forecast_netcdf <- function(da_forecast_output,
   obs_config <- da_forecast_output$obs_config
   pars_config <- da_forecast_output$pars_config
   obs <- da_forecast_output$obs
+  mixer_count <- da_forecast_output$mixer_count
 
   if(!("multi_depth" %in% names(obs_config))){
     obs_config <- obs_config |> dplyr::mutate(multi_depth = 1)
@@ -100,8 +101,9 @@ write_forecast_netcdf <- function(da_forecast_output,
   def_list[[6]] <- ncdf4::ncvar_def("avg_surf_temp","degC",list(timedim, ensdim),missval = -99,longname ='Running Average of Surface Temperature',prec="single")
   def_list[[7]] <- ncdf4::ncvar_def("mixing_vars","dimensionless",list(mixing_vars_dim, timedim, ensdim),fillvalue,longname = "variables required to restart mixing",prec="single")
   def_list[[8]] <- ncdf4::ncvar_def("model_internal_depths","meter",list(timedim, internal_model_depths_dim, ensdim),fillvalue,longname = "depths simulated by glm that are required to restart ",prec="single")
+  def_list[[9]] <- ncdf4::ncvar_def("mixer_count","meter",list(timedim,  ensdim),fillvalue,longname = "restart for mixer count",prec="integer")
 
-  index <- 8
+  index <- 9
 
   if(npars > 0){
     for(par in 1:npars){
@@ -153,8 +155,9 @@ write_forecast_netcdf <- function(da_forecast_output,
   ncdf4::ncvar_put(ncout,def_list[[6]] ,avg_surf_temp)
   ncdf4::ncvar_put(ncout,def_list[[7]] ,mixing_vars)
   ncdf4::ncvar_put(ncout,def_list[[8]] ,model_internal_depths)
+  ncdf4::ncvar_put(ncout,def_list[[9]] ,mixer_count)
 
-  index <- 8
+  index <- 9
 
   if(npars > 0){
     for(par in 1:npars){

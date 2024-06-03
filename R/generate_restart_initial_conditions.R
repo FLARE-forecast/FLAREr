@@ -24,7 +24,6 @@ generate_restart_initial_conditions <- function(restart_file, state_names, par_n
 
   message(paste0("Using restart file with restart index of ", restart_index))
 
-
   modeled_depths <- ncdf4::ncvar_get(nc, "depth")
   lake_depth_restart <- ncdf4::ncvar_get(nc, "lake_depth")[restart_index, ]
   snow_ice_thickness_restart <- ncdf4::ncvar_get(nc, "snow_ice_thickness")[, restart_index, ]
@@ -32,6 +31,8 @@ generate_restart_initial_conditions <- function(restart_file, state_names, par_n
   salt_restart <- ncdf4::ncvar_get(nc, "salt")[restart_index, , ]
 
   mixing_restart <- ncdf4::ncvar_get(nc, "mixing_vars")[ ,restart_index, ]
+  mixer_count <- ncdf4::ncvar_get(nc, "mixer_count")[restart_index, ]
+
   model_internal_depths  <- ncdf4::ncvar_get(nc, "model_internal_depths")[restart_index, , ]
 
   states_restart <- array(NA, dim = c(length(state_names), length(modeled_depths), restart_nmembers))
@@ -57,6 +58,7 @@ generate_restart_initial_conditions <- function(restart_file, state_names, par_n
               avg_surf_temp = avg_surf_temp_restart,
               salt = salt_restart,
               mixing_vars = mixing_restart,
+              mixer_count = mixer_count,
               model_internal_depths = model_internal_depths)
   )
 }

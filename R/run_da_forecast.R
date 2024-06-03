@@ -129,16 +129,20 @@ run_da_forecast <- function(states_init,
   x <- array(NA, dim=c(nsteps, nstates, ndepths_modeled, nmembers))
   x[1, , , ]  <- states_init
 
+  max_layers <- 500
+  glm_native_x <- array(NA, dim=c(nsteps, nstates, max_layers, nmembers))
+
+  for(m in 1:nmembers){
+    index <- which(!is.na(aux_states_init$model_internal_depths[ ,m]))
+    glm_native_x[1, ,index ,] <- x[1, , ,m ]
+  }
+
   if(npars > 0){
     pars <- array(NA, dim=c(nsteps, npars, nmembers))
     pars[1, , ] <- pars_init
   }else{
     pars <- NULL
   }
-
-  q_v <- rep(NA, ndepths_modeled)
-  w <- rep(NA, ndepths_modeled)
-  w_new <- rep(NA, ndepths_modeled)
 
   alpha_v <- 1 - exp(-states_config$vert_decorr_length)
 
@@ -201,12 +205,15 @@ run_da_forecast <- function(states_init,
 
 
   mixing_vars <- array(NA, dim = c(17, nsteps, nmembers))
+  mixer_count <- array(NA, dim = c(nsteps, nmembers))
+
   model_internal_depths <- array(NA, dim = c(nsteps, 500, nmembers))
   lake_depth <- array(NA, dim = c(nsteps, nmembers))
   snow_ice_thickness <- array(NA, dim = c(3, nsteps, nmembers))
   avg_surf_temp <- array(NA, dim = c(nsteps, nmembers))
 
-  mixing_vars[,1 ,] <- aux_states_init$mixing_vars
+  mixing_vars[,1, ] <- aux_states_init$mixing_vars
+  mixer_count[1, ] <- NA
   model_internal_depths[1, ,] <- aux_states_init$model_internal_depths
   lake_depth[1, ] <- aux_states_init$lake_depth
   snow_ice_thickness[,1 , ] <- aux_states_init$snow_ice_thickness
@@ -288,14 +295,14 @@ run_da_forecast <- function(states_init,
           curr_met_file <- met_file_names[met_index[m]]
         }
 
-        curr_pars_ens <- propose_parameters(m,
-                                                    pars,
-                                                    pars_config,
-                                                    npars,
-                                                    par_fit_method,
-                                                    da_method,
-                                                    hist_days,
-                                                    include_uncertainty = config$uncertainty$parameter)
+        curr_pars_ens <- FLAREr:::propose_parameters(m,
+                                                     pars,
+                                                     pars_config,
+                                                     npars,
+                                                     par_fit_method,
+                                                     da_method,
+                                                     hist_days,
+                                                     include_uncertainty = config$uncertainty$parameter)
 
         if(!is.null(ncol(inflow_file_names))){
           if(!config$uncertainty$inflow & i > (hist_days + 1)){
@@ -310,87 +317,101 @@ run_da_forecast <- function(states_init,
           outflow_file_name <- NULL
         }
 
-        out <- FLAREr:::run_model(i,
-                                  m,
-                                  mixing_vars_start = mixing_vars[,i-1 , m],
-                                  curr_start,
-                                  curr_stop,
-                                  par_names,
-                                  curr_pars = curr_pars_ens,
-                                  ens_working_directory = file.path(working_directory, ens_dir_index),
-                                  par_nml = par_file,
-                                  num_phytos,
-                                  glm_depths_start = model_internal_depths[i-1, ,m ],
-                                  lake_depth_start = lake_depth[i-1, m],
-                                  x_start = x[i-1, , ,m ],
-                                  full_time,
-                                  wq_start = NULL,
-                                  wq_end = NULL,
-                                  management = management,
-                                  hist_days,
-                                  modeled_depths = config$model_settings$modeled_depths,
-                                  ndepths_modeled,
-                                  curr_met_file,
-                                  inflow_file_name = inflow_file_name,
-                                  outflow_file_name = outflow_file_name,
-                                  glm_output_vars = output_vars,
-                                  diagnostics_names = config$output_settings$diagnostics_names,
-                                  npars,
-                                  num_wq_vars,
-                                  snow_ice_thickness_start = snow_ice_thickness[, i-1, m ],
-                                  avg_surf_temp_start = avg_surf_temp[i-1, m],
-                                  nstates,
-                                  state_names = states_config$state_names,
-                                  include_wq = config$include_wq,
-                                  debug = debug)
+        out <- run_model(i,
+                         m,
+                         mixing_vars_start = mixing_vars[,i-1 , m],
+                         mixer_count = mixer_count,
+                         curr_start,
+                         curr_stop,
+                         par_names,
+                         curr_pars = curr_pars_ens,
+                         ens_working_directory = file.path(working_directory, ens_dir_index),
+                         par_nml = par_file,
+                         num_phytos,
+                         glm_depths_start = model_internal_depths[i-1, ,m ],
+                         lake_depth_start = lake_depth[i-1, m],
+                         x_start = x[i-1, , ,m ],
+                         full_time,
+                         wq_start = NULL,
+                         wq_end = NULL,
+                         management = management,
+                         hist_days,
+                         modeled_depths = config$model_settings$modeled_depths,
+                         ndepths_modeled,
+                         curr_met_file,
+                         inflow_file_name = inflow_file_name,
+                         outflow_file_name = outflow_file_name,
+                         glm_output_vars = output_vars,
+                         diagnostics_names = config$output_settings$diagnostics_names,
+                         npars,
+                         num_wq_vars,
+                         snow_ice_thickness_start = snow_ice_thickness[, i-1, m ],
+                         avg_surf_temp_start = avg_surf_temp[i-1, m],
+                         nstates,
+                         state_names = states_config$state_names,
+                         include_wq = config$include_wq,
+                         debug = debug,
+                         glm_native_x_start = glm_native_x[i-1, , ,m]
+        )
 
       }, .options = furrr::furrr_options(seed = TRUE))
 
       # Loop through output and assign to matrix
       for(m in 1:nmembers) {
-        x_star[, , m] <- out[[m]]$x_star_end
-        #if(log_wq){
-        #  index <- which(x_star[m, ] <= 0.0000001)
-        #  x_star[m, index[which(index > ndepths_modeled)]] <- 0.0000001
-        #  x_star[m, (ndepths_modeled+1):nstates] <- log(x_star[m, (ndepths_modeled+1):nstates])
-        #}
-
+        glm_native_x[i, , , m] <- out[[m]]$x_star_end
         lake_depth[i ,m ] <- out[[m]]$lake_depth_end
         snow_ice_thickness[,i ,m] <- out[[m]]$snow_ice_thickness_end
         avg_surf_temp[i , m] <- out[[m]]$avg_surf_temp_end
         mixing_vars[, i, m] <- out[[m]]$mixing_vars_end
-        if(length(config$output_settings$diagnostics_names) > 0){
-          diagnostics[, i, , m] <- out[[m]]$diagnostics_end
-        }
-        model_internal_depths[i, ,m] <- out[[m]]$model_internal_depths
+        mixer_count[i, m] <- out[[m]]$mixing_count_end
+
         curr_pars[, m] <- out[[m]]$curr_pars
 
+        num_out_depths <- length(out[[m]]$model_internal_depths)
+
+        model_internal_depths[i,1:num_out_depths ,m] <- out[[m]]$model_internal_depths
+        non_na_depths_index <- 1:num_out_depths
+
+
+        glm_depths_tmp <- c(model_internal_depths[i,non_na_depths ,m], lake_depth[i ,m ])
+        glm_depths_mid <- glm_depths_tmp[1:(length(glm_depths_tmp)-1)] + diff(glm_depths_tmp)/2
+        x_star[, , m] <- approx(glm_depths_mid,glm_native_x[i, jj, non_na_depths, m], modeled_depths, rule = 2)$y
+
+        if(length(config$output_settings$diagnostics_names) > 0){
+          for(d in 1:dim(diagnostics)[1]){
+            diagnostics[d, i, , m] <- approx(glm_depths_mid,out[[m]]$diagnostics_end[d,non_na_depths_index], modeled_depths, rule = 2)$y
+          }
+        }
+
+        q_v <- rep(NA, num_depths_internal)
+        w <- rep(NA, num_depths_internal)
+        w_new <- rep(NA, num_depths_internal)
         #Add process noise
-        q_v[] <- NA
-        w[] <- NA
-        w_new[] <- NA
+
         for(jj in 1:nrow(model_sd)){
-          w[] <- rnorm(ndepths_modeled, 0, 1)
+          model_sd_depth <- approx(x = config$model_settings$modeled_depths,
+                                   y = model_sd[jj, ],
+                                   xout = model_internal_depths[i, non_na_depths_index,m],
+                                   rule = 2)$y
+
+          w[] <- rnorm(num_depths_internal, 0, 1)
           if(config$uncertainty$process == FALSE & i > (hist_days + 1)){
             w[] <- 0.0
           }
-          for(kk in 1:ndepths_modeled){
-            #q_v[kk] <- alpha_v * q_v[kk-1] + sqrt(1 - alpha_v^2) * model_sd[jj, kk] * w[kk]
-            if(kk == 1){
-              w_new[kk] <- w[kk]
-            }else{
-              w_new[kk] <- (alpha_v[jj] * w_new[kk-1] + sqrt(1 - alpha_v[jj]^2) * w[kk])
-            }
-            q_v[kk] <- w_new[kk] * model_sd[jj, kk] #sqrt(log(1 + model_sd[jj, kk] ^ 2))
-            x_corr[jj, kk, m] <-
-              x_star[jj, kk, m] + q_v[kk] #- 0.5*log(1 + model_sd[jj, kk]^2)
-          }
-        }
-        #if(log_wq){
-        #  index <- which(x_corr[m, ] <=  0.0000001)
-        #  x_corr[m, index[which(index > ndepths_modeled)]] <- 0.0000001
-        #}
+          for(kk in 1:num_depths_internal){
+             if(kk == 1){
+               w_new[kk] <- w[kk]
+             }else{
+               alpha <- exp(-states_config$vert_decorr_length[jj] / (model_internal_depths[i,kk ,m]-model_internal_depths[i,kk-1 ,m]))
+               w_new[kk] <- ((1 - alpha) * w_new[kk-1] +  alpha * w[kk])
 
+               #w_new[kk] <- (alpha_v[jj] * w_new[kk-1] + sqrt(1 - alpha_v[jj]^2) * w[kk])
+             }
+             q_v[kk] <- w_new[kk] * model_sd[jj, kk]
+             glm_native_x[i, jj, kk, m] <- glm_native_x[i, jj, kk, m] + q_v[kk]
+          }
+             x_corr[jj, ,m] <- approx(glm_depths_mid,glm_native_x[i, jj, non_na_depths, m], modeled_depths, rule = 2)$y
+          }
       } # END ENSEMBLE LOOP
 
       #Correct any negative water quality states
@@ -412,6 +433,7 @@ run_da_forecast <- function(states_init,
       }
 
     }else{
+      stop("NEED TO FIX i = 1 ELSE ~ line 431")
       x_star <- x[i, , , ]
       x_corr <- x_star
       if(npars > 0){
@@ -492,6 +514,8 @@ run_da_forecast <- function(states_init,
       }
 
     }else{
+
+      message("performing data assimilation")
 
       x_matrix <- apply(aperm(x_corr[,1:ndepths_modeled,], perm = c(2,1,3)), 3, rbind)
       if(length(config$output_settings$diagnostics_names) > 0 & i > 1){
@@ -600,7 +624,6 @@ run_da_forecast <- function(states_init,
         }
       }
 
-
       if(secchi_index > 0){
         psi[vertical_obs * ndepths_modeled + secchi_index] <- obs_secchi$secchi_sd
       }
@@ -684,10 +707,10 @@ run_da_forecast <- function(states_init,
         if(!is.null(config$da_setup$localization_distance)){
           if(!is.na(config$da_setup$localization_distance)){
             p_t <- FLAREr:::localization(mat = p_t,
-                                nstates = nstates,
-                                modeled_depths = config$model_settings$modeled_depths,
-                                localization_distance = config$da_setup$localization_distance,
-                                num_single_states = dim(p_t)[1] - nstates * length(config$model_settings$modeled_depths))
+                                         nstates = nstates,
+                                         modeled_depths = config$model_settings$modeled_depths,
+                                         localization_distance = config$da_setup$localization_distance,
+                                         num_single_states = dim(p_t)[1] - nstates * length(config$model_settings$modeled_depths))
           }
         }
         #Kalman gain
@@ -716,6 +739,12 @@ run_da_forecast <- function(states_init,
           for(m in 1:nmembers){
             depth_index <- which(config$model_settings$modeled_depths <= lake_depth[i, m])
             x[i, s, depth_index, m ] <- update[s,depth_index , m]
+
+            #Map updates to GLM native depths
+            native_depth_index <- which(!is.na(model_internal_depths[i, , m]))
+            glm_native_x[i,s,native_depth_index,m] <- approx(config$model_settings$modeled_depths[depth_index],
+                                                             x[i, s, depth_index, m ], model_internal_depths[i, , m],
+                                                             rule = 2)$y
           }
         }
         if(length(config$output_settings$diagnostics_names) > 0){
@@ -753,21 +782,22 @@ run_da_forecast <- function(states_init,
         }
 
         wt_norm <- exp(LL) / sum(exp(LL))
-        sample <- sample.int(nmembers, replace = TRUE, prob = wt_norm)
+        samples <- sample.int(nmembers, replace = TRUE, prob = wt_norm)
 
-        update <- x_matrix[1:(ndepths_modeled*nstates), sample]
+        update <- x_matrix[1:(ndepths_modeled*nstates), samples]
         x[i, , , ] <- aperm(array(c(update), dim = c(ndepths_modeled, nstates, nmembers)), perm = c(2,1,3))
+        glm_native_x[i, , , ] <-  glm_native_x[i, , ,samples]
 
         if(npars > 0){
-          pars[i, ,] <- pars_star[, sample]
+          pars[i, ,] <- pars_star[, samples]
         }
 
-        snow_ice_thickness[ ,i, ] <- snow_ice_thickness[ ,i, sample]
-        avg_surf_temp[i, ] <- avg_surf_temp[i, sample]
-        lake_depth[i, ] <- lake_depth[i, sample]
-        model_internal_depths[i, , ] <- model_internal_depths[i, , sample]
+        snow_ice_thickness[ ,i, ] <- snow_ice_thickness[ ,i, samples]
+        avg_surf_temp[i, ] <- avg_surf_temp[i, samples]
+        lake_depth[i, ] <- lake_depth[i, samples]
+        model_internal_depths[i, , ] <- model_internal_depths[i, , samples]
         if(length(config$output_settings$diagnostics_names) > 0){
-          diagnostics[ ,i, , ] <- diagnostics[ ,i, ,sample]
+          diagnostics[ ,i, , ] <- diagnostics[ ,i, ,samples]
         }
 
       }else{
@@ -906,6 +936,7 @@ run_da_forecast <- function(states_init,
               forecast_project_id = config$run_config$sim_name,
               time_of_forecast = time_of_forecast,
               mixing_vars =  mixing_vars,
+              mixer_count = mixer_count,
               snow_ice_thickness = snow_ice_thickness,
               avg_surf_temp = avg_surf_temp,
               lake_depth = lake_depth,

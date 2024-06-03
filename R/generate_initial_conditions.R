@@ -47,6 +47,7 @@ generate_initial_conditions <- function(states_config,
     init$mixing_vars <- array(NA, dim=c(17, nmembers))
     init$model_internal_depths <- array(NA, dim = c(500, nmembers))
     init$salt <- array(NA, dim = c(ndepths_modeled, nmembers))
+    init$mixer_count <- array(NA, dim=c(nmembers))
 
     alpha_v <- 1 - exp(-states_config$vert_decorr_length)
 
@@ -112,6 +113,7 @@ generate_initial_conditions <- function(states_config,
     init$snow_ice_thickness[3, ] <- config$default_init$blue_ice_thickness
     init$avg_surf_temp[] <- init$states[1 , 1, ]
     init$mixing_vars[, ] <- 0.0
+    init$mixer_count[] <- 0
     init$salt[, ] <- config$default_init$salinity
 
     for(m in 1:nmembers){
@@ -123,6 +125,7 @@ generate_initial_conditions <- function(states_config,
     aux_states_init$avg_surf_temp <- init$avg_surf_temp
     aux_states_init$the_sals_init <- config$the_sals_init
     aux_states_init$mixing_vars <- init$mixing_vars
+    aux_states_init$mixer_count <- init$mixer_count
     aux_states_init$model_internal_depths <- init$model_internal_depths
     aux_states_init$lake_depth <- init$lake_depth
     aux_states_init$salt <- init$salt
@@ -159,6 +162,7 @@ generate_initial_conditions <- function(states_config,
     aux_states_init$avg_surf_temp <- out$avg_surf_temp
     aux_states_init$the_sals_init <- config$the_sals_init
     aux_states_init$mixing_vars <- out$mixing_vars
+    aux_states_init$mixer_count <- out$mixer_count
     aux_states_init$model_internal_depths <- out$model_internal_depths
     aux_states_init$lake_depth <- out$lake_depth
     aux_states_init$salt <- out$salt
