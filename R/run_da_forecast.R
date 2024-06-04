@@ -388,7 +388,7 @@ run_da_forecast <- function(states_init,
         for(jj in 1:nrow(model_sd)){
           model_sd_depth <- approx(x = config$model_settings$modeled_depths,
                                    y = model_sd[jj, ],
-                                   xout = model_internal_depths[i, non_na_depths_index,m],
+                                   xout = model_internal_depths[i,1:num_out_depths ,m],
                                    rule = 2)$y
 
           w[] <- rnorm(num_out_depths, 0, 1)
@@ -404,7 +404,7 @@ run_da_forecast <- function(states_init,
 
               #w_new[kk] <- (alpha_v[jj] * w_new[kk-1] + sqrt(1 - alpha_v[jj]^2) * w[kk])
             }
-            q_v[kk] <- w_new[kk] * model_sd[jj, kk]
+            q_v[kk] <- w_new[kk] * model_sd_depth[kk]
             glm_native_x[i, jj, kk, m] <- glm_native_x[i, jj, kk, m] + q_v[kk]
           }
           x_corr[jj, ,m] <- approx(glm_depths_mid,glm_native_x[i, jj, non_na_depths_index, m], config$model_settings$modeled_depths, rule = 2)$y
@@ -763,6 +763,8 @@ run_da_forecast <- function(states_init,
 
       }else if(da_method == "pf"){
 
+        print("here")
+
         obs_states <- t(h %*% x_matrix)
 
         LL <- rep(NA, length(nmembers))
@@ -925,7 +927,7 @@ run_da_forecast <- function(states_init,
   return(list(full_time = full_time,
               forecast_start_datetime = forecast_start_datetime,
               x = x,
-              glm_native_x,
+              glm_native_x = glm_native_x,
               pars = pars,
               obs = obs,
               save_file_name = save_file_name,
