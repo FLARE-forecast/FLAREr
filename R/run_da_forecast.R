@@ -740,7 +740,7 @@ run_da_forecast <- function(states_init,
             #Map updates to GLM native depths
             native_depth_index <- which(!is.na(model_internal_depths[i, , m]))
             glm_native_x[i,s,native_depth_index,m] <- approx(config$model_settings$modeled_depths[depth_index],
-                                                             x[i, s, depth_index, m ], model_internal_depths[i, , m],
+                                                             x[i, s, depth_index, m ], model_internal_depths[i,native_depth_index , m],
                                                              rule = 2)$y
           }
         }
