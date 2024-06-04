@@ -150,7 +150,7 @@ write_forecast_netcdf <- function(da_forecast_output,
       id <- which(obs_config$state_names_obs == states_config$state_names[s])
       long_name <- paste0("restart:",obs_config$target_variable[id])
     }else{
-      long_name <- "state"
+      long_name <- "restart"
     }
     if(states_config$state_names[s] == "temp"){
       state_unit <- "degC"
