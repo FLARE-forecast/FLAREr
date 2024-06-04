@@ -86,11 +86,11 @@ generate_initial_conditions <- function(states_config,
           w[] <- 0.0
         }
         for(kk in 1:ndepths_modeled){
-          #q_v[kk] <- alpha_v * q_v[kk-1] + sqrt(1 - alpha_v^2) * model_sd[jj, kk] * w[kk]
           if(kk == 1){
             w_new[1] <- w[1]
           }else{
-            w_new[kk] <- (alpha_v[jj] * w_new[kk-1] + sqrt(1 - alpha_v[jj]^2) * w[kk])
+            alpha <- exp(-states_config$vert_decorr_length[jj] / (config$model_settings$modeled_depths[kk]-config$model_settings$modeled_depths[kk-1]))
+            w_new[kk] <- ((1 - alpha) * w_new[kk-1] +  alpha * w[kk])
           }
           q_v[kk] <- w_new[kk] * states_config$initial_model_sd[jj]
           init$states[jj,kk,m] <- init_depth[jj,kk ]  + q_v[kk]
@@ -102,11 +102,15 @@ generate_initial_conditions <- function(states_config,
 
     if(npars > 0){
       for(par in 1:npars){
-        init$pars[par, ] <- runif(n=nmembers,pars_config$par_init_lowerbound[par], pars_config$par_init_upperbound[par])
+        if(pars_config$fix_par[par] == 0){
+          init$pars[par, ] <- runif(n=nmembers,pars_config$par_init_lowerbound[par], pars_config$par_init_upperbound[par])
+        }else{
+          init$pars[par, ] <- pars_config$par_init[par]
+        }
       }
     }
 
-    init$lake_depth[] <- round(config$default_init$lake_depth, 3)
+    init$lake_depth[] <- round(config$default_init$lake_depth, 4)
     #Matrix to store snow and ice heights
     init$snow_ice_thickness[1, ] <- config$default_init$snow_thickness
     init$snow_ice_thickness[2, ] <- config$default_init$white_ice_thickness
@@ -118,6 +122,10 @@ generate_initial_conditions <- function(states_config,
 
     for(m in 1:nmembers){
       init$model_internal_depths[1:ndepths_modeled, m] <- config$model_settings$modeled_depths
+      #init$model_internal_heights[1:ndepths_modeled, m] <- init$lake_depth[m] - config$model_settings$modeled_depths
+      #for(s in 1:nstates){
+      #  init$states[s,,m] <- rev(init$states[s, ,m])
+      #}
     }
 
     aux_states_init <- list()
