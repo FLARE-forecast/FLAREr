@@ -763,8 +763,6 @@ run_da_forecast <- function(states_init,
 
       }else if(da_method == "pf"){
 
-        print("here")
-
         obs_states <- t(h %*% x_matrix)
 
         LL <- rep(NA, length(nmembers))
