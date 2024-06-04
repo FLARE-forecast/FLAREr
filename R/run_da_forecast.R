@@ -127,8 +127,7 @@ run_da_forecast <- function(states_init,
   da_qc_flag <- rep(NA, nsteps)
 
   x <- array(NA, dim=c(nsteps, nstates, ndepths_modeled, nmembers))
-  max_layers <- 500
-  glm_native_x <- array(NA, dim=c(nsteps, nstates, max_layers, nmembers))
+  glm_native_x <- array(NA, dim=c(nsteps, nstates, config$model_settings$max_model_layers, nmembers))
 
   for(m in 1:nmembers){
     for(s in 1:nstates){
@@ -211,7 +210,7 @@ run_da_forecast <- function(states_init,
   mixing_vars <- array(NA, dim = c(17, nsteps, nmembers))
   mixer_count <- array(NA, dim = c(nsteps, nmembers))
 
-  model_internal_depths <- array(NA, dim = c(nsteps, 500, nmembers))
+  model_internal_depths <- array(NA, dim = c(nsteps, config$model_settings$max_model_layers, nmembers))
   lake_depth <- array(NA, dim = c(nsteps, nmembers))
   snow_ice_thickness <- array(NA, dim = c(3, nsteps, nmembers))
   avg_surf_temp <- array(NA, dim = c(nsteps, nmembers))
@@ -348,6 +347,7 @@ run_da_forecast <- function(states_init,
                          state_names = states_config$state_names,
                          include_wq = config$include_wq,
                          debug = debug,
+                         max_layers = config$model_settings$max_model_layers,
                          glm_native_x_start = glm_native_x[i-1, , ,m]
         )
 

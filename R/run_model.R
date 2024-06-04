@@ -72,7 +72,7 @@ run_model <- function(i,
                       include_wq,
                       debug = TRUE,
                       glm_native_x_start,
-                      max_layers = 500,
+                      max_layers,
                       use_native_glm_layers = TRUE){
 
   rounding_level <- 4

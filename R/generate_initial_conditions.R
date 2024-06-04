@@ -45,7 +45,7 @@ generate_initial_conditions <- function(states_config,
     init$snow_ice_thickness <- array(NA, dim=c(3, nmembers))
     init$avg_surf_temp <- array(NA, dim=c(nmembers))
     init$mixing_vars <- array(NA, dim=c(17, nmembers))
-    init$model_internal_depths <- array(NA, dim = c(500, nmembers))
+    init$model_internal_depths <- array(NA, dim = c(config$model_settings$max_model_layers, nmembers))
     init$salt <- array(NA, dim = c(ndepths_modeled, nmembers))
     init$mixer_count <- array(NA, dim=c(nmembers))
 
