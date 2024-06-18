@@ -30,6 +30,8 @@ run_flare <- function(lake_directory,
     }
   }
 
+  message('Retrieving Observational Data...')
+
   obs_config <- readr::read_csv(file.path(config$file_path$configuration_directory, config$model_settings$obs_config_file), col_types = readr::cols())
   states_config <- readr::read_csv(file.path(config$file_path$configuration_directory, config$model_settings$states_config_file), col_types = readr::cols())
 
@@ -67,7 +69,11 @@ run_flare <- function(lake_directory,
     config$met$use_hive_met <- TRUE
   }
 
+  message('Generating Met Forecasts...')
+
   if(config$met$use_openmeteo){
+
+    message('Using OpenMeteo Met Drivers...')
 
     met_out <- generate_met_files_openmet(out_dir = config$file_path$execute_directory,
                                           start_datetime = met_start_datetime,
@@ -117,6 +123,7 @@ run_flare <- function(lake_directory,
       variables <- c("time", "FLOW", "TEMP", "SALT")
     }
 
+    message('Creating inflow/outflow files...')
 
     inflow_outflow_files <- FLAREr::create_inflow_outflow_files_arrow(inflow_forecast_dir = inflow_forecast_dir,
                                                                       inflow_obs = file.path(lake_directory, "targets",config$location$site_id, config$inflow$observed_filename),
@@ -157,6 +164,8 @@ run_flare <- function(lake_directory,
                                            forecast_start_datetime = config$run_config$forecast_start_datetime,
                                            forecast_horizon =  config$run_config$forecast_horizon)
 
+  message('Setting states and initial conditions...')
+
   states_config <- FLAREr::generate_states_to_obs_mapping(states_config, obs_config)
 
   model_sd <- FLAREr::initiate_model_error(config, states_config)
@@ -167,6 +176,9 @@ run_flare <- function(lake_directory,
                                               obs,
                                               config,
                                               historical_met_error = met_out$historical_met_error)
+
+  message('Running DA forecast...')
+
   #Run EnKF
   da_forecast_output <- FLAREr::run_da_forecast(states_init = init$states,
                                                 pars_init = init$pars,
