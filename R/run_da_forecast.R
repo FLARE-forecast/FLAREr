@@ -281,6 +281,8 @@ run_da_forecast <- function(states_init,
         future::plan("future::multisession", workers = config$model_settings$ncore)
       }
 
+      orgin <- getwd()
+
       out <- furrr::future_map(1:nmembers, function(m) {
 
         ens_dir_index <- m
@@ -355,6 +357,8 @@ run_da_forecast <- function(states_init,
         )
 
       }, .options = furrr::furrr_options(seed = TRUE))
+
+      setwd(orgin)
 
       # Loop through output and assign to matrix
       for(m in 1:nmembers) {
@@ -808,11 +812,11 @@ run_da_forecast <- function(states_init,
         if(length(which(is.nan(wt_norm))) > 0){
           index <- ceiling(z_index[which(z_index <= vertical_obs * ndepths_modeled)] / ndepths_modeled)
           obs_names <- c(obs_config$state_names_obs[index])
-          if(secchi_index > 0){
-            obs_names <- c(obs_names,"seechi")
-          }
           if(depth_index > 0){
             obs_names <- c(obs_names,"depth")
+          }
+          if(secchi_index > 0){
+            obs_names <- c(obs_names,"seechi")
           }
           readr::write_csv(x = tibble(obs_names = obs_names,
                                       obs = zt,
