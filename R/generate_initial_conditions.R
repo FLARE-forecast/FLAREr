@@ -45,8 +45,10 @@ generate_initial_conditions <- function(states_config,
     init$snow_ice_thickness <- array(NA, dim=c(3, nmembers))
     init$avg_surf_temp <- array(NA, dim=c(nmembers))
     init$mixing_vars <- array(NA, dim=c(17, nmembers))
-    init$model_internal_depths <- array(NA, dim = c(500, nmembers))
+    init$model_internal_depths <- array(NA, dim = c(config$model_settings$max_model_layers, nmembers))
     init$salt <- array(NA, dim = c(ndepths_modeled, nmembers))
+    init$mixer_count <- array(NA, dim=c(nmembers))
+    init$log_particle_weights <- array(NA, dim=c(nmembers))
 
     alpha_v <- 1 - exp(-states_config$vert_decorr_length)
 
@@ -85,11 +87,11 @@ generate_initial_conditions <- function(states_config,
           w[] <- 0.0
         }
         for(kk in 1:ndepths_modeled){
-          #q_v[kk] <- alpha_v * q_v[kk-1] + sqrt(1 - alpha_v^2) * model_sd[jj, kk] * w[kk]
           if(kk == 1){
             w_new[1] <- w[1]
           }else{
-            w_new[kk] <- (alpha_v[jj] * w_new[kk-1] + sqrt(1 - alpha_v[jj]^2) * w[kk])
+            alpha <- exp(-states_config$vert_decorr_length[jj] / (config$model_settings$modeled_depths[kk]-config$model_settings$modeled_depths[kk-1]))
+            w_new[kk] <- ((1 - alpha) * w_new[kk-1] +  alpha * w[kk])
           }
           q_v[kk] <- w_new[kk] * states_config$initial_model_sd[jj]
           init$states[jj,kk,m] <- init_depth[jj,kk ]  + q_v[kk]
@@ -101,21 +103,31 @@ generate_initial_conditions <- function(states_config,
 
     if(npars > 0){
       for(par in 1:npars){
-        init$pars[par, ] <- runif(n=nmembers,pars_config$par_init_lowerbound[par], pars_config$par_init_upperbound[par])
+        if(pars_config$fix_par[par] == 0){
+          init$pars[par, ] <- runif(n=nmembers,pars_config$par_init_lowerbound[par], pars_config$par_init_upperbound[par])
+        }else{
+          init$pars[par, ] <- pars_config$par_init[par]
+        }
       }
     }
 
-    init$lake_depth[] <- round(config$default_init$lake_depth, 3)
+    init$lake_depth[] <- round(config$default_init$lake_depth, 4)
     #Matrix to store snow and ice heights
     init$snow_ice_thickness[1, ] <- config$default_init$snow_thickness
     init$snow_ice_thickness[2, ] <- config$default_init$white_ice_thickness
     init$snow_ice_thickness[3, ] <- config$default_init$blue_ice_thickness
     init$avg_surf_temp[] <- init$states[1 , 1, ]
     init$mixing_vars[, ] <- 0.0
+    init$mixer_count[] <- 0
     init$salt[, ] <- config$default_init$salinity
+    init$log_particle_weights[] <- log(1.0)
 
     for(m in 1:nmembers){
       init$model_internal_depths[1:ndepths_modeled, m] <- config$model_settings$modeled_depths
+      #init$model_internal_heights[1:ndepths_modeled, m] <- init$lake_depth[m] - config$model_settings$modeled_depths
+      #for(s in 1:nstates){
+      #  init$states[s,,m] <- rev(init$states[s, ,m])
+      #}
     }
 
     aux_states_init <- list()
@@ -123,9 +135,11 @@ generate_initial_conditions <- function(states_config,
     aux_states_init$avg_surf_temp <- init$avg_surf_temp
     aux_states_init$the_sals_init <- config$the_sals_init
     aux_states_init$mixing_vars <- init$mixing_vars
+    aux_states_init$mixer_count <- init$mixer_count
     aux_states_init$model_internal_depths <- init$model_internal_depths
     aux_states_init$lake_depth <- init$lake_depth
     aux_states_init$salt <- init$salt
+    aux_states_init$log_particle_weights <- init$log_particle_weights
 
     init <- list(states = init$states,
                  pars = init$pars,
@@ -159,9 +173,11 @@ generate_initial_conditions <- function(states_config,
     aux_states_init$avg_surf_temp <- out$avg_surf_temp
     aux_states_init$the_sals_init <- config$the_sals_init
     aux_states_init$mixing_vars <- out$mixing_vars
+    aux_states_init$mixer_count <- out$mixer_count
     aux_states_init$model_internal_depths <- out$model_internal_depths
     aux_states_init$lake_depth <- out$lake_depth
     aux_states_init$salt <- out$salt
+    aux_states_init$log_particle_weights <- out$log_particle_weights
 
     init <- list(states = out$states,
                  pars = out$pars,

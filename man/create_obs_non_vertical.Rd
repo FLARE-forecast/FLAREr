@@ -10,9 +10,7 @@ create_obs_non_vertical(
   start_datetime,
   end_datetime,
   forecast_start_datetime,
-  forecast_horizon,
-  secchi_sd = 0.5,
-  depth_sd = 0.1
+  forecast_horizon
 )
 }
 \arguments{

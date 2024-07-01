@@ -40,6 +40,7 @@
 run_model <- function(i,
                       m,
                       mixing_vars_start,
+                      mixer_count,
                       curr_start,
                       curr_stop,
                       par_names,
@@ -69,12 +70,12 @@ run_model <- function(i,
                       nstates,
                       state_names,
                       include_wq,
-                      debug = TRUE){
+                      debug = TRUE,
+                      glm_native_x_start,
+                      max_layers,
+                      use_native_glm_layers = TRUE){
 
-  switch(Sys.info() [["sysname"]],
-         Linux = { machine <- "unix" },
-         Darwin = { machine <- "mac" },
-         Windows = { machine <- "windows"})
+  rounding_level <- 4
 
   if(is.null(management)){
     simulate_sss <- FALSE
@@ -92,6 +93,10 @@ run_model <- function(i,
   list_index_aed <- 1
   list_index_phyto <- 1
 
+  #update_glm_nml_list[[list_index]] <- mixer_count
+  #update_glm_nml_names[list_index] <- "restart_mixer_count"
+  #list_index <- list_index + 1
+
   update_glm_nml_list[[list_index]] <- mixing_vars_start
   update_glm_nml_names[list_index] <- "restart_variables"
   list_index <- list_index + 1
@@ -104,11 +109,10 @@ run_model <- function(i,
   update_glm_nml_names[list_index] <- "stop"
   list_index <- list_index + 1
 
-  glm_depths_end <- rep(NA,length(glm_depths_start))
-
-  diagnostics <- array(NA, dim = c(length(diagnostics_names),ndepths_modeled))
-
-  x_star_end <- array(NA, dim =c(nstates, ndepths_modeled))
+  glm_depths_end <- rep(NA,length(max_layers))
+  diagnostics <- array(NA, dim = c(length(diagnostics_names),max_layers))
+  x_star_end <- array(NA, dim =c(nstates, max_layers))
+  native_depth_index <- which(!is.na(glm_depths_start))
 
   if(npars > 0){
 
@@ -119,24 +123,20 @@ run_model <- function(i,
       curr_par_set <- which(par_names == unique_pars[par])
       curr_nml <- par_nml[curr_par_set[1]]
       if(curr_nml == "glm3.nml"){
-        update_glm_nml_list[[list_index]] <- round(curr_pars[curr_par_set], 4)
+        update_glm_nml_list[[list_index]] <- round(curr_pars[curr_par_set], rounding_level)
         update_glm_nml_names[list_index] <- unique_pars[par]
         list_index <- list_index + 1
       }else if(curr_nml == "aed2.nml"){
-        update_aed_nml_list[[list_index_aed]] <- round(curr_pars[curr_par_set], 4)
+        update_aed_nml_list[[list_index_aed]] <- round(curr_pars[curr_par_set], rounding_level)
         update_aed_nml_names[list_index_aed] <- unique_pars[par]
         list_index_aed <- list_index_aed + 1
       }else if(curr_nml == "aed_phyto_pars.csv"){
-        update_phyto_nml_list[[list_index_phyto]] <- rep(round(curr_pars[curr_par_set],4), num_phytos)
+        update_phyto_nml_list[[list_index_phyto]] <- rep(round(curr_pars[curr_par_set],rounding_level), num_phytos)
         update_phyto_nml_names[list_index_phyto] <- unique_pars[par]
         list_index_phyto <- list_index_phyto + 1
       }
     }
   }
-
-  glm_depths_tmp <- glm_depths_start[!is.na(glm_depths_start)]
-  glm_depths_tmp_tmp <- c(glm_depths_tmp, lake_depth_start)
-  glm_depths_mid <- glm_depths_tmp_tmp[1:(length(glm_depths_tmp_tmp)-1)] + diff(glm_depths_tmp_tmp)/2
 
   if(include_wq){
 
@@ -144,13 +144,11 @@ run_model <- function(i,
     start_index <- 2
 
     for(wq in 1:num_wq_vars){
-
-      wq_enkf_tmp <- x_start[start_index + wq, ]
-      wq_enkf_tmp[wq_enkf_tmp < 0] <- 0
-      wq_init_vals <- c(wq_init_vals,
-                        approx(modeled_depths,wq_enkf_tmp, glm_depths_mid, rule = 2)$y)
+        wq_tmp <- glm_native_x_start[start_index + wq, native_depth_index]
+        wq_init_vals <- c(wq_init_vals, wq_tmp)
     }
-    update_glm_nml_list[[list_index]] <- round(wq_init_vals, 4)
+
+    update_glm_nml_list[[list_index]] <- round(wq_init_vals, rounding_level)
     update_glm_nml_names[list_index] <- "wq_init_vals"
     list_index <- list_index + 1
 
@@ -181,27 +179,27 @@ run_model <- function(i,
     }
   }
 
-  the_temps_enkf_tmp <- x_start[1, ]
-  the_temps_glm <- approx(modeled_depths,the_temps_enkf_tmp, glm_depths_mid, rule = 2)$y
-  update_glm_nml_list[[list_index]] <- round(the_temps_glm, 4)
+  the_temps_glm <- glm_native_x_start[1, native_depth_index]
+  update_glm_nml_list[[list_index]] <- round(the_temps_glm, rounding_level)
   update_glm_nml_names[list_index] <- "the_temps"
   list_index <- list_index + 1
 
-  salt_start <- x_start[2, ]
-  the_sals_glm <- approx(modeled_depths,salt_start, glm_depths_mid, rule = 2)$y
-  update_glm_nml_list[[list_index]] <- round(the_sals_glm, 4)
+  the_sals_glm <- glm_native_x_start[2, native_depth_index]
+  update_glm_nml_list[[list_index]] <- round(the_sals_glm, rounding_level)
   update_glm_nml_names[list_index] <- "the_sals"
   list_index <- list_index + 1
 
-  update_glm_nml_list[[list_index]] <- round(glm_depths_tmp, 4)
+  the_depths <- glm_depths_start[native_depth_index]
+  update_glm_nml_list[[list_index]] <- round(the_depths, rounding_level)
   update_glm_nml_names[list_index] <- "the_depths"
   list_index <- list_index + 1
 
-  update_glm_nml_list[[list_index]] <- length(glm_depths_tmp)
+
+  update_glm_nml_list[[list_index]] <- length(the_depths)
   update_glm_nml_names[list_index] <- "num_depths"
   list_index <- list_index + 1
 
-  update_glm_nml_list[[list_index]] <- round(lake_depth_start, 4)
+  update_glm_nml_list[[list_index]] <- round(lake_depth_start, rounding_level)
   update_glm_nml_names[list_index] <- "lake_depth"
   list_index <- list_index + 1
 
@@ -209,15 +207,15 @@ run_model <- function(i,
   update_glm_nml_names[list_index] <- "snow_thickness"
   list_index <- list_index + 1
 
-  update_glm_nml_list[[list_index]] <- round(snow_ice_thickness_start[2], 4)
+  update_glm_nml_list[[list_index]] <- round(snow_ice_thickness_start[2], rounding_level)
   update_glm_nml_names[list_index] <- "white_ice_thickness"
   list_index <- list_index + 1
 
-  update_glm_nml_list[[list_index]] <- round(snow_ice_thickness_start[3], 4)
+  update_glm_nml_list[[list_index]] <- round(snow_ice_thickness_start[3], rounding_level)
   update_glm_nml_names[list_index] <- "blue_ice_thickness"
   list_index <- list_index + 1
 
-  update_glm_nml_list[[list_index]] <- round(avg_surf_temp_start, 4)
+  update_glm_nml_list[[list_index]] <- round(avg_surf_temp_start, rounding_level)
   update_glm_nml_names[list_index] <- "avg_surf_temp"
   list_index <- list_index + 1
 
@@ -245,17 +243,16 @@ run_model <- function(i,
     list_index <- list_index + 1
   }
 
-
-  update_nml(var_list = update_glm_nml_list,
-             var_name_list = update_glm_nml_names,
-             working_directory = ens_working_directory,
-             nml = "glm3.nml")
+  FLAREr:::update_nml(var_list = update_glm_nml_list,
+                      var_name_list = update_glm_nml_names,
+                      working_directory = ens_working_directory,
+                      nml = "glm3.nml")
 
   if(list_index_aed > 1){
-    update_nml(update_aed_nml_list,
-               update_aed_nml_names,
-               working_directory = ens_working_directory,
-               "aed2.nml")
+    FLAREr:::update_nml(update_aed_nml_list,
+                        update_aed_nml_names,
+                        working_directory = ens_working_directory,
+                        "aed2.nml")
   }
 
   if(list_index_phyto > 1){
@@ -275,7 +272,7 @@ run_model <- function(i,
   num_reruns <- 0
   verbose <- FALSE
 
-  if(i == 2 & m == 1 & debug){
+  if(i == 2){
     file.copy(from = paste0(ens_working_directory, "/", "glm3.nml"), #GLM SPECIFIC
               to = paste0(ens_working_directory, "/", "glm3_initial.nml"),
               overwrite = TRUE) #GLM SPECIFIC
@@ -284,12 +281,16 @@ run_model <- function(i,
   while(!pass){
     unlink(paste0(ens_working_directory, "/output.nc"))
 
-    if(machine %in% c("unix", "mac", "windows")){
-      GLM3r::run_glm(sim_folder = ens_working_directory, verbose = verbose)
-    }else{
-      message("Machine not identified")
-      stop()
-    }
+    #GLM3r::run_glm(sim_folder = ens_working_directory, verbose = verbose)
+
+    origin <- getwd()
+    setwd(ens_working_directory)
+
+    system2("/Users/rqthomas/Documents/research/glm-aed-dev/glm-aed/glm-source/GLM/glm", args = "--no-gui",
+            stdout = NULL,
+            stderr = NULL)
+
+    setwd(origin)
 
     if(file.exists(paste0(ens_working_directory, "/output.nc"))){
 
@@ -304,8 +305,9 @@ run_model <- function(i,
       if(!is.null(nc)){
         tallest_layer <- ncdf4::ncvar_get(nc, "NS")[1]
         z <- ncdf4::ncvar_get(nc, "z")[1]
+        temp <- ncdf4::ncvar_get(nc, "temp")[1]
         ncdf4::nc_close(nc)
-        if(!is.na(tallest_layer)){
+        if(!is.na(tallest_layer) | is.nan(temp)){
           if(!is.nan(z)) {
             success <- TRUE
           } else {
@@ -338,55 +340,43 @@ run_model <- function(i,
       }
     }
 
-
-
     if(success){
 
       output_vars_multi_depth <- state_names
       output_vars_no_depth <- NA
 
-      GLM_temp_wq_out <-  get_glm_nc_var_all_wq(ncFile = "/output.nc",
-                                                working_dir = ens_working_directory,
-                                                z_out = modeled_depths,
-                                                vars_depth = output_vars_multi_depth,
-                                                vars_no_depth = output_vars_no_depth,
-                                                diagnostic_vars = diagnostics_names)
+      GLM_temp_wq_out <-  FLAREr:::get_glm_nc_var_all_wq(ncFile = "/output.nc",
+                                                         working_dir = ens_working_directory,
+                                                         z_out = modeled_depths,
+                                                         vars_depth = output_vars_multi_depth,
+                                                         vars_no_depth = output_vars_no_depth,
+                                                         diagnostic_vars = diagnostics_names)
 
       if(!debug){
         unlink(paste0(ens_working_directory, "/output.nc"))
       }
 
       num_glm_depths <- length(GLM_temp_wq_out$depths_enkf)
-      glm_temps <- rev(GLM_temp_wq_out$output[ ,1])
-
       glm_depths_end[1:num_glm_depths] <- GLM_temp_wq_out$depths_enkf
-
-      glm_depths_tmp <- c(GLM_temp_wq_out$depths_enkf,GLM_temp_wq_out$lake_depth)
-
-      glm_depths_mid <- glm_depths_tmp[1:(length(glm_depths_tmp)-1)] + diff(glm_depths_tmp)/2
-
-      x_star_end[1, ] <- approx(glm_depths_mid,glm_temps, modeled_depths, rule = 2)$y
-
-      glm_salt <- rev(GLM_temp_wq_out$output[ ,2])
-      x_star_end[2, ] <- approx(glm_depths_mid, glm_salt, modeled_depths, rule = 2)$y
+      x_star_end[1,1:num_glm_depths] <- rev(GLM_temp_wq_out$output[ ,1])
+      x_star_end[2,1:num_glm_depths] <- rev(GLM_temp_wq_out$output[ ,2])
 
       if(include_wq){
         start_index <- 2
         for(wq in 1:num_wq_vars){
-          glm_wq <-  rev(GLM_temp_wq_out$output[ ,start_index+wq])
-          #if(length(is.na(glm_wq)) > 0){next}
-          x_star_end[start_index + wq, ] <- approx(glm_depths_mid,glm_wq, modeled_depths, rule = 2)$y
+          glm_wq <- rev(GLM_temp_wq_out$output[ ,start_index+wq])
+          x_star_end[start_index + wq,1:num_glm_depths] <- glm_wq
         }
       }
 
       if(length(diagnostics_names) > 0){
         for(wq in 1:length(diagnostics_names)){
-          glm_wq <-  rev(GLM_temp_wq_out$diagnostics_output[ , wq])
-          diagnostics[wq , ] <- approx(glm_depths_mid,glm_wq, modeled_depths, rule = 2)$y
+          diagnostic <-  rev(GLM_temp_wq_out$diagnostics_output[ , wq])
+          diagnostics[wq ,1:num_glm_depths] <- diagnostic
         }
       }
 
-      if(length(which(is.na(x_star_end))) == 0){
+      if(length(which(is.na(x_star_end[, 1:num_glm_depths]))) == 0){
         pass = TRUE
       }else{
         message("NA or NaN in output file'. Re-running simulation...")
@@ -396,8 +386,8 @@ run_model <- function(i,
     num_reruns <- num_reruns + 1
     if(num_reruns > 100){
       stop(paste0("Too many re-runs (> 100) due to issues generating output",
-      '\n Suggest testing specific GLM execution with the following code:',
-      '\n GLM3r::run_glm(','"' ,ens_working_directory,'")'))
+                  '\n Suggest testing specific GLM execution with the following code:',
+                  '\n GLM3r::run_glm(','"' ,ens_working_directory,'")'))
     }
 
   }
@@ -407,7 +397,9 @@ run_model <- function(i,
               snow_ice_thickness_end  = GLM_temp_wq_out$snow_wice_bice,
               avg_surf_temp_end  = GLM_temp_wq_out$avg_surf_temp,
               mixing_vars_end = GLM_temp_wq_out$mixing_vars,
+              mixer_count = NA,
               diagnostics_end  = diagnostics,
               model_internal_depths  = glm_depths_end,
-              curr_pars = curr_pars))
+              curr_pars = curr_pars
+  ))
 }

@@ -46,6 +46,7 @@ write_forecast_arrow <- function(da_forecast_output,
   obs_config <- da_forecast_output$obs_config
   pars_config <- da_forecast_output$pars_config
   diagnostics <- da_forecast_output$diagnostics
+  log_particle_weights <- da_forecast_output$log_particle_weights
 
   forecast_flag[which(is.na(forecast_flag))] <- 0
 

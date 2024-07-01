@@ -16,7 +16,9 @@ reference:
   contents:
   - create_inflow_outflow_files_arrow
   - create_obs_matrix
+  - create_obs_non_vertical
   - generate_met_files_arrow
+  - generate_met_files_openmet
   - generate_states_to_obs_mapping
   - generate_initial_conditions
   - initiate_model_error

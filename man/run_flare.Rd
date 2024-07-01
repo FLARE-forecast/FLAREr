@@ -4,12 +4,7 @@
 \alias{run_flare}
 \title{Run FLARE for a single forecast}
 \usage{
-run_flare(
-  lake_directory,
-  configure_run_file,
-  config_set_name,
-  use_depth_secchi = FALSE
-)
+run_flare(lake_directory, configure_run_file, config_set_name)
 }
 \arguments{
 \item{lake_directory}{full path to repository directory}
