@@ -48,6 +48,7 @@ generate_initial_conditions <- function(states_config,
     init$model_internal_depths <- array(NA, dim = c(config$model_settings$max_model_layers, nmembers))
     init$salt <- array(NA, dim = c(ndepths_modeled, nmembers))
     init$mixer_count <- array(NA, dim=c(nmembers))
+    init$log_particle_weights <- array(NA, dim=c(nmembers))
 
     alpha_v <- 1 - exp(-states_config$vert_decorr_length)
 
@@ -119,6 +120,7 @@ generate_initial_conditions <- function(states_config,
     init$mixing_vars[, ] <- 0.0
     init$mixer_count[] <- 0
     init$salt[, ] <- config$default_init$salinity
+    init$log_particle_weights[] <- log(1.0)
 
     for(m in 1:nmembers){
       init$model_internal_depths[1:ndepths_modeled, m] <- config$model_settings$modeled_depths
@@ -137,6 +139,7 @@ generate_initial_conditions <- function(states_config,
     aux_states_init$model_internal_depths <- init$model_internal_depths
     aux_states_init$lake_depth <- init$lake_depth
     aux_states_init$salt <- init$salt
+    aux_states_init$log_particle_weights <- init$log_particle_weights
 
     init <- list(states = init$states,
                  pars = init$pars,
@@ -174,6 +177,7 @@ generate_initial_conditions <- function(states_config,
     aux_states_init$model_internal_depths <- out$model_internal_depths
     aux_states_init$lake_depth <- out$lake_depth
     aux_states_init$salt <- out$salt
+    aux_states_init$log_particle_weights <- out$log_particle_weights
 
     init <- list(states = out$states,
                  pars = out$pars,

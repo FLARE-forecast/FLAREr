@@ -10,8 +10,6 @@
 #'
 generate_restart_initial_conditions <- function(restart_file, state_names, par_names = NULL, restart_index = NULL){
 
-
-
   nc <- ncdf4::nc_open(restart_file)
   restart_nmembers <- length(ncdf4::ncvar_get(nc, "ensemble"))
   forecast <- ncdf4::ncvar_get(nc, "forecast")
@@ -32,6 +30,7 @@ generate_restart_initial_conditions <- function(restart_file, state_names, par_n
 
   mixing_restart <- ncdf4::ncvar_get(nc, "mixing_vars")[ ,restart_index, ]
   mixer_count <- ncdf4::ncvar_get(nc, "mixer_count")[restart_index, ]
+  log_particle_weights <- ncdf4::ncvar_get(nc, "log_particle_weights")[restart_index, ]
 
   model_internal_depths  <- ncdf4::ncvar_get(nc, "model_internal_depth")[restart_index, , ]
 
@@ -59,6 +58,7 @@ generate_restart_initial_conditions <- function(restart_file, state_names, par_n
               salt = salt_restart,
               mixing_vars = mixing_restart,
               mixer_count = mixer_count,
-              model_internal_depths = model_internal_depths)
+              model_internal_depths = model_internal_depths,
+              log_particle_weights = log_particle_weights)
   )
 }
