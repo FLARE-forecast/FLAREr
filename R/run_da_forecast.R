@@ -406,20 +406,24 @@ run_da_forecast <- function(states_init,
             }
             q_v[kk] <- w_new[kk] * model_sd_depth[kk]
             glm_native_x[i, jj, kk, m] <- glm_native_x[i, jj, kk, m] + q_v[kk]
+            if(jj > 1 & glm_native_x[i, jj, kk, m] < 0){
+              glm_native_x[i, jj, kk, m] <- 0.0
+            }
           }
           x_corr[jj, ,m] <- approx(glm_depths_mid,glm_native_x[i, jj, non_na_depths_index, m], config$model_settings$modeled_depths, rule = 2)$y
+
         }
       } # END ENSEMBLE LOOP
 
       #Correct any negative water quality states
-      if(length(states_config$state_names) > 1 & !log_wq){
-        for(s in 2:nstates){
-          for(k in 1:ndepths_modeled){
-            index <- which(x_corr[s, k, ] < 0.0)
-            x_corr[s, k, index] <- 0.0
-          }
-        }
-      }
+      #if(length(states_config$state_names) > 1 & !log_wq){
+      #  for(s in 2:nstates){
+      #    for(k in 1:ndepths_modeled){
+      #      index <- which(x_corr[s, k, ] < 0.0)
+      #      x_corr[s, k, index] <- 0.0
+      #    }
+      #  }
+      #}
 
       if(npars > 0){
         pars_corr <- curr_pars
@@ -811,7 +815,7 @@ run_da_forecast <- function(states_init,
       for(s in 2:nstates){
         for(k in 1:ndepths_modeled){
           index <- which(x[i, s, k, ] < 0.0)
-          x[i, s, k, index] <- 0.0
+          glm_native_x[i, s, k, index] <- 0.0
         }
       }
     }
