@@ -784,6 +784,32 @@ run_da_forecast <- function(states_init,
 
         log_particle_weights[i, ] <- log(1.0)
 
+        ###################
+        ## Quality Control Step
+        ##################
+
+        num_out_depths <- length(which(!is.na(glm_native_x[i, 1, ,1])))
+
+        #Correct any negative water quality states
+        if(length(states_config$state_names) > 1 & !log_wq){
+          for(s in 2:nstates){
+            for(m in 1:nmembers){
+              index <- which(glm_native_x[i, s, , m] < 0.0 & !is.na(glm_native_x[i, s, , m]))
+              glm_native_x[i, s, index, m] <- 0.0
+            }
+          }
+        }
+
+        #Correct any parameter values outside bounds
+        if(npars > 0){
+          for(par in 1:npars){
+            low_index <- which(pars[i,par ,] < pars_config$par_lowerbound[par])
+            high_index <- which(pars[i,par ,] > pars_config$par_upperbound[par])
+            pars[i,par, low_index] <- pars_config$par_lowerbound[par]
+            pars[i,par, high_index]  <- pars_config$par_upperbound[par]
+          }
+        }
+
       }else if(da_method == "pf"){
 
         obs_states <- t(h %*% x_matrix)
@@ -853,29 +879,7 @@ run_da_forecast <- function(states_init,
       }
     }
 
-    ###################
-    ## Quality Control Step
-    ##################
 
-    #Correct any negative water quality states
-    if(length(states_config$state_names) > 1 & !log_wq){
-      for(s in 2:nstates){
-        for(k in 1:ndepths_modeled){
-          index <- which(x[i, s, k, ] < 0.0)
-          glm_native_x[i, s, k, index] <- 0.0
-        }
-      }
-    }
-
-    #Correct any parameter values outside bounds
-    if(npars > 0){
-      for(par in 1:npars){
-        low_index <- which(pars[i,par ,] < pars_config$par_lowerbound[par])
-        high_index <- which(pars[i,par ,] > pars_config$par_upperbound[par])
-        pars[i,par, low_index] <- pars_config$par_lowerbound[par]
-        pars[i,par, high_index]  <- pars_config$par_upperbound[par]
-      }
-    }
 
     ###############
 
