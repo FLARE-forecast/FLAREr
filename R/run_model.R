@@ -40,7 +40,7 @@
 run_model <- function(i,
                       m,
                       mixing_vars_start,
-                      mixer_count,
+                      mixer_count_start,
                       curr_start,
                       curr_stop,
                       par_names,
@@ -48,13 +48,9 @@ run_model <- function(i,
                       ens_working_directory,
                       par_nml,
                       num_phytos,
-                      glm_depths_start,
+                      glm_heights_start,
                       lake_depth_start,
-                      x_start,
                       full_time,
-                      wq_start,
-                      wq_end,
-                      management = NULL,
                       hist_days,
                       modeled_depths,
                       ndepths_modeled,
@@ -71,17 +67,16 @@ run_model <- function(i,
                       state_names,
                       include_wq,
                       debug = TRUE,
-                      glm_native_x_start,
-                      max_layers,
-                      use_native_glm_layers = TRUE){
+                      states_heights_start,
+                      max_layers){
 
-  rounding_level <- 4
+  rounding_level <- 10
 
-  if(is.null(management)){
-    simulate_sss <- FALSE
-  }else{
-    simulate_sss <- management$simulate_sss
-  }
+  # if(is.null(management)){
+  #   simulate_sss <- FALSE
+  # }else{
+  #   simulate_sss <- management$simulate_sss
+  # }
 
   update_glm_nml_list <- list()
   update_aed_nml_list <- list()
@@ -93,9 +88,9 @@ run_model <- function(i,
   list_index_aed <- 1
   list_index_phyto <- 1
 
-  #update_glm_nml_list[[list_index]] <- mixer_count
-  #update_glm_nml_names[list_index] <- "restart_mixer_count"
-  #list_index <- list_index + 1
+  update_glm_nml_list[[list_index]] <- mixer_count_start
+  update_glm_nml_names[list_index] <- "restart_mixer_count"
+  list_index <- list_index + 1
 
   update_glm_nml_list[[list_index]] <- mixing_vars_start
   update_glm_nml_names[list_index] <- "restart_variables"
@@ -109,10 +104,10 @@ run_model <- function(i,
   update_glm_nml_names[list_index] <- "stop"
   list_index <- list_index + 1
 
-  glm_depths_end <- rep(NA,length(max_layers))
+  glm_heights_end <- rep(NA,length(max_layers))
   diagnostics <- array(NA, dim = c(length(diagnostics_names),max_layers))
   x_star_end <- array(NA, dim =c(nstates, max_layers))
-  native_depth_index <- which(!is.na(glm_depths_start))
+  native_heights_index <- which(!is.na(glm_heights_start))
 
   if(npars > 0){
 
@@ -144,7 +139,7 @@ run_model <- function(i,
     start_index <- 2
 
     for(wq in 1:num_wq_vars){
-        wq_tmp <- glm_native_x_start[start_index + wq, native_depth_index]
+        wq_tmp <- rev(states_heights_start[start_index + wq, native_heights_index])
         wq_init_vals <- c(wq_init_vals, wq_tmp)
     }
 
@@ -152,51 +147,51 @@ run_model <- function(i,
     update_glm_nml_names[list_index] <- "wq_init_vals"
     list_index <- list_index + 1
 
-    if(simulate_sss){
-      if(is.na(management$specified_sss_inflow_file)){
-        create_sss_input_output(x = x_start,
-                                i,
-                                m,
-                                full_time,
-                                working_directory = ens_working_directory,
-                                wq_start,
-                                management$management_input,
-                                hist_days,
-                                management$forecast_sss_on,
-                                management$sss_depth,
-                                management$use_specified_sss,
-                                state_names,
-                                modeled_depths = modeled_depths,
-                                forecast_sss_flow = management$forecast_sss_flow,
-                                forecast_sss_oxy = management$forecast_sss_oxy,
-                                salt = salt_start)
-      }else{
-        file.copy(file.path(ens_working_directory, management$specified_sss_inflow_file), paste0(ens_working_directory,"/sss_inflow.csv"))
-        if(!is.na(management$specified_sss_outflow_file)){
-          file.copy(file.path(ens_working_directory, management$specified_sss_outflow_file), paste0(ens_working_directory,"/sss_outflow.csv"))
-        }
-      }
-    }
+    # if(simulate_sss){
+    #   if(is.na(management$specified_sss_inflow_file)){
+    #     create_sss_input_output(x = x_start,
+    #                             i,
+    #                             m,
+    #                             full_time,
+    #                             working_directory = ens_working_directory,
+    #                             wq_start,
+    #                             management$management_input,
+    #                             hist_days,
+    #                             management$forecast_sss_on,
+    #                             management$sss_depth,
+    #                             management$use_specified_sss,
+    #                             state_names,
+    #                             modeled_depths = modeled_depths,
+    #                             forecast_sss_flow = management$forecast_sss_flow,
+    #                             forecast_sss_oxy = management$forecast_sss_oxy,
+    #                             salt = salt_start)
+    #   }else{
+    #     file.copy(file.path(ens_working_directory, management$specified_sss_inflow_file), paste0(ens_working_directory,"/sss_inflow.csv"))
+    #     if(!is.na(management$specified_sss_outflow_file)){
+    #       file.copy(file.path(ens_working_directory, management$specified_sss_outflow_file), paste0(ens_working_directory,"/sss_outflow.csv"))
+    #     }
+    #   }
+    # }
   }
 
-  the_temps_glm <- glm_native_x_start[1, native_depth_index]
+  the_temps_glm <- rev(states_heights_start[1, native_heights_index])
   update_glm_nml_list[[list_index]] <- round(the_temps_glm, rounding_level)
   update_glm_nml_names[list_index] <- "the_temps"
   list_index <- list_index + 1
 
-  the_sals_glm <- glm_native_x_start[2, native_depth_index]
+  the_sals_glm <- rev(states_heights_start[2, native_heights_index])
   update_glm_nml_list[[list_index]] <- round(the_sals_glm, rounding_level)
   update_glm_nml_names[list_index] <- "the_sals"
   list_index <- list_index + 1
 
-  the_depths <- glm_depths_start[native_depth_index]
-  update_glm_nml_list[[list_index]] <- round(the_depths, rounding_level)
-  update_glm_nml_names[list_index] <- "the_depths"
+  the_heights <- rev(glm_heights_start[native_heights_index])
+  update_glm_nml_list[[list_index]] <- round(the_heights, rounding_level)
+  update_glm_nml_names[list_index] <- "the_heights"
   list_index <- list_index + 1
 
 
-  update_glm_nml_list[[list_index]] <- length(the_depths)
-  update_glm_nml_names[list_index] <- "num_depths"
+  update_glm_nml_list[[list_index]] <- length(the_heights)
+  update_glm_nml_names[list_index] <- "num_heights"
   list_index <- list_index + 1
 
   update_glm_nml_list[[list_index]] <- round(lake_depth_start, rounding_level)
@@ -283,14 +278,14 @@ run_model <- function(i,
 
     #GLM3r::run_glm(sim_folder = ens_working_directory, verbose = verbose)
 
-    origin <- getwd()
+    #origin <- getwd()
     setwd(ens_working_directory)
 
     system2("/Users/rqthomas/Documents/research/glm-aed-dev/glm-aed/glm-source/GLM/glm", args = "--no-gui",
             stdout = NULL,
             stderr = NULL)
 
-    setwd(origin)
+    #setwd(origin)
 
     if(file.exists(paste0(ens_working_directory, "/output.nc"))){
 
@@ -345,7 +340,7 @@ run_model <- function(i,
       output_vars_multi_depth <- state_names
       output_vars_no_depth <- NA
 
-      GLM_temp_wq_out <-  FLAREr:::get_glm_nc_var_all_wq(ncFile = "/output.nc",
+      GLM_temp_wq_out <-  FLAREr:::get_glm_nc_var(ncFile = "/output.nc",
                                                          working_dir = ens_working_directory,
                                                          z_out = modeled_depths,
                                                          vars_depth = output_vars_multi_depth,
@@ -356,27 +351,27 @@ run_model <- function(i,
         unlink(paste0(ens_working_directory, "/output.nc"))
       }
 
-      num_glm_depths <- length(GLM_temp_wq_out$depths_enkf)
-      glm_depths_end[1:num_glm_depths] <- GLM_temp_wq_out$depths_enkf
-      x_star_end[1,1:num_glm_depths] <- rev(GLM_temp_wq_out$output[ ,1])
-      x_star_end[2,1:num_glm_depths] <- rev(GLM_temp_wq_out$output[ ,2])
+      num_glm_heights <- length(GLM_temp_wq_out$heights)
+      glm_heights_end[1:num_glm_heights] <- rev(GLM_temp_wq_out$heights)
+      x_star_end[1,1:num_glm_heights] <- rev(GLM_temp_wq_out$output[ ,1])
+      x_star_end[2,1:num_glm_heights] <- rev(GLM_temp_wq_out$output[ ,2])
 
       if(include_wq){
         start_index <- 2
         for(wq in 1:num_wq_vars){
           glm_wq <- rev(GLM_temp_wq_out$output[ ,start_index+wq])
-          x_star_end[start_index + wq,1:num_glm_depths] <- glm_wq
+          x_star_end[start_index + wq,1:num_glm_heights] <- glm_wq
         }
       }
 
       if(length(diagnostics_names) > 0){
         for(wq in 1:length(diagnostics_names)){
           diagnostic <-  rev(GLM_temp_wq_out$diagnostics_output[ , wq])
-          diagnostics[wq ,1:num_glm_depths] <- diagnostic
+          diagnostics[wq ,1:num_glm_heights] <- diagnostic
         }
       }
 
-      if(length(which(is.na(x_star_end[, 1:num_glm_depths]))) == 0){
+      if(length(which(is.na(x_star_end[, 1:num_glm_heights]))) == 0){
         pass = TRUE
       }else{
         message("NA or NaN in output file'. Re-running simulation...")
@@ -397,9 +392,9 @@ run_model <- function(i,
               snow_ice_thickness_end  = GLM_temp_wq_out$snow_wice_bice,
               avg_surf_temp_end  = GLM_temp_wq_out$avg_surf_temp,
               mixing_vars_end = GLM_temp_wq_out$mixing_vars,
-              mixer_count = NA,
+              mixer_count_end = GLM_temp_wq_out$mixer_count,
               diagnostics_end  = diagnostics,
-              model_internal_depths  = glm_depths_end,
+              model_internal_heights  = glm_heights_end,
               curr_pars = curr_pars
   ))
 }

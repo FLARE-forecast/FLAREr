@@ -48,7 +48,7 @@ set_up_model <- function(config,
   }
 
 
-  update_var(length(config$modeled_depths), "num_depths", ens_working_directory, "glm3.nml") #GLM SPECIFIC
+  #update_var(length(config$modeled_depths), "num_depths", ens_working_directory, "glm3.nml") #GLM SPECIFIC
 
 
   inflow_var_names <- c("FLOW","TEMP","SALT", non_temp_names)

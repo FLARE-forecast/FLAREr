@@ -1,41 +1,66 @@
-#num_out_depths <- length(out[[m]]$model_internal_depths)
-#model_internal_depths[i,1:num_out_depths ,m] <- out[[m]]$model_internal_depths
-#non_na_depths_index <- 1:num_out_depths
-add_process_noise <- function(m, x_heights, model_internal_heights, flare_depths, states_config, include_uncertainty = TRUE, hist_days){
+#' Add random noise to model states
+#'
+#' @param states_height_ens
+#' @param model_sd
+#' @param model_internal_heights_ens
+#' @param lake_depth_ens
+#' @param modeled_depths
+#' @param vert_decorr_length
+#' @param include_uncertainty
+#'
+#' @noRd
+#' @return
+#'
+#' @examples
+add_process_noise <- function(states_height_ens, model_sd, model_internal_heights_ens, lake_depth_ens, modeled_depths, vert_decorr_length, include_uncertainty = TRUE){
 
-  alpha_v <- 1 - exp(-states_config$vert_decorr_length)
+  states_depth_ens <- array(NA, dim = c(nrow(model_sd), length(modeled_depths)))
 
-  q_v <- rep(NA, num_out_depths)
-  w <- rep(NA, num_out_depths)
-  w_new <- rep(NA, num_out_depths)
-  #Add process noise
+  alpha_v <- 1 - exp(-vert_decorr_length)
+
+
+  non_na_heights_index <- which(!is.na(model_internal_heights_ens))
+
+  num_out_heights <- length(non_na_heights_index)
+  non_na_heights_index <- 1:num_out_heights
+
+  glm_depths <- lake_depth_ens - model_internal_heights_ens[non_na_heights_index]
+
+
+  q_v <- rep(NA, num_out_heights)
+  w <- rep(NA, num_out_heights)
+  w_new <- rep(NA, num_out_heights)
 
   for(jj in 1:nrow(model_sd)){
-    model_sd_depth <- approx(x = config$model_settings$modeled_depths,
-                             y = model_sd[jj, ],
-                             xout = model_internal_depths[i,1:num_out_depths ,m],
-                             rule = 2)$y
+    model_sd_height <- approx(x = modeled_depths,
+                              y = model_sd[jj, ],
+                              xout = lake_depth_ens - model_internal_heights_ens[1:num_out_heights],
+                              rule = 2)$y
 
-    w[] <- rnorm(num_out_depths, 0, 1)
-    if(include_uncertainty == FALSE & i > (hist_days + 1)){
+    w[] <- rnorm(num_out_heights, 0, 1)
+    if(include_uncertainty == FALSE){
       w[] <- 0.0
     }
-    for(kk in 1:num_out_depths){
+    for(kk in 1:num_out_heights){
       if(kk == 1){
         w_new[kk] <- w[kk]
       }else{
-        alpha <- exp(-states_config$vert_decorr_length[jj] / (model_internal_depths[i,kk]-model_internal_depths[i,kk-1]))
+        alpha <- exp(-vert_decorr_length[jj] / abs((model_internal_heights_ens[kk]-model_internal_heights_ens[kk-1])))
         w_new[kk] <- ((1 - alpha) * w_new[kk-1] +  alpha * w[kk])
-
-        #w_new[kk] <- (alpha_v[jj] * w_new[kk-1] + sqrt(1 - alpha_v[jj]^2) * w[kk])
       }
-      q_v[kk] <- w_new[kk] * model_sd_depth[kk]
-      x_corr_heights <- glm_native_x[jj, kk] + q_v[kk]
+      q_v[kk] <- w_new[kk] * model_sd_height[kk]
+      states_height_ens[jj, kk] <- states_height_ens[jj, kk] + q_v[kk]
+
+      if(jj > 1 & states_height_ens[jj, kk] < 0){
+        states_height_ens[jj, kk] <- 0.0
+      }
     }
-    x_corr_out <- approx(glm_depths_mid,glm_native_x[i, jj, non_na_depths_index, m], config$model_settings$modeled_depths, rule = 2)$y
+
+    states_depth_ens[jj, ] <- approx(glm_depths, states_height_ens[jj, non_na_heights_index], modeled_depths, rule = 2)$y
+
   }
 
-  return(list(x_corr_depth, x_corr_heights))
+  return(list(states_height_ens = states_height_ens, states_depth_ens = states_depth_ens))
 
 
 }

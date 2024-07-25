@@ -33,7 +33,7 @@ write_forecast_arrow <- function(da_forecast_output,
     output_directory <- arrow::SubTreeFileSystem$create(local_directory)
   }
 
-  x <- da_forecast_output$x
+  x <- da_forecast_output$states_depth
   pars <- da_forecast_output$pars
   lake_depth <- da_forecast_output$lake_depth
   snow_ice_thickness <- da_forecast_output$snow_ice_thickness

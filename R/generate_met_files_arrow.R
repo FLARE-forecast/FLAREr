@@ -112,7 +112,8 @@ generate_met_files_arrow <- function(obs_met_file = NULL,
     target <- readr::read_csv(obs_met_file, show_col_types = FALSE) |>
       tidyr::pivot_wider(names_from = variable, values_from = observation) |>
       dplyr::arrange(datetime) |>
-      dplyr::mutate(WindSpeed = wind_speed) |>
+      dplyr::mutate(WindSpeed = wind_speed,
+                    use_ler_vars = use_ler_vars) |>
       dplyr::rename(AirTemp = air_temperature,
                     ShortWave = surface_downwelling_shortwave_flux_in_air,
                     LongWave = surface_downwelling_longwave_flux_in_air,
@@ -144,7 +145,8 @@ generate_met_files_arrow <- function(obs_met_file = NULL,
       dplyr::filter(datetime %in% full_time_hist) |>
       tidyr::pivot_wider(names_from = variable, values_from = prediction) |>
       dplyr::arrange(parameter, datetime) |>
-      dplyr::mutate(WindSpeed = sqrt(eastward_wind^2 + northward_wind^2)) |>
+      dplyr::mutate(WindSpeed = sqrt(eastward_wind^2 + northward_wind^2),
+                    use_ler_vars = use_ler_vars) |>
       dplyr::rename(AirTemp = air_temperature,
                     ShortWave = surface_downwelling_shortwave_flux_in_air,
                     LongWave = surface_downwelling_longwave_flux_in_air,
@@ -245,7 +247,8 @@ generate_met_files_arrow <- function(obs_met_file = NULL,
       dplyr::collect() |>
       tidyr::pivot_wider(names_from = variable, values_from = prediction) |>
       dplyr::arrange(parameter, datetime) |>
-      dplyr::mutate(WindSpeed = sqrt(eastward_wind^2 + northward_wind^2)) |>
+      dplyr::mutate(WindSpeed = sqrt(eastward_wind^2 + northward_wind^2),
+                    use_ler_vars = use_ler_vars) |>
       dplyr::rename(AirTemp = air_temperature,
                     ShortWave = surface_downwelling_shortwave_flux_in_air,
                     LongWave = surface_downwelling_longwave_flux_in_air,

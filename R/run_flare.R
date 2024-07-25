@@ -182,11 +182,9 @@ run_flare <- function(lake_directory,
                                                 pars_config = pars_config,
                                                 states_config = states_config,
                                                 obs_config = obs_config,
-                                                management = NULL,
                                                 da_method = config$da_setup$da_method,
                                                 par_fit_method = config$da_setup$par_fit_method,
                                                 debug = FALSE,
-                                                log_wq = FALSE,
                                                 obs_secchi = obs_non_vertical$obs_secchi,
                                                 obs_depth = obs_non_vertical$obs_depth)
 
