@@ -9,7 +9,7 @@ run_particle_filter(
   h,
   pars_corr,
   zt,
-  psi_t,
+  psi,
   z_index,
   states_depth_start,
   states_height_start,
