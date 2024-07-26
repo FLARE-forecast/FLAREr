@@ -1,23 +1,72 @@
-run_enkf <- function(
-  zt, psi_t,
-  ndepths_modeled,
-  z_index,
-  x_matrix,
-  pars_corr,
-  inflat_pars,
-  par_fit_method,
-  npars,
-  inflation_factor,
-  localization_distance,
-  modeled_depths,
-  lake_depth,
-  nstates,
-  obs_depth,
-  model_internal_depths,
-  glm_native_x){
+#' Title
+#'
+#' @param x_matrix
+#' @param h
+#' @param pars_corr
+#' @param zt
+#' @param psi_t
+#' @param z_index
+#' @param states_depth_start
+#' @param states_height_start
+#' @param model_internal_heights_start
+#' @param lake_depth_start
+#' @param log_particle_weights_start
+#' @param snow_ice_thickness_start
+#' @param avg_surf_temp_start
+#' @param mixer_count_start
+#' @param mixing_vars_start
+#' @param diagnostics_start
+#' @param pars_config
+#' @param config
+#' @param depth_index
+#' @param depth_obs
+#' @param depth_sd
+#' @param par_fit_method
+#'
+#' @return
+#' @export
+#'
+#' @examples
+run_enkf <- function(x_matrix,
+                     h,
+                     pars_corr,
+                     zt,
+                     psi,
+                     z_index,
+                     states_depth_start,
+                     states_height_start,
+                     model_internal_heights_start,
+                     lake_depth_start,
+                     log_particle_weights_start,
+                     snow_ice_thickness_start,
+                     avg_surf_temp_start,
+                     mixer_count_start,
+                     mixing_vars_start,
+                     diagnostics_start,
+                     pars_config,
+                     config,
+                     depth_index,
+                     depth_obs,
+                     depth_sd,
+                     par_fit_method){
 
   #Extract the data uncertainty for the data
   #types present during the time-step
+
+  npars <- dim(pars_corr)[1]
+  nmembers <- dim(states_depth_start)[3]
+  nstates <- dim(states_depth_start)[1]
+  ndepths_modeled <- length(config$model_settings$modeled_depths)
+
+  curr_psi <- psi[z_index] ^ 2
+
+  if(length(z_index) > 1){
+    psi_t <- diag(curr_psi)
+  }else{
+    #Special case where there is only one data
+    #type during the time-step
+    psi_t <- curr_psi
+  }
 
   d_mat <- t(mvtnorm::rmvnorm(n = nmembers, mean = zt, sigma=as.matrix(psi_t)))
 
@@ -89,40 +138,92 @@ run_enkf <- function(
   #Update states array (transposes are necessary to convert
   #between the dims here and the dims in the EnKF formulations)
   update <-  x_matrix + k_t %*% (d_mat - h %*% x_matrix)
-  update <- update[1:(ndepths_modeled*nstates), ]
-  update <- aperm(array(c(update), dim = c(ndepths_modeled, nstates, nmembers)), perm = c(2,1,3))
+  states_depth_updated<- update[1:(ndepths_modeled*nstates), ]
+  states_depth_updated<- aperm(array(c(states_depth_updated), dim = c(ndepths_modeled, nstates, nmembers)), perm = c(2,1,3))
 
-  if(!is.null(obs_depth)){
-    if(!is.na(obs_depth$obs[i])){
-      lake_depth[i, ] <- rnorm(nmembers, obs_depth$obs[i], sd = obs_depth$depth_sd)
-      for(m in 1:nmembers){
-        depth_index <- which(model_internal_depths[i, , m] > lake_depth[i, m])
-        model_internal_depths[i,depth_index , m] <- NA
-      }
-    }
+  if(depth_index > 0){
+    lake_depth_updated<- update[(ndepths_modeled*nstates + depth_index), ]
+    #for(m in 1:nmembers){
+    #  depth_index <- which(model_internal_heights_start[ , m] > lake_depth_update)
+    #  model_internal_heights_start[depth_index , m] <- NA
+    #}
+  }else{
+    lake_depth_updated <- lake_depth_start
   }
+
+
+  states_height_updated <- array(NA, dim = c(nstates, dim(model_internal_heights_start)[1], nmembers))
 
   for(s in 1:nstates){
     for(m in 1:nmembers){
-      depth_index <- which(config$model_settings$modeled_depths <= lake_depth[i, m])
-      x[i, s, depth_index, m ] <- update[s,depth_index , m]
-
+      depth_index <- which(config$model_settings$modeled_depths <= lake_depth_updated[m])
       #Map updates to GLM native depths
-      native_depth_index <- which(!is.na(model_internal_depths[i, , m]))
-      glm_native_x[i,s,native_depth_index,m] <- approx(config$model_settings$modeled_depths[depth_index],
-                                                       x[i, s, depth_index, m ], model_internal_depths[i,native_depth_index , m],
-                                                       rule = 2)$y
+      non_na_heights <- which(!is.na(model_internal_heights_start[ , m]))
+      states_height_updated[s,non_na_heights,m] <- approx(lake_depth_updated[m] - config$model_settings$modeled_depths[depth_index],
+                                                           states_depth_updated[s, depth_index, m ],
+                                                           model_internal_heights_start[non_na_heights , m],
+                                                           rule = 2)$y
     }
   }
 
   if(npars > 0){
     if(par_fit_method != "perturb_init"){
-      pars[i, , ] <- pars_corr + k_t_pars %*% (d_mat - h %*% x_matrix)
+      pars_updated <- pars_corr + k_t_pars %*% (d_mat - h %*% x_matrix)
     }else{
-      pars[i, , ]  <- pars[i-1, , ]
+      pars_updated  <- pars_corr
     }
   }
 
-  return(pars = pars, glm_native_x = glm_native_x, x = x)
+  model_internal_heights_updated <- model_internal_heights_start
+  diagnostics_updated <- diagnostics_start
 
+  if(length(config$output_settings$diagnostics_names) > 0){
+    for(d in 1:dim(diagnostics_start)[1]){
+      for(m in 1:nmembers){
+        depth_index <- which(config$model_settings$modeled_depths > lake_depth_updated[m])
+        diagnostics_updated[d,depth_index, m] <- NA
+      }
+    }
+  }
+
+  log_particle_weights_updated <-rep(log(1.0), nmembers)
+
+  num_out_depths <- length(which(!is.na(states_height_start[1, ,1])))
+
+  #Correct any negative water quality states
+  if(length(states_config$state_names) > 1){
+    for(s in 2:nstates){
+      for(m in 1:nmembers){
+        index <- which(states_height_updated[s, , m] < 0.0 & !is.na(states_height_updated[s, , m]))
+        states_height_updated[s, index, m] <- 0.0
+      }
+    }
+  }
+
+  #Correct any parameter values outside bounds
+  if(npars > 0){
+    for(par in 1:npars){
+      low_index <- which(pars_updated[par ,] < pars_config$par_lowerbound[par])
+      high_index <- which(pars_updated[par ,] > pars_config$par_upperbound[par])
+      pars_updated[par, low_index] <- pars_config$par_lowerbound[par]
+      pars_updated[par, high_index]  <- pars_config$par_upperbound[par]
+    }
+  }
+
+  snow_ice_thickness_updated <- snow_ice_thickness_start
+  avg_surf_temp_updated <- avg_surf_temp_start
+  mixer_count_updated <- mixer_count_start
+  mixing_vars_updated <- mixing_vars_start
+
+  return(list(pars_updated = pars_updated,
+              states_depth_updated = states_depth_updated,
+              states_height_updated = states_height_updated,
+              lake_depth_updated = lake_depth_updated,
+              model_internal_heights_updated = model_internal_heights_updated,
+              log_particle_weights_updated = log_particle_weights_updated,
+              diagnostics_updated = diagnostics_updated,
+              snow_ice_thickness_updated = snow_ice_thickness_updated,
+              avg_surf_temp_updated = avg_surf_temp_updated,
+              mixer_count_updated = mixer_count_updated,
+              mixing_vars_updated = mixing_vars_updated))
 }

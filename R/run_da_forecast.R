@@ -136,8 +136,6 @@ run_da_forecast <- function(states_init,
     pars <- NULL
   }
 
-  alpha_v <- 1 - exp(-states_config$vert_decorr_length)
-
   output_vars <- states_config$state_names
 
   if(config$include_wq){
@@ -198,7 +196,6 @@ run_da_forecast <- function(states_init,
 
   mixing_vars <- array(NA, dim = c(17, nsteps, nmembers))
   mixer_count <- array(NA, dim = c(nsteps, nmembers))
-
   model_internal_heights <- array(NA, dim = c(nsteps, config$model_settings$max_model_layers, nmembers))
   lake_depth <- array(NA, dim = c(nsteps, nmembers))
   snow_ice_thickness <- array(NA, dim = c(3, nsteps, nmembers))
@@ -253,8 +250,8 @@ run_da_forecast <- function(states_init,
     }
 
     #Create array to hold GLM predictions for each ensemble
-    states_wo_noise <- array(NA, dim = c(nstates, ndepths_modeled, nmembers))
-    states_w_noise <- array(NA, dim = c(nstates, ndepths_modeled, nmembers))
+    states_depth_wo_noise <- array(NA, dim = c(nstates, ndepths_modeled, nmembers))
+    states_depth_w_noise <- array(NA, dim = c(nstates, ndepths_modeled, nmembers))
     curr_pars <- array(NA, dim = c(npars, nmembers))
 
     #If i == 1 then assimilate the first time step without running the process
@@ -359,7 +356,7 @@ run_da_forecast <- function(states_init,
 
         glm_depths <- lake_depth[i ,m ] - model_internal_heights[i,non_na_heights_index ,m]
         for(s in 1:nstates){
-          states_wo_noise[s, , m] <- approx(glm_depths,states_height[i,s , non_na_heights_index, m], config$model_settings$modeled_depths, rule = 2)$y
+          states_depth_wo_noise[s, , m] <- approx(glm_depths,states_height[i,s , non_na_heights_index, m], config$model_settings$modeled_depths, rule = 2)$y
         }
 
         if(length(config$output_settings$diagnostics_names) > 0){
@@ -375,14 +372,14 @@ run_da_forecast <- function(states_init,
           include_process_uncertainty <- TRUE
         }
 
-        with_noise <- add_process_noise(states_height_ens = states_height[i, , , m],
+        with_noise <- FLAREr:::add_process_noise(states_height_ens = states_height[i, , , m],
                                         model_sd = model_sd,
                                         model_internal_heights_ens = model_internal_heights[i, ,m],
                                         lake_depth_ens = lake_depth[i,m],
                                         modeled_depths = config$model_settings$modeled_depths,
                                         vert_decorr_length = states_config$vert_decorr_length,
                                         include_uncertainty = include_process_uncertainty)
-        states_w_noise[, ,m] <- with_noise$states_depth_ens
+        states_depth_w_noise[, ,m] <- with_noise$states_depth_ens
         states_height[i, , , m] <- with_noise$states_height_ens
 
       } # END ENSEMBLE LOOP
@@ -392,7 +389,6 @@ run_da_forecast <- function(states_init,
         if(npars == 1){
           pars_corr <- matrix(pars_corr,nrow = length(pars_corr),ncol = 1)
         }
-        pars_star <- pars_corr
       }
 
     }else{
@@ -402,8 +398,8 @@ run_da_forecast <- function(states_init,
         glm_depths <-lake_depth[i ,m ] - model_internal_heights[i,non_na_heights_index ,m]
 
         for(s in 1:nstates){
-          states_wo_noise[s, , m] <- approx(glm_depths, states_height[i,s , non_na_heights_index, m], config$model_settings$modeled_depths, rule = 2)$y
-          states_w_noise[s, , m] <- states_wo_noise[s, , m]
+          states_depth_wo_noise[s, , m] <- approx(glm_depths, states_height[i,s , non_na_heights_index, m], config$model_settings$modeled_depths, rule = 2)$y
+          states_depth_w_noise[s, , m] <- states_depth_wo_noise[s, , m]
         }
       }
 
@@ -412,7 +408,6 @@ run_da_forecast <- function(states_init,
         if(npars == 1){
           pars_corr <- matrix(pars_corr,nrow = length(pars_corr),ncol = 1)
         }
-        pars_star <- pars_corr
       }
     }
 
@@ -456,15 +451,15 @@ run_da_forecast <- function(states_init,
         da_qc_flag[i] <- 0
       }
 
-      states_depth[i, , , ] <- states_w_noise
+      states_depth[i, , , ] <- states_depth_w_noise
 
-      if(npars > 0) pars[i, , ] <- pars_star
+      if(npars > 0) pars[i, , ] <- pars_corr
 
       if(i == (hist_days + 1) & config$uncertainty$initial_condition == FALSE){
-        if(npars > 0) pars[i, , ] <- pars_star
+        if(npars > 0) pars[i, , ] <- pars_corr
         for(s in 1:nstates){
           for(k in 1:ndepths_modeled){
-            states_depth[i, s, k , ] <- mean(states_wo_noise[s, k, ])
+            states_depth[i, s, k , ] <- mean(states_depth_wo_noise[s, k, ])
           }
         }
       }
@@ -489,7 +484,7 @@ run_da_forecast <- function(states_init,
 
       message("performing data assimilation")
 
-      x_matrix <- apply(aperm(states_w_noise[,1:ndepths_modeled,], perm = c(2,1,3)), 3, rbind)
+      x_matrix <- apply(aperm(states_depth_w_noise[,1:ndepths_modeled,], perm = c(2,1,3)), 3, rbind)
 
       # Add depth to the x_matrix if in observations
       if(!is.null(obs_depth)){
@@ -525,7 +520,12 @@ run_da_forecast <- function(states_init,
         depth_index <- 1
         if(!is.na(obs_depth$obs[i])){
           zt <- c(zt, obs_depth$obs[i])
+          depth_obs <- obs_depth$obs[i]
+          depth_sd <- obs_depth$sd
         }
+      }else{
+        depth_obs <- NA
+        depth_sd <- NA
       }
 
       secchi_index <- 0
@@ -606,244 +606,74 @@ run_da_forecast <- function(states_init,
         psi[vertical_obs * ndepths_modeled + depth_index +secchi_index] <- obs_secchi$secchi_sd
       }
 
-
-      curr_psi <- psi[z_index] ^ 2
-
-      if(length(z_index) > 1){
-        psi_t <- diag(curr_psi)
-      }else{
-        #Special case where there is only one data
-        #type during the time-step
-        psi_t <- curr_psi
-      }
-
-      if(!config$uncertainty$observation){
-        psi_t[] <- 0.0
-      }
-
-
       if(da_method == "enkf"){
 
-        #Extract the data uncertainty for the data
-        #types present during the time-step
-
-        d_mat <- t(mvtnorm::rmvnorm(n = nmembers, mean = zt, sigma=as.matrix(psi_t)))
-
-        #Set any negative observations of water quality variables to zero
-        d_mat[which(z_index > ndepths_modeled & d_mat < 0.0)] <- 0.0
-
-        #Ensemble mean
-        ens_mean <- apply(x_matrix, 1, mean)
-
-        if(npars > 0){
-          par_mean <- apply(pars_corr, 1, mean)
-          if(par_fit_method == "inflate"){
-            for(m in 1:nmembers){
-              pars_corr[, m] <- pars_config$inflat_pars * (pars_corr[, m] - par_mean) + par_mean
-            }
-            par_mean <- apply(pars_corr, 1, mean)
-          }
-        }
-
-        dit <- matrix(NA, nrow = nmembers, ncol = dim(x_matrix)[1])
-
-        if(npars > 0) dit_pars<- array(NA, dim = c(nmembers, npars))
-
-        #Loop through ensemble members
-        for(m in 1:nmembers){
-          #  #Ensemble specific deviation
-          dit[m, ] <- x_matrix[, m] - ens_mean
-          if(npars > 0){
-            dit_pars[m, ] <- pars_corr[, m] - par_mean
-          }
-          if(m == 1){
-            p_it <- dit[m, ] %*% t(dit[m, ])
-            if(npars > 0){
-              p_it_pars <- dit_pars[m, ] %*% t(dit[m, ])
-            }
-          }else{
-            p_it <- dit[m, ] %*% t(dit[m, ]) +  p_it
-            if(npars > 0){
-              p_it_pars <- dit_pars[m, ] %*% t(dit[m, ]) + p_it_pars
-            }
-          }
-        }
-
-        if(is.null(config$da_setup$inflation_factor)){
-          config$da_setup$inflation_factor <- 1.0
-        }
-
-        #estimate covariance
-        p_t <- config$da_setup$inflation_factor * (p_it / (nmembers - 1))
-        if(npars > 0){
-          p_t_pars <- config$da_setup$inflation_factor * (p_it_pars / (nmembers - 1))
-        }
-
-        if(!is.null(config$da_setup$localization_distance)){
-          if(!is.na(config$da_setup$localization_distance)){
-            p_t <- FLAREr:::localization(mat = p_t,
-                                         nstates = nstates,
-                                         modeled_depths = config$model_settings$modeled_depths,
-                                         localization_distance = config$da_setup$localization_distance,
-                                         num_single_states = dim(p_t)[1] - nstates * length(config$model_settings$modeled_depths))
-          }
-        }
-        #Kalman gain
-        k_t <- p_t %*% t(h) %*% solve(h %*% p_t %*% t(h) + psi_t, tol = 1e-17)
-        if(npars > 0){
-          k_t_pars <- p_t_pars %*% t(h) %*% solve(h %*% p_t %*% t(h) + psi_t, tol = 1e-17)
-        }
-
-        #Update states array (transposes are necessary to convert
-        #between the dims here and the dims in the EnKF formulations)
-        update <-  x_matrix + k_t %*% (d_mat - h %*% x_matrix)
-        update_depth_states <- update[1:(ndepths_modeled*nstates), ]
-        update_depth_states <- aperm(array(c(update_depth_states), dim = c(ndepths_modeled, nstates, nmembers)), perm = c(2,1,3))
-
-        if(depth_index > 0){
-          update_depth <- update[(ndepths_modeled*nstates + depth_index), ]
-          lake_depth[i, ] <- update_depth
-        }
-
-
-        if(!is.null(obs_depth)){
-          if(!is.na(obs_depth$obs[i])){
-            lake_depth[i, ] <- rnorm(nmembers, obs_depth$obs[i], sd = obs_depth$depth_sd)
-            for(m in 1:nmembers){
-              depth_index <- which(model_internal_heights[i, , m] > lake_depth[i, m])
-              model_internal_heights[i,depth_index , m] <- NA
-            }
-          }
-        }
-
-        for(s in 1:nstates){
-          for(m in 1:nmembers){
-            depth_index <- which(config$model_settings$modeled_depths <= lake_depth[i, m])
-            states_depth[i, s, depth_index, m ] <- update_depth_states[s,depth_index , m]
-
-            #Map updates to GLM native depths
-            non_na_heights <- which(!is.na(model_internal_heights[i, , m]))
-            states_height[i,s,non_na_heights,m] <- approx(lake_depth[i,m] - config$model_settings$modeled_depths[depth_index],
-                                                          states_depth[i, s, depth_index, m ],
-                                                          model_internal_heights[i,non_na_heights , m],
-                                                          rule = 2)$y
-          }
-        }
-
-        if(npars > 0){
-          if(par_fit_method != "perturb_init"){
-            pars[i, , ] <- pars_corr + k_t_pars %*% (d_mat - h %*% x_matrix)
-          }else{
-            pars[i, , ]  <- pars[i-1, , ]
-          }
-        }
-
-        if(length(config$output_settings$diagnostics_names) > 0){
-          for(d in 1:dim(diagnostics)[1]){
-            for(m in 1:nmembers){
-              depth_index <- which(config$model_settings$modeled_depths > lake_depth[i, m])
-              diagnostics[d,i, depth_index, m] <- NA
-            }
-          }
-        }
-
-        log_particle_weights[i, ] <- log(1.0)
-
-        num_out_depths <- length(which(!is.na(states_height[i, 1, ,1])))
-
-        #Correct any negative water quality states
-        if(length(states_config$state_names) > 1 & !log_wq){
-          for(s in 2:nstates){
-            for(m in 1:nmembers){
-              index <- which(states_height[i, s, , m] < 0.0 & !is.na(states_height[i, s, , m]))
-              states_height[i, s, index, m] <- 0.0
-            }
-          }
-        }
-
-        #Correct any parameter values outside bounds
-        if(npars > 0){
-          for(par in 1:npars){
-            low_index <- which(pars[i,par ,] < pars_config$par_lowerbound[par])
-            high_index <- which(pars[i,par ,] > pars_config$par_upperbound[par])
-            pars[i,par, low_index] <- pars_config$par_lowerbound[par]
-            pars[i,par, high_index]  <- pars_config$par_upperbound[par]
-          }
-        }
+        updates <- run_enkf(x_matrix,
+                             h,
+                             pars_corr,
+                             zt,
+                             psi,
+                             z_index,
+                             states_depth_start = states_height[i, , , ],
+                             states_height_start = states_height[i, , ,],
+                             model_internal_heights_start = model_internal_heights[i, , ],
+                             lake_depth_start = lake_depth[i, ],
+                             log_particle_weights_start = log_particle_weights[i-1, ],
+                             snow_ice_thickness_start =  snow_ice_thickness[ ,i, ],
+                             avg_surf_temp_start = avg_surf_temp[i, ],
+                             mixer_count_start = mixer_count[i, ],
+                             mixing_vars_start = mixing_vars[, i, ],
+                             diagnostics_start = diagnostics[ ,i, , ],
+                             pars_config,
+                             config,
+                             depth_index,
+                             depth_obs,
+                             depth_sd,
+                             par_fit_method)
 
       }else if(da_method == "pf"){
 
-        obs_states <- t(h %*% x_matrix)
-
-        LL <- rep(NA, length(nmembers))
-        for(m in 1:nmembers){
-          LL_vector <- dnorm(zt, mean = obs_states[m, ], sd = psi[z_index], log = TRUE)
-
-          if(length(which(is.infinite(LL_vector))) > 0){
-            warning("infinite likelihood")
-          }
-
-          #This handles the case where an observed depth is missing from an ensemble member
-          #due to the ensemble member being shallower than the depth of the observation
-          na_index <- which(is.na(obs_states[m, ]))
-
-          if(length(na_index) > 0){
-            LL_vector[na_index] <- log(1.0e-20) #assign a very low probability density
-          }
-          LL[m] <- sum(LL_vector)
-        }
-
-        wt_norm <- exp(LL) / sum(exp(LL))
-
-        # Check
-        if(length(which(is.nan(wt_norm))) > 0){
-          index <- ceiling(z_index[which(z_index <= vertical_obs * ndepths_modeled)] / ndepths_modeled)
-          obs_names <- c(obs_config$state_names_obs[index])
-          if(depth_index > 0){
-            obs_names <- c(obs_names,"depth")
-          }
-          if(secchi_index > 0){
-            obs_names <- c(obs_names,"seechi")
-          }
-          readr::write_csv(x = tibble(obs_names = obs_names,
-                                      obs = zt,
-                                      pred = obs_states[which(is.nan(wt_norm))[1], ],
-                                      sd = psi[z_index],
-                                      LL = dnorm(zt, mean = obs_states[1, ], sd = psi[z_index], log = TRUE)),
-                           file = paste0(working_directory, "/PF_with_NaN.csv"))
-          stop("PF weights too small resulting in division by 0; see PF_with_NaN.csv file in working directory to diagnosis")
-        }
-
-        log_particle_weights[i, ] <- log_particle_weights[i-1, ] + log(wt_norm)
-
-        samples <- sample.int(nmembers, replace = TRUE, prob = exp(log_particle_weights[i,]))
-        log_particle_weights[i, ] <- log(1.0)
-
-        update <- x_matrix[1:(ndepths_modeled*nstates), samples]
-        states_depth[i, , , ] <- aperm(array(c(update), dim = c(ndepths_modeled, nstates, nmembers)), perm = c(2,1,3))
-        states_height[i, , , ] <-  states_height[i, , ,samples]
-
-        if(npars > 0){
-          pars[i, ,] <- pars_star[, samples]
-        }
-
-        snow_ice_thickness[ ,i, ] <- snow_ice_thickness[ ,i, samples]
-        avg_surf_temp[i, ] <- avg_surf_temp[i, samples]
-        lake_depth[i, ] <- lake_depth[i, samples]
-        model_internal_heights[i, , ] <- model_internal_heights[i, , samples]
-        mixer_count[i, ] <- mixer_count[i, samples]
-        mixing_vars[, i, ] <- mixing_vars[, i, samples]
-
-        if(length(config$output_settings$diagnostics_names) > 0){
-          diagnostics[ ,i, , ] <- diagnostics[ ,i, ,samples]
-        }
+        updates <- run_particle_filter(x_matrix,
+                            h,
+                            pars_corr,
+                            zt,
+                            psi,
+                            z_index,
+                            states_depth_start = states_height[i, , , ],
+                            states_height_start = states_height[i, , ,],
+                            model_internal_heights_start = model_internal_heights[i, , ],
+                            lake_depth_start = lake_depth[i, ],
+                            log_particle_weights_start = log_particle_weights[i-1, ],
+                            snow_ice_thickness_start =  snow_ice_thickness[ ,i, ],
+                            avg_surf_temp_start = avg_surf_temp[i, ],
+                            mixer_count_start = mixer_count[i, ],
+                            mixing_vars_start = mixing_vars[, i, ],
+                            diagnostics_start = diagnostics[ ,i, , ],
+                            pars_config,
+                            config,
+                            depth_index,
+                            depth_obs,
+                            depth_sd,
+                            par_fit_method,
+                            vertical_obs)
 
       }else{
-        message("da_method not supported; select enkf or pf or none")
+        stop("da_method not supported; select enkf or pf or none")
       }
+
+      #Update states and parameters
+      pars[i, , ] <- updates$pars_updated
+      model_internal_heights[i, ,] <- updates$model_internal_heights_updated
+      states_height[i,,,] <- updates$states_height_updated
+      states_depth[i, , ,  ] <- updates$states_depth_updated
+      diagnostics[,i, , ] <-  updates$diagnostics_updated
+      lake_depth[i, ] <-  updates$lake_depth_updated
+      log_particle_weights[i, ] <-  updates$log_particle_weights_updated
+      snow_ice_thickness[,i ,] <-  updates$snow_ice_thickness_updated
+      avg_surf_temp[i , ] <-  updates$avg_surf_temp_updated
+      mixing_vars[, i, ] <-  updates$mixing_vars_updated
+      mixer_count[i, ] <-  updates$mixer_count_updated
     }
-
-
 
     ###############
 
