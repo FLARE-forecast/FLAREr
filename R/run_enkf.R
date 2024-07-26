@@ -160,9 +160,9 @@ run_enkf <- function(x_matrix,
       #Map updates to GLM native depths
       non_na_heights <- which(!is.na(model_internal_heights_start[ , m]))
       states_height_updated[s,non_na_heights,m] <- approx(lake_depth_updated[m] - config$model_settings$modeled_depths[depth_index],
-                                                           states_depth_updated[s, depth_index, m ],
-                                                           model_internal_heights_start[non_na_heights , m],
-                                                           rule = 2)$y
+                                                          states_depth_updated[s, depth_index, m ],
+                                                          model_internal_heights_start[non_na_heights , m],
+                                                          rule = 2)$y
     }
   }
 
