@@ -171,7 +171,6 @@ generate_initial_conditions <- function(states_config,
     aux_states_init$mixer_count <- out$mixer_count
     aux_states_init$model_internal_heights <- out$model_internal_heights
     aux_states_init$lake_depth <- out$lake_depth
-    aux_states_init$salt <- out$salt
     aux_states_init$log_particle_weights <- out$log_particle_weights
 
     init <- list(states = out$states,

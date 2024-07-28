@@ -78,7 +78,7 @@ run_da_forecast <- function(states_init,
   }
 
   nstates <- dim(states_init)[1]
-  ndepths_modeled <- dim(states_init)[2]
+  ndepths_modeled <- length(config$model_settings$modeled_depths)
   nmembers <- dim(states_init)[3]
   n_met_members <- length(met_file_names)
   model <- config$model_settings$model
@@ -121,9 +121,8 @@ run_da_forecast <- function(states_init,
 
   for(m in 1:nmembers){
     for(s in 1:nstates){
+      states_height[1,s , , m] <- states_init[s , ,m ]
       non_na_heights <- which(!is.na(aux_states_init$model_internal_heights[ ,m]))
-      states_height[1,s ,non_na_heights , m] <- states_init[s , ,m ]
-
       glm_depths <- aux_states_init$lake_depth[m] - aux_states_init$model_internal_heights[non_na_heights ,m]
       states_depth[1,s, , m] <- approx(glm_depths, states_height[1, s, non_na_heights, m], config$model_settings$modeled_depths, rule = 2)$y
     }
