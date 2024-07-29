@@ -165,8 +165,7 @@ run_flare <- function(lake_directory,
                                               obs_config,
                                               pars_config,
                                               obs,
-                                              config,
-                                              historical_met_error = met_out$historical_met_error)
+                                              config)
   #Run EnKF
   da_forecast_output <- FLAREr::run_da_forecast(states_init = init$states,
                                                 pars_init = init$pars,
