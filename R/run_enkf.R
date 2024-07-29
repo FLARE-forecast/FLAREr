@@ -22,9 +22,10 @@
 #' @param depth_obs
 #' @param depth_sd
 #' @param par_fit_method
+#' @noRd
 #'
 #' @return
-#' @export
+#'
 #'
 #' @examples
 run_enkf <- function(x_matrix,

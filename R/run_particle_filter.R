@@ -1,4 +1,4 @@
-#' Title
+#' @title Title
 #'
 #' @param x_matrix
 #' @param h
@@ -25,7 +25,7 @@
 #' @param vertical_obs
 #'
 #' @return
-#' @export
+#' @noRd
 #'
 #' @examples
 run_particle_filter <- function(x_matrix,
