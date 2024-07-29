@@ -21,3 +21,6 @@ create_obs_non_vertical(
 \description{
 Process observation for variables that don't have depth
 }
+\details{
+Process observation for variables that don't have depth
+}

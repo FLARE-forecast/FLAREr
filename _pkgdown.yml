@@ -27,7 +27,7 @@ reference:
   - write_forecast_netcdf
   - write_forecast_arrow
   - generate_forecast_score_arrow
-  - plotting_general_2
+  - plotting_general
 - subtitle: Iteration
   desc: Functions for automation and interation
   contents:
