@@ -50,3 +50,6 @@ generate_met_files_openmet(
 \description{
 Generate GLM ready met files from open meteo
 }
+\details{
+Generate GLM ready met files from open meteo
+}

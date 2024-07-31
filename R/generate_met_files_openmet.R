@@ -1,5 +1,5 @@
-#' Generate GLM ready met files from open meteo
-#'
+#' @title Generate GLM ready met files from open meteo
+#' @details Generate GLM ready met files from open meteo
 #' @param out_dir path to where the GLM formated met file will be written
 #' @param start_datetime start date of weather data
 #' @param end_datetime end date of weater data

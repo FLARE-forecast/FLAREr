@@ -9,8 +9,7 @@ generate_initial_conditions(
   obs_config,
   pars_config = NULL,
   obs,
-  config,
-  historical_met_error = FALSE
+  config
 )
 }
 \arguments{
@@ -24,9 +23,9 @@ generate_initial_conditions(
 
 \item{config}{list; list of configurations}
 
-\item{historical_met_error}{boolean; producted by generate_glm_met_files()}
-
 \item{restart_file}{string; netcdf file with full path from FLARE output that is used as initial conditions}
+
+\item{historical_met_error}{boolean; producted by generate_glm_met_files()}
 }
 \value{
 list; list contains the initial conditions objects required by run_da_forecast()

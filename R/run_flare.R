@@ -175,10 +175,7 @@ run_flare <- function(lake_directory,
                                               pars_config,
                                               obs,
                                               config,
-                                              historical_met_error = met_out$historical_met_error)
-
-  message('Running DA forecast...')
-
+                                              obs_non_vertical = obs_non_vertical)
   #Run EnKF
   da_forecast_output <- FLAREr::run_da_forecast(states_init = init$states,
                                                 pars_init = init$pars,
@@ -194,11 +191,9 @@ run_flare <- function(lake_directory,
                                                 pars_config = pars_config,
                                                 states_config = states_config,
                                                 obs_config = obs_config,
-                                                management = NULL,
                                                 da_method = config$da_setup$da_method,
                                                 par_fit_method = config$da_setup$par_fit_method,
                                                 debug = FALSE,
-                                                log_wq = FALSE,
                                                 obs_secchi = obs_non_vertical$obs_secchi,
                                                 obs_depth = obs_non_vertical$obs_depth)
 
@@ -256,10 +251,8 @@ run_flare <- function(lake_directory,
   gc()
 
   message("Generating plot")
-  FLAREr::plotting_general_2(file_name = saved_file,
-                             target_file = obs_insitu_file,
-                             ncore = 2,
-                             obs_csv = FALSE)
+  targets_df <- read_csv(file.path(config$file_path$qaqc_data_directory,paste0(config$location$site_id, "-targets-insitu.csv")))
+  plotting_general(forecast_df, targets_df, file_name = saved_file)
 
   message("Putting forecast")
   FLAREr::put_forecast(saved_file, eml_file_name = NULL, config)

@@ -10,9 +10,7 @@ create_obs_non_vertical(
   start_datetime,
   end_datetime,
   forecast_start_datetime,
-  forecast_horizon,
-  secchi_sd = 0.5,
-  depth_sd = 0.1
+  forecast_horizon
 )
 }
 \arguments{
@@ -21,5 +19,8 @@ create_obs_non_vertical(
 \item{depth_sd}{}
 }
 \description{
+Process observation for variables that don't have depth
+}
+\details{
 Process observation for variables that don't have depth
 }

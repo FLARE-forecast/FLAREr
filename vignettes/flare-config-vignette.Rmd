@@ -36,7 +36,7 @@ A guide to the variables in `configure_flare.yml` and in the
 
 ### da_setup:
 
--   **da_method:** code for data assimilation method (`enkf`)
+-   **da_method:** code for data assimilation method (`enkf` or `pf`)
 
 -   **par_fit_method:** method for parameter fitting
     -   **inflate** uses the parameter `inflat_pars` in the par
@@ -77,8 +77,10 @@ A guide to the variables in `configure_flare.yml` and in the
 
 -   **base_GLM_nml:** name of base GLM namelist. It is required to be in
     the `lake_directory/configuraton/{config_set}` directory.
+    
+-   **max_model_layers:** maximuum number of layers allowed in the GLM simulations
 
--   **modeled_depths:** vector of depths (m) that are simulated. Value
+-   **modeled_depths:** vector of depths (m) with observations or that the user desires output for. Value
     is for the top of the layer.
 
 -   **par_config_file:** name of parameter configuration csv. It is
@@ -95,6 +97,7 @@ A guide to the variables in `configure_flare.yml` and in the
     that specifies how process uncertainty depends on depth. If used it
     is required be in the `lake_directory/configuraton/{config_set}`
     directory.
+    
 
 ### default_init:
 

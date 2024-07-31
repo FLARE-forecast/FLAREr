@@ -1,5 +1,5 @@
-#' Process observation for variables that don't have depth
-#'
+#' @title Process observation for variables that don't have depth
+#' @details Process observation for variables that don't have depth
 #' @param cleaned_observations_file_long
 #' @param obs_config description
 #' @param start_datetime
