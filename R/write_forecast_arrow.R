@@ -57,7 +57,7 @@ write_forecast_arrow <- function(da_forecast_output,
   obs_config <- obs_config |>
     dplyr::filter(multi_depth == 1)
 
-  indexes <- expand.grid(1:dim(x)[1], 1:dim(x)[2], 1:dim(x)[3])
+  indexes <- expand.grid(time = 1:dim(x)[1], states = 1:dim(x)[2], depths = 1:dim(x)[3])
   ensembles <- 1:dim(x)[4]
 
   if(config$model_settings$ncore == 1){
@@ -67,16 +67,17 @@ write_forecast_arrow <- function(da_forecast_output,
   }
 
   output_list <- furrr::future_map_dfr(1:nrow(indexes), function(i, indexes){
-    var1 <- indexes$Var1[i]
-    var2 <- indexes$Var2[i]
-    var3 <- indexes$Var3[i]
+    var1 <- indexes$time[i]
+    var2 <- indexes$states[i]
+    var3 <- indexes$depths[i]
     tibble::tibble(predicted = x[var1, var2, var3, ],
                    time  = full_time[var1],
                    depth = config$model_settings$modeled_depths[var3],
                    variable = states_config$state_names[var2],
                    forecast = forecast_flag[var1],
                    ensemble = ensembles,
-                   variable_type = "state")
+                   variable_type = "state",
+                   log_weight = log_particle_weights[var1, ])
   },
   indexes = indexes
   )
@@ -99,18 +100,19 @@ write_forecast_arrow <- function(da_forecast_output,
         }
       }
 
-      indexes <- expand.grid(1:dim(temp_var)[1], 1:dim(temp_var)[2])
+      indexes <- expand.grid(time = 1:dim(temp_var)[1], depth = 1:dim(temp_var)[2])
 
       output_list_tmp <- furrr::future_map_dfr(1:nrow(indexes), function(i, indexes){
-        var1 <- indexes$Var1[i]
-        var3 <- indexes$Var2[i]
+        var1 <- indexes$time[i]
+        var3 <- indexes$depth[i]
         tibble::tibble(predicted = temp_var[var1, var3, ],
                        time  = full_time[var1],
                        depth = config$model_settings$modeled_depths[var3],
                        variable = obs_config$target_variable[s],
                        forecast = forecast_flag[var1],
                        ensemble = ensembles,
-                       variable_type = "state")
+                       variable_type = "state",
+                       log_weight = log_particle_weights[var1, ])
       },
       indexes = indexes
       )
@@ -121,19 +123,20 @@ write_forecast_arrow <- function(da_forecast_output,
 
   if(length(config$output_settings$diagnostics_names) > 0){
 
-    indexes <- expand.grid(1:dim(diagnostics)[1], 1:dim(diagnostics)[2], 1:dim(diagnostics)[3])
+    indexes <- expand.grid(diag = 1:dim(diagnostics)[1], time = 1:dim(diagnostics)[2], depth = 1:dim(diagnostics)[3])
 
     tmp <- furrr::future_map_dfr(1:nrow(indexes), function(i, indexes){
-      var1 <- indexes$Var1[i]
-      var2 <- indexes$Var2[i]
-      var3 <- indexes$Var3[i]
+      var1 <- indexes$diag[i]
+      var2 <- indexes$time[i]
+      var3 <- indexes$depth[i]
       tibble::tibble(predicted = diagnostics[var1, var2, var3, ],
                      time  = full_time[var2],
                      depth = config$model_settings$modeled_depths[var3],
                      variable = config$output_settings$diagnostics_names[var1],
                      forecast = forecast_flag[var2],
                      ensemble = ensembles,
-                     variable_type = "diagnostic")
+                     variable_type = "diagnostic",
+                     log_weight = log_particle_weights[var2, ])
     },
     indexes = indexes
     )
@@ -141,18 +144,19 @@ write_forecast_arrow <- function(da_forecast_output,
   }
 
   if(!is.null(pars)){
-    indexes <- expand.grid(1:dim(pars)[1], 1:dim(pars)[2])
+    indexes <- expand.grid(time = 1:dim(pars)[1], par = 1:dim(pars)[2])
 
     tmp <- furrr::future_map_dfr(1:nrow(indexes), function(i, indexes){
-      var1 <- indexes$Var1[i]
-      var2 <- indexes$Var2[i]
+      var1 <- indexes$time[i]
+      var2 <- indexes$par[i]
       tibble::tibble(predicted = pars[var1, var2, ],
                      time  = full_time[var1],
                      depth = NA,
                      variable = pars_config$par_names_save[var2],
                      forecast = forecast_flag[var1],
                      ensemble = ensembles,
-                     variable_type = "parameter")
+                     variable_type = "parameter",
+                     log_weight = log_particle_weights[var1, ])
     },
     indexes = indexes
     )
@@ -170,7 +174,8 @@ write_forecast_arrow <- function(da_forecast_output,
                    depth = NA,
                    forecast = forecast_flag[i],
                    ensemble = 1:dim(lake_depth)[2],
-                   variable_type = "state")
+                   variable_type = "state",
+                   log_weight = log_particle_weights[i, ])
   })
   output_list <- dplyr::bind_rows(output_list, output_list3)
 
@@ -182,7 +187,8 @@ write_forecast_arrow <- function(da_forecast_output,
                      depth = NA,
                      forecast = forecast_flag[i],
                      ensemble = 1:dim(diagnostics)[4],
-                     variable_type = "state")
+                     variable_type = "state",
+                     log_weight = log_particle_weights[i, ])
     })
     output_list <- dplyr::bind_rows(output_list, tmp)
   }
@@ -194,7 +200,8 @@ write_forecast_arrow <- function(da_forecast_output,
                    depth = NA,
                    forecast = forecast_flag[i],
                    ensemble = 1:dim(snow_ice_thickness)[3],
-                   variable_type = "state")
+                   variable_type = "state",
+                   log_weight = log_particle_weights[i, ])
   })
 
   output_list <- dplyr::bind_rows(output_list, tmp)
@@ -210,7 +217,7 @@ write_forecast_arrow <- function(da_forecast_output,
     rename(datetime = time,
            parameter = ensemble,
            prediction = predicted) %>%
-    dplyr::select(reference_datetime, datetime, pub_date, model_id, site_id, depth, family, parameter, variable, prediction, forecast, variable_type)
+    dplyr::select(reference_datetime, datetime, pub_date, model_id, site_id, depth, family, parameter, variable, prediction, forecast, variable_type, log_weight)
 
   #Convert to target variable name
   for(i in 1:length(states_config$state_names)){

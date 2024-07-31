@@ -14,9 +14,6 @@
 #' @param lake_depth_start depth of lake
 #' @param x_start state vector
 #' @param full_time vector of time step for entire simulation
-#' @param wq_start starting index of each state in the x_start
-#' @param wq_end ending index of each state in the x_start
-#' @param management management list
 #' @param hist_days number of historical simulations before forecasting
 #' @param modeled_depths depths that are include in the state vector
 #' @param ndepths_modeled number of depths in modeled_depths
@@ -32,7 +29,8 @@
 #' @param nstates number of nstates simulated
 #' @param state_names state names
 #' @param include_wq boolean; TRUE = use water quality model
-#' @param debug boolen; TRUE = turn on more messages for debugging
+#' @param states_heights_start
+#' @param max_layers
 #'
 #' @return list of output variables
 #' @noRd
@@ -66,17 +64,10 @@ run_model <- function(i,
                       nstates,
                       state_names,
                       include_wq,
-                      debug = TRUE,
                       states_heights_start,
                       max_layers){
 
   rounding_level <- 10
-
-  # if(is.null(management)){
-  #   simulate_sss <- FALSE
-  # }else{
-  #   simulate_sss <- management$simulate_sss
-  # }
 
   update_glm_nml_list <- list()
   update_aed_nml_list <- list()
@@ -146,32 +137,6 @@ run_model <- function(i,
     update_glm_nml_list[[list_index]] <- round(wq_init_vals, rounding_level)
     update_glm_nml_names[list_index] <- "wq_init_vals"
     list_index <- list_index + 1
-
-    # if(simulate_sss){
-    #   if(is.na(management$specified_sss_inflow_file)){
-    #     create_sss_input_output(x = x_start,
-    #                             i,
-    #                             m,
-    #                             full_time,
-    #                             working_directory = ens_working_directory,
-    #                             wq_start,
-    #                             management$management_input,
-    #                             hist_days,
-    #                             management$forecast_sss_on,
-    #                             management$sss_depth,
-    #                             management$use_specified_sss,
-    #                             state_names,
-    #                             modeled_depths = modeled_depths,
-    #                             forecast_sss_flow = management$forecast_sss_flow,
-    #                             forecast_sss_oxy = management$forecast_sss_oxy,
-    #                             salt = salt_start)
-    #   }else{
-    #     file.copy(file.path(ens_working_directory, management$specified_sss_inflow_file), paste0(ens_working_directory,"/sss_inflow.csv"))
-    #     if(!is.na(management$specified_sss_outflow_file)){
-    #       file.copy(file.path(ens_working_directory, management$specified_sss_outflow_file), paste0(ens_working_directory,"/sss_outflow.csv"))
-    #     }
-    #   }
-    # }
   }
 
   the_temps_glm <- rev(states_heights_start[1, native_heights_index])
@@ -309,30 +274,18 @@ run_model <- function(i,
             # Catch for if the output has more than one layer
             message(paste0("'output.nc' file generated but the height (z) is NaN. Re-running simulation: ensemble ", m))
             success <- FALSE
-            if(debug){
-              verbose <- TRUE
-            }
           }
         }else{
           message(paste0("'output.nc' file generated but has NA for the layer in the file. Re-running simulation: ensemble ", m))
           success <- FALSE
-          if(debug){
-            verbose <- TRUE
-          }
         }
       }else{
         message(paste0("'output.nc' file generated but has NA for the layer in the file. Re-running simulation: ensemble ", m))
         success <- FALSE
-        if(debug){
-          verbose <- TRUE
-        }
       }
     }else{
       message(paste0("'output.nc' file not generated. Re-running simulation: ensemble ", m))
       success <- FALSE
-      if(debug){
-        verbose <- TRUE
-      }
     }
 
     if(success){
@@ -347,9 +300,7 @@ run_model <- function(i,
                                                          vars_no_depth = output_vars_no_depth,
                                                          diagnostic_vars = diagnostics_names)
 
-      if(!debug){
-        unlink(paste0(ens_working_directory, "/output.nc"))
-      }
+      unlink(paste0(ens_working_directory, "/output.nc"))
 
       num_glm_heights <- length(GLM_temp_wq_out$heights)
       glm_heights_end[1:num_glm_heights] <- rev(GLM_temp_wq_out$heights)
@@ -379,8 +330,8 @@ run_model <- function(i,
       }
     }
     num_reruns <- num_reruns + 1
-    if(num_reruns > 100){
-      stop(paste0("Too many re-runs (> 100) due to issues generating output",
+    if(num_reruns > 10){
+      stop(paste0("Too many re-runs (> 10) due to issues generating output",
                   '\n Suggest testing specific GLM execution with the following code:',
                   '\n GLM3r::run_glm(','"' ,ens_working_directory,'")'))
     }

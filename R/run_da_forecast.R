@@ -26,10 +26,8 @@
 #' @param pars_config list; list of parameter configurations  (Default = NULL)
 #' @param states_config list; list of state configurations
 #' @param obs_config list; list of observation configurations
-#' @param management list; list of management inputs and configuration  (Default = NULL)
 #' @param da_method string; data assimilation method (enkf or pf; Default = enkf)
 #' @param par_fit_method string; method for adding noise to parameters during calibration
-#' @param debug boolean; add extra diagnostics for debugging (Default = FALSE)
 #' @return a list is passed to `write_forecast_netcdf()` to write the
 #' netcdf output and `create_flare_eml()` to generate the EML metadata
 #' @export
@@ -63,7 +61,6 @@ run_da_forecast <- function(states_init,
                             obs_config,
                             da_method = "enkf",
                             par_fit_method = "inflate",
-                            debug = FALSE,
                             obs_secchi = NULL,
                             obs_depth = NULL){
 
@@ -116,8 +113,6 @@ run_da_forecast <- function(states_init,
 
   states_depth  <- array(NA, dim=c(nsteps, nstates, ndepths_modeled, nmembers))
   states_height <- array(NA, dim=c(nsteps, nstates, config$model_settings$max_model_layers, nmembers))
-  log_particle_weights <- array(NA, dim=c(nsteps, nmembers))
-
 
   for(m in 1:nmembers){
     for(s in 1:nstates){
@@ -199,6 +194,7 @@ run_da_forecast <- function(states_init,
   lake_depth <- array(NA, dim = c(nsteps, nmembers))
   snow_ice_thickness <- array(NA, dim = c(3, nsteps, nmembers))
   avg_surf_temp <- array(NA, dim = c(nsteps, nmembers))
+  log_particle_weights <- array(NA, dim=c(nsteps, nmembers))
 
   mixing_vars[,1, ] <- aux_states_init$mixing_vars
   mixer_count[1, ] <- aux_states_init$mixer_count
@@ -328,7 +324,6 @@ run_da_forecast <- function(states_init,
                                    nstates,
                                    state_names = states_config$state_names,
                                    include_wq = config$include_wq,
-                                   debug = debug,
                                    max_layers = config$model_settings$max_model_layers,
                                    states_heights_start = states_height[i-1, , ,m]
         )
@@ -372,12 +367,12 @@ run_da_forecast <- function(states_init,
         }
 
         with_noise <- FLAREr:::add_process_noise(states_height_ens = states_height[i, , , m],
-                                        model_sd = model_sd,
-                                        model_internal_heights_ens = model_internal_heights[i, ,m],
-                                        lake_depth_ens = lake_depth[i,m],
-                                        modeled_depths = config$model_settings$modeled_depths,
-                                        vert_decorr_length = states_config$vert_decorr_length,
-                                        include_uncertainty = include_process_uncertainty)
+                                                 model_sd = model_sd,
+                                                 model_internal_heights_ens = model_internal_heights[i, ,m],
+                                                 lake_depth_ens = lake_depth[i,m],
+                                                 modeled_depths = config$model_settings$modeled_depths,
+                                                 vert_decorr_length = states_config$vert_decorr_length,
+                                                 include_uncertainty = include_process_uncertainty)
         states_depth_w_noise[, ,m] <- with_noise$states_depth_ens
         states_height[i, , , m] <- with_noise$states_height_ens
 
@@ -451,6 +446,8 @@ run_da_forecast <- function(states_init,
       }
 
       states_depth[i, , , ] <- states_depth_w_noise
+
+      log_particle_weights[i, ] <-   log_particle_weights[i-1, ]
 
       if(npars > 0) pars[i, , ] <- pars_corr
 
@@ -608,31 +605,6 @@ run_da_forecast <- function(states_init,
       if(da_method == "enkf"){
 
         updates <- run_enkf(x_matrix,
-                             h,
-                             pars_corr,
-                             zt,
-                             psi,
-                             z_index,
-                             states_depth_start = states_height[i, , , ],
-                             states_height_start = states_height[i, , ,],
-                             model_internal_heights_start = model_internal_heights[i, , ],
-                             lake_depth_start = lake_depth[i, ],
-                             log_particle_weights_start = log_particle_weights[i-1, ],
-                             snow_ice_thickness_start =  snow_ice_thickness[ ,i, ],
-                             avg_surf_temp_start = avg_surf_temp[i, ],
-                             mixer_count_start = mixer_count[i, ],
-                             mixing_vars_start = mixing_vars[, i, ],
-                             diagnostics_start = diagnostics[ ,i, , ],
-                             pars_config,
-                             config,
-                             depth_index,
-                             depth_obs,
-                             depth_sd,
-                             par_fit_method)
-
-      }else if(da_method == "pf"){
-
-        updates <- run_particle_filter(x_matrix,
                             h,
                             pars_corr,
                             zt,
@@ -653,8 +625,33 @@ run_da_forecast <- function(states_init,
                             depth_index,
                             depth_obs,
                             depth_sd,
-                            par_fit_method,
-                            vertical_obs)
+                            par_fit_method)
+
+      }else if(da_method == "pf"){
+
+        updates <- run_particle_filter(x_matrix,
+                                       h,
+                                       pars_corr,
+                                       zt,
+                                       psi,
+                                       z_index,
+                                       states_depth_start = states_height[i, , , ],
+                                       states_height_start = states_height[i, , ,],
+                                       model_internal_heights_start = model_internal_heights[i, , ],
+                                       lake_depth_start = lake_depth[i, ],
+                                       log_particle_weights_start = log_particle_weights[i-1, ],
+                                       snow_ice_thickness_start =  snow_ice_thickness[ ,i, ],
+                                       avg_surf_temp_start = avg_surf_temp[i, ],
+                                       mixer_count_start = mixer_count[i, ],
+                                       mixing_vars_start = mixing_vars[, i, ],
+                                       diagnostics_start = diagnostics[ ,i, , ],
+                                       pars_config,
+                                       config,
+                                       depth_index,
+                                       depth_obs,
+                                       depth_sd,
+                                       par_fit_method,
+                                       vertical_obs)
 
       }else{
         stop("da_method not supported; select enkf or pf or none")
@@ -679,9 +676,11 @@ run_da_forecast <- function(states_init,
     #Print parameters to screen
     if(npars > 0){
       for(par in 1:npars){
-        message(paste0(pars_config$par_names_save[par],": mean ",
-                       round(mean(pars[i,par ,]),4)," sd ",
-                       round(sd(pars[i,par ,]),4)))
+        if(pars_config$fix_par[par] == 0){
+          message(paste0(pars_config$par_names_save[par],": mean ",
+                         round(mean(pars[i,par ,]),4)," sd ",
+                         round(sd(pars[i,par ,]),4)))
+        }
       }
     }
   }

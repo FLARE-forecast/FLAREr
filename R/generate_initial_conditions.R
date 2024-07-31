@@ -21,7 +21,8 @@ generate_initial_conditions <- function(states_config,
                                         obs_config,
                                         pars_config = NULL,
                                         obs,
-                                        config){
+                                        config,
+                                        obs_non_vertical){
   if(is.na(config$run_config$restart_file)){
 
     init <- list()
@@ -38,7 +39,7 @@ generate_initial_conditions <- function(states_config,
     nmembers <- config$da_setup$ensemble_size
     nstates <- length(states_config$state_names)
 
-    init$states <- array(NA, dim=c(nstates, ndepths_modeled, nmembers))
+    init$states <- array(NA, dim=c(nstates, config$model_settings$max_model_layers, nmembers))
     init$pars <- array(NA, dim=c(npars, nmembers))
     init$lake_depth <- array(NA, dim=c(nmembers))
     init$snow_ice_thickness <- array(NA, dim=c(3, nmembers))
@@ -50,9 +51,21 @@ generate_initial_conditions <- function(states_config,
     init$log_particle_weights <- array(NA, dim=c(nmembers))
 
     init$lake_depth[] <- round(config$default_init$lake_depth, 4)
+    nml <- FLAREr:::read_nml(file.path(config$file_path$configuration_directory, config$model_settings$base_GLM_nml))
+    max_depth <- nml$morphometry$H[length(nml$morphometry$H)] - nml$morphometry$H[1]
+    if(!is.null(obs_non_vertical$obs_depth)){
+      if(!is.na(obs_non_vertical$obs_depth$obs[1])){
+        init$lake_depth <- rnorm(nmembers, obs_non_vertical$obs_depth$obs[1], obs_non_vertical$obs_depth$depth_sd)
+        index <- which(init$lake_depth > max_depth)
+        init$lake_depth[index] <- max_depth
+      }
+    }
+
     for(m in 1:nmembers){
       init$model_internal_heights[1:ndepths_modeled, m] <- init$lake_depth[m] - config$model_settings$modeled_depths
     }
+
+
 
     init_depth <- array(NA, dim = c(nrow(states_config),ndepths_modeled))
     for(i in 1:nrow(states_config)){
@@ -82,17 +95,17 @@ generate_initial_conditions <- function(states_config,
 
     for(m in 1:nmembers){
 
-    init$model_internal_heights[1:ndepths_modeled, m] <- init$lake_depth[m] - config$model_settings$modeled_depths
+      init$model_internal_heights[1:ndepths_modeled, m] <- init$lake_depth[m] - config$model_settings$modeled_depths
 
-    with_noise <- add_process_noise(states_height_ens = init_depth,
-                                    model_sd = model_sd,
-                                    model_internal_heights_ens =  init$model_internal_heights[ ,m],
-                                    lake_depth_ens = init$lake_depth[m],
-                                    modeled_depths = config$model_settings$modeled_depths,
-                                    vert_decorr_length = states_config$vert_decorr_length,
-                                    include_uncertainty = config$uncertainty$initial_condition)
+      with_noise <- add_process_noise(states_height_ens = init_depth,
+                                      model_sd = model_sd,
+                                      model_internal_heights_ens =  init$model_internal_heights[ ,m],
+                                      lake_depth_ens = init$lake_depth[m],
+                                      modeled_depths = config$model_settings$modeled_depths,
+                                      vert_decorr_length = states_config$vert_decorr_length,
+                                      include_uncertainty = config$uncertainty$initial_condition)
 
-    init$states[, , m] <- with_noise$states_height_ens
+      init$states[,1:ndepths_modeled , m] <- with_noise$states_height_ens
 
     }
 
@@ -117,13 +130,6 @@ generate_initial_conditions <- function(states_config,
     init$salt[, ] <- config$default_init$salinity
     init$log_particle_weights[] <- log(1.0)
 
-    for(m in 1:nmembers){
-      ##init$model_internal_depths[1:ndepths_modeled, m] <- config$model_settings$modeled_depths
-      init$model_internal_heights[1:ndepths_modeled, m] <- init$lake_depth[m] - config$model_settings$modeled_depths
-      for(s in 1:nstates){
-        init$states[s,,m] <- init$states[s, ,m]
-      }
-    }
 
     aux_states_init <- list()
     aux_states_init$snow_ice_thickness <- init$snow_ice_thickness

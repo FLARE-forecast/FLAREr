@@ -144,10 +144,10 @@ run_enkf <- function(x_matrix,
 
   if(depth_index > 0){
     lake_depth_updated<- update[(ndepths_modeled*nstates + depth_index), ]
-    #for(m in 1:nmembers){
-    #  depth_index <- which(model_internal_heights_start[ , m] > lake_depth_update)
-    #  model_internal_heights_start[depth_index , m] <- NA
-    #}
+    nml <- FLAREr:::read_nml(file.path(config$file_path$configuration_directory, config$model_settings$base_GLM_nml))
+    max_depth <- nml$morphometry$H[length(nml$morphometry$H)] - nml$morphometry$H[1]
+    index <- which(lake_depth_updated > max_depth)
+    lake_depth_updated[index] <- max_depth
   }else{
     lake_depth_updated <- lake_depth_start
   }
@@ -160,6 +160,12 @@ run_enkf <- function(x_matrix,
       depth_index <- which(config$model_settings$modeled_depths <= lake_depth_updated[m])
       #Map updates to GLM native depths
       non_na_heights <- which(!is.na(model_internal_heights_start[ , m]))
+
+      if(s > 1){
+        index <- which(states_depth_updated[s, , m] < 0.0 & !is.na(states_depth_updated[s, , m]))
+        states_depth_updated[s, index, m] <- 0.0
+      }
+
       states_height_updated[s,non_na_heights,m] <- approx(lake_depth_updated[m] - config$model_settings$modeled_depths[depth_index],
                                                           states_depth_updated[s, depth_index, m ],
                                                           model_internal_heights_start[non_na_heights , m],
@@ -190,16 +196,6 @@ run_enkf <- function(x_matrix,
   log_particle_weights_updated <-rep(log(1.0), nmembers)
 
   num_out_depths <- length(which(!is.na(states_height_start[1, ,1])))
-
-  #Correct any negative water quality states
-  if(length(states_config$state_names) > 1){
-    for(s in 2:nstates){
-      for(m in 1:nmembers){
-        index <- which(states_height_updated[s, , m] < 0.0 & !is.na(states_height_updated[s, , m]))
-        states_height_updated[s, index, m] <- 0.0
-      }
-    }
-  }
 
   #Correct any parameter values outside bounds
   if(npars > 0){

@@ -100,27 +100,33 @@ run_particle_filter <- function(x_matrix,
 
   log_particle_weights_updated <- log_particle_weights_start + log(wt_norm)
 
-  samples <- sample.int(nmembers, replace = TRUE, prob = exp(log_particle_weights_updated))
-  log_particle_weights_updated[] <- log(1.0)
+  Neff <- 1/sum(exp(log_particle_weights_updated)^2)
 
-  update <- x_matrix[1:(ndepths_modeled*nstates), samples]
-  states_depth_updated <- aperm(array(c(update), dim = c(ndepths_modeled, nstates, nmembers)), perm = c(2,1,3))
-  states_height_updated <-  states_height_start[ , ,samples]
+  if(Neff < nmembers/2 | config$da_setup$pf_always_resample){
+    samples <- sample.int(nmembers, replace = TRUE, prob = exp(log_particle_weights_updated))
+    log_particle_weights_updated[] <- log(1.0)
 
-  if(npars > 0){
-    pars_updated <- pars_corr[, samples]
+    update <- x_matrix[1:(ndepths_modeled*nstates), samples]
+    states_depth_updated <- aperm(array(c(update), dim = c(ndepths_modeled, nstates, nmembers)), perm = c(2,1,3))
+    states_height_updated <-  states_height_start[ , ,samples]
+
+    if(npars > 0){
+      pars_updated <- pars_corr[, samples]
+    }
+
+    snow_ice_thickness_updated <- snow_ice_thickness_start[ , samples]
+    avg_surf_temp_updated <- avg_surf_temp_start[samples]
+    lake_depth_updated <- lake_depth_start[ samples]
+    model_internal_heights_updated <- model_internal_heights_start[ , samples]
+    mixer_count_updated <- mixer_count_start[samples]
+    mixing_vars_updated <- mixing_vars_start[, samples]
+
+    if(length(config$output_settings$diagnostics_names) > 0){
+      diagnostics_updated <- diagnostics_start[ , ,samples]
+    }
+
   }
 
-  snow_ice_thickness_updated <- snow_ice_thickness_start[ , samples]
-  avg_surf_temp_updated <- avg_surf_temp_start[samples]
-  lake_depth_updated <- lake_depth_start[ samples]
-  model_internal_heights_updated <- model_internal_heights_start[ , samples]
-  mixer_count_updated <- mixer_count_start[samples]
-  mixing_vars_updated <- mixing_vars_start[, samples]
-
-  if(length(config$output_settings$diagnostics_names) > 0){
-    diagnostics_updated <- diagnostics_start[ , ,samples]
-  }
 
   return(list(pars_updated = pars_updated,
               states_depth_updated = states_depth_updated,
