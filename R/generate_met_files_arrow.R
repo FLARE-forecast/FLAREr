@@ -241,10 +241,17 @@ generate_met_files_arrow <- function(obs_met_file = NULL,
     }
   }else{
 
-    forecast <- arrow::open_dataset(forecast_dir) |>
-      dplyr::filter(site_id == lake_name_code) |>
-      dplyr::select(datetime, parameter,variable,prediction) |>
-      dplyr::collect() |>
+    #### test if the forecast directory exists, stop with helpful error if it does not ####
+    tryCatch({
+      forecast <- arrow::open_dataset(forecast_dir) |>
+        dplyr::filter(site_id == lake_name_code) |>
+        dplyr::select(datetime, parameter,variable,prediction) |>
+        dplyr::collect()
+    }, error = function(e) {
+      stop(paste0('NOAA Forecasts were not found for reference_datetime = "',forecast_start_datetime,'"...stopping workflow'))
+    })
+
+    forecast <- forecast |>
       tidyr::pivot_wider(names_from = variable, values_from = prediction) |>
       dplyr::arrange(parameter, datetime) |>
       dplyr::mutate(WindSpeed = sqrt(eastward_wind^2 + northward_wind^2),
