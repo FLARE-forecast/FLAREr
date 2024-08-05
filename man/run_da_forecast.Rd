@@ -21,7 +21,6 @@ run_da_forecast(
   obs_config,
   da_method = "enkf",
   par_fit_method = "inflate",
-  debug = FALSE,
   obs_secchi = NULL,
   obs_depth = NULL
 )
@@ -60,10 +59,6 @@ with a value in \code{model_sd}.}
 \item{da_method}{string; data assimilation method (enkf or pf; Default = enkf)}
 
 \item{par_fit_method}{string; method for adding noise to parameters during calibration}
-
-\item{debug}{boolean; add extra diagnostics for debugging (Default = FALSE)}
-
-\item{management}{list; list of management inputs and configuration  (Default = NULL)}
 }
 \value{
 a list is passed to \code{write_forecast_netcdf()} to write the
