@@ -49,23 +49,23 @@ create_inflow_outflow_files_arrow  <- function(config, config_set_name) {
 
 
     # Generate inflow and outflow files
-    inflow_outflow_files <- pmap(list(flow_forecast_dir = list(inflow_forecast_dir, outflow_forecast_dir),
-                                      flow_historical_dir = list(inflow_historical_dir, outflow_historical_dir),
-                                      flow_type =  list('inflow', 'outflow'),
-                                      variables = list(variables_in, variables_out),
-                                      out_dir = config$file_path$execute_directory ,
-                                      start_datetime = config$run_config$start_datetime,
-                                      end_datetime = config$run_config$end_datetime ,
-                                      forecast_start_datetime = config$run_config$forecast_start_datetime ,
-                                      forecast_horizon = config$run_config$forecast_horizon ,
-                                      site_id = config$location$site_id ,
-                                      use_s3 = config$run_config$use_s3 ,
-                                      bucket = list(config$s3$inflow_drivers$bucket , config$s3$outflow_drivers$bucket),
-                                      endpoint = list(config$s3$inflow_drivers$endpoint , config$s3$outflow_drivers$endpoint) ,
-                                      local_directory = list(file.path(lake_directory, config$flows$local_inflow_directory),
-                                                             file.path(lake_directory, config$flows$local_outflow_directory)),
-                                      use_ler_vars = config$flows$use_ler_vars),
-                                 create_flow_files) |>
+    inflow_outflow_files <- purrr::pmap(list(flow_forecast_dir = list(inflow_forecast_dir, outflow_forecast_dir),
+                                             flow_historical_dir = list(inflow_historical_dir, outflow_historical_dir),
+                                             flow_type =  list('inflow', 'outflow'),
+                                             variables = list(variables_in, variables_out),
+                                             out_dir = config$file_path$execute_directory ,
+                                             start_datetime = config$run_config$start_datetime,
+                                             end_datetime = config$run_config$end_datetime ,
+                                             forecast_start_datetime = config$run_config$forecast_start_datetime ,
+                                             forecast_horizon = config$run_config$forecast_horizon ,
+                                             site_id = config$location$site_id ,
+                                             use_s3 = config$run_config$use_s3 ,
+                                             bucket = list(config$s3$inflow_drivers$bucket , config$s3$outflow_drivers$bucket),
+                                             endpoint = list(config$s3$inflow_drivers$endpoint , config$s3$outflow_drivers$endpoint) ,
+                                             local_directory = list(file.path(lake_directory, config$flows$local_inflow_directory),
+                                                                    file.path(lake_directory, config$flows$local_outflow_directory)),
+                                             use_ler_vars = config$flows$use_ler_vars),
+                                        create_flow_files) |>
       set_names('inflow_file_names', 'outflow_file_names')
 
 
@@ -85,23 +85,23 @@ create_inflow_outflow_files_arrow  <- function(config, config_set_name) {
     }
 
     # Generate inflow/outflow files
-    inflow_outflow_files <- pmap(list(flow_forecast_dir = list(inflow_forecast_dir, NULL),
-                                      flow_historical_dir = list(inflow_historical_dir, NULL),
-                                      flow_type =  list('inflow', 'outflow'),
-                                      variables = list(variables_in, variables_out),
-                                      out_dir = config$file_path$execute_directory ,
-                                      start_datetime = config$run_config$start_datetime,
-                                      end_datetime = config$run_config$end_datetime ,
-                                      forecast_start_datetime = config$run_config$forecast_start_datetime ,
-                                      forecast_horizon = config$run_config$forecast_horizon ,
-                                      site_id = config$location$site_id ,
-                                      use_s3 = config$run_config$use_s3 ,
-                                      bucket = list(config$s3$inflow_drivers$bucket , config$s3$outflow_drivers$bucket),
-                                      endpoint = config$s3$inflow_drivers$endpoint ,
-                                      local_directory = list(file.path(lake_directory, config$flows$local_directory),
-                                                             file.path(lake_directory, config$flows$local_directory)),
-                                      use_ler_vars = config$flows$use_ler_vars),
-                                 create_flow_files)  |>
+    inflow_outflow_files <- purrr::pmap(list(flow_forecast_dir = list(inflow_forecast_dir, NULL),
+                                             flow_historical_dir = list(inflow_historical_dir, NULL),
+                                             flow_type =  list('inflow', 'outflow'),
+                                             variables = list(variables_in, variables_out),
+                                             out_dir = config$file_path$execute_directory ,
+                                             start_datetime = config$run_config$start_datetime,
+                                             end_datetime = config$run_config$end_datetime ,
+                                             forecast_start_datetime = config$run_config$forecast_start_datetime ,
+                                             forecast_horizon = config$run_config$forecast_horizon ,
+                                             site_id = config$location$site_id ,
+                                             use_s3 = config$run_config$use_s3 ,
+                                             bucket = list(config$s3$inflow_drivers$bucket , config$s3$outflow_drivers$bucket),
+                                             endpoint = config$s3$inflow_drivers$endpoint ,
+                                             local_directory = list(file.path(lake_directory, config$flows$local_directory),
+                                                                    file.path(lake_directory, config$flows$local_directory)),
+                                             use_ler_vars = config$flows$use_ler_vars),
+                                        create_flow_files)  |>
       set_names('inflow_file_names', 'outflow_file_names')
 
 
@@ -121,23 +121,23 @@ create_inflow_outflow_files_arrow  <- function(config, config_set_name) {
     }
 
     # Generate inflow/outflow files
-    inflow_outflow_files <- pmap(list(flow_forecast_dir = list(NULL, outflow_forecast_dir),
-                                      flow_historical_dir = list(NULL, outflow_historical_dir),
-                                      flow_type =  list('inflow', 'outflow'),
-                                      variables = list(variables_in, variables_out),
-                                      out_dir = config$file_path$execute_directory ,
-                                      start_datetime = config$run_config$start_datetime,
-                                      end_datetime = config$run_config$end_datetime ,
-                                      forecast_start_datetime = config$run_config$forecast_start_datetime ,
-                                      forecast_horizon = config$run_config$forecast_horizon ,
-                                      site_id = config$location$site_id ,
-                                      use_s3 = config$run_config$use_s3 ,
-                                      bucket = list(config$s3$inflow_drivers$bucket , config$s3$outflow_drivers$bucket),
-                                      endpoint = config$s3$inflow_drivers$endpoint ,
-                                      local_directory = list(file.path(lake_directory, config$flows$local_directory),
-                                                             file.path(lake_directory, config$flows$local_directory)),
-                                      use_ler_vars = config$flows$use_ler_vars),
-                                 create_flow_files) |>
+    inflow_outflow_files <- purrr::pmap(list(flow_forecast_dir = list(NULL, outflow_forecast_dir),
+                                             flow_historical_dir = list(NULL, outflow_historical_dir),
+                                             flow_type =  list('inflow', 'outflow'),
+                                             variables = list(variables_in, variables_out),
+                                             out_dir = config$file_path$execute_directory ,
+                                             start_datetime = config$run_config$start_datetime,
+                                             end_datetime = config$run_config$end_datetime ,
+                                             forecast_start_datetime = config$run_config$forecast_start_datetime ,
+                                             forecast_horizon = config$run_config$forecast_horizon ,
+                                             site_id = config$location$site_id ,
+                                             use_s3 = config$run_config$use_s3 ,
+                                             bucket = list(config$s3$inflow_drivers$bucket , config$s3$outflow_drivers$bucket),
+                                             endpoint = config$s3$inflow_drivers$endpoint ,
+                                             local_directory = list(file.path(lake_directory, config$flows$local_directory),
+                                                                    file.path(lake_directory, config$flows$local_directory)),
+                                             use_ler_vars = config$flows$use_ler_vars),
+                                        create_flow_files) |>
       set_names('inflow_file_names', 'outflow_file_names')
 
   } else if (!config$flows$include_inflow & !config$flows$include_inflow) {  # don't specify inflows or outflows
