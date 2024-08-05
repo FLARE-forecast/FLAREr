@@ -65,7 +65,7 @@ create_inflow_outflow_files_arrow  <- function(config, config_set_name) {
                                              local_directory = list(file.path(lake_directory, config$flows$local_inflow_directory),
                                                                     file.path(lake_directory, config$flows$local_outflow_directory)),
                                              use_ler_vars = config$flows$use_ler_vars),
-                                        create_flow_files) |>
+                                        FLAREr:::create_flow_files) |>
       set_names('inflow_file_names', 'outflow_file_names')
 
 
@@ -101,7 +101,7 @@ create_inflow_outflow_files_arrow  <- function(config, config_set_name) {
                                              local_directory = list(file.path(lake_directory, config$flows$local_directory),
                                                                     file.path(lake_directory, config$flows$local_directory)),
                                              use_ler_vars = config$flows$use_ler_vars),
-                                        create_flow_files)  |>
+                                        FLAREr:::create_flow_files)  |>
       set_names('inflow_file_names', 'outflow_file_names')
 
 
@@ -137,7 +137,7 @@ create_inflow_outflow_files_arrow  <- function(config, config_set_name) {
                                              local_directory = list(file.path(lake_directory, config$flows$local_directory),
                                                                     file.path(lake_directory, config$flows$local_directory)),
                                              use_ler_vars = config$flows$use_ler_vars),
-                                        create_flow_files) |>
+                                        FLAREr:::create_flow_files) |>
       set_names('inflow_file_names', 'outflow_file_names')
 
   } else if (!config$flows$include_inflow & !config$flows$include_inflow) {  # don't specify inflows or outflows
