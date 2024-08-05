@@ -106,46 +106,9 @@ run_flare <- function(lake_directory,
                                                 use_hive_met = config$met$use_hive_met)
   }
 
-  if(is.null(config$inflow$use_inflow_s3)){
-    config$inflow$use_inflow_s3 <- TRUE
-  }
-
-  if(config$inflow$include_inflow){
-    if(config$run_config$forecast_horizon > 0){
-      inflow_forecast_dir <- file.path(config$inflow$forecast_inflow_model, config$location$site_id, "0", lubridate::as_date(config$run_config$forecast_start_datetime))
-    }else{
-      inflow_forecast_dir <- NULL
-    }
-
-    if(length(states_config$state_names) > 2){
-      stop("run_flare currently not configured for using inflows with GLM-AED")
-    }else{
-      variables <- c("time", "FLOW", "TEMP", "SALT")
-    }
-
     message('Creating inflow/outflow files...')
 
-    inflow_outflow_files <- FLAREr::create_inflow_outflow_files_arrow(inflow_forecast_dir = inflow_forecast_dir,
-                                                                      inflow_obs = file.path(lake_directory, "targets",config$location$site_id, config$inflow$observed_filename),
-                                                                      variables = variables,
-                                                                      out_dir = config$file_path$execute_directory,
-                                                                      start_datetime = config$run_config$start_datetime,
-                                                                      end_datetime = config$run_config$end_datetime,
-                                                                      forecast_start_datetime = config$run_config$forecast_start_datetime,
-                                                                      forecast_horizon =  config$run_config$forecast_horizon,
-                                                                      site_id = config$location$site_id,
-                                                                      use_s3 = config$run_config$use_s3,
-                                                                      bucket = config$s3$inflow_drivers$bucket,
-                                                                      endpoint = config$s3$inflow_drivers$endpoint,
-                                                                      local_directory = file.path(lake_directory, config$inflow$local_directory, inflow_forecast_dir),
-                                                                      use_forecast = config$inflow$use_forecasted_inflow,
-                                                                      use_ler_vars = config$inflow$use_ler_vars)
-
-  }else{
-    inflow_outflow_files <- list()
-    inflow_outflow_files$inflow_file_name <- NULL
-    inflow_outflow_files$outflow_file_name <- NULL
-  }
+    inflow_outflow_files <- FLAREr::create_inflow_outflow_files_arrow(config, config_set_name)
 
   obs_insitu_file <- file.path(config$file_path$qaqc_data_directory, config$da_setup$obs_filename)
   if(!fs::file_exists(obs_insitu_file)){
