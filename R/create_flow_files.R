@@ -10,7 +10,7 @@
 #' @param forecast_start_datetime start of the forecast period (break between historical + future periods)
 #' @param forecast_horizon horizon
 #' @param site_id site code
-#' @param use_s3 T/F
+#' @param use_s3 logical
 #' @param bucket s3 storage location
 #' @param endpoint s3 storage location
 #' @param local_directory local storage location
@@ -36,6 +36,7 @@ create_flow_files <- function(flow_forecast_dir = NULL,
                               use_ler_vars = FALSE) {
   lake_name_code <- site_id
 
+  # set locations of flow drivers (s3 or local)
   if (!is.null(flow_forecast_dir) & !is.null(flow_historical_dir)) {
     if (use_s3) {
       if (is.null(bucket) | is.null(endpoint)) {
@@ -75,6 +76,7 @@ create_flow_files <- function(flow_forecast_dir = NULL,
     hist_s3 <- NULL
   }
 
+  # when does the simulation start and end?
   start_datetime <- lubridate::as_datetime(start_datetime)
 
   if (is.na(forecast_start_datetime)) {
@@ -92,7 +94,7 @@ create_flow_files <- function(flow_forecast_dir = NULL,
       filter(datetime >= forecast_start_datetime,
              datetime <= end_datetime)
   } else {
-    future_df <- NULL
+    future_df <- NULL # No future data
   }
 
   if (!is.null(hist_s3)) {
@@ -100,10 +102,11 @@ create_flow_files <- function(flow_forecast_dir = NULL,
       filter(datetime < forecast_start_datetime,
              datetime >= start_datetime)
   } else {
-    hist_df <- NULL
+    hist_df <- NULL # No historical data
   }
 
 
+  # Checks the data are consistent across the periods (same number of flows)
   if (!is.null(future_df) & !is.null(hist_df)) {
     if (unique(future_df$flow_number) !=  unique(hist_df$flow_number)) {
       stop('need the same number of flows in historical and future periods')
@@ -115,18 +118,21 @@ create_flow_files <- function(flow_forecast_dir = NULL,
     future_ensemble_members <- unique(future_df$parameter)
     hist_ensemble_members <- unique(hist_df$parameter)
 
+    # If there are a different number of ensemble members in the historical and future periods
+      # this will resample the period with fewer ensemble members to match
     if (length(hist_ensemble_members) < length(future_ensemble_members)) {
       hist_ensemble_members <- sample(hist_ensemble_members, size = length(future_ensemble_members), replace = T)
     } else if (length(future_ensemble_members) < length(hist_ensemble_members)) {
       future_ensemble_members <- sample(future_ensemble_members, size = length(hist_ensemble_members), replace = T)
     }
 
-
+    # Create an empty array to put the results in
     flow_file_names <- array(NA, dim = c(max(c(1, length(future_ensemble_members))),
                                          num_flows))
 
     for (j in 1:num_flows) {
       for (i in 1:length(future_ensemble_members)) {
+        # generate the future period
         future_ens <- future_df |>
           dplyr::filter(flow_number == j,
                         parameter == future_ensemble_members[i],
@@ -134,9 +140,9 @@ create_flow_files <- function(flow_forecast_dir = NULL,
           tidyr::pivot_wider(names_from = variable, values_from = prediction) |>
           dplyr::rename(time = datetime) |>
           dplyr::select(dplyr::all_of(variables)) |>
-          #dplyr::rename(time = datetime) |>
           dplyr::mutate_if(where(is.numeric), list(~round(., 4)))
 
+        # generate the historical period
         hist_ens <- hist_df |>
           dplyr::filter(flow_number == j,
                         parameter == hist_ensemble_members[i],
@@ -145,10 +151,9 @@ create_flow_files <- function(flow_forecast_dir = NULL,
           tidyr::pivot_wider(names_from = variable, values_from = prediction) |>
           dplyr::rename(time = datetime) |>
           dplyr::select(dplyr::all_of(variables)) |>
-          #dplyr::rename(time = datetime) |>
           dplyr::mutate_if(where(is.numeric), list(~round(., 4)))
 
-
+        # combine to single df
         flow <- dplyr::bind_rows(hist_ens,
                                  future_ens) |>
           arrange(time)
@@ -177,7 +182,7 @@ create_flow_files <- function(flow_forecast_dir = NULL,
                          quote = "none")
       }
     }
-  } else if (!is.null(hist_df) & is.null(future_df)) {
+  } else if (!is.null(hist_df) & is.null(future_df)) { # do the same thing but when there is only historical data
 
     num_flows <- max(hist_df$flow_number)
     hist_ensemble_members <- unique(hist_df$parameter)
@@ -195,7 +200,6 @@ create_flow_files <- function(flow_forecast_dir = NULL,
           tidyr::pivot_wider(names_from = variable, values_from = prediction) |>
           dplyr::rename(time = datetime) |>
           dplyr::select(dplyr::all_of(variables)) |>
-          #dplyr::rename(time = datetime) |>
           dplyr::mutate_if(where(is.numeric), list(~round(., 4)))
 
 
@@ -226,29 +230,27 @@ create_flow_files <- function(flow_forecast_dir = NULL,
                          quote = "none")
       }
     }
-  } else if (!is.null(hist_df) & is.null(future_df)) {
+  } else if (is.null(hist_df) & !is.null(future_df)) { # do the same thing but when there is only future data
 
-    num_flows <- max(hist_df$flow_number)
-    hist_ensemble_members <- unique(hist_df$parameter)
+    num_flows <- max(future_df$flow_number)
+    future_ensemble_members <- unique(future_df$parameter)
 
-    flow_file_names <- array(NA, dim = c(max(c(1, length(hist_ensemble_members))),
+    flow_file_names <- array(NA, dim = c(max(c(1, length(future_ensemble_members))),
                                          num_flows))
 
     for (j in 1:num_flows) {
-      for (i in 1:length(hist_ensemble_members)) {
-        hist_ens <- hist_df |>
+      for (i in 1:length(future_ensemble_members)) {
+        future_ens <- future_df |>
           dplyr::filter(flow_number == j,
-                        parameter == hist_ensemble_members[i],
-                        datetime >= start_datetime,
-                        datetime < lubridate::as_date(forecast_start_datetime)) |>
+                        parameter == future_ensemble_members[i],
+                        datetime >= lubridate::as_date(forecast_start_datetime)) |>
           tidyr::pivot_wider(names_from = variable, values_from = prediction) |>
           dplyr::rename(time = datetime) |>
           dplyr::select(dplyr::all_of(variables)) |>
-          #dplyr::rename(time = datetime) |>
           dplyr::mutate_if(where(is.numeric), list(~round(., 4)))
 
 
-        flow <- hist_ens |>
+        flow <- future_ens |>
           arrange(time)
 
         if (use_ler_vars) {
