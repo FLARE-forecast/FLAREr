@@ -106,8 +106,8 @@ create_inflow_outflow_files_arrow  <- function(config, config_set_name) {
                                              use_s3 = config$run_config$use_s3 ,
                                              bucket = list(config$s3$inflow_drivers$bucket , config$s3$outflow_drivers$bucket),
                                              endpoint = config$s3$inflow_drivers$endpoint ,
-                                             local_directory = list(file.path(lake_directory, config$flows$local_directory),
-                                                                    file.path(lake_directory, config$flows$local_directory)),
+                                             local_directory = list(file.path(lake_directory, config$flows$local_inflow_directory),
+                                                                    file.path(lake_directory, config$flows$local_outflow_directory)),
                                              use_ler_vars = config$flows$use_ler_vars),
                                         FLAREr:::create_flow_files)  |>
       set_names('inflow_file_names', 'outflow_file_names')
@@ -145,8 +145,8 @@ create_inflow_outflow_files_arrow  <- function(config, config_set_name) {
                                              use_s3 = config$run_config$use_s3 ,
                                              bucket = list(config$s3$inflow_drivers$bucket , config$s3$outflow_drivers$bucket),
                                              endpoint = config$s3$inflow_drivers$endpoint ,
-                                             local_directory = list(file.path(lake_directory, config$flows$local_directory),
-                                                                    file.path(lake_directory, config$flows$local_directory)),
+                                             local_directory = list(file.path(lake_directory, config$flows$local_inflow_directory),
+                                                                    file.path(lake_directory, config$flows$local_outflow_directory)),
                                              use_ler_vars = config$flows$use_ler_vars),
                                         FLAREr:::create_flow_files) |>
       set_names('inflow_file_names', 'outflow_file_names')
