@@ -106,9 +106,9 @@ run_flare <- function(lake_directory,
                                                 use_hive_met = config$met$use_hive_met)
   }
 
-    message('Creating inflow/outflow files...')
+  message('Creating inflow/outflow files...')
 
-    inflow_outflow_files <- FLAREr::create_inflow_outflow_files_arrow(config, config_set_name)
+  inflow_outflow_files <- FLAREr::create_inflow_outflow_files_arrow(config, config_set_name)
 
   obs_insitu_file <- file.path(config$file_path$qaqc_data_directory, config$da_setup$obs_filename)
   if(!fs::file_exists(obs_insitu_file)){
@@ -121,11 +121,11 @@ run_flare <- function(lake_directory,
 
 
   obs_non_vertical <- FLAREr::create_obs_non_vertical(cleaned_observations_file_long = file.path(config$file_path$qaqc_data_directory,paste0(config$location$site_id, "-targets-insitu.csv")),
-                                           obs_config,
-                                           start_datetime = config$run_config$start_datetime,
-                                           end_datetime = config$run_config$end_datetime,
-                                           forecast_start_datetime = config$run_config$forecast_start_datetime,
-                                           forecast_horizon =  config$run_config$forecast_horizon)
+                                                      obs_config,
+                                                      start_datetime = config$run_config$start_datetime,
+                                                      end_datetime = config$run_config$end_datetime,
+                                                      forecast_start_datetime = config$run_config$forecast_start_datetime,
+                                                      forecast_horizon =  config$run_config$forecast_horizon)
 
   message('Setting states and initial conditions...')
 
