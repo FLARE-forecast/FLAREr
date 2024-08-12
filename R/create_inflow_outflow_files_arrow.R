@@ -27,11 +27,13 @@ create_inflow_outflow_files_arrow  <- function(config, config_set_name) {
   if (config$flows$include_inflow & config$flows$include_outflow) {
 
     # the model directories for historical flows (before forecast_start_datetime)
-    inflow_historical_dir <- file.path(config$flows$historical_inflow_model,
-                                       config$location$site_id, "0", lubridate::as_date(config$run_config$forecast_start_datetime))
+    inflow_historical_dir <- file.path("historical",
+                                       config$flows$historical_inflow_model,
+                                       paste0("site_id=", config$location$site_id))
 
-    outflow_historical_dir <- file.path(config$flows$historical_outflow_model,
-                                        config$location$site_id, "0", lubridate::as_date(config$run_config$forecast_start_datetime))
+    outflow_historical_dir <- file.path("historical",
+                                        config$flows$historical_outflow_model,
+                                        paste0("site_id=", config$location$site_id))
 
     # do we need future flow?
     if (config$run_config$forecast_horizon > 0) {
@@ -41,10 +43,14 @@ create_inflow_outflow_files_arrow  <- function(config, config_set_name) {
       }
 
       # the model directories for historical flows (before forecast_start_datetime)
-      inflow_forecast_dir <- file.path(config$flows$future_inflow_model,
-                                       config$location$site_id, "0", lubridate::as_date(config$run_config$forecast_start_datetime))
-      outflow_forecast_dir <- file.path(config$flows$future_outflow_model,
-                                        config$location$site_id, "0", lubridate::as_date(config$run_config$forecast_start_datetime))
+      inflow_forecast_dir <- file.path("future",
+                                       config$flows$future_inflow_model,
+                                       paste0("reference_datetime=", lubridate::as_date(config$run_config$forecast_start_datetime)),
+                                       paste0("site_id=", config$location$site_id))
+      outflow_forecast_dir <- file.path("future",
+                                        config$flows$future_outflow_model,
+                                        paste0("reference_datetime=", lubridate::as_date(config$run_config$forecast_start_datetime)),
+                                        paste0("site_id=", config$location$site_id))
     } else {
       # if no forecast being run set to NULL
       inflow_forecast_dir <- NULL
@@ -76,8 +82,10 @@ create_inflow_outflow_files_arrow  <- function(config, config_set_name) {
   } else if (config$flows$include_inflow & !config$flows$include_outflow) { # Specify INFLOW only
 
     # the model directories for historical flows (before forecast_start_datetime)
-    inflow_historical_dir <- file.path(config$flows$historical_inflow_model,
-                                       config$location$site_id, "0", lubridate::as_date(config$run_config$forecast_start_datetime))
+    inflow_historical_dir <- file.path("historical",
+                                       config$flows$historical_inflow_model,
+                                       paste0("site_id=", config$location$site_id))
+
 
     # do we need future flow?
     if (config$run_config$forecast_horizon > 0 ) {
@@ -86,8 +94,10 @@ create_inflow_outflow_files_arrow  <- function(config, config_set_name) {
         stop("Need future flow model(s) when horizon > 0")
       }
 
-      inflow_forecast_dir <- file.path(config$flows$future_inflow_model,
-                                       config$location$site_id, "0", lubridate::as_date(config$run_config$forecast_start_datetime))
+      inflow_forecast_dir <- file.path("future",
+                                        config$flows$future_inflow_model,
+                                        paste0("reference_datetime=", lubridate::as_date(config$run_config$forecast_start_datetime)),
+                                        paste0("site_id=", config$location$site_id))
     } else {
       inflow_forecast_dir <- NULL
     }
@@ -116,8 +126,10 @@ create_inflow_outflow_files_arrow  <- function(config, config_set_name) {
   } else if (!config$flows$include_inflow & config$flows$include_outflow) { # Specify OUTFLOW only
 
     # the model directories for historical flows (before forecast_start_datetime)
-    outflow_historical_dir <- file.path(config$flows$historical_outflow_model,
-                                       config$location$site_id, "0", lubridate::as_date(config$run_config$forecast_start_datetime))
+    outflow_historical_dir <- file.path("historical",
+                                       config$flows$historical_outflow_model,
+                                       paste0("site_id=", config$location$site_id))
+
     # do we need future flow?
     if (config$run_config$forecast_horizon > 0 ) {
 
@@ -125,8 +137,10 @@ create_inflow_outflow_files_arrow  <- function(config, config_set_name) {
         stop("Need future flow model(s) when horizon > 0")
       }
 
-      outflow_forecast_dir <- file.path(config$flows$future_outflow_model,
-                                        config$location$site_id, "0", lubridate::as_date(config$run_config$forecast_start_datetime))
+      outflow_forecast_dir <- file.path("future",
+                                        config$flows$future_outflow_model,
+                                        paste0("reference_datetime=", lubridate::as_date(config$run_config$forecast_start_datetime)),
+                                        paste0("site_id=", config$location$site_id))
     } else {
       outflow_forecast_dir <- NULL
     }
