@@ -1,258 +1,175 @@
-#' @title Generating inflow and output files in the GLM format using arrow
-#' @details Processes historical inflow data from inflow_obs and from files in the inflow_file_dir into the GLM format
-#' @param inflow_forecast_dir string; full directory path that contains forecasted inflow and outflow files
-#' @param inflow_obs string; full path to cleaned inflow observation in the specified format
-#' @param working_directory string; full directory where FLARE executes
-#' @param state_names vector; vector of state names that will be included in the inflow files
+#' @title Generating inflow and outflow files in the GLM format using arrow
+#' @details Processes historical model data and future model files into the GLM format
+#' @param config configuration file
+#' @param config_set_name
 #' @return list with two vectors. One vector is the matrix of inflow_file_names and the other is the matrix of outflow_file_names
 #' @export
+#'
+create_inflow_outflow_files_arrow  <- function(config, config_set_name) {
 
-create_inflow_outflow_files_arrow <- function(inflow_forecast_dir = NULL,
-                                              inflow_obs,
-                                              variables = c("time", "FLOW", "TEMP", "SALT"),
-                                              out_dir,
-                                              start_datetime,
-                                              end_datetime = NA,
-                                              forecast_start_datetime = NA,
-                                              forecast_horizon = 0,
-                                              site_id,
-                                              use_s3 = FALSE,
-                                              bucket = NULL,
-                                              endpoint = NULL,
-                                              local_directory = NULL,
-                                              use_forecast = TRUE,
-                                              use_ler_vars = FALSE){
+  # set use_s3 to T if missing
+  if(is.null(config$run_config$use_s3)){
+    config$run_config$use_s3 <- TRUE
+  }
 
-  lake_name_code <- site_id
+  # The variables differ between inflow and outflow
+  variables_in <- unique(c('time',
+                           'TEMP',
+                           'SALT',
+                           'FLOW',
+                           toupper(readr::read_csv(file.path('configuration',
+                                                             config_set_name,
+                                                             config$model_settings$states_config_file),
+                                                   show_col_types = F)$state_names))) # state variables need to match the inflow
+  variables_out <- c('time', 'FLOW')
 
-  if(!is.null(inflow_forecast_dir)){
+  # Specify inflow AND outflow
+  if (config$flows$include_inflow & config$flows$include_outflow) {
 
-    if(use_s3){
-      if(is.null(bucket) | is.null(endpoint)){
-        stop("scoring function needs bucket and endpoint if use_s3=TRUE")
+    # the model directories for historical flows (before forecast_start_datetime)
+    inflow_historical_dir <- file.path("historical",
+                                       config$flows$historical_inflow_model,
+                                       paste0("site_id=", config$location$site_id))
+
+    outflow_historical_dir <- file.path("historical",
+                                        config$flows$historical_outflow_model,
+                                        paste0("site_id=", config$location$site_id))
+
+    # do we need future flow?
+    if (config$run_config$forecast_horizon > 0) {
+
+      if (is.null(config$flows$future_inflow_model) | is.null(config$flows$future_outflow_model)) {
+        stop("Need future flow model(s) when horizon > 0")
       }
-      vars <- arrow_env_vars()
-      inflow_s3 <- arrow::s3_bucket(bucket = file.path(bucket, inflow_forecast_dir),
-                                    endpoint_override =  endpoint)
-      unset_arrow_vars(vars)
-    }else{
-      if(is.null(local_directory)){
-        stop("scoring function needs local_directory if use_s3=FALSE")
-      }
-      inflow_s3 <- arrow::SubTreeFileSystem$create(local_directory)
+
+      # the model directories for historical flows (before forecast_start_datetime)
+      inflow_forecast_dir <- file.path("future",
+                                       config$flows$future_inflow_model,
+                                       paste0("reference_datetime=", lubridate::as_date(config$run_config$forecast_start_datetime)),
+                                       paste0("site_id=", config$location$site_id))
+      outflow_forecast_dir <- file.path("future",
+                                        config$flows$future_outflow_model,
+                                        paste0("reference_datetime=", lubridate::as_date(config$run_config$forecast_start_datetime)),
+                                        paste0("site_id=", config$location$site_id))
+    } else {
+      # if no forecast being run set to NULL
+      inflow_forecast_dir <- NULL
+      outflow_forecast_dir <- NULL
     }
-  }else{
-    inflow_s3 <- NULL
-  }
-
-  start_datetime <- lubridate::as_datetime(start_datetime)
-  if(is.na(forecast_start_datetime)){
-    end_datetime <- lubridate::as_datetime(end_datetime)
-    forecast_start_datetime <- end_datetime
-  }else{
-    forecast_start_datetime <- lubridate::as_datetime(forecast_start_datetime)
-    end_datetime <- forecast_start_datetime + lubridate::days(forecast_horizon)
-  }
-
-  obs_inflow <- readr::read_csv(inflow_obs, show_col_types = FALSE)
-
-  if(use_forecast){
-    obs_inflow <- obs_inflow |>
-      dplyr::filter(datetime >= lubridate::as_date(start_datetime) & datetime <= lubridate::as_date(forecast_start_datetime))
-  }else{
-    obs_inflow <- obs_inflow |>
-      dplyr::filter(datetime >= lubridate::as_date(start_datetime) & datetime <= lubridate::as_date(end_datetime))
-  }
-
-  obs_outflow <- obs_inflow |> mutate(outflow_num = 1)
-
-  if(!is.null(inflow_s3)){
-    df <- arrow::open_dataset(inflow_s3) |>
-      dplyr::collect()
-
-    inflow_files <- df |>
-      filter(flow_type == "inflow")
-
-    outflow_files <- df |>
-      filter(flow_type == "outflow")
-
-    num_inflows <- max(inflow_files$flow_number)
-    num_outflows <- max(outflow_files$flow_number)
-
-    ensemble_members <- unique(inflow_files$parameter)
-
-  }else{
-    inflow_files <- NULL
-    outflow_files <- NULL
-
-    num_inflows <- 1
-    num_outflows <- 1
-
-    ensemble_members <- 1
-
-  }
-
-  inflow_file_names <- array(NA, dim = c(max(c(1, length(ensemble_members))), num_inflows))
-
-  for(j in 1:num_inflows){
-
-    if(length(inflow_files) == 0 | end_datetime == forecast_start_datetime){
-
-      obs_inflow_tmp <- obs_inflow |>
-        tidyr::pivot_wider(names_from = variable, values_from = observation) |>
-        dplyr::rename(time = datetime) |>
-        dplyr::select(dplyr::all_of(variables))
-
-      inflow_file_name <- file.path(out_dir, paste0("inflow",j,".csv"))
-
-      readr::write_csv(x = obs_inflow_tmp,
-                       file = inflow_file_name,
-                       quote = "none")
-      inflow_file_names[, j] <- inflow_file_name
-    }else{
-
-      for(i in 1:length(ensemble_members)){
-        curr_ens <- inflow_files |>
-          dplyr::filter(flow_number == j,
-                        parameter == ensemble_members[i],
-                        datetime >= lubridate::as_date(forecast_start_datetime)) |>
-          tidyr::pivot_wider(names_from = variable, values_from = prediction) |>
-          dplyr::rename(time = datetime) |>
-          dplyr::select(dplyr::all_of(variables)) |>
-          #dplyr::rename(time = datetime) |>
-          dplyr::mutate_if(where(is.numeric), list(~round(., 4)))
-
-        obs_inflow_tmp <- obs_inflow |>
-          dplyr::filter(datetime < lubridate::as_date(forecast_start_datetime)) |>
-          dplyr::mutate_if(where(is.numeric), list(~round(., 4)))
-
-        if(nrow(obs_inflow_tmp) > 0){
-          obs_inflow_tmp <- obs_inflow_tmp |>
-            tidyr::pivot_wider(names_from = variable, values_from = observation) |>
-            dplyr::rename(time = datetime) |>
-            dplyr::select(dplyr::all_of(variables))
-        }else{
-          obs_inflow_tmp <- NULL
-        }
 
 
-        inflow <- dplyr::bind_rows(obs_inflow_tmp, curr_ens) |>
-          arrange(time)
+    # Generate inflow and outflow files
+    inflow_outflow_files <- purrr::pmap(list(flow_forecast_dir = list(inflow_forecast_dir, outflow_forecast_dir),
+                                             flow_historical_dir = list(inflow_historical_dir, outflow_historical_dir),
+                                             flow_type =  list('inflow', 'outflow'),
+                                             variables = list(variables_in, variables_out),
+                                             out_dir = config$file_path$execute_directory ,
+                                             start_datetime = config$run_config$start_datetime,
+                                             end_datetime = config$run_config$end_datetime ,
+                                             forecast_start_datetime = config$run_config$forecast_start_datetime ,
+                                             forecast_horizon = config$run_config$forecast_horizon ,
+                                             site_id = config$location$site_id ,
+                                             use_s3 = config$run_config$use_s3 ,
+                                             bucket = list(config$s3$inflow_drivers$bucket , config$s3$outflow_drivers$bucket),
+                                             endpoint = list(config$s3$inflow_drivers$endpoint , config$s3$outflow_drivers$endpoint) ,
+                                             local_directory = list(file.path(lake_directory, config$flows$local_inflow_directory),
+                                                                    file.path(lake_directory, config$flows$local_outflow_directory)),
+                                             use_ler_vars = config$flows$use_ler_vars),
+                                        FLAREr:::create_flow_files) |>
+      set_names('inflow_file_names', 'outflow_file_names')
 
-        if(use_ler_vars){
-          inflow <- as.data.frame(inflow)
-          # inflow[, 1] <- as.POSIXct(inflow[, 1], tz = tz) + lubridate::hours(hour_step)
-          inflow[, 1] <- format(inflow[, 1], format="%Y-%m-%d %H:%M:%S")
-          inflow[, 1] <- lubridate::with_tz(inflow[, 1]) + lubridate::hours(hour_step)
-          inflow[, 1] <- format(inflow[, 1], format="%Y-%m-%d %H:%M:%S")
 
-          inflow <- inflow |>
-            dplyr::select(c("time","FLOW", "TEMP", "SALT")) |>
-            dplyr::rename(datetime = time,
-                          Flow_metersCubedPerSecond = FLOW,
-                          Water_Temperature_celsius = TEMP,
-                          Salinity_practicalSalinityUnits = SALT)
+  } else if (config$flows$include_inflow & !config$flows$include_outflow) { # Specify INFLOW only
 
-        }else{
-          inflow <- inflow |>
-            mutate(time = lubridate::as_date(time))
-        }
+    # the model directories for historical flows (before forecast_start_datetime)
+    inflow_historical_dir <- file.path("historical",
+                                       config$flows$historical_inflow_model,
+                                       paste0("site_id=", config$location$site_id))
 
-        inflow_file_name <- file.path(out_dir, paste0("inflow",j,"_ens",i,".csv"))
 
-        inflow_file_names[i, j] <- inflow_file_name
+    # do we need future flow?
+    if (config$run_config$forecast_horizon > 0 ) {
 
-        readr::write_csv(x = inflow,
-                         file = inflow_file_name,
-                         quote = "none")
+      if (is.null(config$flows$future_inflow_model)) {
+        stop("Need future flow model(s) when horizon > 0")
       }
+
+      inflow_forecast_dir <- file.path("future",
+                                        config$flows$future_inflow_model,
+                                        paste0("reference_datetime=", lubridate::as_date(config$run_config$forecast_start_datetime)),
+                                        paste0("site_id=", config$location$site_id))
+    } else {
+      inflow_forecast_dir <- NULL
     }
-  }
 
-  outflow_file_names <- array(NA, dim = c(max(c(1, length(ensemble_members))),num_outflows))
+    # Generate inflow/outflow files
+    inflow_outflow_files <- purrr::pmap(list(flow_forecast_dir = list(inflow_forecast_dir, NULL),
+                                             flow_historical_dir = list(inflow_historical_dir, NULL),
+                                             flow_type =  list('inflow', 'outflow'),
+                                             variables = list(variables_in, variables_out),
+                                             out_dir = config$file_path$execute_directory ,
+                                             start_datetime = config$run_config$start_datetime,
+                                             end_datetime = config$run_config$end_datetime ,
+                                             forecast_start_datetime = config$run_config$forecast_start_datetime ,
+                                             forecast_horizon = config$run_config$forecast_horizon ,
+                                             site_id = config$location$site_id ,
+                                             use_s3 = config$run_config$use_s3 ,
+                                             bucket = list(config$s3$inflow_drivers$bucket , config$s3$outflow_drivers$bucket),
+                                             endpoint = config$s3$inflow_drivers$endpoint ,
+                                             local_directory = list(file.path(lake_directory, config$flows$local_inflow_directory),
+                                                                    file.path(lake_directory, config$flows$local_outflow_directory)),
+                                             use_ler_vars = config$flows$use_ler_vars),
+                                        FLAREr:::create_flow_files)  |>
+      set_names('inflow_file_names', 'outflow_file_names')
 
 
-  for(j in 1:num_outflows){
+  } else if (!config$flows$include_inflow & config$flows$include_outflow) { # Specify OUTFLOW only
 
-    if(length(outflow_files) == 0 | end_datetime == forecast_start_datetime){
+    # the model directories for historical flows (before forecast_start_datetime)
+    outflow_historical_dir <- file.path("historical",
+                                       config$flows$historical_outflow_model,
+                                       paste0("site_id=", config$location$site_id))
 
-      obs_outflow_tmp <- obs_outflow |>
-        tidyr::pivot_wider(names_from = variable, values_from = observation) |>
-        dplyr::rename(time = datetime) |>
-        dplyr::select(time, FLOW)
+    # do we need future flow?
+    if (config$run_config$forecast_horizon > 0 ) {
 
-      if(use_ler_vars){
-        obs_outflow_tmp <- as.data.frame(obs_outflow_tmp)
-        obs_outflow_tmp[, 1] <- format(obs_outflow_tmp[, 1], format="%Y-%m-%d %H:%M:%S")
-        obs_outflow_tmp <- obs_outflow_tmp |>
-          dplyr::rename(datetime = time,
-                        Flow_metersCubedPerSecond = FLOW)
-      }else{
-        obs_outflow_tmp <- obs_outflow_tmp |>
-          mutate(time = lubridate::as_date(time))
+      if (is.null(config$flows$future_outflow_model)) {
+        stop("Need future flow model(s) when horizon > 0")
       }
 
-      outflow_file_name <- file.path(out_dir, paste0("outflow",j,".csv"))
-
-      readr::write_csv(x = obs_outflow_tmp,
-                       file = outflow_file_name,
-                       quote = "none")
-      outflow_file_names[, j] <- outflow_file_name
-    }else{
-
-      for(i in 1:length(ensemble_members)){
-
-        d <- outflow_files |>
-          dplyr::filter(flow_number == j,
-                        parameter == ensemble_members[i],
-                        datetime >= lubridate::as_date(forecast_start_datetime)) |>
-          tidyr::pivot_wider(names_from = variable, values_from = prediction) |>
-          dplyr::rename(time = datetime) |>
-          dplyr::select(time,FLOW) |>
-          dplyr::mutate_if(where(is.numeric), list(~round(., 4)))
-
-        obs_outflow_tmp <- obs_outflow |>
-          dplyr::filter( datetime < lubridate::as_date(forecast_start_datetime)) |>
-          dplyr::mutate_if(where(is.numeric), list(~round(., 4)))
-
-        if(nrow(obs_outflow_tmp) > 0){
-          obs_outflow_tmp <- obs_outflow_tmp |>
-            tidyr::pivot_wider(names_from = variable, values_from = observation) |>
-            dplyr::rename(time = datetime) |>
-            dplyr::select(time, FLOW)
-
-        }else{
-          obs_outflow_tmp <- NULL
-        }
-
-        outflow <- dplyr::bind_rows(obs_outflow_tmp, d) |>
-          arrange(time)
-
-        if(use_ler_vars){
-          outflow <- as.data.frame(outflow)
-          outflow[, 1] <- format(outflow[, 1], format="%Y-%m-%d %H:%M:%S")
-          outflow <- outflow |>
-            dplyr::rename(datetime = time,
-                          Flow_metersCubedPerSecond = FLOW)
-        }
-
-        outflow_file_name <- file.path(out_dir, paste0("outflow",j,"_ens",i,".csv"))
-
-        outflow_file_names[i, j]  <- outflow_file_name
-
-        if(use_forecast){
-          readr::write_csv(x = outflow,
-                           file = outflow_file_name,
-                           quote = "none")
-        }else{
-          readr::write_csv(x = obs_outflow_tmp,
-                           file = outflow_file_name,
-                           quote = "none")
-        }
-      }
+      outflow_forecast_dir <- file.path("future",
+                                        config$flows$future_outflow_model,
+                                        paste0("reference_datetime=", lubridate::as_date(config$run_config$forecast_start_datetime)),
+                                        paste0("site_id=", config$location$site_id))
+    } else {
+      outflow_forecast_dir <- NULL
     }
+
+    # Generate inflow/outflow files
+    inflow_outflow_files <- purrr::pmap(list(flow_forecast_dir = list(NULL, outflow_forecast_dir),
+                                             flow_historical_dir = list(NULL, outflow_historical_dir),
+                                             flow_type =  list('inflow', 'outflow'),
+                                             variables = list(variables_in, variables_out),
+                                             out_dir = config$file_path$execute_directory ,
+                                             start_datetime = config$run_config$start_datetime,
+                                             end_datetime = config$run_config$end_datetime ,
+                                             forecast_start_datetime = config$run_config$forecast_start_datetime ,
+                                             forecast_horizon = config$run_config$forecast_horizon ,
+                                             site_id = config$location$site_id ,
+                                             use_s3 = config$run_config$use_s3 ,
+                                             bucket = list(config$s3$inflow_drivers$bucket , config$s3$outflow_drivers$bucket),
+                                             endpoint = config$s3$inflow_drivers$endpoint ,
+                                             local_directory = list(file.path(lake_directory, config$flows$local_inflow_directory),
+                                                                    file.path(lake_directory, config$flows$local_outflow_directory)),
+                                             use_ler_vars = config$flows$use_ler_vars),
+                                        FLAREr:::create_flow_files) |>
+      set_names('inflow_file_names', 'outflow_file_names')
+
+  } else if (!config$flows$include_inflow & !config$flows$include_inflow) {  # don't specify inflows or outflows
+    inflow_outflow_files <- list()
+    inflow_outflow_files$inflow_file_name <- NULL
+    inflow_outflow_files$outflow_file_name <- NULL
   }
 
-  return(list(inflow_file_names = as.character(gsub("\\\\", "/", inflow_file_names)),
-              outflow_file_names = as.character(gsub("\\\\", "/", outflow_file_names))))
+  return(inflow_outflow_files)
 }
