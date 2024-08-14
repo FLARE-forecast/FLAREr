@@ -24,9 +24,9 @@ create_inflow_outflow_files_arrow  <- function(config, config_set_name) {
 
 
   variables_in <- unique(c('time',
+                           'FLOW',
                            'TEMP',
                            'SALT',
-                           'FLOW',
                            readr::read_csv(file.path('configuration',
                                                              config_set_name,
                                                              config$model_settings$states_config_file),
