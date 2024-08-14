@@ -101,6 +101,15 @@ create_flow_files <- function(flow_forecast_dir = NULL,
     hist_df <- dplyr::collect(arrow::open_dataset(hist_s3)) |>
       filter(datetime < forecast_start_datetime,
              datetime >= start_datetime)
+
+    if(!("parameter" %in% colnames(hist_df))){
+      hist_df <- hist_df |> mutate(parameter = 1)
+    }
+
+    if("observation" %in% colnames(hist_df)){
+      hist_df <- hist_df |> rename(prediction = observation)
+    }
+
   } else {
     hist_df <- NULL # No historical data
   }
@@ -118,8 +127,9 @@ create_flow_files <- function(flow_forecast_dir = NULL,
     future_ensemble_members <- unique(future_df$parameter)
     hist_ensemble_members <- unique(hist_df$parameter)
 
+
     # If there are a different number of ensemble members in the historical and future periods
-      # this will resample the period with fewer ensemble members to match
+    # this will resample the period with fewer ensemble members to match
     if (length(hist_ensemble_members) < length(future_ensemble_members)) {
       hist_ensemble_members <- sample(hist_ensemble_members, size = length(future_ensemble_members), replace = T)
     } else if (length(future_ensemble_members) < length(hist_ensemble_members)) {
@@ -187,8 +197,10 @@ create_flow_files <- function(flow_forecast_dir = NULL,
     num_flows <- max(hist_df$flow_number)
     hist_ensemble_members <- unique(hist_df$parameter)
 
+
     flow_file_names <- array(NA, dim = c(max(c(1, length(hist_ensemble_members))),
                                          num_flows))
+
 
     for (j in 1:num_flows) {
       for (i in 1:length(hist_ensemble_members)) {

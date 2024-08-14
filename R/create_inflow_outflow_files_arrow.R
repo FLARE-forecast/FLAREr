@@ -13,14 +13,28 @@ create_inflow_outflow_files_arrow  <- function(config, config_set_name) {
   }
 
   # The variables differ between inflow and outflow
+  #variables_in <- unique(c('time',
+  #                         'TEMP',
+  #                         'SALT',
+  #                         'FLOW',
+  #                         toupper(readr::read_csv(file.path('configuration',
+  #                                                           config_set_name,
+  #                                                           config$model_settings$states_config_file),
+  #                                                 show_col_types = F)$state_names))) # state variables need to match the inflow
+
+
   variables_in <- unique(c('time',
                            'TEMP',
                            'SALT',
                            'FLOW',
-                           toupper(readr::read_csv(file.path('configuration',
+                           readr::read_csv(file.path('configuration',
                                                              config_set_name,
                                                              config$model_settings$states_config_file),
-                                                   show_col_types = F)$state_names))) # state variables need to match the inflow
+                                                   show_col_types = F)$state_names)) # state variables need to match the inflow
+
+  #Use the upper case TEMP and SALT by excluding the lowercase ones
+  variables_in <- variables_in[!(variables_in %in% c("salt", "temp"))]
+
   variables_out <- c('time', 'FLOW')
 
   # Specify inflow AND outflow
@@ -56,6 +70,23 @@ create_inflow_outflow_files_arrow  <- function(config, config_set_name) {
       inflow_forecast_dir <- NULL
       outflow_forecast_dir <- NULL
     }
+
+
+    # flow_forecast_dir = inflow_forecast_dir
+    # flow_historical_dir = inflow_historical_dir
+    # flow_type = "inflow"
+    # variables = variables_in
+    # out_dir = config$file_path$execute_directory
+    # start_datetime = config$run_config$start_datetime
+    # end_datetime = config$run_config$end_datetime
+    # forecast_start_datetime = config$run_config$forecast_start_datetime
+    # forecast_horizon = config$run_config$forecast_horizon
+    # site_id = config$location$site_id
+    # use_s3 = config$run_config$use_s3
+    # bucket = config$s3$inflow_drivers$bucket
+    # endpoint = config$s3$inflow_drivers$endpoint
+    # local_directory = file.path(lake_directory, config$flows$local_inflow_directory)
+    # use_ler_vars = config$flows$use_ler_vars
 
 
     # Generate inflow and outflow files
@@ -167,8 +198,8 @@ create_inflow_outflow_files_arrow  <- function(config, config_set_name) {
 
   } else if (!config$flows$include_inflow & !config$flows$include_inflow) {  # don't specify inflows or outflows
     inflow_outflow_files <- list()
-    inflow_outflow_files$inflow_file_name <- NULL
-    inflow_outflow_files$outflow_file_name <- NULL
+    inflow_outflow_files$inflow_file_names <- NULL
+    inflow_outflow_files$outflow_file_names <- NULL
   }
 
   return(inflow_outflow_files)
