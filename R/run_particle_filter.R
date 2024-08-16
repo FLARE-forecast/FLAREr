@@ -125,6 +125,27 @@ run_particle_filter <- function(x_matrix,
       diagnostics_updated <- diagnostics_start[ , ,samples]
     }
 
+  }else{
+
+    update <- x_matrix[1:(ndepths_modeled*nstates), ]
+    states_depth_updated <- aperm(array(c(update), dim = c(ndepths_modeled, nstates, nmembers)), perm = c(2,1,3))
+    states_height_updated <-  states_height_start[ , ,]
+
+    if(npars > 0){
+      pars_updated <- pars_corr[, ]
+    }
+
+    snow_ice_thickness_updated <- snow_ice_thickness_start[ , ]
+    avg_surf_temp_updated <- avg_surf_temp_start[]
+    lake_depth_updated <- lake_depth_start[ ]
+    model_internal_heights_updated <- model_internal_heights_start[ , ]
+    mixer_count_updated <- mixer_count_start[]
+    mixing_vars_updated <- mixing_vars_start[, ]
+
+    if(length(config$output_settings$diagnostics_names) > 0){
+      diagnostics_updated <- diagnostics_start[ , ,]
+    }
+
   }
 
 
