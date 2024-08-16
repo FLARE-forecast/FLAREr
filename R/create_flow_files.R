@@ -16,7 +16,7 @@
 #' @param local_directory local storage location
 #' @param use_ler_vars T/F
 #' @return matrix of flow_file_names
-#' @export
+#' @noRd
 #'
 
 create_flow_files <- function(flow_forecast_dir = NULL,
