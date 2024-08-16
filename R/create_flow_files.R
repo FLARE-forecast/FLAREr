@@ -1,5 +1,5 @@
 #' @title Generating a list of flow files in the flare_tempdir
-#' @details Processes historical and future into the GLM format
+
 #' @param flow_forecast_dir location of the forecast files
 #' @param flow_historical_dir location of the historical files
 #' @param flow_type inflow or outflow
@@ -15,6 +15,7 @@
 #' @param endpoint s3 storage location
 #' @param local_directory local storage location
 #' @param use_ler_vars T/F
+#'
 #' @return matrix of flow_file_names
 #' @noRd
 #'
