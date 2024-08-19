@@ -25,10 +25,6 @@ create_obs_non_vertical(
 \item{forecast_start_datetime}{datetime that a forecast starts}
 
 \item{forecast_horizon}{number of days forecasted}
-
-\item{secchi_sd}{standard deviation of secchi depth observations}
-
-\item{depth_sd}{standard deviation of depth observations}
 }
 \value{
 list of secchi and depth observations for use in FLARE

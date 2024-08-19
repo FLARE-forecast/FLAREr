@@ -6,8 +6,6 @@
 #' @param end_datetime last datetime of the simulation
 #' @param forecast_start_datetime datetime that a forecast starts
 #' @param forecast_horizon number of days forecasted
-#' @param secchi_sd standard deviation of secchi depth observations
-#' @param depth_sd standard deviation of depth observations
 #'
 #' @return list of secchi and depth observations for use in FLARE
 #' @export
