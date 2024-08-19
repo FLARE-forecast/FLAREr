@@ -1,19 +1,16 @@
 #' @title Process observation for variables that don't have depth
 #' @details Process observation for variables that don't have depth
-#' @param cleaned_observations_file_long
-#' @param obs_config description
-#' @param start_datetime
-#' @param end_datetime
-#' @param forecast_start_datetime
-#' @param forecast_horizon
-#' @param secchi_sd
-#' @param depth_sd
+#' @param cleaned_observations_file_long string; file name (with full path) of the long-format observation file
+#' @param obs_config string; file name (with full path) of the long-format observation file
+#' @param start_datetime first datetime of the simulation
+#' @param end_datetime last datetime of the simulation
+#' @param forecast_start_datetime datetime that a forecast starts
+#' @param forecast_horizon number of days forecasted
+#' @param secchi_sd standard deviation of secchi depth observations
+#' @param depth_sd standard deviation of depth observations
 #'
-#' @return
+#' @return list of secchi and depth observations for use in FLARE
 #' @export
-#'
-#' @examples
-#'
 create_obs_non_vertical <- function(cleaned_observations_file_long,
                                     obs_config,
                                     start_datetime,

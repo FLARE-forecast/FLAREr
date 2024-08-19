@@ -1,12 +1,10 @@
 #' Create filenames used in netcdf output
 #'
-#' @param full_time
-#' @param hist_days
+#' @param full_time vector of datestimes that are modeled
+#' @param hist_days number of days simulated before a forecast begins
 #'
 #' @noRd
-#' @return
-#'
-#' @examples
+#' @return list of filenames used in the netcdf generation
 create_filenames <- function(full_time, hist_days, forecast_days, config){
 
 

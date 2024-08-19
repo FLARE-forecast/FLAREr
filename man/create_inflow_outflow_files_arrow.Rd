@@ -8,6 +8,8 @@ create_inflow_outflow_files_arrow(config, config_set_name)
 }
 \arguments{
 \item{config}{configuration file}
+
+\item{config_set_name}{specific name of configuration within the configuration directory}
 }
 \value{
 list with two vectors. One vector is the matrix of inflow_file_names and the other is the matrix of outflow_file_names

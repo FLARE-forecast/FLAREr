@@ -1,7 +1,7 @@
 #' @title Generating inflow and outflow files in the GLM format using arrow
 #' @details Processes historical model data and future model files into the GLM format
 #' @param config configuration file
-#' @param config_set_name
+#' @param config_set_name specific name of configuration within the configuration directory
 #' @return list with two vectors. One vector is the matrix of inflow_file_names and the other is the matrix of outflow_file_names
 #' @export
 #'

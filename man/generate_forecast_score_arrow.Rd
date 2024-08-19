@@ -17,7 +17,17 @@ generate_forecast_score_arrow(
 \arguments{
 \item{targets_file}{observation file}
 
-\item{forecast_df}{forecast file}
+\item{forecast_df}{forecast data freame}
+
+\item{use_s3}{Boolen; use s3 storage for saving scores}
+
+\item{bucket}{S3 bucket}
+
+\item{endpoint}{S3 endpoint}
+
+\item{local_directory}{local directory of scores if not using s3}
+
+\item{variable_types}{vector of variable types to include in scores (values are: state, diagnostic, parameter)}
 }
 \description{
 Score a forecast using score4cast package and arrow

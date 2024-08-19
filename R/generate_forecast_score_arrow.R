@@ -1,11 +1,12 @@
 #' Score a forecast using score4cast package and arrow
 #' @param targets_file observation file
-#' @param forecast_df forecast file
-#' @output_directory directory to save scored file
-#' @return
+#' @param forecast_df forecast data freame
+#' @param use_s3 Boolen; use s3 storage for saving scores
+#' @param bucket S3 bucket
+#' @param endpoint S3 endpoint
+#' @param local_directory local directory of scores if not using s3
+#' @param variable_types vector of variable types to include in scores (values are: state, diagnostic, parameter)
 #' @export
-#'
-#' @examples
 generate_forecast_score_arrow <- function(targets_file,
                                           forecast_df,
                                           use_s3 = FALSE,

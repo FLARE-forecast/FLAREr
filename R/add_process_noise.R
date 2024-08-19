@@ -1,17 +1,16 @@
 #' Add random noise to model states
 #'
-#' @param states_height_ens
-#' @param model_sd
-#' @param model_internal_heights_ens
-#' @param lake_depth_ens
-#' @param modeled_depths
-#' @param vert_decorr_length
-#' @param include_uncertainty
+#' @param states_height_ens matrix of states for a particular ensemble member
+#' @param model_sd matrix of process noise standard deviation for each state and depth
+#' @param model_internal_heights_ens vector of heights predicted by GLM for the ensemble member
+#' @param lake_depth_ens depth of lake for ensemble member
+#' @param modeled_depths vector of depths modeled using FLARE
+#' @param vert_decorr_length vector of vertical decorrelation length for each model state
+#' @param include_uncertainty Boolen to include process uncertainty
 #'
 #' @noRd
-#' @return
+#' @return list of updated states with respect to depth and height
 #'
-#' @examples
 add_process_noise <- function(states_height_ens, model_sd, model_internal_heights_ens, lake_depth_ens, modeled_depths, vert_decorr_length, include_uncertainty = TRUE){
 
   states_depth_ens <- array(NA, dim = c(nrow(model_sd), length(modeled_depths)))
