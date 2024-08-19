@@ -19,6 +19,9 @@ set_configuration(
 
 \item{clean_start}{logical: TRUE = reset run configuration with the file in the configuration directory within repository}
 }
+\value{
+list of configuration values
+}
 \description{
 Set and create directories in the configuration file
 }

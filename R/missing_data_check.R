@@ -2,7 +2,7 @@
 #'
 #' @param met_df met dataframe to check
 #'
-#' @return
+#' @return numeric; number of NA, NaN, or Inf values in the file
 #' @noRd
 
 missing_data_check <- function(met_df){

@@ -5,8 +5,7 @@
 #' @param state_names vector of state names
 #' @param inflow_file_names matrix or vector of inflow file names
 #' @param outflow_file_names matrix or vector of outflow file names
-#'
-#' @return
+
 #' @noRd
 set_up_model <- function(config,
                          ens_working_directory,

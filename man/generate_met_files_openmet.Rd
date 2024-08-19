@@ -21,11 +21,11 @@ generate_met_files_openmet(
 )
 }
 \arguments{
-\item{out_dir}{path to where the GLM formated met file will be written}
+\item{out_dir}{path to where the GLM formatted met file will be written}
 
 \item{start_datetime}{start date of weather data}
 
-\item{end_datetime}{end date of weater data}
+\item{end_datetime}{end date of weather data}
 
 \item{forecast_start_datetime}{start datetime of forecast}
 
@@ -37,15 +37,18 @@ generate_met_files_openmet(
 
 \item{site_id}{site code}
 
-\item{openmeteo_api}{type of weather data or forecast (ensemble_forecast, sesason, climate, historical)}
+\item{openmeteo_api}{type of weather data or forecast (ensemble_forecast, season, climate, historical)}
 
 \item{model}{forecast model}
 
 \item{use_archive}{Boolen (default = FALSE); TRUE = use forecasts stored on s3 bucket, FALSE = use open-meteo download directly}
 
-\item{bucket}{s3 bucket for acchive}
+\item{bucket}{s3 bucket for archive}
 
 \item{endpoint}{s3 endpoint for archive}
+}
+\value{
+list of meteorology file names
 }
 \description{
 Generate GLM ready met files from open meteo

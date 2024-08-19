@@ -5,7 +5,7 @@
 #' @param config flare configuration object
 #' @param clean_start logical; reset the configuration run to the base file in the configuration directory
 #'
-#' @return
+#' @return list of configuration values
 #' @export
 #'
 get_run_config <- function(configure_run_file = "configure_run.yml", lake_directory, config, clean_start = FALSE, config_set_name = "default", sim_name = NA){
@@ -54,7 +54,6 @@ get_run_config <- function(configure_run_file = "configure_run.yml", lake_direct
 #' @param directory the branch name on github
 #' @param git_repo https of the github repository
 #'
-#' @return
 #' @export
 #'
 get_git_repo <- function(lake_directory, directory, git_repo){
@@ -74,7 +73,6 @@ get_git_repo <- function(lake_directory, directory, git_repo){
 #' @param file name of the file in the EDI package (not full path)
 #' @param lake_directory full path to repository directory
 #'
-#' @return
 #' @export
 #'
 get_edi_file <- function(edi_https, file, lake_directory){ #, curl_timeout = 60){
@@ -98,7 +96,6 @@ get_edi_file <- function(edi_https, file, lake_directory){ #, curl_timeout = 60)
 #' @param cleaned_inflow_file full path of the cleaned inflow file
 #' @param use_s3 logical; TRUE = use s3
 #'
-#' @return
 #' @export
 #'
 put_targets <- function(site_id, cleaned_insitu_file = NA, cleaned_met_file = NA, cleaned_inflow_file = NA, use_s3 = FALSE, config){
@@ -136,7 +133,6 @@ put_targets <- function(site_id, cleaned_insitu_file = NA, cleaned_met_file = NA
 #' @param lake_directory full path to repository directory
 #' @param config flare configuration object
 #'
-#' @return
 #' @export
 #'
 get_targets <- function(lake_directory, config){
@@ -186,7 +182,7 @@ get_driver_forecast_path <- function(config, forecast_model){
 #' @param lake_directory full path to repository directory
 #' @param clean_start logical: TRUE = reset run configuration with the file in the configuration directory within repository
 #'
-#' @return
+#' @return list of configuration values
 #' @export
 #'
 set_configuration <- function(configure_run_file = "configure_run.yml", lake_directory, clean_start = FALSE, config_set_name = "default", sim_name = NA){
@@ -233,7 +229,7 @@ set_configuration <- function(configure_run_file = "configure_run.yml", lake_dir
 #' @param config flare configuration object
 #' @param lake_directory full path to repository directory
 #'
-#' @return
+#' @return list of updated configuration values
 #' @export
 #'
 get_restart_file <- function(config, lake_directory){
@@ -294,28 +290,27 @@ update_run_config <- function(config, lake_directory, configure_run_file = "conf
   invisible(config)
 }
 
+
 #' Update run configuration
 #'
-#' @param lake_directory
-#' @param configure_run_file
-#' @param restart_file
-#' @param start_datetime
-#' @param end_datetime
-#' @param forecast_start_datetime
-#' @param forecast_horizon
-#' @param sim_name
-#' @param site_id
-#' @param configure_flare
-#' @param configure_obs
-#' @param use_s3
-#' @param bucket
-#' @param endpoint
-#' @param use_https
+#' @param lake_directory full path to repository directory
+#' @param configure_run_file name of run configuration file (do not include full path)
+#' @param restart_file full path of saved FLARE netcdf
+#' @param start_datetime first datetime of the simulation
+#' @param end_datetime last datetime of the simulation
+#' @param forecast_start_datetime datetime that a forecast starts
+#' @param forecast_horizon number of days forecasted
+#' @param sim_name name of particular FLARE simulation
+#' @param site_id four letter code for the site
+#' @param configure_flare list of FLARE configurations
+#' @param configure_obs list of observation configurations
+#' @param use_s3 logical; TRUE = use s3
+#' @param bucket s3 bucket
+#' @param endpoint s3 endpoint
+#' @param use_https TRUE/FALSE use https when using s3
 
 #' @export
 #'
-#' @examples
-
 update_run_config2 <- function(lake_directory,
                                configure_run_file = "configure_run.yml",
                                restart_file,
@@ -410,7 +405,7 @@ put_forecast <- function(saved_file, eml_file_name = NULL, config){
 #' @param score_file full path of saved FLARE netcdf
 #' @param config flare configuration object
 #' @noRd
-#' @return
+#'
 #' @export
 #'
 put_score <- function(saved_file, config){
@@ -432,7 +427,6 @@ put_score <- function(saved_file, config){
 #' @param score_file full path of saved FLARE netcdf
 #' @param config flare configuration object
 #' @noRd
-#' @return
 #' @export
 #'
 
@@ -459,7 +453,6 @@ put_forecast_csv <- function(saved_file, config){
 #' @param region S3 region
 #' @param base_url S3 endpoint
 #' @noRd
-#' @return
 #' @export
 #'
 download_s3_objects <- function(lake_directory, bucket, prefix, region, base_url){
@@ -490,7 +483,6 @@ download_s3_objects <- function(lake_directory, bucket, prefix, region, base_url
 #' @param sim_name name of simulation
 #' @param endpoint S3 endpoint
 #'
-#' @return
 #' @export
 #'
 delete_restart <- function(site_id, sim_name, bucket = "restart", endpoint){
@@ -517,7 +509,7 @@ delete_restart <- function(site_id, sim_name, bucket = "restart", endpoint){
 #'
 #' @param lake_directory full path to repository directory
 #' @noRd
-#' @return
+#' @return list of configuration values
 #' @export
 #'
 initialize_obs_processing <- function(lake_directory, observation_yml = NA, config_set_name = "default"){
@@ -594,7 +586,7 @@ check_noaa_present <- function(lake_directory, configure_run_file = "configure_r
 #' @param configure_run_file name of simulation
 #' @param config_set_name FLARE configuration object (needed for s3 buckets and endpoit)
 #'
-#' @return
+#' @return logical
 #' @export
 #'
 

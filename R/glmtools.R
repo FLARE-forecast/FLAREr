@@ -279,12 +279,12 @@ nml_template_path <- function(){
   return(system.file('sim_files/glm3.nml'))
 }
 
-#' Title
+#' Print NML
 #'
-#' @param x
+#' @param x nml name
 #' @param ...
 #'
-#' @return
+#' @return text
 #'@noRd
 #'
 print.nml <- function(x, ...){

@@ -1,33 +1,32 @@
-#' @title Title
+#' @title Run particle filter on model predictions
 #'
-#' @param x_matrix
-#' @param h
-#' @param pars_corr
-#' @param zt
-#' @param psi_t
-#' @param z_index
-#' @param states_depth_start
-#' @param states_height_start
-#' @param model_internal_heights_start
-#' @param lake_depth_start
-#' @param log_particle_weights_start
-#' @param snow_ice_thickness_start
-#' @param avg_surf_temp_start
-#' @param mixer_count_start
-#' @param mixing_vars_start
-#' @param diagnostics_start
-#' @param pars_config
-#' @param config
-#' @param depth_index
-#' @param depth_obs
-#' @param depth_sd
-#' @param par_fit_method
-#' @param vertical_obs
+#' @param x_matrix matrix of model states (includes secchi and depths)
+#' @param h matrix to map x matrix to zt vector
+#' @param pars_corr matrix of parameters
+#' @param zt vector of observations
+#' @param psi_t vector of observation standard deviations
+#' @param z_index indexes of observations
+#' @param states_depth_start states orientated by depth
+#' @param states_height_start states orientated by height
+#' @param model_internal_heights_start heights predicted by GLM model
+#' @param lake_depth_start lake depth
+#' @param log_particle_weights_start log of particle weights
+#' @param snow_ice_thickness_start vector of snow and ice thickness
+#' @param avg_surf_temp_start average surface temperature (a restart variable)
+#' @param mixer_count_start mix count (a restart variable)
+#' @param mixing_vars_start mixing variables (a restart variable)
+#' @param diagnostics_start diagnostics
+#' @param pars_config parameter configuration list
+#' @param config FLARE configuration list
+#' @param depth_index index in x matrix with depth values
+#' @param depth_obs observed depth
+#' @param depth_sd observed depth standard deviation
+#' @param par_fit_method method for fixing parameters
+#' @param vertical_obs number of vertical observations (i.e. states not associated with a depth)
 #'
-#' @return
+#' @return list of updated model states, diagnostics, and parameters
 #' @noRd
 #'
-#' @examples
 run_particle_filter <- function(x_matrix,
                                 h,
                                 pars_corr,

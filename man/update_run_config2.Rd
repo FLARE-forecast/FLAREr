@@ -22,6 +22,37 @@ update_run_config2(
   use_https = TRUE
 )
 }
+\arguments{
+\item{lake_directory}{full path to repository directory}
+
+\item{configure_run_file}{name of run configuration file (do not include full path)}
+
+\item{restart_file}{full path of saved FLARE netcdf}
+
+\item{start_datetime}{first datetime of the simulation}
+
+\item{end_datetime}{last datetime of the simulation}
+
+\item{forecast_start_datetime}{datetime that a forecast starts}
+
+\item{forecast_horizon}{number of days forecasted}
+
+\item{sim_name}{name of particular FLARE simulation}
+
+\item{site_id}{four letter code for the site}
+
+\item{configure_flare}{list of FLARE configurations}
+
+\item{configure_obs}{list of observation configurations}
+
+\item{use_s3}{logical; TRUE = use s3}
+
+\item{bucket}{s3 bucket}
+
+\item{endpoint}{s3 endpoint}
+
+\item{use_https}{TRUE/FALSE use https when using s3}
+}
 \description{
 Update run configuration
 }

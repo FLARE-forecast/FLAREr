@@ -9,7 +9,6 @@
 ##' @import ggplot2
 ##' @importFrom lubridate as_datetime
 ##' @author Austin Delany
-##' @examples
 
 plotting_general <- function(forecast_df,
                                targets_df,

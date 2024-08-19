@@ -1,20 +1,20 @@
 #' @title Generate GLM ready met files from open meteo
 #' @details Generate GLM ready met files from open meteo
-#' @param out_dir path to where the GLM formated met file will be written
+#' @param out_dir path to where the GLM formatted met file will be written
 #' @param start_datetime start date of weather data
-#' @param end_datetime end date of weater data
+#' @param end_datetime end date of weather data
 #' @param forecast_start_datetime start datetime of forecast
 #' @param forecast_horizon number of days in the future
 #' @param latitude latitude
 #' @param longitude longitude (west is negative)
 #' @param site_id site code
-#' @param openmeteo_api type of weather data or forecast (ensemble_forecast, sesason, climate, historical)
+#' @param openmeteo_api type of weather data or forecast (ensemble_forecast, season, climate, historical)
 #' @param model forecast model
 #' @param use_archive Boolen (default = FALSE); TRUE = use forecasts stored on s3 bucket, FALSE = use open-meteo download directly
-#' @param bucket s3 bucket for acchive
+#' @param bucket s3 bucket for archive
 #' @param endpoint s3 endpoint for archive
 #'
-#' @return
+#' @return list of meteorology file names
 #' @export
 generate_met_files_openmet <- function(out_dir,
                                        start_datetime,

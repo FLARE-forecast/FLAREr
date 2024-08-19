@@ -22,6 +22,9 @@ get_run_config(
 
 \item{clean_start}{logical; reset the configuration run to the base file in the configuration directory}
 }
+\value{
+list of configuration values
+}
 \description{
 Get run configuration from s3 bucket
 }

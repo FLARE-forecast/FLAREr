@@ -21,7 +21,7 @@
 #' @param inflow_file_name inflow file associated with the ensemble member
 #' @param outflow_file_name outflow file associated with the ensemble member
 #' @param glm_output_vars vector of output variable names
-#' @param diagnostics_names vector of output diagnmostic names
+#' @param diagnostics_names vector of output diagnostic names
 #' @param npars number of parameters calibrated
 #' @param num_wq_vars number of water quality variables
 #' @param snow_ice_thickness_start vector of snow and ice states
@@ -29,8 +29,8 @@
 #' @param nstates number of nstates simulated
 #' @param state_names state names
 #' @param include_wq boolean; TRUE = use water quality model
-#' @param states_heights_start
-#' @param max_layers
+#' @param states_heights_start matrix of states orientated by height
+#' @param max_layers max number of layers allowed in the GLM
 #'
 #' @return list of output variables
 #' @noRd

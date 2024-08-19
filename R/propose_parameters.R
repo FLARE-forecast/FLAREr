@@ -9,9 +9,7 @@
 #' @param hist_days number of simulation days before forecasting
 #' @param include_uncertainty include parameter uncertainty in forecasts
 #' @noRd
-#' @return
-#'
-#' @examples
+#' @return vector of new parameter values for the ensemble member
 propose_parameters <- function(m, pars, pars_config, npars, par_fit_method, da_method, hist_days,
                                include_uncertainty){
 
