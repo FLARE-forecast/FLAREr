@@ -24,7 +24,7 @@ run_flare <- function(lake_directory,
   if(!is.null(config$model_settings$par_config_file)){
     if(!is.na(config$model_settings$par_config_file)){
       pars_config <- readr::read_csv(file.path(config$file_path$configuration_directory, config$model_settings$par_config_file), col_types = readr::cols())
-      if(!setequal(names(pars_config),c("par_names","par_names_save","par_file","par_init","par_init_lowerbound","par_init_upperbound","par_lowerbound","par_upperbound","inflat_pars","perturb_par","par_units"))){
+      if(!setequal(names(pars_config),c("par_names","par_names_save","par_file","par_init","par_init_lowerbound","par_init_upperbound","par_lowerbound","par_upperbound","inflat_pars","perturb_par","par_units", "fix_par"))){
         stop(" par configuraiton file does not have the correct columns")
       }
     }
@@ -65,10 +65,6 @@ run_flare <- function(lake_directory,
     config$met$use_met_s3 <- TRUE
   }
 
-  if(is.null(config$met$use_hive_met)){
-    config$met$use_hive_met <- TRUE
-  }
-
   message('Generating Met Forecasts...')
 
   if(config$met$use_openmeteo){
@@ -102,8 +98,7 @@ run_flare <- function(lake_directory,
                                                 endpoint = config$s3$drivers$endpoint,
                                                 local_directory = file.path(lake_directory,config$met$local_directory),
                                                 use_forecast = config$met$use_forecasted_met,
-                                                use_ler_vars = config$met$use_ler_vars,
-                                                use_hive_met = config$met$use_hive_met)
+                                                use_ler_vars = config$met$use_ler_vars)
   }
 
   message('Creating inflow/outflow files...')
@@ -138,7 +133,30 @@ run_flare <- function(lake_directory,
                                               pars_config,
                                               obs,
                                               config,
-                                              obs_non_vertical = obs_non_vertical)
+                                              obs_non_vertical)
+
+
+  states_init = init$states
+  pars_init = init$pars
+  aux_states_init = init$aux_states_init
+  obs = obs
+  obs_sd = obs_config$obs_sd
+  model_sd = model_sd
+  working_directory = config$file_path$execute_directory
+  met_file_names = met_out$filenames
+  inflow_file_names = inflow_outflow_files$inflow_file_names[,1]
+  outflow_file_names = inflow_outflow_files$outflow_file_names
+  config = config
+  pars_config = pars_config
+  states_config = states_config
+  obs_config = obs_config
+  management = NULL
+  da_method = config$da_setup$da_method
+  par_fit_method = config$da_setup$par_fit_method
+  obs_secchi = obs_non_vertical$obs_secchi
+  obs_depth = obs_non_vertical$obs_depth
+  debug = FALSE
+  log_wq = FALSE
   #Run EnKF
   da_forecast_output <- FLAREr::run_da_forecast(states_init = init$states,
                                                 pars_init = init$pars,
@@ -156,7 +174,6 @@ run_flare <- function(lake_directory,
                                                 obs_config = obs_config,
                                                 da_method = config$da_setup$da_method,
                                                 par_fit_method = config$da_setup$par_fit_method,
-                                                debug = FALSE,
                                                 obs_secchi = obs_non_vertical$obs_secchi,
                                                 obs_depth = obs_non_vertical$obs_depth)
 
@@ -178,6 +195,10 @@ run_flare <- function(lake_directory,
 
   rm(da_forecast_output)
   gc()
+
+  message("Generating plot")
+  targets_df <- read_csv(file.path(config$file_path$qaqc_data_directory,paste0(config$location$site_id, "-targets-insitu.csv")))
+  plotting_general(forecast_df, targets_df, file_name = saved_file)
 
   message("Scoring forecasts")
   if(config$output_settings$evaluate_past & config$run_config$use_s3){
@@ -213,12 +234,10 @@ run_flare <- function(lake_directory,
   rm(combined_forecasts)
   gc()
 
-  message("Generating plot")
-  targets_df <- read_csv(file.path(config$file_path$qaqc_data_directory,paste0(config$location$site_id, "-targets-insitu.csv")))
-  plotting_general(forecast_df, targets_df, file_name = saved_file)
+
 
   message("Putting forecast")
-  FLAREr::put_forecast(saved_file, eml_file_name = NULL, config)
+  FLAREr::put_forecast(saved_file, config = config)
 
   message(paste0("successfully generated flare forecats for: ", basename(saved_file)))
 

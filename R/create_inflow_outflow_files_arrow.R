@@ -27,7 +27,7 @@ create_inflow_outflow_files_arrow  <- function(config, config_set_name) {
                            'FLOW',
                            'TEMP',
                            'SALT',
-                           readr::read_csv(file.path('configuration',
+                           readr::read_csv(file.path(lake_directory, 'configuration',
                                                              config_set_name,
                                                              config$model_settings$states_config_file),
                                                    show_col_types = F)$state_names)) # state variables need to match the inflow

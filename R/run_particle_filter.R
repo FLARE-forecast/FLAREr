@@ -121,8 +121,11 @@ run_particle_filter <- function(x_matrix,
     mixer_count_updated <- mixer_count_start[samples]
     mixing_vars_updated <- mixing_vars_start[, samples]
 
-    if(length(config$output_settings$diagnostics_names) > 0){
+    if(length(config$output_settings$diagnostics_names) > 1){
       diagnostics_updated <- diagnostics_start[ , ,samples]
+    }else if(length(config$output_settings$diagnostics_names) == 1){
+      diagnostics_updated <- array(NA, dim = c(1, dim(diagnostics_start)))
+      diagnostics_updated[1, , ] <- diagnostics_start[ ,samples]
     }
 
   }else{
@@ -142,8 +145,11 @@ run_particle_filter <- function(x_matrix,
     mixer_count_updated <- mixer_count_start[]
     mixing_vars_updated <- mixing_vars_start[, ]
 
-    if(length(config$output_settings$diagnostics_names) > 0){
+    if(length(config$output_settings$diagnostics_names) > 1){
       diagnostics_updated <- diagnostics_start[ , ,]
+    }else if(length(config$output_settings$diagnostics_names) == 1){
+      diagnostics_updated <- array(NA, dim = c(1, dim(diagnostics_start)))
+      diagnostics_updated[1, , ] <- diagnostics_start[ , ]
     }
 
   }

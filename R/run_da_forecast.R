@@ -685,7 +685,7 @@ run_da_forecast <- function(states_init,
     }
   }
 
-  file_names <- create_filenames(full_time, hist_days, forecast_days)
+  file_names <- create_filenames(full_time, hist_days, forecast_days, config)
 
   return(list(full_time = full_time,
               forecast_start_datetime = forecast_start_datetime,

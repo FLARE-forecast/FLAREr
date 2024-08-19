@@ -57,7 +57,7 @@ A guide to the variables in `configure_flare.yml` and in the
     are in the enkf covariance metric is deminished. The distance
     governs the exponential decay of the covariance strength.
 
--   **no_negative_states:** Force non-temperature states to be postive
+-   **no_negative_states:** Force non-temperature states to be positive
     (`TRUE` or `FALSE`)
 
 -   **assimilate_first_step:** Assimilate data provided by the initial
@@ -68,6 +68,9 @@ A guide to the variables in `configure_flare.yml` and in the
 
 -   **obs_filename:** file name of targets file. It is required to be
     located in the `lake_directory/targets/{site_id}` directory.
+    
+-   **pf_always_resample:** Force the particle filter to resample each timestep (only when `da_method = pf`)
+    (`TRUE` or `FALSE`)
 
 ### model_settings:
 
@@ -78,7 +81,7 @@ A guide to the variables in `configure_flare.yml` and in the
 -   **base_GLM_nml:** name of base GLM namelist. It is required to be in
     the `lake_directory/configuraton/{config_set}` directory.
     
--   **max_model_layers:** maximuum number of layers allowed in the GLM simulations
+-   **max_model_layers:** maximum number of layers allowed in the GLM simulations
 
 -   **modeled_depths:** vector of depths (m) with observations or that the user desires output for. Value
     is for the top of the layer.

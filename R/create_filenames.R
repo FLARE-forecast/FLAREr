@@ -7,7 +7,7 @@
 #' @return
 #'
 #' @examples
-create_filenames <- function(full_time, hist_days, forecast_days){
+create_filenames <- function(full_time, hist_days, forecast_days, config){
 
 
   if(lubridate::day(full_time[1]) < 10){

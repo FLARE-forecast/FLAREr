@@ -182,10 +182,18 @@ run_enkf <- function(x_matrix,
   }
 
   model_internal_heights_updated <- model_internal_heights_start
-  diagnostics_updated <- diagnostics_start
+
+  if(length(config$output_settings$diagnostics_names) > 1){
+    diagnostics_updated <- diagnostics_start[ , ,]
+  }else if(length(config$output_settings$diagnostics_names) == 1){
+    diagnostics_updated <- array(NA, dim = c(1, dim(diagnostics_start)))
+    diagnostics_updated[1, , ] <- diagnostics_start[ , ]
+  }else{
+    diagnostics_updated <- diagnostics_start
+  }
 
   if(length(config$output_settings$diagnostics_names) > 0){
-    for(d in 1:dim(diagnostics_start)[1]){
+    for(d in 1:dim(diagnostics_updated)[1]){
       for(m in 1:nmembers){
         depth_index <- which(config$model_settings$modeled_depths > lake_depth_updated[m])
         diagnostics_updated[d,depth_index, m] <- NA
