@@ -34,6 +34,7 @@ jobs:
         run: |
           sudo apt-get update
           sudo apt-get -y install libnetcdf-dev libgd-dev
+          sudo apt-get -y install libgd-dev
 
       - uses: r-lib/actions/setup-r-dependencies@v2
         with:
