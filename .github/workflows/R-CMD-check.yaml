@@ -73,9 +73,7 @@ jobs:
       - name: Install dependencies
         run: |
           install.packages(c("remotes", "tidyverse", "parallelly"))
-          remotes::install_github('eco4cast/EFIstandards')
           remotes::install_cran("xtable")
-          remotes::install_github("FLARE-forecast/GLM3r")
           remotes::install_deps(dependencies = TRUE)
           remotes::install_cran("rcmdcheck")
           remotes::install_cran("knitr")
