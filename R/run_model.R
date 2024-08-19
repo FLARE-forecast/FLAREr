@@ -241,14 +241,14 @@ run_model <- function(i,
   while(!pass){
     unlink(paste0(ens_working_directory, "/output.nc"))
 
-    #GLM3r::run_glm(sim_folder = ens_working_directory, verbose = verbose)
+    GLM3r::run_glm(sim_folder = ens_working_directory, verbose = verbose)
 
     #origin <- getwd()
-    setwd(ens_working_directory)
+    #setwd(ens_working_directory)
 
-    system2("/Users/rqthomas/Documents/research/glm-aed-dev/glm-aed/glm-source/GLM/glm", args = "--no-gui",
-            stdout = NULL,
-            stderr = NULL)
+    #system2("/Users/rqthomas/Documents/research/glm-aed-dev/glm-aed/glm-source/GLM/glm", args = "--no-gui",
+    #        stdout = NULL,
+    #        stderr = NULL)
 
     #setwd(origin)
 

@@ -1,6 +1,6 @@
 Package: FLAREr
 Title: Forecasting Lake and Reservoir Ecosystems
-Version: 2.2.21
+Version: 3.0.0
 Authors@R: 
     c(person(given = "R. Quinn",
            family = "Thomas",
@@ -12,6 +12,12 @@ Authors@R:
            role = c("ctb")),
         person(given = "Tadhg",
            family = "Moore",
+           role = c("ctb")),
+      person(given = "Freya",
+           family = "Olsson",
+           role = c("ctb")),
+    person(given = "Austin",
+           family = "Delany",
            role = c("ctb")))       
 Description: This package uses the Ensemble Kalman Filter (EnKF) or the Particle Filter to assimilate observations and generate forecasts of lake water quality using the General Lake Model - Aquatic Ecosystem Dynamics.  The package includes functions to generate the weather and inflow forcing files, organize observations in the form required by the EnKF, and visualize output.
 License: MIT + file LICENSE
@@ -29,14 +35,12 @@ Imports:
     yaml,
     stringr,
     imputeTS,
-    emld,
     tibble,
     tools,
     ggplot2,
     GLM3r,
     patchwork,
     parallel,
-    EML,
     purrr,
     furrr,
     future,
@@ -54,7 +58,7 @@ Imports:
     tsibble,
     zoo,
     RopenMeteo
-Remotes: FLARE-forecast/GLM3r, eco4cast/score4cast, eco4cast/read4cast, FLARE-forecast/RopenMeteo
+Remotes: rqthomas/GLM3r, eco4cast/score4cast, eco4cast/read4cast, FLARE-forecast/RopenMeteo
 Suggests: 
     knitr,
     rmarkdown,
