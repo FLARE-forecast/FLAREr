@@ -224,7 +224,3 @@ The second modification you will do is to to increase the observational uncertai
 ### Changing the ensemble size
 
 The variable `ensemble_size` allows you to adjust the size of the ensemble. 
-
-### Changing the number of depths simulated
-
-The variable `modeled_depths` allows you to adjust the depths that FLARE simulates.  If you used a restart file, then the `model_depths` are required to be equal to the model_depths in the restart file.

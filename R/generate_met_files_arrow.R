@@ -1,20 +1,7 @@
 ##' @title Convert historical meteorology and NOAA forecasts to GLM format via arrow connection
 ##' @details Function combines historical meteorology and NOAA forecasts to create meteorology input files in the GLM format.  A file is generated for each ensemble member.
-##' @param obs_met_file string; full path to netcdf that is observed historical meteorology
-##' @param out_dir string; full path to directory where the converted files will be saved
-##' @param start_datetime start date of weather data
-##' @param end_datetime end date of weather data
-##' @param forecast_start_datetime start datetime of forecast
-##' @param forecast_horizon number of days in the future
-##' @param site_id site code
-##' @param use_s3 TRUE/FALSE use S3 storage
-##' @param bucket s3 bucket for archive
-##' @param endpoint s3 endpoint for archive
-##' @param local_directory local directory if not using s3
-##' @param use_forecast TRUE/FALSE use forecasted met
-##' @param use_ler_vars TRUE/FALSE use LER met variable names
-##' @param use_hive_met TRUE/FALSE use hive partitioned met
-
+##' @param  config list of FLARE configurations
+##' @param lake_directory directory of lake configurations
 ##' @return list; vector of full path for the converted files and boolean flag if issues with historical meteorology files
 ##' @export
 ##' @import dplyr
@@ -23,33 +10,26 @@
 ##' @importFrom lubridate as_datetime days hours ymd_hm
 ##' @author Quinn Thomas
 ##'
-generate_met_files_arrow <- function(obs_met_file = NULL,
-                                     out_dir,
-                                     start_datetime,
-                                     end_datetime = NA,
-                                     forecast_start_datetime = NA,
-                                     forecast_horizon = 0,
-                                     site_id,
-                                     use_s3 = FALSE,
-                                     bucket = NULL,
-                                     endpoint = NULL,
-                                     local_directory = NULL,
-                                     use_forecast = TRUE,
-                                     use_ler_vars = FALSE,
-                                     use_hive_met = TRUE){
+generate_met_files_arrow <- function(config, lake_directory){
 
-  lake_name_code <- site_id
+  out_dir <- config$file_path$execute_directory
+  forecast_horizon <-  config$run_config$forecast_horizon
+  use_met_s3 <- config$met$use_met_s3
+  bucket <- config$s3$drivers$bucket
+  endpoint <- config$s3$drivers$endpoint
+  local_directory <- config$met$local_met_directory
+  use_ler_vars <- config$met$use_ler_vars
 
-  start_datetime <- lubridate::as_datetime(start_datetime)
-  if(is.na(forecast_start_datetime)){
-    end_datetime <- lubridate::as_datetime(end_datetime) #- lubridate::hours(1)
+  lake_name_code <-  config$location$site_id
+
+  start_datetime <- lubridate::as_datetime(config$run_config$start_datetime)
+  if(is.na(config$run_config$forecast_start_datetime)){
+    end_datetime <- lubridate::as_datetime(config$run_config$end_datetime) #- lubridate::hours(1)
     forecast_start_datetime <- end_datetime
   }else{
-    forecast_start_datetime <- lubridate::as_datetime(forecast_start_datetime)
+    forecast_start_datetime <- lubridate::as_datetime(config$run_config$forecast_start_datetime)
     end_datetime <- forecast_start_datetime + lubridate::days(forecast_horizon) #- lubridate::hours(1)
   }
-
-
 
     if(!is.na(forecast_start_datetime) & forecast_horizon > 0){
 
@@ -60,48 +40,40 @@ generate_met_files_arrow <- function(obs_met_file = NULL,
         stop("Only forecasts that start at 00:00:00 UTC are currently supported")
       }
 
-      if(use_s3){
+      if(config$met$use_met_s3){
 
       if(is.null(bucket) | is.null(endpoint)){
         stop("inflow forecast function needs bucket and endpoint if use_s3=TRUE")
       }
       vars <- arrow_env_vars()
 
-      if(use_hive_met){
-        forecast_dir <- arrow::s3_bucket(bucket = file.path(bucket, paste0("stage2/reference_datetime=",forecast_date),paste0("site_id=",lake_name_code)),
+      forecast_dir <- arrow::s3_bucket(bucket = file.path(bucket, paste0(config$met$future_met_model,"/reference_datetime=",forecast_date),paste0("site_id=",lake_name_code)),
                                          endpoint_override =  endpoint, anonymous = TRUE)
-      }else{
-        forecast_dir <- arrow::s3_bucket(bucket = file.path(bucket, "stage2/parquet", forecast_hour,forecast_date, lake_name_code),
-                                         endpoint_override =  endpoint, anonymous = TRUE)
-      }
 
       unset_arrow_vars(vars)
     }else{
       if(is.null(local_directory)){
-        stop("inflow forecast function needs local_directory if use_s3=FALSE")
+        stop("met forecast function needs local_directory if use_s3=FALSE")
       }
-      forecast_dir <- arrow::SubTreeFileSystem$create(file.path(local_directory, "stage2/parquet", forecast_hour,forecast_date))
+      forecast_dir <- arrow::SubTreeFileSystem$create(file.path(lake_directory, local_directory,paste0(config$met$future_met_model,"/reference_datetime=",forecast_date),paste0("site_id=",lake_name_code)))
     }
   }
 
-  if(!use_forecast | forecast_horizon == 0){
+  if(forecast_horizon == 0){
     forecast_dir <- NULL
   }
 
-  if(is.null(obs_met_file)){
-    if(use_s3){
+  if(start_datetime < forecast_start_datetime){
+    if(use_met_s3){
 
-      if(use_hive_met){
-        past_dir <- arrow::s3_bucket(bucket = file.path(bucket, paste0("stage3/site_id=",lake_name_code)),
+        past_dir <- arrow::s3_bucket(bucket = file.path(bucket, paste0(config$met$historical_met_model,"/site_id=",lake_name_code)),
                                      endpoint_override =  endpoint, anonymous = TRUE)
-      }else{
-        past_dir <- arrow::s3_bucket(bucket = file.path(bucket, "stage3/parquet",lake_name_code),
-                                     endpoint_override =  endpoint, anonymous = TRUE)
-      }
 
     }else{
-      past_dir <-  arrow::SubTreeFileSystem$create(file.path(local_directory, "stage3/parquet", lake_name_code))
+      past_dir <-  arrow::SubTreeFileSystem$create(file.path(lake_directory, local_directory, paste0(config$met$historical_met_model,"/site_id=",lake_name_code)))
     }
+  }else{
+    past_dir <- NULL
   }
 
 
@@ -110,56 +82,31 @@ generate_met_files_arrow <- function(obs_met_file = NULL,
   #}
 
   full_time <- seq(start_datetime, end_datetime, by = "1 hour")
-  if(use_forecast){
     if(forecast_start_datetime > start_datetime){
       full_time_hist <- seq(start_datetime, forecast_start_datetime, by = "1 hour")
     }else{
-      full_time_hist <- NULL
-    }
-  }else{
-    full_time_hist <- seq(start_datetime, end_datetime, by = "1 hour")
-  }
-
-  if(!is.null(obs_met_file)){
-
-    target <- readr::read_csv(obs_met_file, show_col_types = FALSE) |>
-      tidyr::pivot_wider(names_from = variable, values_from = observation) |>
-      dplyr::arrange(datetime) |>
-      dplyr::mutate(WindSpeed = wind_speed,
-                    use_ler_vars = use_ler_vars) |>
-      dplyr::rename(AirTemp = air_temperature,
-                    ShortWave = surface_downwelling_shortwave_flux_in_air,
-                    LongWave = surface_downwelling_longwave_flux_in_air,
-                    RelHum = relative_humidity,
-                    Rain = precipitation_flux,
-                    time = datetime) |>
-      dplyr::mutate(AirTemp = AirTemp - 273.15,
-                    RelHum = RelHum * 100,
-                    RelHum = ifelse(RelHum > 100, 100, RelHum),
-                    Rain = ifelse(use_ler_vars, Rain * (60 * 60), Rain * (60 * 60 * 24)/1000),
-                    Snow = 0.0) |>
-      dplyr::mutate_at(dplyr::vars(all_of(c("AirTemp", "ShortWave","LongWave","RelHum","WindSpeed"))), list(~round(., 2))) |>
-      dplyr::filter(time %in% full_time_hist) |>
-      dplyr::mutate(Rain = round(Rain, 5),
-                    time = strftime(time, format="%Y-%m-%d %H:%M", tz = "UTC")) |>
-      dplyr::select(time, AirTemp,ShortWave, LongWave, RelHum, WindSpeed,Rain, Snow)
-
-    if( any(target$RelHum <= 0.0)) {
-      idx <- which(target$RelHum <= 0.0)
-      target$RelHum[idx] <- NA
-      target$RelHum <- zoo::na.approx(target$RelHum, rule = 2)
+      full_time_hist <- seq(start_datetime, end_datetime, by = "1 hour")
     }
 
-  }else if(!is.null(full_time_hist)){
-    target <- arrow::open_dataset(past_dir) |>
-      dplyr::filter(site_id == lake_name_code) |>
+  if(!is.null(past_dir)){
+
+    hist_met <- arrow::open_dataset(past_dir) |>
       dplyr::select(datetime, parameter,variable,prediction) |>
       dplyr::collect() |>
       dplyr::filter(datetime %in% full_time_hist) |>
       tidyr::pivot_wider(names_from = variable, values_from = prediction) |>
-      dplyr::arrange(parameter, datetime) |>
-      dplyr::mutate(WindSpeed = sqrt(eastward_wind^2 + northward_wind^2),
-                    use_ler_vars = use_ler_vars) |>
+      dplyr::arrange(parameter, datetime)
+
+    if(!("wind_speed" %in% colnames(hist_met))){
+      hist_met <- hist_met |>
+        dplyr::mutate(WindSpeed = sqrt(eastward_wind^2 + northward_wind^2))
+    }else{
+      hist_met <- hist_met |>
+        dplyr::mutate(WindSpeed = wind_speed)
+    }
+
+    hist_met <- hist_met |>
+    dplyr::mutate(use_ler_vars = use_ler_vars) |>
       dplyr::rename(AirTemp = air_temperature,
                     ShortWave = surface_downwelling_shortwave_flux_in_air,
                     LongWave = surface_downwelling_longwave_flux_in_air,
@@ -181,10 +128,16 @@ generate_met_files_arrow <- function(obs_met_file = NULL,
       dplyr::slice(-dplyr::n()) |>
       dplyr::ungroup()
 
-    n_gaps <- target |>
+    n_gaps <- hist_met |>
       dplyr::mutate(time = lubridate::ymd_hm(time)) |>
       tsibble::as_tsibble(index = time, key = ensemble) |>
       tsibble::count_gaps()
+
+    if( any(hist_met$RelHum <= 0.0)) {
+      idx <- which(hist_met$RelHum <= 0.0)
+      hist_met$RelHum[idx] <- NA
+      hist_met$RelHum <- zoo::na.approx(hist_met$RelHum, rule = 2)
+    }
 
 
     if (nrow(n_gaps) > 0) {
@@ -194,7 +147,7 @@ generate_met_files_arrow <- function(obs_met_file = NULL,
     }
 
     # fill in any missed timesteps to ensure a continuous time series
-    target <-  target |>
+    hist_met <-  hist_met |>
       dplyr::mutate(time = lubridate::ymd_hm(time)) |>
       tsibble::as_tsibble(index = time, key = ensemble) |>
       tsibble::fill_gaps() |>
@@ -202,28 +155,17 @@ generate_met_files_arrow <- function(obs_met_file = NULL,
       dplyr::as_tibble() |>
       dplyr::mutate(time = format(time, format="%Y-%m-%d %H:%M", tz = "UTC"))
 
-
   }else{
-    target <- NULL
+    hist_met <- NULL
   }
 
 
 
   if(is.null(forecast_dir)){
 
-    if(!is.null(obs_met_file)){
-
-      current_filename <- "met.csv"
-      current_filename <- file.path(out_dir, current_filename)
-
-
-      write.csv(target, file = current_filename, quote = FALSE, row.names = FALSE)
-    }else{
-
-      ensemble_members <- unique(target$ensemble)
-
-      current_filename <- purrr::map_chr(ensemble_members, function(ens, out_dir, target){
-        df <- target |>
+      ensemble_members <- unique(hist_met$ensemble)
+      current_filename <- purrr::map_chr(ensemble_members, function(ens, out_dir, hist_met){
+        df <- hist_met |>
           dplyr::filter(ensemble == ens) |>
           dplyr::select(-ensemble) |>
           dplyr::arrange(time)
@@ -250,14 +192,12 @@ generate_met_files_arrow <- function(obs_met_file = NULL,
         return(fn)
       },
       out_dir,
-      target)
-    }
+      hist_met)
   }else{
 
     #### test if the forecast directory exists, stop with helpful error if it does not ####
     tryCatch({
       forecast <- arrow::open_dataset(forecast_dir) |>
-        dplyr::filter(site_id == lake_name_code) |>
         dplyr::select(datetime, parameter,variable,prediction) |>
         dplyr::collect()
     }, error = function(e) {
@@ -266,9 +206,17 @@ generate_met_files_arrow <- function(obs_met_file = NULL,
 
     forecast <- forecast |>
       tidyr::pivot_wider(names_from = variable, values_from = prediction) |>
-      dplyr::arrange(parameter, datetime) |>
-      dplyr::mutate(WindSpeed = sqrt(eastward_wind^2 + northward_wind^2),
-                    use_ler_vars = use_ler_vars) |>
+      dplyr::arrange(parameter, datetime)
+
+    if(!("wind_speed" %in% colnames(forecast))){
+      forecast <- forecast |>
+        dplyr::mutate(WindSpeed = sqrt(eastward_wind^2 + northward_wind^2))
+    }else{
+      forecast <- forecast |>
+        dplyr::mutate(WindSpeed = wind_speed)
+    }
+    forecast <- forecast |>
+      dplyr::mutate(use_ler_vars = use_ler_vars) |>
       dplyr::rename(AirTemp = air_temperature,
                     ShortWave = surface_downwelling_shortwave_flux_in_air,
                     LongWave = surface_downwelling_longwave_flux_in_air,
@@ -291,19 +239,18 @@ generate_met_files_arrow <- function(obs_met_file = NULL,
 
     ensemble_members <- unique(forecast$ensemble)
 
-    current_filename <- purrr::map_chr(ensemble_members, function(ens, out_dir, forecast, target){
+    current_filename <- purrr::map_chr(ensemble_members, function(ens, out_dir, forecast, hist_met){
 
-      if("ensemble" %in% names(target)){
-        target <- target |>
+      if("ensemble" %in% names(hist_met)){
+        hist_met <- hist_met |>
           dplyr::filter(ensemble == ens) |>
           dplyr::select(-ensemble)
       }
 
-
       df <- forecast |>
         dplyr::filter(ensemble == ens) |>
         dplyr::select(-ensemble) |>
-        dplyr::bind_rows(target) |>
+        dplyr::bind_rows(hist_met) |>
         dplyr::arrange(time)
 
       if(max(forecast$time) < strftime(end_datetime - lubridate::hours(1), format="%Y-%m-%d %H:%M", tz = "UTC")){
@@ -325,7 +272,7 @@ generate_met_files_arrow <- function(obs_met_file = NULL,
       }
 
       # check for bad data
-      missing_data_check(df)
+      FLAREr:::missing_data_check(df)
 
       fn <- paste0("met_",stringr::str_pad(ens, width = 2, side = "left", pad = "0"),".csv")
       fn <- file.path(out_dir, fn)
@@ -334,7 +281,7 @@ generate_met_files_arrow <- function(obs_met_file = NULL,
     },
     out_dir = out_dir,
     forecast,
-    target)
+    hist_met)
   }
   return(list(filenames = current_filename, historical_met_error = FALSE))
 }

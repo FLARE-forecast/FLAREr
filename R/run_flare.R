@@ -38,22 +38,12 @@ run_flare <- function(lake_directory,
   if(!"temp" %in% states_config$state_names) stop("missing temp as a state name in states config")
   if(!"salt" %in% states_config$state_names) stop("missing salt as a state name in states config")
 
-
-  if(!config$met$use_observed_met){
-    obs_met_file <- NULL
-  }else{
-    obs_met_file <- file.path(config$file_path$qaqc_data_directory, config$met$observed_filename)
-    if(!fs::file_exists(obs_met_file)){
-      stop(paste0(obs_met_file, " is not found"))
-    }
-  }
-
   if(is.null(config$met$use_openmeteo)) config$met$use_openmeteo <- FALSE
 
   met_start_datetime <- lubridate::as_datetime(config$run_config$start_datetime)
   met_forecast_start_datetime <- lubridate::as_datetime(config$run_config$forecast_start_datetime)
 
-  if(config$run_config$forecast_horizon > 16 & config$met$use_forecasted_met & !config$met$use_openmeteo){
+  if(config$run_config$forecast_horizon > 16 & !config$met$use_openmeteo){
     met_forecast_start_datetime <- met_forecast_start_datetime - lubridate::days(config$met$forecast_lag_days)
     if(met_forecast_start_datetime < met_start_datetime){
       met_start_datetime <- met_forecast_start_datetime
@@ -86,19 +76,7 @@ run_flare <- function(lake_directory,
                                           endpoint = config$s3$drivers$endpoint)
   }else{
 
-    met_out <- FLAREr::generate_met_files_arrow(obs_met_file = obs_met_file,
-                                                out_dir = config$file_path$execute_directory,
-                                                start_datetime = met_start_datetime,
-                                                end_datetime = config$run_config$end_datetime,
-                                                forecast_start_datetime = met_forecast_start_datetime,
-                                                forecast_horizon =  config$run_config$forecast_horizon,
-                                                site_id = config$location$site_id,
-                                                use_s3 = config$met$use_met_s3,
-                                                bucket = config$s3$drivers$bucket,
-                                                endpoint = config$s3$drivers$endpoint,
-                                                local_directory = file.path(lake_directory,config$met$local_directory),
-                                                use_forecast = config$met$use_forecasted_met,
-                                                use_ler_vars = config$met$use_ler_vars)
+    met_out <- FLAREr::generate_met_files_arrow(config, lake_directory)
   }
 
   message('Creating inflow/outflow files...')

@@ -137,36 +137,30 @@ A guide to the variables in `configure_flare.yml` and in the
 
 ### met:
 
--   **use_forecasted_met:** Use forecast met during forecasting (`TRUE`
-    or `FALSE`)
-
--   **use_met_s3:** access met data on s3 bucket (`TRUE` or `FALSE`)
-
--   **use_observed_met:** use observed met for non-forecast time steps
-    (`TRUE` or `FALSE`)
-
--   **observed_filename:** name of meterology targets file name
-
--   **use_ler_vars:** use LER standardized met names (`TRUE` or `FALSE`)
-
--   **local_directory:** directory where meterology forcasts are saved
+-  **future_met_model:** 
+-  **historical_met_model:** gefs-v12-reprocess/stage3 # or historical_met_model: gets-v12/stage3
+-  **forecast_lag_days:** 0
+-  **use_ler_vars:**  use LER standardized met names (`TRUE` or `FALSE`)
+-  **use_met_s3:** access met data on s3 bucket (`TRUE` or `FALSE`)
+-  **openmeteo_api:** F
+-  **openmeteo_model:**
+-  **use_openmeteo_archive:** 
+-  **local_met_directory:** directory where meterology forcasts are saved
     if not using s3 access. Relative to the lake_directory.
 
 ### inflow:
 
--   **include_inflow:** Include inflows in simulations (`TRUE` or
+-  **include_inflow:** Include inflows in simulations (`TRUE` or
     `FALSE`)
-
--   **use_forecasted_inflow:** Use forecast met during forecasting
-    (`TRUE` or `FALSE`)
-
--   **forecast_inflow_model:** name of inflow model
-
--   **observed_filename:** name of inflow targets file name
-
--   **use_ler_vars:** use LER standardized met names (`TRUE` or `FALSE`)
-
--   **local_directory:** directory where inflow forcasts are saved if
+-  **include_outflow:** Include outflows in simulations (`TRUE` or
+    `FALSE`)
+-  **future_inflow_model:** historical_interp
+-  **historical_inflow_model:** historical_interp
+-  **local_inflow_directory:** directory where inflow forcasts are saved if
+    not using s3 access. Relative to the lake_directory.
+-  **future_outflow_model:** historical_interp
+-  **historical_outflow_model:** historical_interp
+-  **local_outflow_directory:** directory where outflow forcasts are saved if
     not using s3 access. Relative to the lake_directory.
 
 ### uncertainty:

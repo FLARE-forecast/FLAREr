@@ -4,51 +4,12 @@
 \alias{generate_met_files_arrow}
 \title{Convert historical meteorology and NOAA forecasts to GLM format via arrow connection}
 \usage{
-generate_met_files_arrow(
-  obs_met_file = NULL,
-  out_dir,
-  start_datetime,
-  end_datetime = NA,
-  forecast_start_datetime = NA,
-  forecast_horizon = 0,
-  site_id,
-  use_s3 = FALSE,
-  bucket = NULL,
-  endpoint = NULL,
-  local_directory = NULL,
-  use_forecast = TRUE,
-  use_ler_vars = FALSE,
-  use_hive_met = TRUE
-)
+generate_met_files_arrow(config, lake_directory)
 }
 \arguments{
-\item{obs_met_file}{string; full path to netcdf that is observed historical meteorology}
+\item{config}{list of FLARE configurations}
 
-\item{out_dir}{string; full path to directory where the converted files will be saved}
-
-\item{start_datetime}{start date of weather data}
-
-\item{end_datetime}{end date of weather data}
-
-\item{forecast_start_datetime}{start datetime of forecast}
-
-\item{forecast_horizon}{number of days in the future}
-
-\item{site_id}{site code}
-
-\item{use_s3}{TRUE/FALSE use S3 storage}
-
-\item{bucket}{s3 bucket for archive}
-
-\item{endpoint}{s3 endpoint for archive}
-
-\item{local_directory}{local directory if not using s3}
-
-\item{use_forecast}{TRUE/FALSE use forecasted met}
-
-\item{use_ler_vars}{TRUE/FALSE use LER met variable names}
-
-\item{use_hive_met}{TRUE/FALSE use hive partitioned met}
+\item{lake_directory}{directory of lake configurations}
 }
 \value{
 list; vector of full path for the converted files and boolean flag if issues with historical meteorology files

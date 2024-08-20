@@ -54,11 +54,15 @@ flows:
    local_outflow_directory: drivers/outflow
    use_ler_vars: FALSE
 met:
-   use_forecasted_met: TRUE
-   use_met_s3: FALSE
-   use_observed_met: FALSE
+   future_met_model: gefs-v12-reprocess/stage2
+   historical_met_model: gefs-v12-reprocess/stage3 # or historical_met_model: gets-v12/stage3
+   forecast_lag_days: 0
    use_ler_vars: FALSE
-   local_directory: drivers/noaa/gefs-v12-reprocess
+   use_met_s3: FALSE
+   openmeteo_api: FALSE
+   openmeteo_model:
+   use_openmeteo_archive: FALSE
+   local_met_directory: drivers/met
 uncertainty:
    observation: TRUE
    process: TRUE
