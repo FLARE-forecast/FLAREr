@@ -1,15 +1,15 @@
 on:
-  push:
-    branches:
-      - main
-      - master
-      - ler
-      - particle_filter
-  pull_request:
-    branches:
-      - main
-      - master
-      - ler
+  #push:
+  #  branches:
+  #    - main
+  #    - master
+  #    - ler
+  #    - particle_filter
+  #pull_request:
+  #  branches:
+  #    - main
+  #    - master
+  #    - ler
 
 name: test-coverage
 
