@@ -2,6 +2,19 @@
 ##' @details Function combines historical meteorology and NOAA forecasts to create meteorology input files in the GLM format.  A file is generated for each ensemble member.
 ##' @param obs_met_file string; full path to netcdf that is observed historical meteorology
 ##' @param out_dir string; full path to directory where the converted files will be saved
+##' @param start_datetime start date of weather data
+##' @param end_datetime end date of weather data
+##' @param forecast_start_datetime start datetime of forecast
+##' @param forecast_horizon number of days in the future
+##' @param site_id site code
+##' @param use_s3 TRUE/FALSE use S3 storage
+##' @param bucket s3 bucket for archive
+##' @param endpoint s3 endpoint for archive
+##' @param local_directory local directory if not using s3
+##' @param use_forecast TRUE/FALSE use forecasted met
+##' @param use_ler_vars TRUE/FALSE use LER met variable names
+##' @param use_hive_met TRUE/FALSE use hive partitioned met
+
 ##' @return list; vector of full path for the converted files and boolean flag if issues with historical meteorology files
 ##' @export
 ##' @import dplyr

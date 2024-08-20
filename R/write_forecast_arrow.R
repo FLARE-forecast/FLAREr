@@ -1,8 +1,10 @@
 ##' @title Generate parquet output file
-##' @details Function generates a netcdf file from the object that is returned by run_da_forecast()
+##' @details Function generates a parquet file from the object that is returned by run_da_forecast()
 ##' @param da_forecast_output list; object that is returned by run_da_forecast()
-##' @param forecast_output_directory string; full path of the directory where the csv file will be written
-##' @param use_short_filename use shortened file name; this results in less information in the file name and potentially overwriting existing files
+##' @param use_s3 Boolen; use s3 storage for saving scores
+##' @param bucket S3 bucket
+##' @param endpoint S3 endpoint
+##' @param local_directory local directory of scores if not using s3
 ##' @return None
 ##' @export
 ##' @importFrom lubridate with_tz

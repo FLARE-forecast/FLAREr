@@ -28,6 +28,8 @@
 #' @param obs_config list; list of observation configurations
 #' @param da_method string; data assimilation method (enkf or pf; Default = enkf)
 #' @param par_fit_method string; method for adding noise to parameters during calibration
+#' @param obs_secchi list of secchi observations
+#' @param obs_depth list of depth observations
 #' @return a list is passed to `write_forecast_netcdf()` to write the
 #' netcdf output and `create_flare_eml()` to generate the EML metadata
 #' @export

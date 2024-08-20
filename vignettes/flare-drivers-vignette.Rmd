@@ -2,7 +2,7 @@
 title: "FLAREr driver inputs"
 output: rmarkdown::html_vignette
 vignette: >
-  %\VignetteIndexEntry{FLAREr example}
+  %\VignetteIndexEntry{FLAREr drivers}
   %\VignetteEngine{knitr::rmarkdown}
   %\VignetteEncoding{UTF-8}
 ---

@@ -5,8 +5,7 @@
 #' @param pars_config list; list of parameter configurations  (Default = NULL)
 #' @param obs array; array of the observations. Required dimensions are `[nobs, time, depth]`
 #' @param config list; list of configurations
-#' @param restart_file string; netcdf file with full path from FLARE output that is used as initial conditions
-#' @param historical_met_error boolean; producted by generate_glm_met_files()
+#' @param obs_non_vertical list; observations of variables that don't have vertical dimension.
 #' @import ncdf4
 #' @return list; list contains the initial conditions objects required by run_da_forecast()
 #' @export

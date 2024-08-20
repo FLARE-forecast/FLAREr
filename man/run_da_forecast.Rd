@@ -59,6 +59,10 @@ with a value in \code{model_sd}.}
 \item{da_method}{string; data assimilation method (enkf or pf; Default = enkf)}
 
 \item{par_fit_method}{string; method for adding noise to parameters during calibration}
+
+\item{obs_secchi}{list of secchi observations}
+
+\item{obs_depth}{list of depth observations}
 }
 \value{
 a list is passed to \code{write_forecast_netcdf()} to write the

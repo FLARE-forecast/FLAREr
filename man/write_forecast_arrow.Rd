@@ -15,9 +15,13 @@ write_forecast_arrow(
 \arguments{
 \item{da_forecast_output}{list; object that is returned by run_da_forecast()}
 
-\item{forecast_output_directory}{string; full path of the directory where the csv file will be written}
+\item{use_s3}{Boolen; use s3 storage for saving scores}
 
-\item{use_short_filename}{use shortened file name; this results in less information in the file name and potentially overwriting existing files}
+\item{bucket}{S3 bucket}
+
+\item{endpoint}{S3 endpoint}
+
+\item{local_directory}{local directory of scores if not using s3}
 }
 \value{
 None
@@ -26,7 +30,7 @@ None
 Generate parquet output file
 }
 \details{
-Function generates a netcdf file from the object that is returned by run_da_forecast()
+Function generates a parquet file from the object that is returned by run_da_forecast()
 }
 \author{
 Quinn Thomas

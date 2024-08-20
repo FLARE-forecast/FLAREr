@@ -24,9 +24,7 @@ generate_initial_conditions(
 
 \item{config}{list; list of configurations}
 
-\item{restart_file}{string; netcdf file with full path from FLARE output that is used as initial conditions}
-
-\item{historical_met_error}{boolean; producted by generate_glm_met_files()}
+\item{obs_non_vertical}{list; observations of variables that don't have vertical dimension.}
 }
 \value{
 list; list contains the initial conditions objects required by run_da_forecast()

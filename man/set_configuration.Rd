@@ -18,6 +18,10 @@ set_configuration(
 \item{lake_directory}{full path to repository directory}
 
 \item{clean_start}{logical: TRUE = reset run configuration with the file in the configuration directory within repository}
+
+\item{config_set_name}{name of configuration set}
+
+\item{sim_name}{name of simulation}
 }
 \value{
 list of configuration values

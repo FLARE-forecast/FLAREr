@@ -4,6 +4,8 @@
 #' @param lake_directory full path to repository directory
 #' @param config flare configuration object
 #' @param clean_start logical; reset the configuration run to the base file in the configuration directory
+#' @param config_set_name name of configuration set
+#' @param sim_name name of simulation
 #'
 #' @return list of configuration values
 #' @export
@@ -95,6 +97,7 @@ get_edi_file <- function(edi_https, file, lake_directory){ #, curl_timeout = 60)
 #' @param cleaned_met_file full path of the cleaned met file
 #' @param cleaned_inflow_file full path of the cleaned inflow file
 #' @param use_s3 logical; TRUE = use s3
+#' @param config list of FLARE configurations
 #'
 #' @export
 #'
@@ -181,6 +184,8 @@ get_driver_forecast_path <- function(config, forecast_model){
 #' @param configure_run_file name of run configuration file (do not include full path)
 #' @param lake_directory full path to repository directory
 #' @param clean_start logical: TRUE = reset run configuration with the file in the configuration directory within repository
+#' @param config_set_name name of configuration set
+#' @param sim_name name of simulation
 #'
 #' @return list of configuration values
 #' @export
@@ -256,11 +261,12 @@ get_restart_file <- function(config, lake_directory){
 #' @param saved_file full path of saved FLARE netcdf
 #' @param new_horizon horizon (in days) to update the run configuration with
 #' @param day_advance number of days between forecast forecast generation (defaults to 1)
-#' @noRd
+#' @param new_start_datetime Boolean; update the start_datetime
 #' @return configuration list
 #' @export
 #'
-update_run_config <- function(config, lake_directory, configure_run_file = "configure_run.yml", saved_file = NA, new_horizon = NA, day_advance = NA, new_start_datetime = TRUE){
+update_run_config <- function(config, lake_directory, configure_run_file = "configure_run.yml", saved_file = NA,
+                              new_horizon = NA, day_advance = NA, new_start_datetime = TRUE){
   if(new_start_datetime){
     config$run_config$start_datetime <- config$run_config$forecast_start_datetime
   }
@@ -400,11 +406,10 @@ put_forecast <- function(saved_file, eml_file_name = NULL, config){
   }
 }
 
-#' Upload score to s3 bucket
+#' @title Upload score to s3 bucket
 #'
-#' @param score_file full path of saved FLARE netcdf
+#' @param saved_file full path of saved FLARE netcdf
 #' @param config flare configuration object
-#' @noRd
 #'
 #' @export
 #'
@@ -422,11 +427,10 @@ put_score <- function(saved_file, config){
   }
 }
 
-#' Upload forecast csv to s3 bucket
+#' @title Upload forecast csv to s3 bucket
 #'
-#' @param score_file full path of saved FLARE netcdf
+#' @param saved_file full path of saved FLARE netcdf
 #' @param config flare configuration object
-#' @noRd
 #' @export
 #'
 
@@ -445,14 +449,14 @@ put_forecast_csv <- function(saved_file, config){
 }
 
 
-#' Download file from s3 bucket
+#' @title Download file from s3 bucket
 #'
 #' @param lake_directory full path to repository directory
 #' @param bucket name of s3 bucket
 #' @param prefix relative path directory within bucket
 #' @param region S3 region
 #' @param base_url S3 endpoint
-#' @noRd
+
 #' @export
 #'
 download_s3_objects <- function(lake_directory, bucket, prefix, region, base_url){
@@ -479,8 +483,9 @@ download_s3_objects <- function(lake_directory, bucket, prefix, region, base_url
 
 #' Delete restart file on s3 bucket
 #'
-#' @param site four letter code for site
+#' @param site_id four letter code for site
 #' @param sim_name name of simulation
+#' @param bucket s3 bucket
 #' @param endpoint S3 endpoint
 #'
 #' @export
@@ -510,7 +515,6 @@ delete_restart <- function(site_id, sim_name, bucket = "restart", endpoint){
 #' @param lake_directory full path to repository directory
 #' @noRd
 #' @return list of configuration values
-#' @export
 #'
 initialize_obs_processing <- function(lake_directory, observation_yml = NA, config_set_name = "default"){
 
