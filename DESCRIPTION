@@ -57,7 +57,9 @@ Imports:
     tidyr,
     tsibble,
     zoo,
-    RopenMeteo
+    RopenMeteo,
+    EML,
+    emld
 Remotes: rqthomas/GLM3r, eco4cast/score4cast, eco4cast/read4cast, FLARE-forecast/RopenMeteo
 Suggests: 
     knitr,
