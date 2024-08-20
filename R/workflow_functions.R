@@ -262,8 +262,8 @@ get_restart_file <- function(config, lake_directory){
 #' @param new_horizon horizon (in days) to update the run configuration with
 #' @param day_advance number of days between forecast forecast generation (defaults to 1)
 #' @param new_start_datetime Boolean; update the start_datetime
+#' @noRd
 #' @return configuration list
-#' @export
 #'
 update_run_config <- function(config, lake_directory, configure_run_file = "configure_run.yml", saved_file = NA,
                               new_horizon = NA, day_advance = NA, new_start_datetime = TRUE){
@@ -406,49 +406,6 @@ put_forecast <- function(saved_file, eml_file_name = NULL, config){
   }
 }
 
-#' @title Upload score to s3 bucket
-#'
-#' @param saved_file full path of saved FLARE netcdf
-#' @param config flare configuration object
-#'
-#' @export
-#'
-put_score <- function(saved_file, config){
-  if(config$run_config$use_s3){
-    success <- aws.s3::put_object(file = saved_file,
-                                  object = file.path(stringr::str_split_fixed(config$s3$scores$bucket, "/", n = 2)[2], config$location$site_id, basename(saved_file)),
-                                  bucket = stringr::str_split_fixed(config$s3$scores$bucket, "/", n = 2)[1],
-                                  region = stringr::str_split_fixed(config$s3$scores$endpoint, pattern = "\\.", n = 2)[1],
-                                  base_url = stringr::str_split_fixed(config$s3$scores$endpoint, pattern = "\\.", n = 2)[2],
-                                  use_https = as.logical(Sys.getenv("USE_HTTPS")))
-    if(success){
-      unlink(saved_file)
-    }
-  }
-}
-
-#' @title Upload forecast csv to s3 bucket
-#'
-#' @param saved_file full path of saved FLARE netcdf
-#' @param config flare configuration object
-#' @export
-#'
-
-put_forecast_csv <- function(saved_file, config){
-  if(config$run_config$use_s3){
-    success <- aws.s3::put_object(file = saved_file,
-                                  object = file.path(stringr::str_split_fixed(config$s3$forecasts_csv$bucket, "/", n = 2)[2], config$location$site_id, basename(saved_file)),
-                                  bucket = stringr::str_split_fixed(config$s3$forecasts_csv$bucket, "/", n = 2)[1],
-                                  region = stringr::str_split_fixed(config$s3$forecasts_csv$endpoint, pattern = "\\.", n = 2)[1],
-                                  base_url = stringr::str_split_fixed(config$s3$forecasts_csv$endpoint, pattern = "\\.", n = 2)[2],
-                                  use_https = as.logical(Sys.getenv("USE_HTTPS")))
-    if(success){
-      unlink(saved_file)
-    }
-  }
-}
-
-
 #' @title Download file from s3 bucket
 #'
 #' @param lake_directory full path to repository directory
@@ -456,8 +413,7 @@ put_forecast_csv <- function(saved_file, config){
 #' @param prefix relative path directory within bucket
 #' @param region S3 region
 #' @param base_url S3 endpoint
-
-#' @export
+#' @noRd
 #'
 download_s3_objects <- function(lake_directory, bucket, prefix, region, base_url){
 

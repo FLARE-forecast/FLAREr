@@ -1,5 +1,5 @@
 ---
-title: "Common Workflow"
+title: "Example Workflow"
 output: rmarkdown::html_vignette
 vignette: >
   %\VignetteIndexEntry{Example Workflow}

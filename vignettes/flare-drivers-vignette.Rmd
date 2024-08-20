@@ -1,5 +1,5 @@
 ---
-title: "FLAREr driver inputs"
+title: "FLAREr drivers"
 output: rmarkdown::html_vignette
 vignette: >
   %\VignetteIndexEntry{FLAREr drivers}
