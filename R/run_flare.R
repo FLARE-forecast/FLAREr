@@ -103,7 +103,7 @@ run_flare <- function(lake_directory,
 
   message('Creating inflow/outflow files...')
 
-  inflow_outflow_files <- FLAREr::create_inflow_outflow_files_arrow(config, config_set_name)
+  inflow_outflow_files <- FLAREr::create_inflow_outflow_files_arrow(config, config_set_name, lake_directory)
 
   obs_insitu_file <- file.path(config$file_path$qaqc_data_directory, config$da_setup$obs_filename)
   if(!fs::file_exists(obs_insitu_file)){

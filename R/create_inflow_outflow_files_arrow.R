@@ -2,10 +2,12 @@
 #' @details Processes historical model data and future model files into the GLM format
 #' @param config configuration file
 #' @param config_set_name specific name of configuration within the configuration directory
+#' @param lake_directory directory for FLARE application
 #' @return list with two vectors. One vector is the matrix of inflow_file_names and the other is the matrix of outflow_file_names
+#'
 #' @export
 #'
-create_inflow_outflow_files_arrow  <- function(config, config_set_name) {
+create_inflow_outflow_files_arrow  <- function(config, config_set_name, lake_directory) {
 
   # set use_s3 to T if missing
   if(is.null(config$run_config$use_s3)){
@@ -106,7 +108,7 @@ create_inflow_outflow_files_arrow  <- function(config, config_set_name) {
                                              local_directory = list(file.path(lake_directory, config$flows$local_inflow_directory),
                                                                     file.path(lake_directory, config$flows$local_outflow_directory)),
                                              use_ler_vars = config$flows$use_ler_vars),
-                                        FLAREr:::create_flow_files) |>
+                                        create_flow_files) |>
       set_names('inflow_file_names', 'outflow_file_names')
 
 
@@ -150,7 +152,7 @@ create_inflow_outflow_files_arrow  <- function(config, config_set_name) {
                                              local_directory = list(file.path(lake_directory, config$flows$local_inflow_directory),
                                                                     file.path(lake_directory, config$flows$local_outflow_directory)),
                                              use_ler_vars = config$flows$use_ler_vars),
-                                        FLAREr:::create_flow_files)  |>
+                                        create_flow_files)  |>
       set_names('inflow_file_names', 'outflow_file_names')
 
 
@@ -193,7 +195,7 @@ create_inflow_outflow_files_arrow  <- function(config, config_set_name) {
                                              local_directory = list(file.path(lake_directory, config$flows$local_inflow_directory),
                                                                     file.path(lake_directory, config$flows$local_outflow_directory)),
                                              use_ler_vars = config$flows$use_ler_vars),
-                                        FLAREr:::create_flow_files) |>
+                                        create_flow_files) |>
       set_names('inflow_file_names', 'outflow_file_names')
 
   } else if (!config$flows$include_inflow & !config$flows$include_inflow) {  # don't specify inflows or outflows

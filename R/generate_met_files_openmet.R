@@ -118,7 +118,7 @@ generate_met_files_openmet <- function(out_dir,
         na.omit() |>
         summarize(max_datetime = max(datetime), .by = ensemble) |>
         filter(ensemble == "00") |>
-        pull(max_datetime)
+        pull("max_datetime")
 
       if(use_archive){
 

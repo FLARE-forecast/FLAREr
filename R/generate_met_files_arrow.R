@@ -65,7 +65,7 @@ generate_met_files_arrow <- function(obs_met_file = NULL,
       if(is.null(bucket) | is.null(endpoint)){
         stop("inflow forecast function needs bucket and endpoint if use_s3=TRUE")
       }
-      vars <- FLAREr:::arrow_env_vars()
+      vars <- arrow_env_vars()
 
       if(use_hive_met){
         forecast_dir <- arrow::s3_bucket(bucket = file.path(bucket, paste0("stage2/reference_datetime=",forecast_date),paste0("site_id=",lake_name_code)),
@@ -75,7 +75,7 @@ generate_met_files_arrow <- function(obs_met_file = NULL,
                                          endpoint_override =  endpoint, anonymous = TRUE)
       }
 
-      FLAREr:::unset_arrow_vars(vars)
+      unset_arrow_vars(vars)
     }else{
       if(is.null(local_directory)){
         stop("inflow forecast function needs local_directory if use_s3=FALSE")
@@ -325,7 +325,7 @@ generate_met_files_arrow <- function(obs_met_file = NULL,
       }
 
       # check for bad data
-      FLAREr:::missing_data_check(df)
+      missing_data_check(df)
 
       fn <- paste0("met_",stringr::str_pad(ens, width = 2, side = "left", pad = "0"),".csv")
       fn <- file.path(out_dir, fn)

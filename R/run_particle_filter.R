@@ -19,10 +19,13 @@
 #' @param pars_config parameter configuration list
 #' @param config FLARE configuration list
 #' @param depth_index index in x matrix with depth values
+#' @param secchi_index in x matrix with secchi values
 #' @param depth_obs observed depth
 #' @param depth_sd observed depth standard deviation
 #' @param par_fit_method method for fixing parameters
 #' @param vertical_obs number of vertical observations (i.e. states not associated with a depth)
+#' @param working_directory current working directory for simulation
+#' @param obs_config list of observation configurations
 #'
 #' @return list of updated model states, diagnostics, and parameters
 #' @noRd
@@ -46,10 +49,13 @@ run_particle_filter <- function(x_matrix,
                                 pars_config,
                                 config,
                                 depth_index,
+                                secchi_index,
                                 depth_obs,
                                 depth_sd,
                                 par_fit_method,
-                                vertical_obs){
+                                vertical_obs,
+                                working_directory,
+                                obs_config){
 
   npars <- dim(pars_corr)[1]
   nmembers <- dim(states_depth_start)[3]

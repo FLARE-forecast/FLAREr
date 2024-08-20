@@ -4,12 +4,14 @@
 \alias{create_inflow_outflow_files_arrow}
 \title{Generating inflow and outflow files in the GLM format using arrow}
 \usage{
-create_inflow_outflow_files_arrow(config, config_set_name)
+create_inflow_outflow_files_arrow(config, config_set_name, lake_directory)
 }
 \arguments{
 \item{config}{configuration file}
 
 \item{config_set_name}{specific name of configuration within the configuration directory}
+
+\item{lake_directory}{directory for FLARE application}
 }
 \value{
 list with two vectors. One vector is the matrix of inflow_file_names and the other is the matrix of outflow_file_names

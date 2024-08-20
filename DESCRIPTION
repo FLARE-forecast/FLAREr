@@ -1,5 +1,5 @@
 Package: FLAREr
-Title: Forecasting Lake and Reservoir Ecosystems
+Title: Forecasting Lake and Reservoir Ecosystems in R
 Version: 3.0.0
 Authors@R: 
     c(person(given = "R. Quinn",
@@ -39,14 +39,11 @@ Imports:
     tools,
     ggplot2,
     GLM3r,
-    patchwork,
     parallel,
     purrr,
     furrr,
     future,
     score4cast,
-    read4cast,
-    methods,
     arrow,
     aws.s3,
     brio,
@@ -60,7 +57,7 @@ Imports:
     RopenMeteo,
     EML,
     emld
-Remotes: rqthomas/GLM3r, eco4cast/score4cast, eco4cast/read4cast, FLARE-forecast/RopenMeteo
+Remotes: rqthomas/GLM3r, eco4cast/score4cast, FLARE-forecast/RopenMeteo
 Suggests: 
     knitr,
     rmarkdown,

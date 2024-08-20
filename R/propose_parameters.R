@@ -1,5 +1,6 @@
 #' Propose new parameters for use in data assimilation and forecasting
 #'
+#' @param i time step index
 #' @param m ensemble member number
 #' @param pars matrix of parameters
 #' @param pars_config parameter configuration data frame
@@ -10,7 +11,7 @@
 #' @param include_uncertainty include parameter uncertainty in forecasts
 #' @noRd
 #' @return vector of new parameter values for the ensemble member
-propose_parameters <- function(m, pars, pars_config, npars, par_fit_method, da_method, hist_days,
+propose_parameters <- function(i, m, pars, pars_config, npars, par_fit_method, da_method, hist_days,
                                include_uncertainty){
 
   curr_pars_ens <- NULL

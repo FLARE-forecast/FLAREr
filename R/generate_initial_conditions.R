@@ -50,7 +50,7 @@ generate_initial_conditions <- function(states_config,
     init$log_particle_weights <- array(NA, dim=c(nmembers))
 
     init$lake_depth[] <- round(config$default_init$lake_depth, 4)
-    nml <- FLAREr:::read_nml(file.path(config$file_path$configuration_directory, config$model_settings$base_GLM_nml))
+    nml <- read_nml(file.path(config$file_path$configuration_directory, config$model_settings$base_GLM_nml))
     max_depth <- nml$morphometry$H[length(nml$morphometry$H)] - nml$morphometry$H[1]
     if(!is.null(obs_non_vertical$obs_depth)){
       if(!is.na(obs_non_vertical$obs_depth$obs[1])){

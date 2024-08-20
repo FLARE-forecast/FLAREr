@@ -19,6 +19,7 @@
 #' @param pars_config parameter configuration list
 #' @param config FLARE configuration list
 #' @param depth_index index in x matrix with depth values
+#' @param secchi_index in x matrix with secchi values
 #' @param depth_obs observed depth
 #' @param depth_sd observed depth standard deviation
 #' @param par_fit_method method for fixing parameters
@@ -44,6 +45,7 @@ run_enkf <- function(x_matrix,
                      pars_config,
                      config,
                      depth_index,
+                     secchi_index,
                      depth_obs,
                      depth_sd,
                      par_fit_method){
@@ -120,11 +122,11 @@ run_enkf <- function(x_matrix,
 
   if(!is.null(config$da_setup$localization_distance)){
     if(!is.na(config$da_setup$localization_distance)){
-      p_t <- FLAREr:::localization(mat = p_t,
-                                   nstates = nstates,
-                                   modeled_depths = config$model_settings$modeled_depths,
-                                   localization_distance = config$da_setup$localization_distance,
-                                   num_single_states = dim(p_t)[1] - nstates * length(config$model_settings$modeled_depths))
+      p_t <- localization(mat = p_t,
+                          nstates = nstates,
+                          modeled_depths = config$model_settings$modeled_depths,
+                          localization_distance = config$da_setup$localization_distance,
+                          num_single_states = dim(p_t)[1] - nstates * length(config$model_settings$modeled_depths))
     }
   }
   #Kalman gain
@@ -141,7 +143,7 @@ run_enkf <- function(x_matrix,
 
   if(depth_index > 0){
     lake_depth_updated<- update[(ndepths_modeled*nstates + depth_index), ]
-    nml <- FLAREr:::read_nml(file.path(config$file_path$configuration_directory, config$model_settings$base_GLM_nml))
+    nml <- read_nml(file.path(config$file_path$configuration_directory, config$model_settings$base_GLM_nml))
     max_depth <- nml$morphometry$H[length(nml$morphometry$H)] - nml$morphometry$H[1]
     index <- which(lake_depth_updated > max_depth)
     lake_depth_updated[index] <- max_depth

@@ -130,8 +130,8 @@ run_model <- function(i,
     start_index <- 2
 
     for(wq in 1:num_wq_vars){
-        wq_tmp <- rev(states_heights_start[start_index + wq, native_heights_index])
-        wq_init_vals <- c(wq_init_vals, wq_tmp)
+      wq_tmp <- rev(states_heights_start[start_index + wq, native_heights_index])
+      wq_init_vals <- c(wq_init_vals, wq_tmp)
     }
 
     update_glm_nml_list[[list_index]] <- round(wq_init_vals, rounding_level)
@@ -203,16 +203,16 @@ run_model <- function(i,
     list_index <- list_index + 1
   }
 
-  FLAREr:::update_nml(var_list = update_glm_nml_list,
-                      var_name_list = update_glm_nml_names,
-                      working_directory = ens_working_directory,
-                      nml = "glm3.nml")
+  update_nml(var_list = update_glm_nml_list,
+             var_name_list = update_glm_nml_names,
+             working_directory = ens_working_directory,
+             nml = "glm3.nml")
 
   if(list_index_aed > 1){
-    FLAREr:::update_nml(update_aed_nml_list,
-                        update_aed_nml_names,
-                        working_directory = ens_working_directory,
-                        "aed2.nml")
+    update_nml(update_aed_nml_list,
+               update_aed_nml_names,
+               working_directory = ens_working_directory,
+               "aed2.nml")
   }
 
   if(list_index_phyto > 1){
@@ -293,12 +293,12 @@ run_model <- function(i,
       output_vars_multi_depth <- state_names
       output_vars_no_depth <- NA
 
-      GLM_temp_wq_out <-  FLAREr:::get_glm_nc_var(ncFile = "/output.nc",
-                                                         working_dir = ens_working_directory,
-                                                         z_out = modeled_depths,
-                                                         vars_depth = output_vars_multi_depth,
-                                                         vars_no_depth = output_vars_no_depth,
-                                                         diagnostic_vars = diagnostics_names)
+      GLM_temp_wq_out <-  get_glm_nc_var(ncFile = "/output.nc",
+                                         working_dir = ens_working_directory,
+                                         z_out = modeled_depths,
+                                         vars_depth = output_vars_multi_depth,
+                                         vars_no_depth = output_vars_no_depth,
+                                         diagnostic_vars = diagnostics_names)
 
       unlink(paste0(ens_working_directory, "/output.nc"))
 

@@ -181,7 +181,7 @@ run_da_forecast <- function(states_init,
         unlink(file.path(working_directory, m), recursive = TRUE)
         dir.create(file.path(working_directory, m), showWarnings = FALSE)
       }
-      FLAREr:::set_up_model(config,
+      set_up_model(config,
                             ens_working_directory = file.path(working_directory, m),
                             state_names = states_config$state_names,
                             inflow_file_names = inflow_file_names,
@@ -275,7 +275,7 @@ run_da_forecast <- function(states_init,
           curr_met_file <- met_file_names[met_index[m]]
         }
 
-        curr_pars_ens <- FLAREr:::propose_parameters(m,
+        curr_pars_ens <- propose_parameters(i, m,
                                                      pars,
                                                      pars_config,
                                                      npars,
@@ -297,7 +297,7 @@ run_da_forecast <- function(states_init,
           outflow_file_name <- NULL
         }
 
-        out <-  FLAREr:::run_model(i,
+        out <-  run_model(i,
                                    m,
                                    mixing_vars_start = mixing_vars[,i-1 , m],
                                    mixer_count_start = mixer_count[i-1,m],
@@ -368,7 +368,7 @@ run_da_forecast <- function(states_init,
           include_process_uncertainty <- TRUE
         }
 
-        with_noise <- FLAREr:::add_process_noise(states_height_ens = states_height[i, , , m],
+        with_noise <- add_process_noise(states_height_ens = states_height[i, , , m],
                                                  model_sd = model_sd,
                                                  model_internal_heights_ens = model_internal_heights[i, ,m],
                                                  lake_depth_ens = lake_depth[i,m],
@@ -625,6 +625,7 @@ run_da_forecast <- function(states_init,
                             pars_config,
                             config,
                             depth_index,
+                            secchi_index,
                             depth_obs,
                             depth_sd,
                             par_fit_method)
@@ -650,10 +651,13 @@ run_da_forecast <- function(states_init,
                                        pars_config,
                                        config,
                                        depth_index,
+                                       secchi_index,
                                        depth_obs,
                                        depth_sd,
                                        par_fit_method,
-                                       vertical_obs)
+                                       vertical_obs,
+                                       working_directory,
+                                       obs_config)
 
       }else{
         stop("da_method not supported; select enkf or pf or none")
