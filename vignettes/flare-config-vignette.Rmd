@@ -38,7 +38,11 @@ A guide to the variables in `configure_flare.yml` and in the
 
 -   **da_method:** code for data assimilation method (`enkf` or `pf`)
 
+    -   **enkf**: ensemble Kalman Filter
+    -   **pf**: bootstrap resampling particle filter
+
 -   **par_fit_method:** method for parameter fitting
+
     -   **inflate** uses the parameter `inflat_pars` in the par
         configuration to increase the variance of the parameters when
         data is assimilated. This is the method used in Thomas et al.
@@ -54,7 +58,7 @@ A guide to the variables in `configure_flare.yml` and in the
 -   **ensemble_size:** number of ensemble members
 
 -   **localization_distance:** distance in meters over which covariances
-    are in the enkf covariance metric is deminished. The distance
+    are in the enkf covariance metric is diminished. The distance
     governs the exponential decay of the covariance strength.
 
 -   **no_negative_states:** Force non-temperature states to be positive
@@ -68,9 +72,9 @@ A guide to the variables in `configure_flare.yml` and in the
 
 -   **obs_filename:** file name of targets file. It is required to be
     located in the `lake_directory/targets/{site_id}` directory.
-    
--   **pf_always_resample:** Force the particle filter to resample each timestep (only when `da_method = pf`)
-    (`TRUE` or `FALSE`)
+
+-   **pf_always_resample:** Force the particle filter to resample each
+    timestep (only when `da_method = pf`) (`TRUE` or `FALSE`)
 
 ### model_settings:
 
@@ -80,11 +84,12 @@ A guide to the variables in `configure_flare.yml` and in the
 
 -   **base_GLM_nml:** name of base GLM namelist. It is required to be in
     the `lake_directory/configuraton/{config_set}` directory.
-    
--   **max_model_layers:** maximum number of layers allowed in the GLM simulations
 
--   **modeled_depths:** vector of depths (m) with observations or that the user desires output for. Value
-    is for the top of the layer.
+-   **max_model_layers:** maximum number of layers allowed in the GLM
+    simulations
+
+-   **modeled_depths:** vector of depths (m) with observations or that
+    the user desires output for. Value is for the top of the layer.
 
 -   **par_config_file:** name of parameter configuration csv. It is
     required to be in the `lake_directory/configuraton/{config_set}`
@@ -100,26 +105,8 @@ A guide to the variables in `configure_flare.yml` and in the
     that specifies how process uncertainty depends on depth. If used it
     is required be in the `lake_directory/configuraton/{config_set}`
     directory.
-    
 
 ### default_init:
-
--   **lake_depth_init:** initial lake depth (meters)
-
--   **default_temp_init:** vector of initial temperature profile
-
--   **default_temp_init_depths:** vector of depths in initial
-    temperature profile
-
--   **the_sals_init**: vector of initial salinty values
-
--   **default_snow_thickness_init:** initial snow thickness (cm)
-
--   **default_white_ice_thickness_init:** initial white ice thickness
-
-    (cm) 
-
--   **default_blue_ice_thickness_init:** initial blue ice thickness (cm)
 
 -   **lake_depth:** initial lake depth (meters)
 
@@ -127,7 +114,7 @@ A guide to the variables in `configure_flare.yml` and in the
 
 -   **temp_depths:** vector of depths in initial temperature profile
 
--   **salinity:** initial salinty value (g/kg)
+-   **salinity:** initial salinity value (g/kg)
 
 -   **snow_thickness:** initial snow thickness (m)
 
@@ -137,31 +124,46 @@ A guide to the variables in `configure_flare.yml` and in the
 
 ### met:
 
--  **future_met_model:** 
--  **historical_met_model:** gefs-v12-reprocess/stage3 # or historical_met_model: gets-v12/stage3
--  **forecast_lag_days:** 0
--  **use_ler_vars:**  use LER standardized met names (`TRUE` or `FALSE`)
--  **use_met_s3:** access met data on s3 bucket (`TRUE` or `FALSE`)
--  **openmeteo_api:** F
--  **openmeteo_model:**
--  **use_openmeteo_archive:** 
--  **local_met_directory:** directory where meterology forcasts are saved
-    if not using s3 access. Relative to the lake_directory.
+-   **future_met_model:** path to met model used for forecast days
+    (relative to `s3$drivers$bucket` path or **local_met_directory**)
+-   **historical_met_model:** path to met model used for historical days
+    (relative to `s3$drivers$bucket` path or **local_met_directory**)
+-   **forecast_lag_days:** number of days to look backward for a
+    forecast
+-   **use_ler_vars:** use LER standardized met names (`TRUE` or `FALSE`)
+-   **use_met_s3:** access met data on s3 bucket (`TRUE` or `FALSE`)
+-   **openmeteo_api:** the name of the openmeteo api to use (leave empty
+    if not using openmeteo); `seasonal`, `ensemble_forecast`,
+    `historical`, `climate`
+-   **openmeteo_model:** name of the openmeteo model to use (leave empty
+    if not using openmeteo); see <https://open-meteo.com/en/docs> for
+    list of models
+-   **use_openmeteo_archive:** use a archived version of openmeteo on s3
+    rather than directly using the api
+-   **local_met_directory:** directory where meteorology forecasts are
+    saved if not using s3 access. Relative to the lake_directory.
 
 ### inflow:
 
--  **include_inflow:** Include inflows in simulations (`TRUE` or
+-   **include_inflow:** Include inflows in simulations (`TRUE` or
     `FALSE`)
--  **include_outflow:** Include outflows in simulations (`TRUE` or
+-   **include_outflow:** Include outflows in simulations (`TRUE` or
     `FALSE`)
--  **future_inflow_model:** historical_interp
--  **historical_inflow_model:** historical_interp
--  **local_inflow_directory:** directory where inflow forcasts are saved if
-    not using s3 access. Relative to the lake_directory.
--  **future_outflow_model:** historical_interp
--  **historical_outflow_model:** historical_interp
--  **local_outflow_directory:** directory where outflow forcasts are saved if
-    not using s3 access. Relative to the lake_directory.
+-   **future_inflow_model:** path to inflow model used for forecast days
+    (relative to `s3$inflow$bucket` path or **local_inflow_directory**)
+-   **historical_inflow_model:** path to inflow model used for
+    historical days (relative to `s3$inflow$bucket` path or
+    **local_inflow_directory**)
+-   **local_inflow_directory:** directory where inflow forecasts are
+    saved if not using s3 access. Relative to the lake_directory.
+-   **future_outflow_model:** path to outflow model used for forecast
+    days (relative to `s3$outflow$bucket` path or
+    **local_outflow_directory**)
+-   **historical_outflow_model:** path to outflow model used for
+    historical days (relative to `s3$outflow$bucket` path or
+    **local_outflow_directory**)
+-   **local_outflow_directory:** directory where outflow forecasts are
+    saved if not using s3 access. Relative to the lake_directory.
 
 ### uncertainty:
 
@@ -196,26 +198,29 @@ A guide to the variables in `configure_flare.yml` and in the
 ### s3
 
 -   **drivers:**
-    -   **endpoint:**
-    -   **bucket:**
+    -   **endpoint:** s3 endpoint of met drivers
+    -   **bucket:** s3 bucket of met drivers
 -   **inflow_drivers:**
-    -   **endpoint:**
-    -   **bucket:**
+    -   **endpoint:** s3 endpoint of inflow drivers
+    -   **bucket:** s3 bucket of inflow drivers
+-   **outflow_drivers:**
+    -   **endpoint:** s3 endpoint of outflow drivers
+    -   **bucket:** s3 bucket of outflow drivers
 -   **targets:**
-    -   **endpoint:**
-    -   **bucket:**
+    -   **endpoint:** s3 endpoint of target files
+    -   **bucket:** s3 bucket of target files
 -   **forecasts:**
-    -   **endpoint:**
-    -   **bucket:**
+    -   **endpoint:** s3 endpoint of forecast netcdf restart files
+    -   **bucket:** s3 bucket of forecast netcdf restart files
 -   **forecasts_parquet:**
-    -   **endpoint:**
-    -   **bucket:**
+    -   **endpoint:** s3 endpoint of forecast parquet files
+    -   **bucket:** s3 bucket of forecast parquet files
 -   **warm_start:**
-    -   **endpoint:**
-    -   **bucket:**
+    -   **endpoint:** s3 endpoint of restart yaml file
+    -   **bucket:** s3 bucket of restart yaml file
 -   **scores:**
-    -   **endpoint:**
-    -   **bucket:**
+    -   **endpoint:** s3 endpoint of scores
+    -   **bucket:** s3 bucket of scores
 
 ## parameter_calibration_config.csv
 
@@ -224,7 +229,7 @@ A guide to the variables in `configure_flare.yml` and in the
     that are desired in output and plots
 -   **par_file:** vector of nml or csv file names that contains the
     parameter that is being estimated
--   **par_init_mean:** vector of initial mean value for parameters
+-   **par_init:** vector of initial mean value for parameters
 -   **par_init_lowerbound:** vector of lower bound for the initial
     uniform distribution of the parameters
 -   **par_init_upperbound:** vector of upper bound for the initial
@@ -236,6 +241,7 @@ A guide to the variables in `configure_flare.yml` and in the
 -   **perturb_par:** The standard deviation of the normally distributed
     random noise that is added to parameters
 -   **par_units:** Units of parameter for plotting
+-   **fix_par**: 0 = fit parameter, 1 = hold parameter at **par_init**
 
 ## states_config.csv
 
@@ -247,6 +253,7 @@ A guide to the variables in `configure_flare.yml` and in the
     to set the depth profile when observations are lacking
 -   **model_sd:** the standard deviation of the process error for the
     tate
+-   **vert_decorr_length:**
 -   **initial_model_sd:** the standard deviation on the initial
     distribution of the state
 -   **states_to_obs_mapping:** a multiplier on the state to convert to
@@ -271,7 +278,7 @@ A guide to the variables in `configure_flare.yml` and in the
 ### depth_model_sd.csv:
 
 -   **depth:** depth (m)
--   *column name* = variable name for states that have depth varying
+-   column names: **variable** name for states that have depth varying
     process uncertainty. Values are the sd for each depth. sd will be
     interpolated between and extrapolated beyond the depths provided.
 
@@ -281,3 +288,5 @@ A guide to the variables in `configure_flare.yml` and in the
 -   **obs_sd**: the standard deviation of the observation uncertainty
 -   **target_variable**: the name of variable in the data file that is
     used for the observed state.
+-   **multi_depth:** 1 = observation has multiple depths, 0 =
+    observation does not have a depth associated with it.
