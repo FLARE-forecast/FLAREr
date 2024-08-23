@@ -65,8 +65,7 @@ with a value in \code{model_sd}.}
 \item{obs_depth}{list of depth observations}
 }
 \value{
-a list is passed to \code{write_forecast_netcdf()} to write the
-netcdf output and \code{create_flare_eml()} to generate the EML metadata
+a list
 }
 \description{
 Run ensemble data assimilation and/or produce forecasts
@@ -81,16 +80,4 @@ following dimension order: parameters, ensemble member.  The arrays for states_i
 and pars_init can be created using the \code{generate_initial_conditions()} function, if
 starting from initial conditions in the  \code{states_config} data frame or from observations
 in first time column of the \code{obs} array.
-}
-\examples{
-\dontrun{
-da_forecast_output <- FLAREr::run_da_forecast(states_init = init$states,
-    pars_init = init$pars, aux_states_init = init$aux_states_init,
-    obs = obs, obs_sd = obs_config$obs_sd, model_sd = model_sd,
-    working_directory = config$file_path$execute_directory,
-    met_file_names = met_file_names, inflow_file_names = inflow_file_names,
-    outflow_file_names = outflow_file_names, config = config,
-    pars_config = pars_config, states_config = states_config,
-    obs_config = obs_config)
-}
 }

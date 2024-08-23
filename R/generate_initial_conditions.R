@@ -8,14 +8,7 @@
 #' @param obs_non_vertical list; observations of variables that don't have vertical dimension.
 #' @import ncdf4
 #' @return list; list contains the initial conditions objects required by run_da_forecast()
-#' @export
 #' @author Quinn Thomas
-#' @examples
-#' \dontrun{
-#'   init <- generate_initial_conditions(states_config, obs_config,
-#'     pars_config, obs, config, restart_file = config$run_config$restart_file,
-#'     historical_met_error = met_out$historical_met_error)
-#'   }
 generate_initial_conditions <- function(states_config,
                                         obs_config,
                                         pars_config = NULL,

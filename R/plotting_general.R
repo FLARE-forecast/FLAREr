@@ -4,7 +4,6 @@
 ##' @param targets_df dataframe; data frame containing all observations (targets)
 ##' @param forecast_df dataframe; data frame containing the forecast predictions
 ##' @return None
-##' @export
 ##' @import dplyr
 ##' @import ggplot2
 ##' @importFrom lubridate as_datetime

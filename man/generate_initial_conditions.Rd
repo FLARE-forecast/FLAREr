@@ -35,13 +35,6 @@ Generate initial conditions for FLARE
 \details{
 Function to generate initial conditions from either default values in the states_config, observations (if available), or a previous run using the output as a restart file.
 }
-\examples{
-\dontrun{
-  init <- generate_initial_conditions(states_config, obs_config,
-    pars_config, obs, config, restart_file = config$run_config$restart_file,
-    historical_met_error = met_out$historical_met_error)
-  }
-}
 \author{
 Quinn Thomas
 }

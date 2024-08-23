@@ -7,8 +7,7 @@
 #' @param forecast_start_datetime datetime that a forecast starts
 #' @param forecast_horizon number of days forecasted
 #'
-#' @return list of secchi and depth observations for use in FLARE
-#' @export
+#' @return list of secchi and depth observations for use in FLAREs
 create_obs_non_vertical <- function(cleaned_observations_file_long,
                                     obs_config,
                                     start_datetime,

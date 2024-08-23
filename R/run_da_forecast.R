@@ -30,22 +30,8 @@
 #' @param par_fit_method string; method for adding noise to parameters during calibration
 #' @param obs_secchi list of secchi observations
 #' @param obs_depth list of depth observations
-#' @return a list is passed to `write_forecast_netcdf()` to write the
-#' netcdf output and `create_flare_eml()` to generate the EML metadata
-#' @export
-#' @importFrom parallel clusterExport detectCores clusterEvalQ parLapply stopCluster
-#' @importFrom GLM3r glm_version
-#' @examples
-##' \dontrun{
-#' da_forecast_output <- FLAREr::run_da_forecast(states_init = init$states,
-#'     pars_init = init$pars, aux_states_init = init$aux_states_init,
-#'     obs = obs, obs_sd = obs_config$obs_sd, model_sd = model_sd,
-#'     working_directory = config$file_path$execute_directory,
-#'     met_file_names = met_file_names, inflow_file_names = inflow_file_names,
-#'     outflow_file_names = outflow_file_names, config = config,
-#'     pars_config = pars_config, states_config = states_config,
-#'     obs_config = obs_config)
-#' }
+#' @return a list
+
 
 run_da_forecast <- function(states_init,
                             pars_init = NULL,

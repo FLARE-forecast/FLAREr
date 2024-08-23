@@ -1,14 +1,3 @@
-#FUNCTIONS Shared between the MCMC and EnKF
-
-#' Add together two numbers.
-#'
-#' @param x A number.
-#' @param y A number.
-#' @return The sum of \code{x} and \code{y}.
-#' @noRd
-#' @examples
-#' add(1, 1)
-#' add(10, 1)
 update_var <- function(var_value,var_name,working_directory, nml){
 
   orig_nml <- read_nml(paste0(working_directory,'/',nml))

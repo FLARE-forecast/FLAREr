@@ -4,16 +4,10 @@
 ##' @param obs_config list; observations configuration list
 ##' @param config list; flare configuration list
 ##' @return matrix that is based to generate_initial_conditions() and run_da_forecast()
-##' @export
 ##' @import readr
 ##' @importFrom lubridate as_datetime as_date hour days
 ##' @importFrom dplyr filter
 ##' @author Quinn Thomas
-##' @examples
-##' \dontrun{
-##' obs <- create_obs_matrix(cleaned_observations_file_long, obs_config, config)
-##' }
-
 create_obs_matrix <- function(cleaned_observations_file_long,
                               obs_config,
                               config){

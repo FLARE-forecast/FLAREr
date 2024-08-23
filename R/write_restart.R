@@ -4,18 +4,10 @@
 ##' @param forecast_output_directory string; full path of directory where the netcdf file will be written
 ##' @param use_short_filename use shortened file name; this results in less informatoin in the file name and potentially overwriting existing files
 ##' @return None
-##' @export
 ##' @import ncdf4
 ##' @import ggplot2
 ##' @importFrom lubridate with_tz
 ##' @author Quinn Thomas
-##' @examples
-##' \dontrun{
-##' write_forecast_netcdf(da_forecast_output = da_forecast_output,
-##'     forecast_output_directory = config$file_path$forecast_output_directory,
-##'     use_short_filename = TRUE)
-##' }
-##'
 
 write_restart <- function(da_forecast_output,
                                   forecast_output_directory,

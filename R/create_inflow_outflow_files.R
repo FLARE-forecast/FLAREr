@@ -5,7 +5,6 @@
 #' @param lake_directory directory for FLARE application
 #' @return list with two vectors. One vector is the matrix of inflow_file_names and the other is the matrix of outflow_file_names
 #'
-#' @export
 #'
 create_inflow_outflow_files  <- function(config, config_set_name, lake_directory) {
   # set use_s3 to T if missing

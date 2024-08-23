@@ -17,9 +17,9 @@ run_flare <- function(lake_directory,
     stop(paste0("lake_directory is missing the configuration/",config_set_name," directory"))
   }
 
-  config <- FLAREr::set_configuration(configure_run_file, lake_directory, config_set_name = config_set_name)
+  config <- set_configuration(configure_run_file, lake_directory, config_set_name = config_set_name)
 
-  config <- FLAREr::get_restart_file(config, lake_directory)
+  config <- get_restart_file(config, lake_directory)
 
   message(paste0("     Running forecast that starts on: ", config$run_config$start_datetime))
 
@@ -63,7 +63,7 @@ run_flare <- function(lake_directory,
 
     message('Using OpenMeteo Met Drivers...')
 
-    met_out <- FLAREr::create_met_files_openmet(out_dir = config$file_path$execute_directory,
+    met_out <- create_met_files_openmet(out_dir = config$file_path$execute_directory,
                                           start_datetime = met_start_datetime,
                                           end_datetime = config$run_config$end_datetime,
                                           forecast_start_datetime = met_forecast_start_datetime,
@@ -78,24 +78,24 @@ run_flare <- function(lake_directory,
                                           endpoint = config$s3$drivers$endpoint)
   }else{
 
-    met_out <- FLAREr::create_met_files(config, lake_directory)
+    met_out <- create_met_files(config, lake_directory)
   }
 
   message('Creating inflow/outflow files...')
 
-  inflow_outflow_files <- FLAREr::create_inflow_outflow_files(config, config_set_name, lake_directory)
+  inflow_outflow_files <- create_inflow_outflow_files(config, config_set_name, lake_directory)
 
   obs_insitu_file <- file.path(config$file_path$qaqc_data_directory, config$da_setup$obs_filename)
   if(!file.exists(obs_insitu_file)){
     stop(paste0(file.path(config$file_path$qaqc_data_directory, config$da_setup$obs_filename), " is not found"))
   }
 
-  obs <- FLAREr::create_obs_matrix(cleaned_observations_file_long = obs_insitu_file,
+  obs <- create_obs_matrix(cleaned_observations_file_long = obs_insitu_file,
                                    obs_config = obs_config,
                                    config)
 
 
-  obs_non_vertical <- FLAREr::create_obs_non_vertical(cleaned_observations_file_long = file.path(config$file_path$qaqc_data_directory,paste0(config$location$site_id, "-targets-insitu.csv")),
+  obs_non_vertical <- create_obs_non_vertical(cleaned_observations_file_long = file.path(config$file_path$qaqc_data_directory,paste0(config$location$site_id, "-targets-insitu.csv")),
                                                       obs_config,
                                                       start_datetime = config$run_config$start_datetime,
                                                       end_datetime = config$run_config$end_datetime,
@@ -104,18 +104,18 @@ run_flare <- function(lake_directory,
 
   message('Setting states and initial conditions...')
 
-  states_config <- FLAREr::generate_states_to_obs_mapping(states_config, obs_config)
+  states_config <- generate_states_to_obs_mapping(states_config, obs_config)
 
-  model_sd <- FLAREr::initiate_model_error(config, states_config)
+  model_sd <- initiate_model_error(config, states_config)
 
-  init <- FLAREr::generate_initial_conditions(states_config,
+  init <- generate_initial_conditions(states_config,
                                               obs_config,
                                               pars_config,
                                               obs,
                                               config,
                                               obs_non_vertical)
   #Run EnKF
-  da_forecast_output <- FLAREr::run_da_forecast(states_init = init$states,
+  da_forecast_output <- run_da_forecast(states_init = init$states,
                                                 pars_init = init$pars,
                                                 aux_states_init = init$aux_states_init,
                                                 obs = obs,
@@ -139,12 +139,12 @@ run_flare <- function(lake_directory,
   gc()
 
   message("Writing restart")
-  saved_file <- FLAREr::write_restart(da_forecast_output = da_forecast_output,
+  saved_file <- write_restart(da_forecast_output = da_forecast_output,
                                               forecast_output_directory = config$file_path$forecast_output_directory,
                                               use_short_filename = TRUE)
 
   message("Writing forecast")
-  forecast_df <- FLAREr::write_forecast(da_forecast_output = da_forecast_output,
+  forecast_df <- write_forecast(da_forecast_output = da_forecast_output,
                                               use_s3 = config$run_config$use_s3,
                                               bucket = config$s3$forecasts_parquet$bucket,
                                               endpoint = config$s3$forecasts_parquet$endpoint,
@@ -164,7 +164,7 @@ run_flare <- function(lake_directory,
 
 
   message("Putting forecast")
-  FLAREr::put_forecast(saved_file, config = config)
+  put_forecast(saved_file, config = config)
 
   message(paste0("successfully generated flare forecats for: ", tools::file_path_sans_ext(basename(saved_file))))
 

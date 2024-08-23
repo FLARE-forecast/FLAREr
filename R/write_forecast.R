@@ -6,7 +6,6 @@
 ##' @param endpoint S3 endpoint
 ##' @param local_directory local directory of scores if not using s3
 ##' @return None
-##' @export
 ##' @importFrom lubridate with_tz
 ##' @author Quinn Thomas
 ##'

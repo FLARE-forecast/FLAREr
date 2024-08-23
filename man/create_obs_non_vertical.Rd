@@ -27,7 +27,7 @@ create_obs_non_vertical(
 \item{forecast_horizon}{number of days forecasted}
 }
 \value{
-list of secchi and depth observations for use in FLARE
+list of secchi and depth observations for use in FLAREs
 }
 \description{
 Process observation for variables that don't have depth
