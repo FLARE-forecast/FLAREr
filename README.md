@@ -30,12 +30,12 @@ You will need to download the necessary packages prior to running.
 ```
 remotes::install_github("FLARE-forecast/FLAREr")
 ```
-
+https://github.com/AquaticEcoDynamics/glm-aed/archive/refs/heads/main.zip
 ```
-download.file("https://github.com/AquaticEcoDynamics/glm-aed/archive/refs/tags/v3.3.0.zip", "v3.3.0.zip")
-unzip("v3.3.0.zip")
-system2("chmod","u+x glm-aed-3.3.0/binaries/macos/Big_Sur/glm_latest/glm")
-system2("./glm-aed-3.3.0/binaries/macos/Big_Sur/glm_latest/glm")
+download.file("https://github.com/rqthomas/glm-aed/archive/refs/heads/main.zip", "glm_aed.zip")
+unzip("glm_aed.zip")
+system2("chmod","u+x glm-aed-main/binaries/macos/Sonoma/glm_latest/glm")
+system2("./glm-aed-main/binaries/macos/Sonoma/glm_latest/glm")
 ```
 
 ```

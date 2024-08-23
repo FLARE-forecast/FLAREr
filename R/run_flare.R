@@ -13,11 +13,6 @@ run_flare <- function(lake_directory,
                       configure_run_file,
                       config_set_name){
 
-  if(!length(find.package("GLM3r", quiet = TRUE)) > 0L){
-    msg <- "The GLM model is required for data assimilation and forecasting. It can be installed using\n devtools::install_github('FLARE-forecast/GLM3r')\n"
-    stop(msg)
-  }
-
   if(!dir.exists(file.path(lake_directory, "configuration", config_set_name))){
     stop(paste0("lake_directory is missing the configuration/",config_set_name," directory"))
   }
@@ -159,7 +154,7 @@ run_flare <- function(lake_directory,
   gc()
 
   message("Generating plot")
-  targets_df <- read_csv(file.path(config$file_path$qaqc_data_directory,paste0(config$location$site_id, "-targets-insitu.csv")))
+  targets_df <- read_csv(file.path(config$file_path$qaqc_data_directory,paste0(config$location$site_id, "-targets-insitu.csv")), show_col_types = FALSE)
   plotting_general(forecast_df, targets_df, file_name = saved_file)
 
   rm(forecast_df)

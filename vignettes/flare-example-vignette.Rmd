@@ -187,12 +187,16 @@ df |>
 
 ```
 ```{r}
-df |> 
-  filter(variable == "lw_factor") |> 
+targets_df <- read_csv(file.path(lake_directory, "targets/fcre/fcre-targets-insitu.csv"), show_col_types = FALSE)
+combined_df <- left_join(df, targets_df, by = join_by(datetime, depth, variable, site_id))
+combined_df |> 
+  filter(variable == "temperature",
+         depth == 1) |> 
   ggplot(aes(x = datetime, y = prediction, group = parameter)) +
   geom_line() +
   geom_vline(aes(xintercept = as_datetime(reference_datetime))) +
-  labs(title = "lw_factor")
+  geom_point(aes(y = observation), color = "red") +
+  labs(title = "1 m water temperature forecast")
 ```
 
 ## 5. Comparing to observations

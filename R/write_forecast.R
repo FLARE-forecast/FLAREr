@@ -225,7 +225,7 @@ write_forecast <- function(da_forecast_output,
   for(i in 1:length(states_config$state_names)){
     if(length(which(obs_config$state_names_obs == states_config$state_names[i])) >0){
       obs_name <- obs_config$target_variable[which(obs_config$state_names_obs == states_config$state_names[i])]
-      output_list <- output_list %>%
+      output_list <- output_list |>
         dplyr::mutate(variable = ifelse(variable == states_config$state_names[i], obs_name, variable))
     }
   }

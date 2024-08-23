@@ -11,7 +11,7 @@ da_setup:
     pf_always_resample: FALSE
     no_negative_states: FALSE
     assimilate_first_step: FALSE
-    use_obs_constraint: FALSE
+    use_obs_constraint: TRUE
     inflation_factor: 1.0
     obs_filename: fcre-targets-insitu.csv
 model_settings:
