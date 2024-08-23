@@ -15,6 +15,7 @@ da_setup:
     inflation_factor: 1.0
     obs_filename: fcre-targets-insitu.csv
 model_settings:
+   glm_path: /Users/rqthomas/Downloads./
    ncore: 4
    max_model_layers: 75
    model_name: glm
@@ -54,8 +55,8 @@ flows:
    local_outflow_directory: drivers/outflow
    use_ler_vars: FALSE
 met:
-   future_met_model: gefs-v12-reprocess/stage2
-   historical_met_model: gefs-v12-reprocess/stage3 # or historical_met_model: gets-v12/stage3
+   future_met_model: gefs/st2
+   historical_met_model: gefs/stage3 # or historical_met_model: gets-v12/stage3
    forecast_lag_days: 0
    use_ler_vars: FALSE
    use_met_s3: FALSE

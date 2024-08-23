@@ -43,38 +43,54 @@ create_flow_files <- function(flow_forecast_dir = NULL,
       if (is.null(bucket) | is.null(endpoint)) {
         stop("needs bucket and endpoint if use_s3=TRUE")
       }
-      vars <- arrow_env_vars()
-      future_s3 <- arrow::s3_bucket(bucket = file.path(bucket, flow_forecast_dir),
-                                    endpoint_override = endpoint)
-      hist_s3 <- arrow::s3_bucket(bucket = file.path(bucket,flow_historical_dir),
-                                  endpoint_override = endpoint)
-      unset_arrow_vars(vars)
+
+      future_flow <- duckdbfs::open_dataset(paste0("s3://", bucket,"/", flow_forecast_dir), s3_access_key_id="", s3_endpoint=endpoint)
+      hist_flow <- duckdbfs::open_dataset(paste0("s3://", bucket,"/", flow_historical_dir), s3_access_key_id="", s3_endpoint=endpoint)
+
+      #vars <- arrow_env_vars()
+      #future_s3 <- arrow::s3_bucket(bucket = file.path(bucket, flow_forecast_dir),
+      #                              endpoint_override = endpoint)
+      #hist_s3 <- arrow::s3_bucket(bucket = file.path(bucket,flow_historical_dir),
+      #                            endpoint_override = endpoint)
+      #unset_arrow_vars(vars)
     } else {
       if (is.null(local_directory)) {
         stop("needs local_directory if use_s3=FALSE")
       }
-      future_s3 <- arrow::SubTreeFileSystem$create(file.path(local_directory, flow_forecast_dir))
-      hist_s3 <-  arrow::SubTreeFileSystem$create(file.path(local_directory, flow_historical_dir))
+
+
+      future_flow <- duckdbfs::open_dataset(file.path(local_directory, flow_forecast_dir))
+      hist_flow <- duckdbfs::open_dataset(file.path(local_directory, flow_historical_dir))
+
+      #future_s3 <- arrow::SubTreeFileSystem$create(file.path(local_directory, flow_forecast_dir))
+      #hist_s3 <-  arrow::SubTreeFileSystem$create(file.path(local_directory, flow_historical_dir))
     }
   }  else if (is.null(flow_forecast_dir) & !is.null(flow_historical_dir)) {
     if (use_s3) {
       if (is.null(bucket) | is.null(endpoint)) {
         stop("needs bucket and endpoint if use_s3=TRUE")
       }
-      vars <- arrow_env_vars()
-      future_s3 <- NULL
-      hist_s3 <- arrow::s3_bucket(bucket = file.path(bucket,flow_historical_dir), endpoint_override = endpoint)
-      unset_arrow_vars(vars)
+
+      future_flow <- NULL
+      hist_flow <- duckdbfs::open_dataset(paste0("s3://", bucket,"/", flow_historical_dir), s3_access_key_id="", s3_endpoint=endpoint)
+
+      #vars <- arrow_env_vars()
+
+
+      #hist_s3 <- arrow::s3_bucket(bucket = file.path(bucket,flow_historical_dir), endpoint_override = endpoint)
+      #unset_arrow_vars(vars)
     } else {
       if (is.null(local_directory)) {
         stop("needs local_directory if use_s3=FALSE")
       }
-      future_s3 <- NULL
-      hist_s3 <-  arrow::SubTreeFileSystem$create(file.path(local_directory, flow_historical_dir))
+      future_flow <- NULL
+      #hist_s3 <-  arrow::SubTreeFileSystem$create(file.path(local_directory, flow_historical_dir))
+      hist_flow <- duckdbfs::open_dataset(file.path(local_directory, flow_historical_dir))
+
     }
   }else {
-    future_s3 <- NULL
-    hist_s3 <- NULL
+    future_flow <- NULL
+    hist_flow <- NULL
   }
 
   # when does the simulation start and end?
@@ -90,16 +106,16 @@ create_flow_files <- function(flow_forecast_dir = NULL,
 
 
   # Access the data
-  if (!is.null(future_s3)) {
-    future_df <- dplyr::collect(arrow::open_dataset(future_s3)) |>
+  if (!is.null(future_flow)) {
+    future_df <- dplyr::collect(future_flow) |>
       filter(datetime >= forecast_start_datetime,
              datetime <= end_datetime)
   } else {
     future_df <- NULL # No future data
   }
 
-  if (!is.null(hist_s3)) {
-    hist_df <- dplyr::collect(arrow::open_dataset(hist_s3)) |>
+  if (!is.null(hist_flow)) {
+    hist_df <- dplyr::collect(hist_flow) |>
       filter(datetime < forecast_start_datetime,
              datetime >= start_datetime)
 

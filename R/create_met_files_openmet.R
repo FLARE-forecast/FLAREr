@@ -16,7 +16,7 @@
 #'
 #' @return list of meteorology file names
 #' @export
-generate_met_files_openmet <- function(out_dir,
+create_met_files_openmet <- function(out_dir,
                                        start_datetime,
                                        end_datetime = NA,
                                        forecast_start_datetime = NA,

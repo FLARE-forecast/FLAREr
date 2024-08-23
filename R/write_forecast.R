@@ -12,28 +12,12 @@
 ##'
 ##'
 
-write_forecast_arrow <- function(da_forecast_output,
+write_forecast <- function(da_forecast_output,
                                  use_s3 = FALSE,
                                  bucket = NULL,
                                  endpoint = NULL,
                                  local_directory = NULL){
 
-
-  if(use_s3){
-    if(is.null(bucket) | is.null(endpoint)){
-      stop("scoring function needs bucket and endpoint if use_s3=TRUE")
-    }
-
-    vars <- arrow_env_vars()
-    output_directory <- arrow::s3_bucket(bucket = bucket,
-                                         endpoint_override =  endpoint)
-    on.exit(unset_arrow_vars(vars))
-  }else{
-    if(is.null(local_directory)){
-      stop("scoring function needs local_directory if use_s3=FALSE")
-    }
-    output_directory <- arrow::SubTreeFileSystem$create(local_directory)
-  }
 
   x <- da_forecast_output$states_depth
   pars <- da_forecast_output$pars
@@ -234,9 +218,37 @@ write_forecast_arrow <- function(da_forecast_output,
     mutate(reference_date = lubridate::as_date(reference_datetime))
 
   message("starting writing dataset")
-  arrow::write_dataset(dataset = output_list,
-                       path = output_directory,
-                       partitioning = c("site_id", "model_id","reference_date"))
+
+  if(use_s3){
+    if(is.null(bucket) | is.null(endpoint)){
+      stop("scoring function needs bucket and endpoint if use_s3=TRUE")
+    }
+
+    forecast_dir <- paste0("s3://", bucket)
+    duckdbfs::write_dataset(dataset = output_list,
+                         path = forecast_dir,
+                         partitioning = c("site_id", "model_id","reference_date"),
+                         s3_endpoint=endpoint)
+    #future_met <- duckdbfs::open_dataset(forecast_dir, s3_access_key_id="", s3_endpoint=endpoint)
+    #vars <- arrow_env_vars()
+    #output_directory <- arrow::s3_bucket(bucket = bucket,
+    #                                     endpoint_override =  endpoint)
+    #on.exit(unset_arrow_vars(vars))
+  }else{
+    if(is.null(local_directory)){
+      stop("scoring function needs local_directory if use_s3=FALSE")
+    }
+    #output_directory <- arrow::SubTreeFileSystem$create(local_directory)
+    forecast_dir <- file.path(local_directory)
+    dir.create(forecast_dir,showWarnings = FALSE)
+    duckdbfs::write_dataset(dataset = output_list,
+                            path = forecast_dir,
+                            partitioning = c("site_id", "model_id","reference_date"))
+  }
+
+  #arrow::write_dataset(dataset = output_list,
+  #                     path = output_directory,
+  #                     partitioning = c("site_id", "model_id","reference_date"))
   message("ending writing dataset")
   return(output_list)
 }

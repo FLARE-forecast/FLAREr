@@ -19,7 +19,7 @@ Authors@R:
     person(given = "Austin",
            family = "Delany",
            role = c("ctb")))       
-Description: This package uses the Ensemble Kalman Filter (EnKF) or the Particle Filter to assimilate observations and generate forecasts of lake water quality using the General Lake Model - Aquatic Ecosystem Dynamics.  The package includes functions to generate the weather and inflow forcing files, organize observations in the form required by the EnKF, and visualize output.
+Description: This package uses the Ensemble Kalman Filter (EnKF) or the Particle Filter to assimilate observations and generate forecasts of lake water quality using the General Lake Model - Aquatic Ecosystem Dynamics.  The package includes functions to generate the weather and inflow forcing files, organize observations in the form required by the data assimilation, and visualize output.
 License: MIT + file LICENSE
 Encoding: UTF-8
 LazyData: true
@@ -27,7 +27,6 @@ Roxygen: list(markdown = TRUE)
 RoxygenNote: 7.3.2
 Imports:
     ncdf4,
-    magrittr,
     dplyr,
     lubridate,
     readr,
@@ -35,29 +34,16 @@ Imports:
     yaml,
     stringr,
     imputeTS,
-    tibble,
     tools,
-    ggplot2,
-    GLM3r,
-    parallel,
-    purrr,
     furrr,
-    future,
-    score4cast,
-    arrow,
     aws.s3,
-    brio,
-    cpp11,
-    decor,
-    fs,
-    httr,
     tidyr,
     tsibble,
-    zoo,
     RopenMeteo,
-    EML,
-    emld
-Remotes: rqthomas/GLM3r, eco4cast/score4cast, FLARE-forecast/RopenMeteo
+    ggplot2,
+    tibble,
+    duckdbfs
+Remotes: FLARE-forecast/RopenMeteo
 Suggests: 
     knitr,
     rmarkdown,

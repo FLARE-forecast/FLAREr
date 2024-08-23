@@ -7,7 +7,7 @@
 #'
 #' @export
 #'
-create_inflow_outflow_files_arrow  <- function(config, config_set_name, lake_directory) {
+create_inflow_outflow_files  <- function(config, config_set_name, lake_directory) {
 
   # set use_s3 to T if missing
   if(is.null(config$run_config$use_s3)){

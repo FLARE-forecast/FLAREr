@@ -246,9 +246,20 @@ run_model <- function(i,
     #origin <- getwd()
     #setwd(ens_working_directory)
 
-    #system2("/Users/rqthomas/Documents/research/glm-aed-dev/glm-aed/glm-source/GLM/glm", args = "--no-gui",
-    #        stdout = NULL,
-    #        stderr = NULL)
+    #switch(Sys.info()[['sysname']],
+    #       Windows= {
+    #         cmd <-
+    #         system2(file.path(glm_path, "glm.exe"), args = "--no-gui", stdout = NULL, stderr = NULL)
+    #       },
+    #       Linux  = {
+    #         system2(file.path(glm_path, "glm"), args = "--no-gui", stdout = NULL, stderr = NULL)
+    #       },
+    #       Darwin = {
+    #         cmd <- file.path(glm_path, "glm")
+    #         print(cmd)
+    #         system2(cmd, args = "--no-gui", stdout = NULL, stderr = NULL)
+    #       })
+
 
     #setwd(origin)
 

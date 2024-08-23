@@ -160,7 +160,7 @@ run_da_forecast <- function(states_init,
     outflow_file_names <- NULL
   }
 
-  config$model_settings$ncore <- min(c(config$model_settings$ncore, parallel::detectCores()))
+  config$model_settings$ncore <- min(c(config$model_settings$ncore, future::availableCores()))
   if(config$model_settings$ncore == 1) {
     if(!dir.exists(file.path(working_directory, "1"))) {
       dir.create(file.path(working_directory, "1"), showWarnings = FALSE)
@@ -182,10 +182,10 @@ run_da_forecast <- function(states_init,
         dir.create(file.path(working_directory, m), showWarnings = FALSE)
       }
       set_up_model(config,
-                            ens_working_directory = file.path(working_directory, m),
-                            state_names = states_config$state_names,
-                            inflow_file_names = inflow_file_names,
-                            outflow_file_names = outflow_file_names)
+                   ens_working_directory = file.path(working_directory, m),
+                   state_names = states_config$state_names,
+                   inflow_file_names = inflow_file_names,
+                   outflow_file_names = outflow_file_names)
     })
   }
 
@@ -276,13 +276,13 @@ run_da_forecast <- function(states_init,
         }
 
         curr_pars_ens <- propose_parameters(i, m,
-                                                     pars,
-                                                     pars_config,
-                                                     npars,
-                                                     par_fit_method,
-                                                     da_method,
-                                                     hist_days,
-                                                     include_uncertainty = config$uncertainty$parameter)
+                                            pars,
+                                            pars_config,
+                                            npars,
+                                            par_fit_method,
+                                            da_method,
+                                            hist_days,
+                                            include_uncertainty = config$uncertainty$parameter)
 
         if(!is.null(ncol(inflow_file_names))){
           if(!config$uncertainty$inflow & i > (hist_days + 1)){
@@ -298,36 +298,36 @@ run_da_forecast <- function(states_init,
         }
 
         out <-  run_model(i,
-                                   m,
-                                   mixing_vars_start = mixing_vars[,i-1 , m],
-                                   mixer_count_start = mixer_count[i-1,m],
-                                   curr_start,
-                                   curr_stop,
-                                   par_names,
-                                   curr_pars = curr_pars_ens,
-                                   ens_working_directory = file.path(working_directory, ens_dir_index),
-                                   par_nml = par_file,
-                                   num_phytos,
-                                   glm_heights_start = model_internal_heights[i-1, ,m ],
-                                   lake_depth_start = lake_depth[i-1, m],
-                                   full_time,
-                                   hist_days,
-                                   modeled_depths = config$model_settings$modeled_depths,
-                                   ndepths_modeled,
-                                   curr_met_file,
-                                   inflow_file_name = inflow_file_name,
-                                   outflow_file_name = outflow_file_name,
-                                   glm_output_vars = output_vars,
-                                   diagnostics_names = config$output_settings$diagnostics_names,
-                                   npars,
-                                   num_wq_vars,
-                                   snow_ice_thickness_start = snow_ice_thickness[, i-1, m ],
-                                   avg_surf_temp_start = avg_surf_temp[i-1, m],
-                                   nstates,
-                                   state_names = states_config$state_names,
-                                   include_wq = config$include_wq,
-                                   max_layers = config$model_settings$max_model_layers,
-                                   states_heights_start = states_height[i-1, , ,m]
+                          m,
+                          mixing_vars_start = mixing_vars[,i-1 , m],
+                          mixer_count_start = mixer_count[i-1,m],
+                          curr_start,
+                          curr_stop,
+                          par_names,
+                          curr_pars = curr_pars_ens,
+                          ens_working_directory = file.path(working_directory, ens_dir_index),
+                          par_nml = par_file,
+                          num_phytos,
+                          glm_heights_start = model_internal_heights[i-1, ,m ],
+                          lake_depth_start = lake_depth[i-1, m],
+                          full_time,
+                          hist_days,
+                          modeled_depths = config$model_settings$modeled_depths,
+                          ndepths_modeled,
+                          curr_met_file,
+                          inflow_file_name = inflow_file_name,
+                          outflow_file_name = outflow_file_name,
+                          glm_output_vars = output_vars,
+                          diagnostics_names = config$output_settings$diagnostics_names,
+                          npars,
+                          num_wq_vars,
+                          snow_ice_thickness_start = snow_ice_thickness[, i-1, m ],
+                          avg_surf_temp_start = avg_surf_temp[i-1, m],
+                          nstates,
+                          state_names = states_config$state_names,
+                          include_wq = config$include_wq,
+                          max_layers = config$model_settings$max_model_layers,
+                          states_heights_start = states_height[i-1, , ,m]
         )
 
       }, .options = furrr::furrr_options(seed = TRUE))
@@ -369,12 +369,12 @@ run_da_forecast <- function(states_init,
         }
 
         with_noise <- add_process_noise(states_height_ens = states_height[i, , , m],
-                                                 model_sd = model_sd,
-                                                 model_internal_heights_ens = model_internal_heights[i, ,m],
-                                                 lake_depth_ens = lake_depth[i,m],
-                                                 modeled_depths = config$model_settings$modeled_depths,
-                                                 vert_decorr_length = states_config$vert_decorr_length,
-                                                 include_uncertainty = include_process_uncertainty)
+                                        model_sd = model_sd,
+                                        model_internal_heights_ens = model_internal_heights[i, ,m],
+                                        lake_depth_ens = lake_depth[i,m],
+                                        modeled_depths = config$model_settings$modeled_depths,
+                                        vert_decorr_length = states_config$vert_decorr_length,
+                                        include_uncertainty = include_process_uncertainty)
         states_depth_w_noise[, ,m] <- with_noise$states_depth_ens
         states_height[i, , , m] <- with_noise$states_height_ens
 

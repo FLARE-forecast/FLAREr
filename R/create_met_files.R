@@ -1,4 +1,4 @@
-##' @title Convert historical meteorology and NOAA forecasts to GLM format via arrow connection
+##' @title Convert historical meteorology and NOAA forecasts to GLM format
 ##' @details Function combines historical meteorology and NOAA forecasts to create meteorology input files in the GLM format.  A file is generated for each ensemble member.
 ##' @param  config list of FLARE configurations
 ##' @param lake_directory directory of lake configurations
@@ -10,7 +10,7 @@
 ##' @importFrom lubridate as_datetime days hours ymd_hm
 ##' @author Quinn Thomas
 ##'
-generate_met_files_arrow <- function(config, lake_directory){
+create_met_files <- function(config, lake_directory){
 
   out_dir <- config$file_path$execute_directory
   forecast_horizon <-  config$run_config$forecast_horizon
@@ -45,17 +45,21 @@ generate_met_files_arrow <- function(config, lake_directory){
       if(is.null(bucket) | is.null(endpoint)){
         stop("inflow forecast function needs bucket and endpoint if use_s3=TRUE")
       }
-      vars <- arrow_env_vars()
+      #vars <- arrow_env_vars()
 
-      forecast_dir <- arrow::s3_bucket(bucket = file.path(bucket, paste0(config$met$future_met_model,"/reference_datetime=",forecast_date),paste0("site_id=",lake_name_code)),
-                                         endpoint_override =  endpoint, anonymous = TRUE)
+      forecast_dir <- paste0("s3://", config$s3$drivers$bucket,"/",config$met$future_met_model,"/reference_datetime=",forecast_date,"/site_id=",lake_name_code)
+      future_met <- duckdbfs::open_dataset(forecast_dir, s3_access_key_id="", s3_endpoint=endpoint)
+      #forecast_dir <- arrow::s3_bucket(bucket = file.path(bucket, paste0(config$met$future_met_model,"/reference_datetime=",forecast_date),paste0("site_id=",lake_name_code)),
+      #                                   endpoint_override =  endpoint, anonymous = TRUE)
 
-      unset_arrow_vars(vars)
+      #unset_arrow_vars(vars)
     }else{
       if(is.null(local_directory)){
         stop("met forecast function needs local_directory if use_s3=FALSE")
       }
-      forecast_dir <- arrow::SubTreeFileSystem$create(file.path(lake_directory, local_directory,paste0(config$met$future_met_model,"/reference_datetime=",forecast_date),paste0("site_id=",lake_name_code)))
+      #forecast_dir <- arrow::SubTreeFileSystem$create(file.path(lake_directory, local_directory,paste0(config$met$future_met_model,"/reference_datetime=",forecast_date),paste0("site_id=",lake_name_code)))
+      forecast_dir <- paste0(lake_directory,"/", local_directory, "/", config$met$future_met_model,"/reference_datetime=",forecast_date,"/site_id=",lake_name_code)
+      future_met <- duckdbfs::open_dataset(forecast_dir)
     }
   }
 
@@ -66,11 +70,17 @@ generate_met_files_arrow <- function(config, lake_directory){
   if(start_datetime < forecast_start_datetime){
     if(use_met_s3){
 
-        past_dir <- arrow::s3_bucket(bucket = file.path(bucket, paste0(config$met$historical_met_model,"/site_id=",lake_name_code)),
-                                     endpoint_override =  endpoint, anonymous = TRUE)
+        #past_dir <- arrow::s3_bucket(bucket = file.path(bucket, paste0(config$met$historical_met_model,"/site_id=",lake_name_code)),
+        #                             endpoint_override =  endpoint, anonymous = TRUE)
+
+        past_dir <- paste0("s3://", config$s3$drivers$bucket, "/", config$met$historical_met_model,"/site_id=",lake_name_code)
+        hist_met <- duckdbfs::open_dataset(past_dir, s3_access_key_id="", s3_endpoint=endpoint)
+
 
     }else{
-      past_dir <-  arrow::SubTreeFileSystem$create(file.path(lake_directory, local_directory, paste0(config$met$historical_met_model,"/site_id=",lake_name_code)))
+      #past_dir <-  arrow::SubTreeFileSystem$create(file.path(lake_directory, local_directory, paste0(config$met$historical_met_model,"/site_id=",lake_name_code)))
+      past_dir <- paste0(lake_directory,"/", local_directory, "/", config$met$historical_met_model,"/site_id=",lake_name_code)
+      hist_met <- duckdbfs::open_dataset(past_dir, s3_access_key_id="", s3_endpoint=endpoint)
     }
   }else{
     past_dir <- NULL
@@ -90,7 +100,7 @@ generate_met_files_arrow <- function(config, lake_directory){
 
   if(!is.null(past_dir)){
 
-    hist_met <- arrow::open_dataset(past_dir) |>
+    hist_met <- hist_met |>
       dplyr::select(datetime, parameter,variable,prediction) |>
       dplyr::collect() |>
       dplyr::filter(datetime %in% full_time_hist) |>
@@ -138,7 +148,6 @@ generate_met_files_arrow <- function(config, lake_directory){
       hist_met$RelHum[idx] <- NA
       hist_met$RelHum <- zoo::na.approx(hist_met$RelHum, rule = 2)
     }
-
 
     if (nrow(n_gaps) > 0) {
       n_gaps <- n_gaps |>
@@ -197,7 +206,7 @@ generate_met_files_arrow <- function(config, lake_directory){
 
     #### test if the forecast directory exists, stop with helpful error if it does not ####
     tryCatch({
-      forecast <- arrow::open_dataset(forecast_dir) |>
+      forecast <- future_met |>
         dplyr::select(datetime, parameter,variable,prediction) |>
         dplyr::collect()
     }, error = function(e) {
