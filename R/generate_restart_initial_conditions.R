@@ -34,7 +34,7 @@ generate_restart_initial_conditions <- function(restart_file, state_names, par_n
       pars_restart[i, ] <- ncdf4::ncvar_get(nc, par_names[i])[restart_index, ]
     }
   }else{
-    pars_restart = NULL
+    pars_restart <- NULL
   }
 
   ncdf4::nc_close(nc)

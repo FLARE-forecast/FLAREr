@@ -161,7 +161,7 @@ Read configuration files
 The following reads in the configuration files and overwrites the directory locations based on the lake_directory and directories provided above.  In practice you will specific these directories in the configure file and not overwrite them.
 
 ```{r}
-
+Sys.setenv('GLM_PATH'='GLM3r')
 next_restart <- FLAREr::run_flare(lake_directory = lake_directory,configure_run_file = "configure_run.yml", config_set_name = "default")
   
 ```  
@@ -186,26 +186,17 @@ df |>
   labs(title = "1 m water temperature forecast")
 
 ```
-
-```{r}
-df <- arrow::open_dataset(file.path(lake_directory,"scores/parquet")) |> collect()
-```
-
-```{r}
-head(df)
-```
-
 ```{r}
 df |> 
-  filter(variable == "temperature",
-         depth == 1) |> 
-  ggplot(aes(x = datetime)) +
-  geom_ribbon(aes(ymin = quantile10, ymax = quantile90), alpha = 0.5, fill = "lightblue") +
-  geom_line(aes(y = median)) +
-  geom_point(aes(y = observation), color = "red") +
+  filter(variable == "lw_factor") |> 
+  ggplot(aes(x = datetime, y = prediction, group = parameter)) +
+  geom_line() +
   geom_vline(aes(xintercept = as_datetime(reference_datetime))) +
-  labs(title = "1 m water temperature forecast")
+  labs(title = "lw_factor")
 ```
+
+## 5. Comparing to observations
+
 
 ## 6: Modifying FLARE
 

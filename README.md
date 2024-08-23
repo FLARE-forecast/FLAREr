@@ -30,6 +30,21 @@ You will need to download the necessary packages prior to running.
 ```
 remotes::install_github("FLARE-forecast/FLAREr")
 ```
+
+```
+download.file("https://github.com/AquaticEcoDynamics/glm-aed/archive/refs/tags/v3.3.0.zip", "v3.3.0.zip")
+unzip("v3.3.0.zip")
+system2("chmod","u+x glm-aed-3.3.0/binaries/macos/Big_Sur/glm_latest/glm")
+system2("./glm-aed-3.3.0/binaries/macos/Big_Sur/glm_latest/glm")
+```
+
+```
+download.file("https://github.com/AquaticEcoDynamics/glm-aed/raw/main/binaries/ubuntu/22.04/glm_latest/glm", "glm")
+system2("chmod", "u+x glm")
+```
+
+Working on windows
+
 ## Use
 
 FLAREr is a set of functions that address key steps in the forecasting workflow. 

@@ -37,13 +37,13 @@ create_obs_non_vertical <- function(cleaned_observations_file_long,
   if("secchi" %in% unique(obs_config$state_names_obs)){
 
 
-    obs_secchi <- readr::read_csv(cleaned_observations_file_long, show_col_types = FALSE) %>%
-      dplyr::filter(variable == "secchi") %>%
-      dplyr::mutate(date = lubridate::as_date(datetime)) %>%
-      dplyr::right_join(tibble::tibble(date = lubridate::as_datetime(full_time)), by = "date") %>%
-      dplyr::mutate(observation = ifelse(date > lubridate::as_date(forecast_start_datetime), NA, observation)) %>%
-      dplyr::arrange(date) %>%
-      dplyr::select(observation) %>%
+    obs_secchi <- readr::read_csv(cleaned_observations_file_long, show_col_types = FALSE) |>
+      dplyr::filter(variable == "secchi") |>
+      dplyr::mutate(date = lubridate::as_date(datetime)) |>
+      dplyr::right_join(tibble::tibble(date = lubridate::as_datetime(full_time)), by = "date") |>
+      dplyr::mutate(observation = ifelse(date > lubridate::as_date(forecast_start_datetime), NA, observation)) |>
+      dplyr::arrange(date) |>
+      dplyr::select(observation) |>
       as_vector()
 
     obs_secchi <- list(obs = obs_secchi,
@@ -53,15 +53,15 @@ create_obs_non_vertical <- function(cleaned_observations_file_long,
   }
 
   if("depth" %in% unique(obs_config$state_names_obs)){
-    obs_depth <- readr::read_csv(cleaned_observations_file_long, show_col_types = FALSE) %>%
-      dplyr::filter(variable == "depth") %>%
+    obs_depth <- readr::read_csv(cleaned_observations_file_long, show_col_types = FALSE) |>
+      dplyr::filter(variable == "depth") |>
       dplyr::mutate(date = lubridate::as_date(datetime),
-                    hour = hour(datetime)) %>%
-      dplyr::filter(hour == 0)  %>%
-      dplyr::right_join(tibble::tibble(date = lubridate::as_datetime(full_time)), by = "date") %>%
-      dplyr::mutate(observation = ifelse(date > lubridate::as_date(forecast_start_datetime), NA, observation)) %>%
-      dplyr::arrange(date) %>%
-      dplyr::select(observation) %>%
+                    hour = hour(datetime)) |>
+      dplyr::filter(hour == 0)  |>
+      dplyr::right_join(tibble::tibble(date = lubridate::as_datetime(full_time)), by = "date") |>
+      dplyr::mutate(observation = ifelse(date > lubridate::as_date(forecast_start_datetime), NA, observation)) |>
+      dplyr::arrange(date) |>
+      dplyr::select(observation) |>
       as_vector()
 
     obs_depth <- list(obs = obs_depth,

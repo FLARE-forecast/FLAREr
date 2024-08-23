@@ -42,7 +42,7 @@ Imports:
     RopenMeteo,
     ggplot2,
     tibble,
-    duckdbfs
+    arrow
 Remotes: FLARE-forecast/RopenMeteo
 Suggests: 
     knitr,

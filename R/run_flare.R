@@ -68,7 +68,7 @@ run_flare <- function(lake_directory,
 
     message('Using OpenMeteo Met Drivers...')
 
-    met_out <- create_met_files_openmet(out_dir = config$file_path$execute_directory,
+    met_out <- FLAREr::create_met_files_openmet(out_dir = config$file_path$execute_directory,
                                           start_datetime = met_start_datetime,
                                           end_datetime = config$run_config$end_datetime,
                                           forecast_start_datetime = met_forecast_start_datetime,
@@ -83,7 +83,7 @@ run_flare <- function(lake_directory,
                                           endpoint = config$s3$drivers$endpoint)
   }else{
 
-    met_out <- create_met_files(config, lake_directory)
+    met_out <- FLAREr::create_met_files(config, lake_directory)
   }
 
   message('Creating inflow/outflow files...')

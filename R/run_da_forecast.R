@@ -327,7 +327,8 @@ run_da_forecast <- function(states_init,
                           state_names = states_config$state_names,
                           include_wq = config$include_wq,
                           max_layers = config$model_settings$max_model_layers,
-                          states_heights_start = states_height[i-1, , ,m]
+                          states_heights_start = states_height[i-1, , ,m],
+                          glm_path = config$model_settings$glm_path
         )
 
       }, .options = furrr::furrr_options(seed = TRUE))

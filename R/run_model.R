@@ -65,7 +65,8 @@ run_model <- function(i,
                       state_names,
                       include_wq,
                       states_heights_start,
-                      max_layers){
+                      max_layers,
+                      glm_path){
 
   rounding_level <- 10
 
@@ -241,27 +242,7 @@ run_model <- function(i,
   while(!pass){
     unlink(paste0(ens_working_directory, "/output.nc"))
 
-    GLM3r::run_glm(sim_folder = ens_working_directory, verbose = verbose)
-
-    #origin <- getwd()
-    #setwd(ens_working_directory)
-
-    #switch(Sys.info()[['sysname']],
-    #       Windows= {
-    #         cmd <-
-    #         system2(file.path(glm_path, "glm.exe"), args = "--no-gui", stdout = NULL, stderr = NULL)
-    #       },
-    #       Linux  = {
-    #         system2(file.path(glm_path, "glm"), args = "--no-gui", stdout = NULL, stderr = NULL)
-    #       },
-    #       Darwin = {
-    #         cmd <- file.path(glm_path, "glm")
-    #         print(cmd)
-    #         system2(cmd, args = "--no-gui", stdout = NULL, stderr = NULL)
-    #       })
-
-
-    #setwd(origin)
+    run_glm(dir = ens_working_directory, verbose = FALSE)
 
     if(file.exists(paste0(ens_working_directory, "/output.nc"))){
 
@@ -344,7 +325,7 @@ run_model <- function(i,
     if(num_reruns > 10){
       stop(paste0("Too many re-runs (> 10) due to issues generating output",
                   '\n Suggest testing specific GLM execution with the following code:',
-                  '\n GLM3r::run_glm(','"' ,ens_working_directory,'")'))
+                  '\n FLAREr:::run_glm(','"' ,ens_working_directory,'")'))
     }
 
   }

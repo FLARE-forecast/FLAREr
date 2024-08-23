@@ -31,35 +31,31 @@ create_met_files <- function(config, lake_directory){
     end_datetime <- forecast_start_datetime + lubridate::days(forecast_horizon) #- lubridate::hours(1)
   }
 
-    if(!is.na(forecast_start_datetime) & forecast_horizon > 0){
+  if(!is.na(forecast_start_datetime) & forecast_horizon > 0){
 
-      forecast_date <- lubridate::as_date(forecast_start_datetime)
-      forecast_hour <- lubridate::hour(forecast_start_datetime)
+    forecast_date <- lubridate::as_date(forecast_start_datetime)
+    forecast_hour <- lubridate::hour(forecast_start_datetime)
 
-      if(forecast_hour != 0){
-        stop("Only forecasts that start at 00:00:00 UTC are currently supported")
-      }
+    if(forecast_hour != 0){
+      stop("Only forecasts that start at 00:00:00 UTC are currently supported")
+    }
 
-      if(config$met$use_met_s3){
+    if(config$met$use_met_s3){
 
       if(is.null(bucket) | is.null(endpoint)){
         stop("inflow forecast function needs bucket and endpoint if use_s3=TRUE")
       }
-      #vars <- arrow_env_vars()
+      vars <- arrow_env_vars()
 
-      forecast_dir <- paste0("s3://", config$s3$drivers$bucket,"/",config$met$future_met_model,"/reference_datetime=",forecast_date,"/site_id=",lake_name_code)
-      future_met <- duckdbfs::open_dataset(forecast_dir, s3_access_key_id="", s3_endpoint=endpoint)
-      #forecast_dir <- arrow::s3_bucket(bucket = file.path(bucket, paste0(config$met$future_met_model,"/reference_datetime=",forecast_date),paste0("site_id=",lake_name_code)),
-      #                                   endpoint_override =  endpoint, anonymous = TRUE)
+      forecast_dir <- arrow::s3_bucket(bucket = file.path(bucket, paste0(config$met$future_met_model,"/reference_datetime=",forecast_date),paste0("site_id=",lake_name_code)),
+                                       endpoint_override =  endpoint, anonymous = TRUE)
 
-      #unset_arrow_vars(vars)
+      unset_arrow_vars(vars)
     }else{
       if(is.null(local_directory)){
         stop("met forecast function needs local_directory if use_s3=FALSE")
       }
-      #forecast_dir <- arrow::SubTreeFileSystem$create(file.path(lake_directory, local_directory,paste0(config$met$future_met_model,"/reference_datetime=",forecast_date),paste0("site_id=",lake_name_code)))
-      forecast_dir <- paste0(lake_directory,"/", local_directory, "/", config$met$future_met_model,"/reference_datetime=",forecast_date,"/site_id=",lake_name_code)
-      future_met <- duckdbfs::open_dataset(forecast_dir)
+      forecast_dir <- arrow::SubTreeFileSystem$create(file.path(lake_directory, local_directory,paste0(config$met$future_met_model,"/reference_datetime=",forecast_date),paste0("site_id=",lake_name_code)))
     }
   }
 
@@ -70,17 +66,11 @@ create_met_files <- function(config, lake_directory){
   if(start_datetime < forecast_start_datetime){
     if(use_met_s3){
 
-        #past_dir <- arrow::s3_bucket(bucket = file.path(bucket, paste0(config$met$historical_met_model,"/site_id=",lake_name_code)),
-        #                             endpoint_override =  endpoint, anonymous = TRUE)
-
-        past_dir <- paste0("s3://", config$s3$drivers$bucket, "/", config$met$historical_met_model,"/site_id=",lake_name_code)
-        hist_met <- duckdbfs::open_dataset(past_dir, s3_access_key_id="", s3_endpoint=endpoint)
-
+      past_dir <- arrow::s3_bucket(bucket = file.path(bucket, paste0(config$met$historical_met_model,"/site_id=",lake_name_code)),
+                                   endpoint_override =  endpoint, anonymous = TRUE)
 
     }else{
-      #past_dir <-  arrow::SubTreeFileSystem$create(file.path(lake_directory, local_directory, paste0(config$met$historical_met_model,"/site_id=",lake_name_code)))
-      past_dir <- paste0(lake_directory,"/", local_directory, "/", config$met$historical_met_model,"/site_id=",lake_name_code)
-      hist_met <- duckdbfs::open_dataset(past_dir, s3_access_key_id="", s3_endpoint=endpoint)
+      past_dir <-  arrow::SubTreeFileSystem$create(file.path(lake_directory, local_directory, paste0(config$met$historical_met_model,"/site_id=",lake_name_code)))
     }
   }else{
     past_dir <- NULL
@@ -92,15 +82,15 @@ create_met_files <- function(config, lake_directory){
   #}
 
   full_time <- seq(start_datetime, end_datetime, by = "1 hour")
-    if(forecast_start_datetime > start_datetime){
-      full_time_hist <- seq(start_datetime, forecast_start_datetime, by = "1 hour")
-    }else{
-      full_time_hist <- seq(start_datetime, end_datetime, by = "1 hour")
-    }
+  if(forecast_start_datetime > start_datetime){
+    full_time_hist <- seq(start_datetime, forecast_start_datetime, by = "1 hour")
+  }else{
+    full_time_hist <- seq(start_datetime, end_datetime, by = "1 hour")
+  }
 
   if(!is.null(past_dir)){
 
-    hist_met <- hist_met |>
+    hist_met <- arrow::open_dataset(past_dir) |>
       dplyr::select(datetime, parameter,variable,prediction) |>
       dplyr::collect() |>
       dplyr::filter(datetime %in% full_time_hist) |>
@@ -116,7 +106,7 @@ create_met_files <- function(config, lake_directory){
     }
 
     hist_met <- hist_met |>
-    dplyr::mutate(use_ler_vars = use_ler_vars) |>
+      dplyr::mutate(use_ler_vars = use_ler_vars) |>
       dplyr::rename(AirTemp = air_temperature,
                     ShortWave = surface_downwelling_shortwave_flux_in_air,
                     LongWave = surface_downwelling_longwave_flux_in_air,
@@ -149,6 +139,7 @@ create_met_files <- function(config, lake_directory){
       hist_met$RelHum <- zoo::na.approx(hist_met$RelHum, rule = 2)
     }
 
+
     if (nrow(n_gaps) > 0) {
       n_gaps <- n_gaps |>
         dplyr::summarise(n_gaps = max(.n, na.rm = T)) |> pull()
@@ -172,41 +163,41 @@ create_met_files <- function(config, lake_directory){
 
   if(is.null(forecast_dir)){
 
-      ensemble_members <- unique(hist_met$ensemble)
-      current_filename <- purrr::map_chr(ensemble_members, function(ens, out_dir, hist_met){
-        df <- hist_met |>
-          dplyr::filter(ensemble == ens) |>
-          dplyr::select(-ensemble) |>
-          dplyr::arrange(time)
+    ensemble_members <- unique(hist_met$ensemble)
+    current_filename <- purrr::map_chr(ensemble_members, function(ens, out_dir, hist_met){
+      df <- hist_met |>
+        dplyr::filter(ensemble == ens) |>
+        dplyr::select(-ensemble) |>
+        dplyr::arrange(time)
 
-        if(use_ler_vars){
+      if(use_ler_vars){
 
-          df <- df |>
-            dplyr::rename(datetime = time,
-                          Air_Temperature_celsius = AirTemp,
-                          Shortwave_Radiation_Downwelling_wattPerMeterSquared = ShortWave,
-                          Longwave_Radiation_Downwelling_wattPerMeterSquared = LongWave,
-                          Relative_Humidity_percent = RelHum,
-                          Ten_Meter_Elevation_Wind_Speed_meterPerSecond = WindSpeed,
-                          Precipitation_millimeterPerHour = Rain,
-                          Snowfall_millimeterPerHour = Snow)
-        }
+        df <- df |>
+          dplyr::rename(datetime = time,
+                        Air_Temperature_celsius = AirTemp,
+                        Shortwave_Radiation_Downwelling_wattPerMeterSquared = ShortWave,
+                        Longwave_Radiation_Downwelling_wattPerMeterSquared = LongWave,
+                        Relative_Humidity_percent = RelHum,
+                        Ten_Meter_Elevation_Wind_Speed_meterPerSecond = WindSpeed,
+                        Precipitation_millimeterPerHour = Rain,
+                        Snowfall_millimeterPerHour = Snow)
+      }
 
-        # check for bad data
-        missing_data_check(df)
+      # check for bad data
+      missing_data_check(df)
 
-        fn <- paste0("met_",stringr::str_pad(ens, width = 2, side = "left", pad = "0"),".csv")
-        fn <- file.path(out_dir, fn)
-        write.csv(df, file = fn, quote = FALSE, row.names = FALSE)
-        return(fn)
-      },
-      out_dir,
-      hist_met)
+      fn <- paste0("met_",stringr::str_pad(ens, width = 2, side = "left", pad = "0"),".csv")
+      fn <- file.path(out_dir, fn)
+      write.csv(df, file = fn, quote = FALSE, row.names = FALSE)
+      return(fn)
+    },
+    out_dir,
+    hist_met)
   }else{
 
     #### test if the forecast directory exists, stop with helpful error if it does not ####
     tryCatch({
-      forecast <- future_met |>
+      forecast <- arrow::open_dataset(forecast_dir) |>
         dplyr::select(datetime, parameter,variable,prediction) |>
         dplyr::collect()
     }, error = function(e) {
@@ -292,5 +283,6 @@ create_met_files <- function(config, lake_directory){
     forecast,
     hist_met)
   }
+
   return(list(filenames = current_filename, historical_met_error = FALSE))
 }

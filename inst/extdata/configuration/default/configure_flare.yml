@@ -11,11 +11,10 @@ da_setup:
     pf_always_resample: FALSE
     no_negative_states: FALSE
     assimilate_first_step: FALSE
-    use_obs_constraint: TRUE
+    use_obs_constraint: FALSE
     inflation_factor: 1.0
     obs_filename: fcre-targets-insitu.csv
 model_settings:
-   glm_path: /Users/rqthomas/Downloads./
    ncore: 4
    max_model_layers: 75
    model_name: glm
@@ -73,5 +72,3 @@ uncertainty:
    inflow_process: TRUE
 output_settings:
    diagnostics_names:  [extc]
-   evaluate_past: FALSE
-   variables_in_scores: [state, parameter, diagnostic]

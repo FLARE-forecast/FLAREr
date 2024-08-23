@@ -8,7 +8,6 @@
 #' @export
 #'
 create_inflow_outflow_files  <- function(config, config_set_name, lake_directory) {
-
   # set use_s3 to T if missing
   if(is.null(config$run_config$use_s3)){
     config$run_config$use_s3 <- TRUE
@@ -30,9 +29,9 @@ create_inflow_outflow_files  <- function(config, config_set_name, lake_directory
                            'TEMP',
                            'SALT',
                            readr::read_csv(file.path(lake_directory, 'configuration',
-                                                             config_set_name,
-                                                             config$model_settings$states_config_file),
-                                                   show_col_types = F)$state_names)) # state variables need to match the inflow
+                                                     config_set_name,
+                                                     config$model_settings$states_config_file),
+                                           show_col_types = F)$state_names)) # state variables need to match the inflow
 
   #Use the upper case TEMP and SALT by excluding the lowercase ones
   variables_in <- variables_in[!(variables_in %in% c("salt", "temp"))]
@@ -128,9 +127,9 @@ create_inflow_outflow_files  <- function(config, config_set_name, lake_directory
       }
 
       inflow_forecast_dir <- file.path("future",
-                                        config$flows$future_inflow_model,
-                                        paste0("reference_datetime=", lubridate::as_date(config$run_config$forecast_start_datetime)),
-                                        paste0("site_id=", config$location$site_id))
+                                       config$flows$future_inflow_model,
+                                       paste0("reference_datetime=", lubridate::as_date(config$run_config$forecast_start_datetime)),
+                                       paste0("site_id=", config$location$site_id))
     } else {
       inflow_forecast_dir <- NULL
     }
@@ -160,8 +159,8 @@ create_inflow_outflow_files  <- function(config, config_set_name, lake_directory
 
     # the model directories for historical flows (before forecast_start_datetime)
     outflow_historical_dir <- file.path("historical",
-                                       config$flows$historical_outflow_model,
-                                       paste0("site_id=", config$location$site_id))
+                                        config$flows$historical_outflow_model,
+                                        paste0("site_id=", config$location$site_id))
 
     # do we need future flow?
     if (config$run_config$forecast_horizon > 0 ) {
