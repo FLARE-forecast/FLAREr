@@ -61,7 +61,7 @@ propose_parameters <- function(i, m, pars, pars_config, npars, par_fit_method, d
           }
 
         }else{
-          message("parameter fitting method not supported.  inflate or perturb are supported. only inflate is supported for enkf")
+          message("parameter fitting method not supported.  inflate, perturb. perturb are supported")
         }
 
         if(curr_pars_ens[par] <  pars_config$par_lowerbound[par]) curr_pars_ens[par] <-  pars_config$par_lowerbound[par]

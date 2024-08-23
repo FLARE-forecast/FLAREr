@@ -30,17 +30,34 @@ You will need to download the necessary packages prior to running.
 ```
 remotes::install_github("FLARE-forecast/FLAREr")
 ```
-https://github.com/AquaticEcoDynamics/glm-aed/archive/refs/heads/main.zip
+
+Next you need the GLM model.  You can get in using multiple pathways
+
+The easiest way is to install the `GLM3r` package from Github using
+
+```
+remotes::install_github("rqthomas/GLM3r")
+```
+
+or you can download from the AquaticEcoDynamics GitHub organization.  This code assumes you are in the directory with the FLARE configurations and workflow subdirectories
+
 ```
 download.file("https://github.com/rqthomas/glm-aed/archive/refs/heads/main.zip", "glm_aed.zip")
 unzip("glm_aed.zip")
+```
+
+if you are running on Mac you will need to run:
+
+```
 system2("chmod","u+x glm-aed-main/binaries/macos/Sonoma/glm_latest/glm")
 system2("./glm-aed-main/binaries/macos/Sonoma/glm_latest/glm")
 ```
 
+if you are running on Linux you will need to run:
+
 ```
-download.file("https://github.com/AquaticEcoDynamics/glm-aed/raw/main/binaries/ubuntu/22.04/glm_latest/glm", "glm")
-system2("chmod", "u+x glm")
+system2("chmod","u+x glm-aed-main/binaries/ubuntu/22.04/glm_latest/glm")
+system2("./glm-aed-main/binaries/ubuntu/22.04/glm_latest/glm")
 ```
 
 Working on windows
@@ -52,6 +69,9 @@ FLAREr is a set of functions that address key steps in the forecasting workflow.
 ### Requires
 
 User generated *insitu* observations, meteorology, and inflow/outflow in a specified format.  See FLARE example vignette for format specification.
+You are required to set a directory structure as follows:
+
+
 
 ### Quick Run
 
@@ -61,6 +81,9 @@ The code below will produce a single forecast for Falling Creek Reservoir using 
 library(arrow)
 library(tidyverse)
 library(FLAREr)
+
+remotes::install_github("rqthomas/GLM3r")
+Sys.setenv('GLM_PATH'='GLM3r')
 
 tmp <- tempdir()
 file.copy(system.file("extdata", package = "FLAREr"), tmp, recursive = TRUE)

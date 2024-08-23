@@ -199,6 +199,16 @@ combined_df |>
   labs(title = "1 m water temperature forecast")
 ```
 
+```{r}
+df |> 
+  filter(variable == "lw_factor") |> 
+  ggplot(aes(x = datetime, y = prediction, group = parameter)) +
+  geom_line() +
+  geom_vline(aes(xintercept = as_datetime(reference_datetime))) +
+  labs(title = "lw_factor parameter")
+
+
+```
 ## 5. Comparing to observations
 
 
