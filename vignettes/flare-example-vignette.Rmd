@@ -77,6 +77,7 @@ Third, create a directory that will be your working directory for your FLARE run
 
 ```{r}
 lake_directory <-  tempdir()
+print(lake_directory)
 dir.create(file.path(lake_directory, "configuration/default"), recursive = TRUE)
 dir.create(file.path(lake_directory, "targets")) # For QAQC data
 dir.create(file.path(lake_directory, "drivers")) # Weather and inflow forecasts
