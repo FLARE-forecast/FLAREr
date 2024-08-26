@@ -63,6 +63,8 @@ The easiest way is to install the `GLM3r` package from Github using
 
 ```{r}
 remotes::install_github("rqthomas/GLM3r")
+sim_folder <- system.file('extdata', package = 'GLM3r')
+GLM3r::run_glm(sim_folder)
 ```
 
 After installing GLM3r you need to set an environment variable that points to the GLM code.
