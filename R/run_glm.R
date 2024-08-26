@@ -2,6 +2,9 @@ run_glm <- function(dir, verbose = TRUE){
 
   os <- Sys.info()[['sysname']]
 
+  print("OS is")
+  print(os)
+
   origin <- getwd()
   setwd(dir)
 
@@ -20,8 +23,6 @@ run_glm <- function(dir, verbose = TRUE){
       }else{
         dylib_path <- ""
       }
-
-      dylib_path <- ""
 
       tryCatch({
         if (verbose){
@@ -51,7 +52,7 @@ run_glm <- function(dir, verbose = TRUE){
         if (verbose){
           out <- system2(glm_path, wait = TRUE, stdout = "", stderr = "", args = "--no-gui")
         }else{
-          out <- system2(glm_path, wait = TRUE, stdout = NULL, stderr = NULL, args = "--no-gui")
+          out <- system2(glm_path, wait = TRUE, stdout = "", stderr = "", args = "--no-gui")
         }
       }, error = function(err) {
         print(paste("GLM_ERROR:  ",err))
