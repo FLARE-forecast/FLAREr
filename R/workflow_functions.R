@@ -173,9 +173,9 @@ set_configuration <- function(configure_run_file = "configure_run.yml", lake_dir
 
 
   if(!dir.exists(lake_directory)){
-    stop(c(normalizePath(lake_directory), lake_directory, file.path(lake_directory, "flare_tempdir", config$location$site_id, config$run_config$sim_name)))
+    stop(c(normalizePath(lake_directory,winslash = "/")), lake_directory, file.path(lake_directory, "flare_tempdir", config$location$site_id, config$run_config$sim_name)))
   }else{
-    stop(c(normalizePath(lake_directory), lake_directory, file.path(lake_directory, "flare_tempdir", config$location$site_id, config$run_config$sim_name)))
+    stop(c(normalizePath(lake_directory, winslash = "/"), lake_directory, file.path(lake_directory, "flare_tempdir", config$location$site_id, config$run_config$sim_name)))
 
   }
 
