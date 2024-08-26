@@ -173,9 +173,9 @@ set_configuration <- function(configure_run_file = "configure_run.yml", lake_dir
 
 
   if(!dir.exists(lake_directory)){
-    stop(lake_directory)
+    stop(normalizePath(lake_directory))
   }else{
-    stop(lake_directory)
+    stop(normalizePath(lake_directory))
   }
 
   run_config <- yaml::read_yaml(file.path(lake_directory,"configuration",config_set_name,configure_run_file))
