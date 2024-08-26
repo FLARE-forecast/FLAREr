@@ -21,6 +21,8 @@ run_glm <- function(dir, verbose = TRUE){
         dylib_path <- ""
       }
 
+      dylib_path <- ""
+
       tryCatch({
         if (verbose){
           out <- system2(glm_path, wait = TRUE, stdout = "",
