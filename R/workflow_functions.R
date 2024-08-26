@@ -253,7 +253,7 @@ get_restart_file <- function(config, lake_directory){
 #' @export
 #' @examples
 
-#' dir <- tempdir()
+#' dir <- normalizePath(tempdir(),  winslash = "/")
 #' lake_directory <- file.path(dir, "extdata")
 #' #Copy files to temporarly directory
 #' dir.create(dir,showWarnings = FALSE)
@@ -472,7 +472,7 @@ initialize_obs_processing <- function(lake_directory, observation_yml = NA, conf
 #' @export
 #' @examplesIf interactive()
 #'
-#' dir <- tempdir()
+#' dir <- normalizePath(tempdir(),  winslash = "/")
 #' lake_directory <- file.path(dir, "extdata")
 #' # Copy files to temporarly directory
 #' dir.create(dir,showWarnings = FALSE)
