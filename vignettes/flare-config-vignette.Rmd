@@ -24,6 +24,8 @@ A guide to the variables in `configure_flare.yml` and in the
 
 ## configure_flare.yml
 
+`configure_flare.yml` is required to be located in your `{lake_directory}/configurations/{config_set_name}` directory.
+
 ### location:
 
 -   **site_id:** Four letter code for lake
@@ -224,6 +226,8 @@ A guide to the variables in `configure_flare.yml` and in the
 
 ## parameter_calibration_config.csv
 
+`parameter_calibration_config.csv` is required to be located in your `{lake_directory}/configurations/{config_set_name}` directory.
+
 -   **par_names:** vector of GLM names of parameter values estimated
 -   **par_names_save:** vector of names of parameter values estimated
     that are desired in output and plots
@@ -244,6 +248,9 @@ A guide to the variables in `configure_flare.yml` and in the
 -   **fix_par**: 0 = fit parameter, 1 = hold parameter at **par_init**
 
 ## states_config.csv
+
+`states_config.csv` is required to be located in your `{lake_directory}/configurations/{config_set_name}` directory.
+
 
 -   **state_names:** name of states.
 -   **initial_conditions:** The initial conditions for the state if
@@ -277,12 +284,17 @@ A guide to the variables in `configure_flare.yml` and in the
 
 ### depth_model_sd.csv:
 
+`depth_model_sd.csv` is optional and should be located in your `{lake_directory}/configurations/{config_set_name}` directory.
+
+
 -   **depth:** depth (m)
 -   column names: **variable** name for states that have depth varying
     process uncertainty. Values are the sd for each depth. sd will be
     interpolated between and extrapolated beyond the depths provided.
 
 ## observations_config.csv
+
+`observations_config.csv` is required to be located in your `{lake_directory}/configurations/{config_set_name}` directory.
 
 -   **state_names_obs**: names of states with observations
 -   **obs_sd**: the standard deviation of the observation uncertainty
