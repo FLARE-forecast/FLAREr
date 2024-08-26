@@ -107,9 +107,6 @@ run_flare <- function(lake_directory,
     met_out <- create_met_files(config, lake_directory)
   }
 
-  print(met_out)
-  print(lake_directory)
-
   message('Creating inflow/outflow files...')
 
   inflow_outflow_files <- create_inflow_outflow_files(config, config_set_name, lake_directory)

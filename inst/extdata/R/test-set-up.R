@@ -1,6 +1,6 @@
-dir.create(file.path(lake_directory, "configuration/default"), recursive = TRUE)
-dir.create(file.path(lake_directory, "targets")) # For QAQC data
-dir.create(file.path(lake_directory, "drivers")) # Weather and inflow forecasts
+dir.create(file.path(lake_directory, "configuration/default"), recursive = TRUE, showWarnings = FALSE)
+dir.create(file.path(lake_directory, "targets"), showWarnings = FALSE) # For QAQC data
+dir.create(file.path(lake_directory, "drivers"), showWarnings = FALSE) # Weather and inflow forecasts
 
 file.copy(system.file("extdata", "configuration", "default", "configure_flare.yml", package = "FLAREr"), file.path(lake_directory, "configuration", "default", "configure_flare.yml"))
 file.copy(system.file("extdata", "configuration", "default", "configure_run.yml", package = "FLAREr"), file.path(lake_directory, "configuration", "default", "configure_run.yml"))

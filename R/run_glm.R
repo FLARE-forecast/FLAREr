@@ -2,9 +2,6 @@ run_glm <- function(dir, verbose = TRUE){
 
   os <- Sys.info()[['sysname']]
 
-  print("OS is")
-  print(os)
-
   origin <- getwd()
   setwd(dir)
 
