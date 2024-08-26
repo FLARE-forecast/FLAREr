@@ -171,6 +171,13 @@ get_driver_forecast_path <- function(config, forecast_model){
 #'
 set_configuration <- function(configure_run_file = "configure_run.yml", lake_directory, clean_start = FALSE, config_set_name = "default", sim_name = NA){
 
+
+  if(!dir.exists(lake_directory)){
+    stop(lake_directory)
+  }else{
+    stop(lake_directory)
+  }
+
   run_config <- yaml::read_yaml(file.path(lake_directory,"configuration",config_set_name,configure_run_file))
   config <- yaml::read_yaml(file.path(lake_directory,"configuration",config_set_name,run_config$configure_flare))
   config$run_config <- run_config

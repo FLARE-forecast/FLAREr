@@ -239,10 +239,12 @@ run_model <- function(i,
               overwrite = TRUE) #GLM SPECIFIC
   }
 
+  verbose <- FALSE
   while(!pass){
     unlink(paste0(ens_working_directory, "/output.nc"))
 
-    run_glm(dir = ens_working_directory, verbose = FALSE)
+    run_glm(dir = ens_working_directory, verbose = verbose)
+    verbose <- TRUE
 
     if(file.exists(paste0(ens_working_directory, "/output.nc"))){
 
