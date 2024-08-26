@@ -8,6 +8,7 @@
 ##' @import ggplot2
 ##' @importFrom lubridate with_tz
 ##' @author Quinn Thomas
+##' @keywords internal
 
 write_restart <- function(da_forecast_output,
                                   forecast_output_directory,

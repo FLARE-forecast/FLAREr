@@ -81,3 +81,4 @@ and pars_init can be created using the \code{generate_initial_conditions()} func
 starting from initial conditions in the  \code{states_config} data frame or from observations
 in first time column of the \code{obs} array.
 }
+\keyword{internal}

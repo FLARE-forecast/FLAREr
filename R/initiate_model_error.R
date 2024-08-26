@@ -3,6 +3,7 @@
 #' @param config list; list from reading in configuration yaml
 #' @param states_config list; list from reading in states configuration csv
 #' @return matrix
+#' @keywords internal
 #'
 initiate_model_error <- function(config, states_config){
   if(!is.null(config$model_settings$depth_model_sd_config_file)){

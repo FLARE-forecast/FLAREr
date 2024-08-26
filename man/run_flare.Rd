@@ -22,3 +22,34 @@ Run FLARE for a single forecast
 \details{
 Combines functions necessary to do a complete execution of FLARE
 }
+\examples{
+\dontshow{if (interactive()) (if (getRversion() >= "3.4") withAutoprint else force)(\{ # examplesIf}
+#Load and install dependencies
+library(dplyr)
+library(ggplot2)
+library(readr)
+library(lubridate)
+remotes::install_github("rqthomas/GLM3r")
+Sys.setenv('GLM_PATH'='GLM3r')
+
+dir <- tempdir()
+lake_directory <- file.path(dir, "extdata")
+#Copy files to temporarly directory
+dir.create(dir,showWarnings = FALSE)
+file.copy(system.file("extdata", package = "FLAREr"),
+          tempdir(),
+          recursive = TRUE)
+run_flare(lake_directory = lake_directory,
+          configure_run_file = "configure_run.yml",
+          config_set_name = "default")
+open_dataset(file.path(lake_directory,"forecasts/parquet")) |>
+  filter(variable == "temperature",
+        depth == 1) |>
+ collect() |>
+ ggplot(aes(x = datetime, y = prediction, group = parameter)) +
+ geom_line() +
+ geom_vline(aes(xintercept = as_datetime(reference_datetime))) +
+ labs(title = "1 m water temperature forecast")
+
+\dontshow{\}) # examplesIf}
+}

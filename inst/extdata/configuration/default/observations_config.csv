@@ -1,2 +1,3 @@
 state_names_obs,obs_units,obs_sd,target_variable, multi_depth
 temp,degC,0.5,temperature, 1
+secchi, unitless,0.5, secchi,0

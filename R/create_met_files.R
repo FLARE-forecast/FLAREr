@@ -3,8 +3,8 @@
 ##' @param  config list of FLARE configurations
 ##' @param lake_directory directory of lake configurations
 ##' @return list; vector of full path for the converted files and boolean flag if issues with historical meteorology files
-##' @export
 ##' @import dplyr
+##' @keywords internal
 ##' @importFrom stringr str_sub str_split str_detect
 ##' @importFrom tibble tibble
 ##' @importFrom lubridate as_datetime days hours ymd_hm
@@ -40,7 +40,7 @@ create_met_files <- function(config, lake_directory){
       stop("Only forecasts that start at 00:00:00 UTC are currently supported")
     }
 
-    if(config$met$use_met_s3){
+    if(config$met$future_met_use_s3){
 
       if(is.null(bucket) | is.null(endpoint)){
         stop("inflow forecast function needs bucket and endpoint if use_s3=TRUE")
@@ -64,7 +64,7 @@ create_met_files <- function(config, lake_directory){
   }
 
   if(start_datetime < forecast_start_datetime){
-    if(use_met_s3){
+    if(config$met$historical_met_use_s3){
 
       past_dir <- arrow::s3_bucket(bucket = file.path(bucket, paste0(config$met$historical_met_model,"/site_id=",lake_name_code)),
                                    endpoint_override =  endpoint, anonymous = TRUE)
@@ -272,7 +272,7 @@ create_met_files <- function(config, lake_directory){
       }
 
       # check for bad data
-      FLAREr:::missing_data_check(df)
+      missing_data_check(df)
 
       fn <- paste0("met_",stringr::str_pad(ens, width = 2, side = "left", pad = "0"),".csv")
       fn <- file.path(out_dir, fn)
@@ -284,5 +284,5 @@ create_met_files <- function(config, lake_directory){
     hist_met)
   }
 
-  return(list(filenames = current_filename, historical_met_error = FALSE))
+  return(list(filenames = current_filename))
 }

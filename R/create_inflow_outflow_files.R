@@ -4,7 +4,7 @@
 #' @param config_set_name specific name of configuration within the configuration directory
 #' @param lake_directory directory for FLARE application
 #' @return list with two vectors. One vector is the matrix of inflow_file_names and the other is the matrix of outflow_file_names
-#'
+#' @keywords internal
 #'
 create_inflow_outflow_files  <- function(config, config_set_name, lake_directory) {
   # set use_s3 to T if missing
@@ -41,12 +41,10 @@ create_inflow_outflow_files  <- function(config, config_set_name, lake_directory
   if (config$flows$include_inflow & config$flows$include_outflow) {
 
     # the model directories for historical flows (before forecast_start_datetime)
-    inflow_historical_dir <- file.path("historical",
-                                       config$flows$historical_inflow_model,
+    inflow_historical_dir <- file.path(config$flows$historical_inflow_model,
                                        paste0("site_id=", config$location$site_id))
 
-    outflow_historical_dir <- file.path("historical",
-                                        config$flows$historical_outflow_model,
+    outflow_historical_dir <- file.path(config$flows$historical_outflow_model,
                                         paste0("site_id=", config$location$site_id))
 
     # do we need future flow?
@@ -57,12 +55,10 @@ create_inflow_outflow_files  <- function(config, config_set_name, lake_directory
       }
 
       # the model directories for historical flows (before forecast_start_datetime)
-      inflow_forecast_dir <- file.path("future",
-                                       config$flows$future_inflow_model,
+      inflow_forecast_dir <- file.path(config$flows$future_inflow_model,
                                        paste0("reference_datetime=", lubridate::as_date(config$run_config$forecast_start_datetime)),
                                        paste0("site_id=", config$location$site_id))
-      outflow_forecast_dir <- file.path("future",
-                                        config$flows$future_outflow_model,
+      outflow_forecast_dir <- file.path(config$flows$future_outflow_model,
                                         paste0("reference_datetime=", lubridate::as_date(config$run_config$forecast_start_datetime)),
                                         paste0("site_id=", config$location$site_id))
     } else {
@@ -107,14 +103,13 @@ create_inflow_outflow_files  <- function(config, config_set_name, lake_directory
                                                                     file.path(lake_directory, config$flows$local_outflow_directory)),
                                              use_ler_vars = config$flows$use_ler_vars),
                                         create_flow_files) |>
-      set_names('inflow_file_names', 'outflow_file_names')
+      purrr::set_names('inflow_file_names', 'outflow_file_names')
 
 
   } else if (config$flows$include_inflow & !config$flows$include_outflow) { # Specify INFLOW only
 
     # the model directories for historical flows (before forecast_start_datetime)
-    inflow_historical_dir <- file.path("historical",
-                                       config$flows$historical_inflow_model,
+    inflow_historical_dir <- file.path(config$flows$historical_inflow_model,
                                        paste0("site_id=", config$location$site_id))
 
 
@@ -125,8 +120,7 @@ create_inflow_outflow_files  <- function(config, config_set_name, lake_directory
         stop("Need future flow model(s) when horizon > 0")
       }
 
-      inflow_forecast_dir <- file.path("future",
-                                       config$flows$future_inflow_model,
+      inflow_forecast_dir <- file.path(config$flows$future_inflow_model,
                                        paste0("reference_datetime=", lubridate::as_date(config$run_config$forecast_start_datetime)),
                                        paste0("site_id=", config$location$site_id))
     } else {
@@ -151,14 +145,13 @@ create_inflow_outflow_files  <- function(config, config_set_name, lake_directory
                                                                     file.path(lake_directory, config$flows$local_outflow_directory)),
                                              use_ler_vars = config$flows$use_ler_vars),
                                         create_flow_files)  |>
-      set_names('inflow_file_names', 'outflow_file_names')
+      purrr::set_names('inflow_file_names', 'outflow_file_names')
 
 
   } else if (!config$flows$include_inflow & config$flows$include_outflow) { # Specify OUTFLOW only
 
     # the model directories for historical flows (before forecast_start_datetime)
-    outflow_historical_dir <- file.path("historical",
-                                        config$flows$historical_outflow_model,
+    outflow_historical_dir <- file.path(config$flows$historical_outflow_model,
                                         paste0("site_id=", config$location$site_id))
 
     # do we need future flow?
@@ -168,8 +161,7 @@ create_inflow_outflow_files  <- function(config, config_set_name, lake_directory
         stop("Need future flow model(s) when horizon > 0")
       }
 
-      outflow_forecast_dir <- file.path("future",
-                                        config$flows$future_outflow_model,
+      outflow_forecast_dir <- file.path(config$flows$future_outflow_model,
                                         paste0("reference_datetime=", lubridate::as_date(config$run_config$forecast_start_datetime)),
                                         paste0("site_id=", config$location$site_id))
     } else {
@@ -194,7 +186,7 @@ create_inflow_outflow_files  <- function(config, config_set_name, lake_directory
                                                                     file.path(lake_directory, config$flows$local_outflow_directory)),
                                              use_ler_vars = config$flows$use_ler_vars),
                                         create_flow_files) |>
-      set_names('inflow_file_names', 'outflow_file_names')
+      purrr::set_names('inflow_file_names', 'outflow_file_names')
 
   } else if (!config$flows$include_inflow & !config$flows$include_inflow) {  # don't specify inflows or outflows
     inflow_outflow_files <- list()

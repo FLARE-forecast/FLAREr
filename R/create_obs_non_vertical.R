@@ -6,6 +6,7 @@
 #' @param end_datetime last datetime of the simulation
 #' @param forecast_start_datetime datetime that a forecast starts
 #' @param forecast_horizon number of days forecasted
+#' @keywords internal
 #'
 #' @return list of secchi and depth observations for use in FLAREs
 create_obs_non_vertical <- function(cleaned_observations_file_long,
@@ -43,7 +44,7 @@ create_obs_non_vertical <- function(cleaned_observations_file_long,
       dplyr::mutate(observation = ifelse(date > lubridate::as_date(forecast_start_datetime), NA, observation)) |>
       dplyr::arrange(date) |>
       dplyr::select(observation) |>
-      as_vector()
+      purrr::as_vector()
 
     obs_secchi <- list(obs = obs_secchi,
                        secchi_sd = obs_config$obs_sd[which(obs_config$state_names_obs == "secchi")])
@@ -61,7 +62,7 @@ create_obs_non_vertical <- function(cleaned_observations_file_long,
       dplyr::mutate(observation = ifelse(date > lubridate::as_date(forecast_start_datetime), NA, observation)) |>
       dplyr::arrange(date) |>
       dplyr::select(observation) |>
-      as_vector()
+      purrr::as_vector()
 
     obs_depth <- list(obs = obs_depth,
                       depth_sd = obs_config$obs_sd[which(obs_config$state_names_obs == "depth")])

@@ -7,16 +7,16 @@ Authors@R:
            role = c("aut", "cre"),
            email = "rqthomas@vt.edu",
            comment = c(ORCID = "0000-0003-1282-7825")),
-    person(given = "Vahid",
+      person(given = "Vahid",
            family = "Daneshmand",
            role = c("ctb")),
-        person(given = "Tadhg",
+      person(given = "Tadhg",
            family = "Moore",
            role = c("ctb")),
       person(given = "Freya",
            family = "Olsson",
            role = c("ctb")),
-    person(given = "Austin",
+      person(given = "Austin",
            family = "Delany",
            role = c("ctb")))       
 Description: This package uses the Ensemble Kalman Filter (EnKF) or the Particle Filter to assimilate observations and generate forecasts of lake water quality using the General Lake Model - Aquatic Ecosystem Dynamics.  The package includes functions to generate the weather and inflow forcing files, organize observations in the form required by the data assimilation, and visualize output.
@@ -36,6 +36,9 @@ Imports:
     imputeTS,
     tools,
     furrr,
+    future,
+    purrr,
+    zoo,
     aws.s3,
     tidyr,
     tsibble,
@@ -47,7 +50,8 @@ Remotes: FLARE-forecast/RopenMeteo
 Suggests: 
     knitr,
     rmarkdown,
-    testthat (>= 3.0.0)
+    testthat (>= 3.0.0),
+    remotes
 VignetteBuilder: knitr
 Config/testthat/edition: 3
 URL: http://flare-forecast.org/FLAREr/

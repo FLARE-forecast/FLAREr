@@ -8,6 +8,7 @@
 ##' @importFrom lubridate as_datetime as_date hour days
 ##' @importFrom dplyr filter
 ##' @author Quinn Thomas
+##' @keywords internal
 create_obs_matrix <- function(cleaned_observations_file_long,
                               obs_config,
                               config){
@@ -35,9 +36,9 @@ create_obs_matrix <- function(cleaned_observations_file_long,
       dplyr::filter(multi_depth == 1)
 
      df <- as_tibble(expand.grid(variable = obs_config$target_variable, datetime = full_time, depth = config$model_settings$modeled_depths)) |>
-      mutate(variable = as.character(variable),
-             datetime = force_tz(datetime, "UTC")) |>
-      left_join(d, by = join_by(variable, datetime, depth))
+      dplyr::mutate(variable = as.character(variable),
+             datetime = lubridate::force_tz(datetime, "UTC")) |>
+      dplyr::left_join(d, by = dplyr::join_by(variable, datetime, depth))
 
 
     obs <- array(df$observation,dim = c(length(obs_config$target_variable), length(full_time), length(config$model_settings$modeled_depths)))

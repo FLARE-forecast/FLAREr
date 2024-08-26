@@ -31,6 +31,8 @@
 #' @param obs_secchi list of secchi observations
 #' @param obs_depth list of depth observations
 #' @return a list
+#'
+#' @keywords internal
 
 
 run_da_forecast <- function(states_init,

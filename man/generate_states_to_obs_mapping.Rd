@@ -23,3 +23,4 @@ Convert columns the map states to observations to a single vector.  This is nece
 \author{
 Quinn Thomas
 }
+\keyword{internal}

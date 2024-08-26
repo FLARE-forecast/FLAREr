@@ -11,21 +11,8 @@ reference:
   desc: Function for default application of FLARE
 - contents:
   - run_flare
-- subtitle: Iteration
-  desc: Functions for automation and interation
+- subtitle: Helpers
+  desc: Functions for automation
   contents:
-  - check_noaa_present_arrow
-  - get_run_config
-  - update_run_config2
-  - get_git_repo
-- subtitle: S3 intergration
-  desc: Functions used for S3 intergration
-  contents:
-  - delete_restart
-  - delete_sim
-  - get_driver_forecast_path
-  - get_targets
-  - put_targets
-  - put_forecast
-  - get_restart_file
-
+  - check_noaa_present
+  - update_run_config

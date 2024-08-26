@@ -29,3 +29,4 @@ list of configuration values
 \description{
 Set and create directories in the configuration file
 }
+\keyword{internal}

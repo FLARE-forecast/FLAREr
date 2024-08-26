@@ -85,9 +85,10 @@ library(FLAREr)
 remotes::install_github("rqthomas/GLM3r")
 Sys.setenv('GLM_PATH'='GLM3r')
 
-tmp <- tempdir()
-file.copy(system.file("extdata", package = "FLAREr"), tmp, recursive = TRUE)
-lake_directory <- file.path(tmp, "example")
+
+dir.create(tempdir(),showWarnings = FALSE)
+lake_directory <- file.path(tempdir(), "extdata")
+file.copy(system.file("extdata", package = "FLAREr"), tempdir(), recursive = TRUE)
 run_flare(lake_directory = lake_directory,configure_run_file = "configure_run.yml", config_set_name = "default")
 
 open_dataset(file.path(lake_directory,"forecasts/parquet")) |> 

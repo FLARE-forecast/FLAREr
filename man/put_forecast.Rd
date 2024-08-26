@@ -16,3 +16,4 @@ put_forecast(saved_file, eml_file_name = NULL, config)
 \description{
 Upload forecast file and metadata to s3 bucket
 }
+\keyword{internal}

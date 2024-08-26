@@ -8,6 +8,36 @@
 #'
 #' @return the full path to save netcdf file that is used to restart following forecast
 #' @export
+#' @examplesIf interactive()
+#' #Load and install dependencies
+#' library(dplyr)
+#' library(ggplot2)
+#' library(readr)
+#' library(lubridate)
+#' remotes::install_github("rqthomas/GLM3r")
+#' Sys.setenv('GLM_PATH'='GLM3r')
+#'
+#' dir <- tempdir()
+#' lake_directory <- file.path(dir, "extdata")
+#' #Copy files to temporarly directory
+#' dir.create(dir,showWarnings = FALSE)
+#' file.copy(system.file("extdata", package = "FLAREr"),
+#'           tempdir(),
+#'           recursive = TRUE)
+
+#' run_flare(lake_directory = lake_directory,
+#'           configure_run_file = "configure_run.yml",
+#'           config_set_name = "default")
+
+#' open_dataset(file.path(lake_directory,"forecasts/parquet")) |>
+#'   filter(variable == "temperature",
+#'         depth == 1) |>
+#'  collect() |>
+#'  ggplot(aes(x = datetime, y = prediction, group = parameter)) +
+#'  geom_line() +
+#'  geom_vline(aes(xintercept = as_datetime(reference_datetime))) +
+#'  labs(title = "1 m water temperature forecast")
+#'
 #'
 run_flare <- function(lake_directory,
                       configure_run_file,
@@ -51,10 +81,6 @@ run_flare <- function(lake_directory,
       met_start_datetime <- met_forecast_start_datetime
       message("horizon is > 16 days so adjusting forecast_start_datetime in the met file generation to use yesterdays forecast. But adjusted forecast_start_datetime < start_datetime")
     }
-  }
-
-  if(is.null(config$met$use_met_s3)){
-    config$met$use_met_s3 <- TRUE
   }
 
   message('Generating Met Forecasts...')

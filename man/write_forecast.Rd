@@ -35,3 +35,4 @@ Function generates a parquet file from the object that is returned by run_da_for
 \author{
 Quinn Thomas
 }
+\keyword{internal}

@@ -6,6 +6,7 @@
 #' @param clean_start logical; reset the configuration run to the base file in the configuration directory
 #' @param config_set_name name of configuration set
 #' @param sim_name name of simulation
+#' @keywords internal
 #'
 #' @return list of configuration values
 #' @export
@@ -55,6 +56,7 @@ get_run_config <- function(configure_run_file = "configure_run.yml", lake_direct
 #' @param lake_directory full path to repository directory
 #' @param directory the branch name on github
 #' @param git_repo https of the github repository
+#' @keywords internal
 #'
 #' @export
 #'
@@ -77,8 +79,7 @@ get_git_repo <- function(lake_directory, directory, git_repo){
 #' @param cleaned_inflow_file full path of the cleaned inflow file
 #' @param use_s3 logical; TRUE = use s3
 #' @param config list of FLARE configurations
-#'
-#' @export
+#' @keywords internal
 #'
 put_targets <- function(site_id, cleaned_insitu_file = NA, cleaned_met_file = NA, cleaned_inflow_file = NA, use_s3 = FALSE, config){
 
@@ -114,8 +115,7 @@ put_targets <- function(site_id, cleaned_insitu_file = NA, cleaned_met_file = NA
 #'
 #' @param lake_directory full path to repository directory
 #' @param config flare configuration object
-#'
-#' @export
+#' @keywords internal
 #'
 get_targets <- function(lake_directory, config){
   if(config$run_config$use_s3){
@@ -133,7 +133,7 @@ get_targets <- function(lake_directory, config){
 #' @param forecast_model name of forecast model (i.e "noaa/NOAAGEFS_1hr); path relative to driver directory.
 #'
 #' @return full path to driver forecast
-#' @export
+#' @keywords internal
 #'
 get_driver_forecast_path <- function(config, forecast_model){
   if(config$run_config$forecast_horizon > 0){
@@ -167,7 +167,7 @@ get_driver_forecast_path <- function(config, forecast_model){
 #' @param sim_name name of simulation
 #'
 #' @return list of configuration values
-#' @export
+#' @keywords internal
 #'
 set_configuration <- function(configure_run_file = "configure_run.yml", lake_directory, clean_start = FALSE, config_set_name = "default", sim_name = NA){
 
@@ -214,7 +214,7 @@ set_configuration <- function(configure_run_file = "configure_run.yml", lake_dir
 #' @param lake_directory full path to repository directory
 #'
 #' @return list of updated configuration values
-#' @export
+#' @keywords internal
 #'
 get_restart_file <- function(config, lake_directory){
   if(!is.na(config$run_config$restart_file)){
@@ -231,50 +231,6 @@ get_restart_file <- function(config, lake_directory){
   }
   return(config)
 }
-
-#' Update run configuration and upload to s3 bucket
-#'
-#' @param config flare configuration object
-#' @param lake_directory full path to repository directory
-#' @param configure_run_file name of run configuration file (do not include full path)
-#' @param saved_file full path of saved FLARE netcdf
-#' @param new_horizon horizon (in days) to update the run configuration with
-#' @param day_advance number of days between forecast forecast generation (defaults to 1)
-#' @param new_start_datetime Boolean; update the start_datetime
-#' @noRd
-#' @return configuration list
-#'
-update_run_config <- function(config, lake_directory, configure_run_file = "configure_run.yml", saved_file = NA,
-                              new_horizon = NA, day_advance = NA, new_start_datetime = TRUE){
-  if(new_start_datetime){
-    config$run_config$start_datetime <- config$run_config$forecast_start_datetime
-  }
-  if(!is.na(new_horizon)){
-    if(!is.na(config$run_config$forecast_horizon)){
-      config$run_config$forecast_horizon <- new_horizon
-    }
-  }
-  if(!is.na(day_advance)){
-    config$run_config$forecast_start_datetime <- as.character(lubridate::as_datetime(config$run_config$forecast_start_datetime) + lubridate::days(day_advance))
-    if(lubridate::hour(config$run_config$forecast_start_datetime) == 0){
-      config$run_config$forecast_start_datetime <- paste(config$run_config$forecast_start_datetime, "00:00:00")
-    }
-  }
-  if(!is.na(saved_file)){
-    config$run_config$restart_file <- basename(saved_file)
-  }
-  yaml::write_yaml(config$run_config, file = file.path(lake_directory,"restart",config$location$site_id,config$run_config$sim_name,configure_run_file))
-  if(config$run_config$use_s3){
-    aws.s3::put_object(file = file.path(lake_directory,"restart",config$location$site_id,config$run_config$sim_name, configure_run_file),
-                       object = file.path(stringr::str_split_fixed(config$s3$warm_start$bucket, "/", n = 2)[2], config$location$site_id,config$run_config$sim_name, configure_run_file),
-                       bucket = stringr::str_split_fixed(config$s3$warm_start$bucket, "/", n = 2)[1],
-                       region = stringr::str_split_fixed(config$s3$warm_start$endpoint, pattern = "\\.", n = 2)[1],
-                       base_url = stringr::str_split_fixed(config$s3$warm_start$endpoint, pattern = "\\.", n = 2)[2],
-                       use_https = as.logical(Sys.getenv("USE_HTTPS")))
-  }
-  invisible(config)
-}
-
 
 #' Update run configuration
 #'
@@ -295,9 +251,40 @@ update_run_config <- function(config, lake_directory, configure_run_file = "conf
 #' @param use_https TRUE/FALSE use https when using s3
 
 #' @export
+#' @examples
+
+#' dir <- tempdir()
+#' lake_directory <- file.path(dir, "extdata")
+#' #Copy files to temporarly directory
+#' dir.create(dir,showWarnings = FALSE)
+#' file.copy(system.file("extdata", package = "FLAREr"),
+#'           tempdir(),
+#'           recursive = TRUE)
+#' print(lake_directory)
+#' dir.create(file.path(lake_directory, "restart/fcre/test"),
+#'            recursive = TRUE,
+#'            showWarnings = FALSE)
+#' file.copy(file.path(lake_directory, "configuration/default/configure_run.yml"),
+#'           file.path(lake_directory, "restart/fcre/test/configure_run.yml"),
+#'           overwrite = TRUE)
+
+#'update_run_config2(lake_directory,
+#'                   configure_run_file = "configure_run.yml",
+#'                   restart_file = NA,
+#'                   start_datetime = "2022-10-01 00:00:00",
+#'                   end_datetime = NA,
+#'                   forecast_start_datetime = "2022-10-10 00:00:00",
+#'                   forecast_horizon = 20,
+#'                   sim_name = "test",
+#'                   site_id = "fcre",
+#'                   configure_flare = "configure_flare.yml",
+#'                   configure_obs = NULL,
+#'                   use_s3 = FALSE,
+#'                   bucket = NULL,
+#'                   endpoint = NULL)
 #'
-update_run_config2 <- function(lake_directory,
-                               configure_run_file = "configure_run.yml",
+update_run_config <- function(lake_directory,
+                               configure_run_file,
                                restart_file,
                                start_datetime,
                                end_datetime,
@@ -358,7 +345,7 @@ update_run_config2 <- function(lake_directory,
 #' @param eml_file_name full path of saved FLARE metadata
 #' @param config flare configuration object
 #'
-#' @export
+#' @keywords internal
 #'
 put_forecast <- function(saved_file, eml_file_name = NULL, config){
   if(config$run_config$use_s3){
@@ -393,7 +380,7 @@ put_forecast <- function(saved_file, eml_file_name = NULL, config){
 #' @param region S3 region
 #' @param base_url S3 endpoint
 #' @noRd
-#'
+#' @keywords internal
 download_s3_objects <- function(lake_directory, bucket, prefix, region, base_url){
 
   files <- aws.s3::get_bucket(bucket = bucket,
@@ -423,7 +410,7 @@ download_s3_objects <- function(lake_directory, bucket, prefix, region, base_url
 #' @param bucket s3 bucket
 #' @param endpoint S3 endpoint
 #'
-#' @export
+#' @keywords internal
 #'
 delete_restart <- function(site_id, sim_name, bucket = "restart", endpoint){
   files <- aws.s3::get_bucket(bucket = stringr::str_split_fixed(bucket, "/", n = 2)[1],
@@ -450,6 +437,7 @@ delete_restart <- function(site_id, sim_name, bucket = "restart", endpoint){
 #' @param lake_directory full path to repository directory
 #' @noRd
 #' @return list of configuration values
+#' @keywords internal
 #'
 initialize_obs_processing <- function(lake_directory, observation_yml = NA, config_set_name = "default"){
 
@@ -474,51 +462,6 @@ initialize_obs_processing <- function(lake_directory, observation_yml = NA, conf
   return(config_obs)
 }
 
-#' Check if NOAA forecast is on s3 bucket
-#'
-#' @param lake_directory full path to repository directory
-#' @param configure_run_file file name (no path) of run configuration file
-#' @param config_set_name FLARE configuration object (needed for s3 buckets and endpoit)
-#'
-#' @return logical
-#'
-#' @noRd
-#'
-#'
-check_noaa_present <- function(lake_directory, configure_run_file = "configure_run.yml", config_set_name = "default"){
-
-  config <- set_configuration(configure_run_file,lake_directory, config_set_name = config_set_name)
-
-  noaa_forecast_path <- get_driver_forecast_path(config,
-                                                 forecast_model = config$met$forecast_met_model)
-
-  if(config$run_config$forecast_horizon > 0 & !is.null(noaa_forecast_path)){
-    noaa_files <- aws.s3::get_bucket(bucket = stringr::str_split_fixed(config$s3$drivers$bucket, "/", n = 2)[1],
-                                     prefix = file.path(stringr::str_split_fixed(config$s3$drivers$bucket, "/", n = 2)[2], noaa_forecast_path),
-                                     region = stringr::str_split_fixed(config$s3$drivers$endpoint, pattern = "\\.", n = 2)[1],
-                                     base_url = stringr::str_split_fixed(config$s3$drivers$endpoint, pattern = "\\.", n = 2)[2],
-                                     use_https = as.logical(Sys.getenv("USE_HTTPS")))
-    noaa_forecast_path <- file.path(lake_directory,"drivers", noaa_forecast_path)
-    keys <- vapply(noaa_files, `[[`, "", "Key", USE.NAMES = FALSE)
-    empty <- grepl("/$", keys)
-    forecast_files <- keys[!empty]
-    noaa_forecasts_ready <- FALSE
-  }else{
-    forecast_files <- NULL
-    noaa_forecasts_ready <- TRUE
-  }
-
-  if(length(forecast_files) == 31 | length(forecast_files) == 21){
-    noaa_forecasts_ready <- TRUE
-  }else{
-    if(config$run_config$forecast_horizon > 0){
-      message(paste0("waiting for NOAA forecast: ", config$run_config$forecast_start_datetime))
-    }
-  }
-  return(noaa_forecasts_ready)
-
-}
-
 #' Check if NOAA forecasts have been downloaded and processed
 #'
 #' @param lake_directory four-letter code for site
@@ -527,9 +470,21 @@ check_noaa_present <- function(lake_directory, configure_run_file = "configure_r
 #'
 #' @return logical
 #' @export
+#' @examplesIf interactive()
 #'
+#' dir <- tempdir()
+#' lake_directory <- file.path(dir, "extdata")
+#' # Copy files to temporarly directory
+#' dir.create(dir,showWarnings = FALSE)
+#' file.copy(system.file("extdata", package = "FLAREr"),
+#'           tempdir(),
+#'           recursive = TRUE)
+#'
+#' check_noaa_present(lake_directory,
+#'                    configure_run_file = "configure_run.yml",
+#'                    config_set_name = "default")
 
-check_noaa_present_arrow <- function(lake_directory, configure_run_file = "configure_run.yml", config_set_name = "default"){
+check_noaa_present <- function(lake_directory, configure_run_file = "configure_run.yml", config_set_name = "default"){
 
   config <- set_configuration(configure_run_file, lake_directory, config_set_name = config_set_name)
 
@@ -596,8 +551,8 @@ check_noaa_present_arrow <- function(lake_directory, configure_run_file = "confi
 #' @param site_id four letter code for site
 #' @param sim_name name of simulation
 #' @param config FLARE configuration object (needed for s3 buckets and endpoit)
+#' @keywords internal
 #'
-#' @export
 #'
 delete_sim <- function(site_id, sim_name, config){
 

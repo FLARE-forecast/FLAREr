@@ -8,7 +8,7 @@
 ##' @return None
 ##' @importFrom lubridate with_tz
 ##' @author Quinn Thomas
-##'
+##' @keywords internal
 ##'
 
 write_forecast <- function(da_forecast_output,

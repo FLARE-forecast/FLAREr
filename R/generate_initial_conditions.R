@@ -9,6 +9,7 @@
 #' @import ncdf4
 #' @return list; list contains the initial conditions objects required by run_da_forecast()
 #' @author Quinn Thomas
+#' @keywords internal
 generate_initial_conditions <- function(states_config,
                                         obs_config,
                                         pars_config = NULL,

@@ -1,13 +1,10 @@
 pandoc: 3.1.11
-pkgdown: 2.0.9
+pkgdown: 2.1.0
 pkgdown_sha: ~
 articles:
   flare-config-vignette: flare-config-vignette.html
-  flare-drivers-vignette: flare-drivers-vignette.html
   flare-example-vignette: flare-example-vignette.html
-  flare-workflow-vignette: flare-workflow-vignette.html
-last_built: 2024-08-20T13:38Z
+last_built: 2024-08-26T17:30Z
 urls:
   reference: http://flare-forecast.org/FLAREr/reference
   article: http://flare-forecast.org/FLAREr/articles
-

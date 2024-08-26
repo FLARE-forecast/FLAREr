@@ -131,15 +131,15 @@ A guide to the variables in `configure_flare.yml` and in the
 -   **forecast_lag_days:** number of days to look backward for a
     forecast
 -   **use_ler_vars:** use LER standardized met names (`TRUE` or `FALSE`)
--   **use_met_s3:** access met data on s3 bucket (`TRUE` or `FALSE`)
--   **openmeteo_api:** the name of the openmeteo api to use (leave empty
-    if not using openmeteo); `seasonal`, `ensemble_forecast`,
+-   **historical_met_use_s3:** access historical met data on s3 bucket (`TRUE` or `FALSE`)
+-   **future_met_use_s3:** access future met data on s3 bucket (`TRUE` or `FALSE`)
+-   **use_openmeteo:** use openmeteo for meterology inputs (`TRUE` or `FALSE`)
+-   **openmeteo_api:** the name of the openmeteo api to use (only used if `openmeteo = TRUE`); `seasonal`, `ensemble_forecast`,
     `historical`, `climate`
--   **openmeteo_model:** name of the openmeteo model to use (leave empty
-    if not using openmeteo); see <https://open-meteo.com/en/docs> for
+-   **openmeteo_model:** name of the openmeteo model to use ( (only used if `openmeteo = TRUE`)); see <https://open-meteo.com/en/docs> for
     list of models
 -   **use_openmeteo_archive:** use a archived version of openmeteo on s3
-    rather than directly using the api
+    rather than directly using the api.  (only used if `openmeteo = TRUE`)
 -   **local_met_directory:** directory where meteorology forecasts are
     saved if not using s3 access. Relative to the lake_directory.
 
@@ -182,7 +182,7 @@ A guide to the variables in `configure_flare.yml` and in the
 -   **parameter:** Include uncertainty in parameters during forecast
     (`TRUE` or `FALSE`)
 
--   **inflow_process:** Include uncertainty in inflow during forecast
+-   **inflow:** Include uncertainty in inflow during forecast
     (`TRUE` or `FALSE`)
 
 ### output_settings:

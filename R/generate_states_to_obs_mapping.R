@@ -5,6 +5,7 @@
 ##' @return updated states_config list
 ##' @importFrom stringr str_detect
 ##' @author Quinn Thomas
+##' @keywords internal
 
 generate_states_to_obs_mapping <- function(states_config, obs_config){
 

@@ -56,3 +56,4 @@ Generate GLM ready met files from open meteo
 \details{
 Generate GLM ready met files from open meteo
 }
+\keyword{internal}

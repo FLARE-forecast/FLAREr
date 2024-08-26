@@ -13,6 +13,7 @@
 #' @param use_archive Boolen (default = FALSE); TRUE = use forecasts stored on s3 bucket, FALSE = use open-meteo download directly
 #' @param bucket s3 bucket for archive
 #' @param endpoint s3 endpoint for archive
+#' @keywords internal
 #'
 #' @return list of meteorology file names
 create_met_files_openmet <- function(out_dir,
@@ -200,7 +201,7 @@ create_met_files_openmet <- function(out_dir,
       RopenMeteo::write_glm_format(path = out_dir)
   }
 
-  current_filenames <- fs::dir_ls(path = out_dir, glob = "*/met*.csv")
+  current_filenames <- list.files(path = out_dir, pattern = paste0("met_",model),full.names = TRUE)
 
   return(list(filenames = current_filenames))
 }

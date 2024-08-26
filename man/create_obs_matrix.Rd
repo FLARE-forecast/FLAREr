@@ -25,3 +25,4 @@ Creates a matrix of observations that maps the modeled states to the observed st
 \author{
 Quinn Thomas
 }
+\keyword{internal}
