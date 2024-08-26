@@ -76,7 +76,7 @@ Sys.setenv('GLM_PATH'='GLM3r')
 Third, create a directory that will be your working directory for your FLARE run.  To find this directory on your computer you can use `print(lake_directory)`
 
 ```{r}
-lake_directory <-  normalizePath(tempdir())
+lake_directory <-  normalizePath(tempdir(),  winslash = "/")
 print(lake_directory)
 dir.create(file.path(lake_directory, "configuration/default"), recursive = TRUE)
 dir.create(file.path(lake_directory, "targets")) # For QAQC data
