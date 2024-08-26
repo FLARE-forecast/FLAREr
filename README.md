@@ -1,5 +1,6 @@
 <!-- badges: start -->
 [![R-CMD-check](https://github.com/FLARE-forecast/FLAREr/actions/workflows/R-CMD-check.yaml/badge.svg)](https://github.com/FLARE-forecast/FLAREr/actions/workflows/R-CMD-check.yaml)
+[![Codecov test coverage](https://codecov.io/gh/FLARE-forecast/FLAREr/branch/single-parameter/graph/badge.svg)](https://codecov.io/gh/FLARE-forecast/FLAREr?branch=single-parameter)
 <!-- badges: end -->
 
 # FLAREr

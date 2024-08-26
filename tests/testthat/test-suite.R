@@ -1,9 +1,9 @@
 # Met files ----
 test_that("met files are generated", {
 
-  lake_directory <-  tempdir()
-  configure_run_file <- "configure_run.yml"
-  config_set_name <- "default"
+  lake_directory <<- normalizePath(tempdir(),  winslash = "/")
+  configure_run_file <<- "configure_run.yml"
+  config_set_name <<- "default"
 
   source(file.path(system.file("extdata", package = "FLAREr"), "R/test-set-up.R"))
 
@@ -22,7 +22,7 @@ test_that("open-meteo met files are generated", {
 
   skip_if_offline()
 
-  lake_directory <-  tempdir()
+  lake_directory <- normalizePath(tempdir(),  winslash = "/")
   configure_run_file <- "configure_run.yml"
   config_set_name <- "default"
 
@@ -53,7 +53,7 @@ test_that("open-meteo met files are generated", {
 
 test_that("inflow files are generated", {
 
-  lake_directory <-  tempdir()
+  lake_directory <-  normalizePath(tempdir(),  winslash = "/")
   configure_run_file <- "configure_run.yml"
   config_set_name <- "default"
 
@@ -71,7 +71,7 @@ test_that("inflow files are generated", {
 
 test_that("observation matrix is created", {
 
-  lake_directory <-  tempdir()
+  lake_directory <-  normalizePath(tempdir(),  winslash = "/")
   configure_run_file <- "configure_run.yml"
   config_set_name <- "default"
 
@@ -91,7 +91,7 @@ test_that("observation matrix is created", {
 
 test_that("observation non-vertical list is created", {
 
-  lake_directory <-  tempdir()
+  lake_directory <-  normalizePath(tempdir(),  winslash = "/")
   configure_run_file <- "configure_run.yml"
   config_set_name <- "default"
 
@@ -113,7 +113,7 @@ test_that("observation non-vertical list is created", {
 
 test_that("state set up", {
 
-  lake_directory <-  tempdir()
+  lake_directory <-  normalizePath(tempdir(),  winslash = "/")
   configure_run_file <- "configure_run.yml"
   config_set_name <- "default"
 
@@ -134,7 +134,7 @@ test_that("state set up", {
 
 test_that("state set up", {
 
-  lake_directory <-  tempdir()
+  lake_directory <-  normalizePath(tempdir(),  winslash = "/")
   configure_run_file <- "configure_run.yml"
   config_set_name <- "default"
 
@@ -150,7 +150,7 @@ test_that("state set up", {
 
 test_that("initial conditions", {
 
-  lake_directory <-  tempdir()
+  lake_directory <-  normalizePath(tempdir(),  winslash = "/")
   configure_run_file <- "configure_run.yml"
   config_set_name <- "default"
 
@@ -192,7 +192,7 @@ test_that("run_flare works", {
   remotes::install_github("rqthomas/GLM3r")
   Sys.setenv('GLM_PATH'='GLM3r')
 
-  lake_directory <-  tempdir()
+  lake_directory <-  normalizePath(tempdir(),  winslash = "/")
   configure_run_file <- "configure_run.yml"
   config_set_name <- "default"
 

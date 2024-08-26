@@ -32,7 +32,7 @@ library(lubridate)
 remotes::install_github("rqthomas/GLM3r")
 Sys.setenv('GLM_PATH'='GLM3r')
 
-dir <- tempdir()
+dir <- normalizePath(tempdir(),  winslash = "/")
 lake_directory <- file.path(dir, "extdata")
 #Copy files to temporarly directory
 dir.create(dir,showWarnings = FALSE)

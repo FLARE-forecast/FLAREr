@@ -57,7 +57,7 @@ update_run_config(
 Update run configuration
 }
 \examples{
-dir <- tempdir()
+dir <- normalizePath(tempdir(),  winslash = "/")
 lake_directory <- file.path(dir, "extdata")
 #Copy files to temporarly directory
 dir.create(dir,showWarnings = FALSE)
