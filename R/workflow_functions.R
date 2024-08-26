@@ -268,7 +268,7 @@ get_restart_file <- function(config, lake_directory){
 #'           file.path(lake_directory, "restart/fcre/test/configure_run.yml"),
 #'           overwrite = TRUE)
 
-#'update_run_config2(lake_directory,
+#'update_run_config(lake_directory,
 #'                   configure_run_file = "configure_run.yml",
 #'                   restart_file = NA,
 #'                   start_datetime = "2022-10-01 00:00:00",
