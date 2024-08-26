@@ -195,15 +195,6 @@ set_configuration <- function(configure_run_file = "configure_run.yml", lake_dir
   config$file_path$execute_directory <- file.path(lake_directory, "flare_tempdir", config$location$site_id, config$run_config$sim_name)
   dir.create(config$file_path$execute_directory, recursive = TRUE, showWarnings = FALSE)
 
-
-  if(!dir.exists(lake_directory)){
-    stop(c(normalizePath(lake_directory,winslash = "/"), lake_directory, file.path(lake_directory, "flare_tempdir", config$location$site_id, config$run_config$sim_name)))
-  }else{
-    stop(c(normalizePath(lake_directory, winslash = "/"), lake_directory, file.path(lake_directory, "flare_tempdir", config$location$site_id, config$run_config$sim_name)))
-
-  }
-
-
   if(Sys.getenv(x = "AWS_ACCESS_KEY_ID") == "" & config$run_config$use_s3 == TRUE){
     warning(paste0(" Use s3 is set to TRUE in ",file.path(lake_directory,"configuration",config_set_name,configure_run_file),
                    "AWS_ACCESS_KEY_ID environment variable is not set.  s3 can still be used for downloading"))
