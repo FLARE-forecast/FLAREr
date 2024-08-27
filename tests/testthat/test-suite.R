@@ -25,8 +25,8 @@ test_that("open-meteo met files are generated", {
 
   dir <-  file.path(normalizePath(tempdir(),  winslash = "/"))
   lake_directory <- file.path(dir, "extdata")
-  configure_run_file <- "configure_run.yml"
-  config_set_name <- "default"
+  configure_run_file <<- "configure_run.yml"
+  config_set_name <<- "default"
 
   source(file.path(system.file("extdata", package = "FLAREr"), "R/test-set-up.R"))
 
@@ -57,8 +57,8 @@ test_that("inflow files are generated", {
 
   dir <-  file.path(normalizePath(tempdir(),  winslash = "/"))
   lake_directory <- file.path(dir, "extdata")
-  configure_run_file <- "configure_run.yml"
-  config_set_name <- "default"
+  configure_run_file <<- "configure_run.yml"
+  config_set_name <<- "default"
 
   source(file.path(system.file("extdata", package = "FLAREr"), "R/test-set-up.R"))
 
@@ -76,8 +76,8 @@ test_that("observation matrix is created", {
 
   dir <-  file.path(normalizePath(tempdir(),  winslash = "/"))
   lake_directory <- file.path(dir, "extdata")
-  configure_run_file <- "configure_run.yml"
-  config_set_name <- "default"
+  configure_run_file <<- "configure_run.yml"
+  config_set_name <<- "default"
 
   source(file.path(system.file("extdata", package = "FLAREr"), "R/test-set-up.R"))
 
@@ -97,8 +97,8 @@ test_that("observation non-vertical list is created", {
 
   dir <-  file.path(normalizePath(tempdir(),  winslash = "/"))
   lake_directory <- file.path(dir, "extdata")
-  configure_run_file <- "configure_run.yml"
-  config_set_name <- "default"
+  configure_run_file <<- "configure_run.yml"
+  config_set_name <<- "default"
 
   source(file.path(system.file("extdata", package = "FLAREr"), "R/test-set-up.R"))
 
@@ -120,8 +120,8 @@ test_that("state set up", {
 
   dir <-  file.path(normalizePath(tempdir(),  winslash = "/"))
   lake_directory <- file.path(dir, "extdata")
-  configure_run_file <- "configure_run.yml"
-  config_set_name <- "default"
+  configure_run_file <<- "configure_run.yml"
+  config_set_name <<- "default"
 
   source(file.path(system.file("extdata", package = "FLAREr"), "R/test-set-up.R"))
 
@@ -141,8 +141,8 @@ test_that("initial conditions", {
 
   dir <-  file.path(normalizePath(tempdir(),  winslash = "/"))
   lake_directory <- file.path(dir, "extdata")
-  configure_run_file <- "configure_run.yml"
-  config_set_name <- "default"
+  configure_run_file <<- "configure_run.yml"
+  config_set_name <<- "default"
 
   source(file.path(system.file("extdata", package = "FLAREr"), "R/test-set-up.R"))
 
@@ -184,8 +184,8 @@ test_that("run_flare enkf and restart works", {
 
   dir <-  file.path(normalizePath(tempdir(),  winslash = "/"))
   lake_directory <- file.path(dir, "extdata")
-  configure_run_file <- "configure_run.yml"
-  config_set_name <- "default"
+  configure_run_file <<- "configure_run.yml"
+  config_set_name <<- "default"
 
   if(file.exists(file.path(lake_directory, "restart", "fcre","test", "configure_run.yml"))){
     unlink(file.path(lake_directory, "restart", "fcre","test", "configure_run.yml"))
@@ -263,8 +263,8 @@ test_that("particle filter works", {
 
   dir <-  file.path(normalizePath(tempdir(),  winslash = "/"))
   lake_directory <- file.path(dir, "extdata")
-  configure_run_file <- "configure_run.yml"
-  config_set_name <- "default_pf"
+  configure_run_file <<- "configure_run.yml"
+  config_set_name <<- "default_pf"
 
   source(file.path(system.file("extdata", package = "FLAREr"), "R/test-set-up.R"))
 

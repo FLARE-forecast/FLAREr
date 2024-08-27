@@ -1,7 +1,5 @@
 file.copy(system.file("extdata", package = "FLAREr"), dir, recursive = TRUE)
 
-
-
 dir.create(file.path(lake_directory, "configuration", config_set_name), recursive = TRUE, showWarnings = FALSE)
 dir.create(file.path(lake_directory, "targets"), showWarnings = FALSE) # For QAQC data
 dir.create(file.path(lake_directory, "drivers"), showWarnings = FALSE) # Weather and inflow forecasts
