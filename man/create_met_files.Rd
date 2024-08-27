@@ -4,12 +4,21 @@
 \alias{create_met_files}
 \title{Convert historical meteorology and NOAA forecasts to GLM format}
 \usage{
-create_met_files(config, lake_directory)
+create_met_files(
+  config,
+  lake_directory,
+  met_forecast_start_datetime,
+  met_start_datetime
+)
 }
 \arguments{
 \item{config}{list of FLARE configurations}
 
 \item{lake_directory}{directory of lake configurations}
+
+\item{met_forecast_start_datetime}{start datetime of met forecasts}
+
+\item{met_start_datetime}{start datetime of met simulation}
 }
 \value{
 list; vector of full path for the converted files and boolean flag if issues with historical meteorology files

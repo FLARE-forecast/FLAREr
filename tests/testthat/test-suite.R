@@ -3,12 +3,19 @@ test_that("met files are generated", {
 
   dir <-  file.path(normalizePath(tempdir(),  winslash = "/"))
   lake_directory <- file.path(dir, "extdata")
-  configure_run_file <<- "configure_run.yml"
-  config_set_name <<- "default"
+  configure_run_file <- "configure_run.yml"
+  config_set_name <- "default"
+  file.copy(system.file("extdata", package = "FLAREr"), dir, recursive = TRUE)
+  config <- FLAREr:::set_configuration(configure_run_file, lake_directory, config_set_name = config_set_name)
+  config <- FLAREr:::get_restart_file(config, lake_directory)
+  pars_config <- readr::read_csv(file.path(config$file_path$configuration_directory, config$model_settings$par_config_file), col_types = readr::cols())
+  obs_config <- readr::read_csv(file.path(config$file_path$configuration_directory, config$model_settings$obs_config_file), col_types = readr::cols())
+  states_config <- readr::read_csv(file.path(config$file_path$configuration_directory, config$model_settings$states_config_file), col_types = readr::cols())
 
-  source(file.path(system.file("extdata", package = "FLAREr"), "R/test-set-up.R"))
+  met_start_datetime <- lubridate::as_datetime(config$run_config$start_datetime)
+  met_forecast_start_datetime <- lubridate::as_datetime(config$run_config$forecast_start_datetime)
 
-  met_out <- FLAREr:::create_met_files(config, lake_directory)
+  met_out <- FLAREr:::create_met_files(config, lake_directory, met_forecast_start_datetime, met_start_datetime)
 
 
   met_file_names <- met_out$filenames
@@ -25,10 +32,18 @@ test_that("open-meteo met files are generated", {
 
   dir <-  file.path(normalizePath(tempdir(),  winslash = "/"))
   lake_directory <- file.path(dir, "extdata")
-  configure_run_file <<- "configure_run.yml"
-  config_set_name <<- "default"
+  configure_run_file <- "configure_run.yml"
+  config_set_name <- "default"
 
-  source(file.path(system.file("extdata", package = "FLAREr"), "R/test-set-up.R"))
+  file.copy(system.file("extdata", package = "FLAREr"), dir, recursive = TRUE)
+  config <- FLAREr:::set_configuration(configure_run_file, lake_directory, config_set_name = config_set_name)
+  config <- FLAREr:::get_restart_file(config, lake_directory)
+  pars_config <- readr::read_csv(file.path(config$file_path$configuration_directory, config$model_settings$par_config_file), col_types = readr::cols())
+  obs_config <- readr::read_csv(file.path(config$file_path$configuration_directory, config$model_settings$obs_config_file), col_types = readr::cols())
+  states_config <- readr::read_csv(file.path(config$file_path$configuration_directory, config$model_settings$states_config_file), col_types = readr::cols())
+
+  met_start_datetime <- lubridate::as_datetime(config$run_config$start_datetime)
+  met_forecast_start_datetime <- lubridate::as_datetime(config$run_config$forecast_start_datetime)
 
   met_out <- FLAREr:::create_met_files_openmet(out_dir = config$file_path$execute_directory,
                                                start_datetime = met_start_datetime,
@@ -55,13 +70,20 @@ test_that("open-meteo met files are generated", {
 
 test_that("inflow files are generated", {
 
-  dir <-  file.path(normalizePath(tempdir(),  winslash = "/"))
+  dir <- file.path(normalizePath(tempdir(),  winslash = "/"))
   lake_directory <- file.path(dir, "extdata")
-  configure_run_file <<- "configure_run.yml"
-  config_set_name <<- "default"
+  configure_run_file <- "configure_run.yml"
+  config_set_name <- "default"
 
-  source(file.path(system.file("extdata", package = "FLAREr"), "R/test-set-up.R"))
+  file.copy(system.file("extdata", package = "FLAREr"), dir, recursive = TRUE)
+  config <- FLAREr:::set_configuration(configure_run_file, lake_directory, config_set_name = config_set_name)
+  config <- FLAREr:::get_restart_file(config, lake_directory)
+  pars_config <- readr::read_csv(file.path(config$file_path$configuration_directory, config$model_settings$par_config_file), col_types = readr::cols())
+  obs_config <- readr::read_csv(file.path(config$file_path$configuration_directory, config$model_settings$obs_config_file), col_types = readr::cols())
+  states_config <- readr::read_csv(file.path(config$file_path$configuration_directory, config$model_settings$states_config_file), col_types = readr::cols())
 
+  met_start_datetime <- lubridate::as_datetime(config$run_config$start_datetime)
+  met_forecast_start_datetime <- lubridate::as_datetime(config$run_config$forecast_start_datetime)
   inflow_outflow_files <- FLAREr:::create_inflow_outflow_files(config, config_set_name, lake_directory)
 
   df <- readr::read_csv(inflow_outflow_files$inflow_file_names[,1], show_col_types = FALSE)
@@ -76,11 +98,18 @@ test_that("observation matrix is created", {
 
   dir <-  file.path(normalizePath(tempdir(),  winslash = "/"))
   lake_directory <- file.path(dir, "extdata")
-  configure_run_file <<- "configure_run.yml"
-  config_set_name <<- "default"
+  configure_run_file <- "configure_run.yml"
+  config_set_name <- "default"
 
-  source(file.path(system.file("extdata", package = "FLAREr"), "R/test-set-up.R"))
+  file.copy(system.file("extdata", package = "FLAREr"), dir, recursive = TRUE)
+  config <- FLAREr:::set_configuration(configure_run_file, lake_directory, config_set_name = config_set_name)
+  config <- FLAREr:::get_restart_file(config, lake_directory)
+  pars_config <- readr::read_csv(file.path(config$file_path$configuration_directory, config$model_settings$par_config_file), col_types = readr::cols())
+  obs_config <- readr::read_csv(file.path(config$file_path$configuration_directory, config$model_settings$obs_config_file), col_types = readr::cols())
+  states_config <- readr::read_csv(file.path(config$file_path$configuration_directory, config$model_settings$states_config_file), col_types = readr::cols())
 
+  met_start_datetime <- lubridate::as_datetime(config$run_config$start_datetime)
+  met_forecast_start_datetime <- lubridate::as_datetime(config$run_config$forecast_start_datetime)
   obs_insitu_file <- file.path(config$file_path$qaqc_data_directory, config$da_setup$obs_filename)
 
   obs <- FLAREr:::create_obs_matrix(cleaned_observations_file_long = obs_insitu_file,
@@ -97,11 +126,18 @@ test_that("observation non-vertical list is created", {
 
   dir <-  file.path(normalizePath(tempdir(),  winslash = "/"))
   lake_directory <- file.path(dir, "extdata")
-  configure_run_file <<- "configure_run.yml"
-  config_set_name <<- "default"
+  configure_run_file <- "configure_run.yml"
+  config_set_name <- "default"
 
-  source(file.path(system.file("extdata", package = "FLAREr"), "R/test-set-up.R"))
+  file.copy(system.file("extdata", package = "FLAREr"), dir, recursive = TRUE)
+  config <- FLAREr:::set_configuration(configure_run_file, lake_directory, config_set_name = config_set_name)
+  config <- FLAREr:::get_restart_file(config, lake_directory)
+  pars_config <- readr::read_csv(file.path(config$file_path$configuration_directory, config$model_settings$par_config_file), col_types = readr::cols())
+  obs_config <- readr::read_csv(file.path(config$file_path$configuration_directory, config$model_settings$obs_config_file), col_types = readr::cols())
+  states_config <- readr::read_csv(file.path(config$file_path$configuration_directory, config$model_settings$states_config_file), col_types = readr::cols())
 
+  met_start_datetime <- lubridate::as_datetime(config$run_config$start_datetime)
+  met_forecast_start_datetime <- lubridate::as_datetime(config$run_config$forecast_start_datetime)
   obs_insitu_file <- file.path(config$file_path$qaqc_data_directory, config$da_setup$obs_filename)
 
   obs_non_vertical <- FLAREr:::create_obs_non_vertical(cleaned_observations_file_long = file.path(config$file_path$qaqc_data_directory,paste0(config$location$site_id, "-targets-insitu.csv")),
@@ -120,11 +156,18 @@ test_that("state set up", {
 
   dir <-  file.path(normalizePath(tempdir(),  winslash = "/"))
   lake_directory <- file.path(dir, "extdata")
-  configure_run_file <<- "configure_run.yml"
-  config_set_name <<- "default"
+  configure_run_file <- "configure_run.yml"
+  config_set_name <- "default"
 
-  source(file.path(system.file("extdata", package = "FLAREr"), "R/test-set-up.R"))
+  file.copy(system.file("extdata", package = "FLAREr"), dir, recursive = TRUE)
+  config <- FLAREr:::set_configuration(configure_run_file, lake_directory, config_set_name = config_set_name)
+  config <- FLAREr:::get_restart_file(config, lake_directory)
+  pars_config <- readr::read_csv(file.path(config$file_path$configuration_directory, config$model_settings$par_config_file), col_types = readr::cols())
+  obs_config <- readr::read_csv(file.path(config$file_path$configuration_directory, config$model_settings$obs_config_file), col_types = readr::cols())
+  states_config <- readr::read_csv(file.path(config$file_path$configuration_directory, config$model_settings$states_config_file), col_types = readr::cols())
 
+  met_start_datetime <- lubridate::as_datetime(config$run_config$start_datetime)
+  met_forecast_start_datetime <- lubridate::as_datetime(config$run_config$forecast_start_datetime)
   states_config <- FLAREr:::generate_states_to_obs_mapping(states_config, obs_config)
 
   testthat::expect_true(nrow(states_config) == 2)
@@ -141,11 +184,18 @@ test_that("initial conditions", {
 
   dir <-  file.path(normalizePath(tempdir(),  winslash = "/"))
   lake_directory <- file.path(dir, "extdata")
-  configure_run_file <<- "configure_run.yml"
-  config_set_name <<- "default"
+  configure_run_file <- "configure_run.yml"
+  config_set_name <- "default"
 
-  source(file.path(system.file("extdata", package = "FLAREr"), "R/test-set-up.R"))
+  file.copy(system.file("extdata", package = "FLAREr"), dir, recursive = TRUE)
+  config <- FLAREr:::set_configuration(configure_run_file, lake_directory, config_set_name = config_set_name)
+  config <- FLAREr:::get_restart_file(config, lake_directory)
+  pars_config <- readr::read_csv(file.path(config$file_path$configuration_directory, config$model_settings$par_config_file), col_types = readr::cols())
+  obs_config <- readr::read_csv(file.path(config$file_path$configuration_directory, config$model_settings$obs_config_file), col_types = readr::cols())
+  states_config <- readr::read_csv(file.path(config$file_path$configuration_directory, config$model_settings$states_config_file), col_types = readr::cols())
 
+  met_start_datetime <- lubridate::as_datetime(config$run_config$start_datetime)
+  met_forecast_start_datetime <- lubridate::as_datetime(config$run_config$forecast_start_datetime)
   obs_insitu_file <- file.path(config$file_path$qaqc_data_directory, config$da_setup$obs_filename)
 
   obs <- FLAREr:::create_obs_matrix(cleaned_observations_file_long = obs_insitu_file,
@@ -184,15 +234,22 @@ test_that("run_flare enkf and restart works", {
 
   dir <-  file.path(normalizePath(tempdir(),  winslash = "/"))
   lake_directory <- file.path(dir, "extdata")
-  configure_run_file <<- "configure_run.yml"
-  config_set_name <<- "default"
+  configure_run_file <- "configure_run.yml"
+  config_set_name <- "default"
 
   if(file.exists(file.path(lake_directory, "restart", "fcre","test", "configure_run.yml"))){
     unlink(file.path(lake_directory, "restart", "fcre","test", "configure_run.yml"))
   }
 
-  source(file.path(system.file("extdata", package = "FLAREr"), "R/test-set-up.R"))
+  file.copy(system.file("extdata", package = "FLAREr"), dir, recursive = TRUE)
+  config <- FLAREr:::set_configuration(configure_run_file, lake_directory, config_set_name = config_set_name)
+  config <- FLAREr:::get_restart_file(config, lake_directory)
+  pars_config <- readr::read_csv(file.path(config$file_path$configuration_directory, config$model_settings$par_config_file), col_types = readr::cols())
+  obs_config <- readr::read_csv(file.path(config$file_path$configuration_directory, config$model_settings$obs_config_file), col_types = readr::cols())
+  states_config <- readr::read_csv(file.path(config$file_path$configuration_directory, config$model_settings$states_config_file), col_types = readr::cols())
 
+  met_start_datetime <- lubridate::as_datetime(config$run_config$start_datetime)
+  met_forecast_start_datetime <- lubridate::as_datetime(config$run_config$forecast_start_datetime)
   next_restart <- FLAREr::run_flare(lake_directory = lake_directory, configure_run_file = configure_run_file, config_set_name = config_set_name)
 
   testthat::expect_true(file.exists(file.path(lake_directory, "forecasts/parquet/site_id=fcre/model_id=test/reference_date=2022-10-02/part-0.parquet")))
@@ -240,11 +297,18 @@ test_that("run_flare aed works", {
 
   dir <-  file.path(normalizePath(tempdir(),  winslash = "/"))
   lake_directory <- file.path(dir, "extdata")
-  configure_run_file <<- "configure_run.yml"
-  config_set_name <<- "aed"
+  configure_run_file <- "configure_run.yml"
+  config_set_name <- "aed"
 
-  source(file.path(system.file("extdata", package = "FLAREr"), "R/test-set-up.R"))
+  file.copy(system.file("extdata", package = "FLAREr"), dir, recursive = TRUE)
+  config <- FLAREr:::set_configuration(configure_run_file, lake_directory, config_set_name = config_set_name)
+  config <- FLAREr:::get_restart_file(config, lake_directory)
+  pars_config <- readr::read_csv(file.path(config$file_path$configuration_directory, config$model_settings$par_config_file), col_types = readr::cols())
+  obs_config <- readr::read_csv(file.path(config$file_path$configuration_directory, config$model_settings$obs_config_file), col_types = readr::cols())
+  states_config <- readr::read_csv(file.path(config$file_path$configuration_directory, config$model_settings$states_config_file), col_types = readr::cols())
 
+  met_start_datetime <- lubridate::as_datetime(config$run_config$start_datetime)
+  met_forecast_start_datetime <- lubridate::as_datetime(config$run_config$forecast_start_datetime)
   next_restart <- FLAREr::run_flare(lake_directory = lake_directory, configure_run_file = configure_run_file, config_set_name = config_set_name)
 
   testthat::expect_true(file.exists(file.path(lake_directory, "forecasts/parquet/site_id=fcre/model_id=test_aed/reference_date=2022-10-02/part-0.parquet")))
@@ -263,11 +327,18 @@ test_that("particle filter works", {
 
   dir <-  file.path(normalizePath(tempdir(),  winslash = "/"))
   lake_directory <- file.path(dir, "extdata")
-  configure_run_file <<- "configure_run.yml"
-  config_set_name <<- "default_pf"
+  configure_run_file <- "configure_run.yml"
+  config_set_name <- "default_pf"
 
-  source(file.path(system.file("extdata", package = "FLAREr"), "R/test-set-up.R"))
+  file.copy(system.file("extdata", package = "FLAREr"), dir, recursive = TRUE)
+  config <- FLAREr:::set_configuration(configure_run_file, lake_directory, config_set_name = config_set_name)
+  config <- FLAREr:::get_restart_file(config, lake_directory)
+  pars_config <- readr::read_csv(file.path(config$file_path$configuration_directory, config$model_settings$par_config_file), col_types = readr::cols())
+  obs_config <- readr::read_csv(file.path(config$file_path$configuration_directory, config$model_settings$obs_config_file), col_types = readr::cols())
+  states_config <- readr::read_csv(file.path(config$file_path$configuration_directory, config$model_settings$states_config_file), col_types = readr::cols())
 
+  met_start_datetime <- lubridate::as_datetime(config$run_config$start_datetime)
+  met_forecast_start_datetime <- lubridate::as_datetime(config$run_config$forecast_start_datetime)
   next_restart <- FLAREr::run_flare(lake_directory = lake_directory, configure_run_file = configure_run_file, config_set_name = config_set_name)
 
   testthat::expect_true(file.exists(file.path(lake_directory, "forecasts/parquet/site_id=fcre/model_id=test_pf/reference_date=2022-10-02/part-0.parquet")))

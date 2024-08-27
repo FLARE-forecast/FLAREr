@@ -2,6 +2,8 @@
 ##' @details Function combines historical meteorology and NOAA forecasts to create meteorology input files in the GLM format.  A file is generated for each ensemble member.
 ##' @param  config list of FLARE configurations
 ##' @param lake_directory directory of lake configurations
+##' @param met_forecast_start_datetime start datetime of met forecasts
+##' @param met_start_datetime start datetime of met simulation
 ##' @return list; vector of full path for the converted files and boolean flag if issues with historical meteorology files
 ##' @import dplyr
 ##' @keywords internal
@@ -10,7 +12,7 @@
 ##' @importFrom lubridate as_datetime days hours ymd_hm
 ##' @author Quinn Thomas
 ##'
-create_met_files <- function(config, lake_directory){
+create_met_files <- function(config, lake_directory, met_forecast_start_datetime, met_start_datetime){
 
   out_dir <- config$file_path$execute_directory
   forecast_horizon <-  config$run_config$forecast_horizon
@@ -22,12 +24,12 @@ create_met_files <- function(config, lake_directory){
 
   lake_name_code <-  config$location$site_id
 
-  start_datetime <- lubridate::as_datetime(config$run_config$start_datetime)
-  if(is.na(config$run_config$forecast_start_datetime)){
+  start_datetime <- lubridate::as_datetime(met_start_datetime)
+  if(is.na(met_forecast_start_datetime)){
     end_datetime <- lubridate::as_datetime(config$run_config$end_datetime) #- lubridate::hours(1)
     forecast_start_datetime <- end_datetime
   }else{
-    forecast_start_datetime <- lubridate::as_datetime(config$run_config$forecast_start_datetime)
+    forecast_start_datetime <- lubridate::as_datetime(met_forecast_start_datetime)
     end_datetime <- forecast_start_datetime + lubridate::days(forecast_horizon) #- lubridate::hours(1)
   }
 

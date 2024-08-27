@@ -104,7 +104,7 @@ run_flare <- function(lake_directory,
                                           endpoint = config$s3$drivers$endpoint)
   }else{
 
-    met_out <- create_met_files(config, lake_directory)
+    met_out <- create_met_files(config, lake_directory, met_forecast_start_datetime, met_start_datetime)
   }
 
   message('Creating inflow/outflow files...')
