@@ -210,7 +210,7 @@ write_forecast <- function(da_forecast_output,
   time_of_forecast <- lubridate::with_tz(da_forecast_output$time_of_forecast, tzone = "UTC")
 
   output_list <- output_list |>
-    dplyr::mutate(pub_date = time_of_forecast,
+    dplyr::mutate(pub_datetime = time_of_forecast,
                   reference_datetime = forecast_start_datetime,
                   site_id = config$location$site_id,
                   model_id = config$run_config$sim_name,
@@ -218,7 +218,7 @@ write_forecast <- function(da_forecast_output,
     rename(datetime = time,
            parameter = ensemble,
            prediction = predicted) |>
-    dplyr::select(reference_datetime, datetime, pub_date, model_id, site_id, depth, family, parameter, variable, prediction, forecast, variable_type, log_weight)
+    dplyr::select(reference_datetime, datetime, pub_datetime, model_id, site_id, depth, family, parameter, variable, prediction, forecast, variable_type, log_weight)
 
   #Convert to target variable name
   for(i in 1:length(states_config$state_names)){
