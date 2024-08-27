@@ -20,7 +20,7 @@ run_da_forecast(
   states_config,
   obs_config,
   da_method = "enkf",
-  par_fit_method = "inflate",
+  par_fit_method = "perturb",
   obs_secchi = NULL,
   obs_depth = NULL
 )
