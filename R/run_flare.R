@@ -179,9 +179,11 @@ run_flare <- function(lake_directory,
   rm(da_forecast_output)
   gc()
 
-  message("Generating plot")
-  targets_df <- read_csv(file.path(config$file_path$qaqc_data_directory,paste0(config$location$site_id, "-targets-insitu.csv")), show_col_types = FALSE)
-  plotting_general(forecast_df, targets_df, file_name = saved_file)
+  if(config$output_settings$generate_plot){
+    message("Generating plot")
+    targets_df <- read_csv(file.path(config$file_path$qaqc_data_directory,paste0(config$location$site_id, "-targets-insitu.csv")), show_col_types = FALSE)
+    plotting_general(forecast_df, targets_df, file_name = saved_file)
+  }
 
   rm(forecast_df)
   gc()

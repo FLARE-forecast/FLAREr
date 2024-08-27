@@ -4,7 +4,7 @@ location:
    latitude: 37.307   #Degrees North
    longitude: -79.837  #Degrees East
 da_setup:
-    da_method: enkf
+    da_method: pf
     par_fit_method: perturb
     ensemble_size:  31
     localization_distance: .na #distance in meters were covariances in the model error are used

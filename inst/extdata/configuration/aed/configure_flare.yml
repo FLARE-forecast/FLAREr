@@ -17,8 +17,11 @@ da_setup:
 model_settings:
    ncore: 4
    max_model_layers: 75
-   model_name: glm
+   model_name: glm_aed
    base_GLM_nml: glm3.nml
+   base_AED_nml: aed2.nml
+   base_AED_phyto_pars_nml: aed_phyto_pars.csv
+   base_AED_zoop_pars_nml: aed2_zoop_pars.nml
    modeled_depths:
     - 0.00
     - 1.00
@@ -44,8 +47,8 @@ default_init:
    white_ice_thickness: 0.0
    blue_ice_thickness: 0.0
 flows:
-   include_inflow: TRUE
-   include_outflow: TRUE
+   include_inflow: FALSE
+   include_outflow: FALSE
    future_inflow_model: f/model_id=h
    historical_inflow_model: h/model_id=h
    local_inflow_directory: drivers/iflow
