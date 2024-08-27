@@ -33,9 +33,21 @@ A guide to upgrading to FLAREr 3.0.0.
 
 -   **max_model_layers:** set to 75
 
+-   **modeled_depths"** are now the depth with observations or the depths that you want in your output (e.g., the depths used in data assimilation)  GLM internal sets the depth (actually now heights) that are modeled.
+
 ### met:
 
-Your historical met needs to be a model.  If you are using stage 3 noaa then you just need to point the `historical_met_model` and `local_met_directory` to that.  If you were using obervations as the historical met you need to create a "model" from the observations.  The model needs to a parameter and prediction column.  The number of ensemble members in the historical model needs to match the number in the future model.
+Your historical met needs to be a model.  If you are using stage 3 NOAA then you just need to point the `historical_met_model` and `local_met_directory` to that.  If you were using observations as the historical met you need to create a "model" from the observations.  The model needs to a parameter and prediction column.  The number of ensemble members in the historical model needs to match the number in the future model.  Here is some example code for converting a gapfilled meteorology file to a "model".
+
+```
+met_ensemble <- 31
+hist_interp_met <- readr::read_csv(cleaned_met_file) |>
+  mutate(parameter = 1) |>
+  reframe(prediction = rnorm(met_ensemble, mean = observation, sd = 0),
+          parameter = 0:(met_ensemble-1),
+          .by = c(site_id, datetime, variable)) |> 
+ arrow::write_dataset(path = file.path(lake_directory, "drivers/met/historical/model_id=obs_interp/site_id=fcre"))         
+```
 
 -   **future_met_model:** path to met model used for forecast days
     (relative to `s3$drivers$bucket` path or **local_met_directory**)
@@ -58,7 +70,7 @@ Your historical met needs to be a model.  If you are using stage 3 noaa then you
 
 ### inflow:
 
-You inflow and outflows need to be separate models
+You inflow and outflows need to be separate models.  
 
 -   **include_inflow:** Include inflows in simulations (`TRUE` or
     `FALSE`)
@@ -104,9 +116,10 @@ This section now has `inflow_drivers` and `outflow_drivers`.
 
 ## parameter_calibration_config.csv
 
-Remove the column `inflate_par` from `parameter_calibration_config.csv`
+Remove the column `inflat_par` from `parameter_calibration_config.csv`
 
 Add 
+
 -   **fix_par**: 0 = fit parameter, 1 = hold parameter at **par_init**
 
 ## states_config.csv
@@ -132,13 +145,16 @@ Add the following variable to the `&morphometry` section
 restart_mixer_count = 0
 ```
 
-Change the following variables in the `   ` section to:
+Change the following variables in the `init_profiles` section to:
 
 ```
 min_layer_vol = 0.025
 min_layer_thick = 0.2
 max_layer_thick = 0.8
 ```
+Change `the_depth` to `the_heights`
+
+Change `num_depths` to `num_heights`
 
 ## Other changes
 
@@ -178,4 +194,26 @@ generate_forecast_score_arrow <- function(targets_file,
 
 }
 ```
+
+## Other changes
+
+The package does not depend on the `GLM3r` package anymore.  There are multiple options for getting a GLM binary.  The easiest is to install GLM3r from github (the README has more information about getting the GLM binary)
+
+```
+remotes::install_github("rqthomas/GLM3r")
+```
+
+you are require to set an environment variable in your workflow script that calls `run_flare`.
+
+```
+Sys.setenv('GLM_PATH'='GLM3r')
+```
+
+The `update_run_config2` function has been replaced by the `update_run_config` function
+
+The `check_noaa_present_arrow` function has been replaced by the `check_noaa_present` function
+
+Other `FLAREr` functions now require `:::` because they are not exported by the package.
+
+The forecast parquet output has `pub_datetime` rather than `pub_date` and it has a new column `log_weight`
   
