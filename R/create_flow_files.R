@@ -119,7 +119,7 @@ create_flow_files <- function(flow_forecast_dir = NULL,
 
 
   if (!is.null(future_df) & !is.null(hist_df)) { # when there is historical and future data
-    if (unique(future_df$flow_number) !=  unique(hist_df$flow_number)) { # Checks the data are consistent across the periods (same number of flows)
+    if (!setequal(unique(future_df$flow_number), unique(hist_df$flow_number))) { # Checks the data are consistent across the periods (same number of flows)
       stop('need the same number of flows in historical and future periods')
     } else {
       num_flows <- max(future_df$flow_number)
