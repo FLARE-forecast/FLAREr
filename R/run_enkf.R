@@ -80,7 +80,7 @@ run_enkf <- function(x_matrix,
     par_mean <- apply(pars_corr, 1, mean)
     if(par_fit_method == "inflate"){
       for(m in 1:nmembers){
-        pars_corr[, m] <- pars_config$inflat_pars * (pars_corr[, m] - par_mean) + par_mean
+        pars_corr[, m] <- pars_config$perturb_par * (pars_corr[, m] - par_mean) + par_mean
       }
       par_mean <- apply(pars_corr, 1, mean)
     }

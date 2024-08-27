@@ -190,13 +190,7 @@ A guide to the variables in `configure_flare.yml` and in the
 ### output_settings:
 
 -   **diagnostics_names:** names of non-state GLM variables to save
-
--   **evaluate_past:** score past forecasts with reference_datetimes
-    within the forecast horizon (`TRUE` or `FALSE`)
-
--   **variables_in_scores:** Variable types to include in scores.
-    Options are `state`, `parameter`, and/or `diagnostic`
-
+-   **generate_plots**: generate diagnostic plots (`TRUE` or `FALSE`)
 ### s3
 
 -   **drivers:**
@@ -240,10 +234,8 @@ A guide to the variables in `configure_flare.yml` and in the
     uniform distribution of the parameters
 -   **par_lowerbound:** vector of lower bounds that a parameter can have
 -   **par_upperbound:** vector of upper bounds that a parameter can have
--   **inflat_pars:** The variance inflation factor applied to the
-    parameter component of the ensemble. Value greater than 1.
--   **perturb_par:** The standard deviation of the normally distributed
-    random noise that is added to parameters
+-   **perturb_par:** The parameter controlling the noise or spread in the parameters.  If the parameter fitting method is `perturb` then it is the standard deviation of the normally distributed
+    random noise that is added to parameters.  If the parameter fitting method is `perturb_const`, then it is the standard deviation of the parameter distribution.  If the parameter fitting method is `inflate` it is the The variance inflation factor applied to the parameter component of the ensemble (Value greater than 1). 
 -   **par_units:** Units of parameter for plotting
 -   **fix_par**: 0 = fit parameter, 1 = hold parameter at **par_init**
 
