@@ -42,11 +42,11 @@ Imports:
     aws.s3,
     tidyr,
     tsibble,
-    RopenMeteo,
+    ropenmeteo,
     ggplot2,
     tibble,
     arrow
-Remotes: FLARE-forecast/RopenMeteo
+Remotes: FLARE-forecast/ropenmeteo
 Suggests: 
     knitr,
     rmarkdown,
