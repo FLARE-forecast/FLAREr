@@ -35,6 +35,7 @@
   <ul class="dropdown-menu" aria-labelledby="dropdown-articles">
 <li><a class="dropdown-item" href="../articles/flare-config-vignette.html">FLAREr configurations</a></li>
     <li><a class="dropdown-item" href="../articles/flare-example-vignette.html">FLAREr example</a></li>
+    <li><a class="dropdown-item" href="../articles/flare-upgrade-vignette.html">FLAREr upgrade</a></li>
   </ul>
 </li>
       </ul>
@@ -129,7 +130,7 @@ Github using</p>
 <div class="sourceCode" id="cb2"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu">remotes</span><span class="fu">::</span><span class="fu"><a href="https://remotes.r-lib.org/reference/install_github.html" class="external-link">install_github</a></span><span class="op">(</span><span class="st">"rqthomas/GLM3r"</span><span class="op">)</span></span>
 <span><span class="co">#&gt; Using GitHub PAT from the git credential store.</span></span>
-<span><span class="co">#&gt; Skipping install of 'GLM3r' from a github remote, the SHA1 (d2585fba) has not changed since last install.</span></span>
+<span><span class="co">#&gt; Skipping install of 'GLM3r' from a github remote, the SHA1 (16924165) has not changed since last install.</span></span>
 <span><span class="co">#&gt;   Use `force = TRUE` to force installation</span></span></code></pre></div>
 <p>After installing GLM3r you need to set an environment variable that
 points to the GLM code.</p>
@@ -139,7 +140,7 @@ points to the GLM code.</p>
 your FLARE run. To find this directory on your computer you can use
 <code>print(lake_directory)</code></p>
 <div class="sourceCode" id="cb4"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="va">lake_directory</span> <span class="op">&lt;-</span>  <span class="fu"><a href="https://rdrr.io/r/base/tempfile.html" class="external-link">tempdir</a></span><span class="op">(</span><span class="op">)</span></span>
+<code class="sourceCode R"><span><span class="va">lake_directory</span> <span class="op">&lt;-</span>  <span class="fu"><a href="https://rdrr.io/r/base/normalizePath.html" class="external-link">normalizePath</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/tempfile.html" class="external-link">tempdir</a></span><span class="op">(</span><span class="op">)</span>,  winslash <span class="op">=</span> <span class="st">"/"</span><span class="op">)</span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/base/files2.html" class="external-link">dir.create</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/file.path.html" class="external-link">file.path</a></span><span class="op">(</span><span class="va">lake_directory</span>, <span class="st">"configuration/default"</span><span class="op">)</span>, recursive <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/base/files2.html" class="external-link">dir.create</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/file.path.html" class="external-link">file.path</a></span><span class="op">(</span><span class="va">lake_directory</span>, <span class="st">"targets"</span><span class="op">)</span><span class="op">)</span> <span class="co"># For QAQC data</span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/base/files2.html" class="external-link">dir.create</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/file.path.html" class="external-link">file.path</a></span><span class="op">(</span><span class="va">lake_directory</span>, <span class="st">"drivers"</span><span class="op">)</span><span class="op">)</span> <span class="co"># Weather and inflow forecasts</span></span></code></pre></div>
@@ -328,87 +329,87 @@ file and not overwrite them.</p>
 <span><span class="co">#&gt;   as.zoo.data.frame zoo</span></span>
 <span><span class="co">#&gt; Creating inflow/outflow files...</span></span>
 <span><span class="co">#&gt; Setting states and initial conditions...</span></span>
-<span><span class="co">#&gt; Running time step 1/20 : 2022-09-28 00:00 - 2022-09-29 00:00 [2024-08-26 13:30:23.508392]</span></span>
+<span><span class="co">#&gt; Running time step 1/20 : 2022-09-28 00:00 - 2022-09-29 00:00 [2024-08-27 07:10:55.068636]</span></span>
 <span><span class="co">#&gt; performing data assimilation</span></span>
 <span><span class="co">#&gt; zone1temp: mean 11.1488 sd 0.9754</span></span>
 <span><span class="co">#&gt; zone2temp: mean 14.2376 sd 1.3698</span></span>
 <span><span class="co">#&gt; lw_factor: mean 0.978 sd 0.0554</span></span>
-<span><span class="co">#&gt; Running time step 2/20 : 2022-09-29 00:00 - 2022-09-30 00:00 [2024-08-26 13:30:25.568651]</span></span>
+<span><span class="co">#&gt; Running time step 2/20 : 2022-09-29 00:00 - 2022-09-30 00:00 [2024-08-27 07:10:57.148152]</span></span>
 <span><span class="co">#&gt; performing data assimilation</span></span>
 <span><span class="co">#&gt; zone1temp: mean 11.8718 sd 1.2045</span></span>
 <span><span class="co">#&gt; zone2temp: mean 14.0601 sd 1.537</span></span>
 <span><span class="co">#&gt; lw_factor: mean 0.9758 sd 0.0508</span></span>
-<span><span class="co">#&gt; Running time step 3/20 : 2022-09-30 00:00 - 2022-10-01 00:00 [2024-08-26 13:30:27.437903]</span></span>
+<span><span class="co">#&gt; Running time step 3/20 : 2022-09-30 00:00 - 2022-10-01 00:00 [2024-08-27 07:10:59.005113]</span></span>
 <span><span class="co">#&gt; performing data assimilation</span></span>
 <span><span class="co">#&gt; zone1temp: mean 11.6904 sd 1.2579</span></span>
 <span><span class="co">#&gt; zone2temp: mean 13.8491 sd 1.8128</span></span>
 <span><span class="co">#&gt; lw_factor: mean 0.9224 sd 0.0462</span></span>
-<span><span class="co">#&gt; Running time step 4/20 : 2022-10-01 00:00 - 2022-10-02 00:00 [2024-08-26 13:30:29.292179]</span></span>
+<span><span class="co">#&gt; Running time step 4/20 : 2022-10-01 00:00 - 2022-10-02 00:00 [2024-08-27 07:11:00.987831]</span></span>
 <span><span class="co">#&gt; performing data assimilation</span></span>
 <span><span class="co">#&gt; zone1temp: mean 11.9015 sd 1.2679</span></span>
 <span><span class="co">#&gt; zone2temp: mean 14.0854 sd 1.8746</span></span>
 <span><span class="co">#&gt; lw_factor: mean 0.9495 sd 0.0388</span></span>
-<span><span class="co">#&gt; Running time step 5/20 : 2022-10-02 00:00 - 2022-10-03 00:00 [2024-08-26 13:30:31.11215]</span></span>
+<span><span class="co">#&gt; Running time step 5/20 : 2022-10-02 00:00 - 2022-10-03 00:00 [2024-08-27 07:11:02.944947]</span></span>
 <span><span class="co">#&gt; zone1temp: mean 11.9262 sd 1.6037</span></span>
 <span><span class="co">#&gt; zone2temp: mean 13.9903 sd 2.158</span></span>
 <span><span class="co">#&gt; lw_factor: mean 0.9537 sd 0.0421</span></span>
-<span><span class="co">#&gt; Running time step 6/20 : 2022-10-03 00:00 - 2022-10-04 00:00 [2024-08-26 13:30:32.950696]</span></span>
+<span><span class="co">#&gt; Running time step 6/20 : 2022-10-03 00:00 - 2022-10-04 00:00 [2024-08-27 07:11:04.780649]</span></span>
 <span><span class="co">#&gt; zone1temp: mean 11.8605 sd 1.7484</span></span>
 <span><span class="co">#&gt; zone2temp: mean 13.836 sd 2.6358</span></span>
 <span><span class="co">#&gt; lw_factor: mean 0.9504 sd 0.0423</span></span>
-<span><span class="co">#&gt; Running time step 7/20 : 2022-10-04 00:00 - 2022-10-05 00:00 [2024-08-26 13:30:34.790861]</span></span>
+<span><span class="co">#&gt; Running time step 7/20 : 2022-10-04 00:00 - 2022-10-05 00:00 [2024-08-27 07:11:06.591829]</span></span>
 <span><span class="co">#&gt; zone1temp: mean 11.8767 sd 2.2094</span></span>
 <span><span class="co">#&gt; zone2temp: mean 13.9167 sd 2.6294</span></span>
 <span><span class="co">#&gt; lw_factor: mean 0.9526 sd 0.0519</span></span>
-<span><span class="co">#&gt; Running time step 8/20 : 2022-10-05 00:00 - 2022-10-06 00:00 [2024-08-26 13:30:36.643903]</span></span>
+<span><span class="co">#&gt; Running time step 8/20 : 2022-10-05 00:00 - 2022-10-06 00:00 [2024-08-27 07:11:08.478187]</span></span>
 <span><span class="co">#&gt; zone1temp: mean 11.924 sd 2.2463</span></span>
 <span><span class="co">#&gt; zone2temp: mean 14.0422 sd 2.9333</span></span>
 <span><span class="co">#&gt; lw_factor: mean 0.9506 sd 0.049</span></span>
-<span><span class="co">#&gt; Running time step 9/20 : 2022-10-06 00:00 - 2022-10-07 00:00 [2024-08-26 13:30:38.512982]</span></span>
+<span><span class="co">#&gt; Running time step 9/20 : 2022-10-06 00:00 - 2022-10-07 00:00 [2024-08-27 07:11:10.384546]</span></span>
 <span><span class="co">#&gt; zone1temp: mean 12.0518 sd 2.2155</span></span>
 <span><span class="co">#&gt; zone2temp: mean 13.9569 sd 2.8478</span></span>
 <span><span class="co">#&gt; lw_factor: mean 0.9492 sd 0.051</span></span>
-<span><span class="co">#&gt; Running time step 10/20 : 2022-10-07 00:00 - 2022-10-08 00:00 [2024-08-26 13:30:40.375255]</span></span>
+<span><span class="co">#&gt; Running time step 10/20 : 2022-10-07 00:00 - 2022-10-08 00:00 [2024-08-27 07:11:12.221704]</span></span>
 <span><span class="co">#&gt; zone1temp: mean 11.9152 sd 2.1706</span></span>
 <span><span class="co">#&gt; zone2temp: mean 13.8616 sd 3.09</span></span>
 <span><span class="co">#&gt; lw_factor: mean 0.9447 sd 0.0552</span></span>
-<span><span class="co">#&gt; Running time step 11/20 : 2022-10-08 00:00 - 2022-10-09 00:00 [2024-08-26 13:30:42.202131]</span></span>
+<span><span class="co">#&gt; Running time step 11/20 : 2022-10-08 00:00 - 2022-10-09 00:00 [2024-08-27 07:11:14.096004]</span></span>
 <span><span class="co">#&gt; zone1temp: mean 12.2123 sd 2.4608</span></span>
 <span><span class="co">#&gt; zone2temp: mean 13.731 sd 3.2854</span></span>
 <span><span class="co">#&gt; lw_factor: mean 0.9456 sd 0.055</span></span>
-<span><span class="co">#&gt; Running time step 12/20 : 2022-10-09 00:00 - 2022-10-10 00:00 [2024-08-26 13:30:44.023055]</span></span>
+<span><span class="co">#&gt; Running time step 12/20 : 2022-10-09 00:00 - 2022-10-10 00:00 [2024-08-27 07:11:15.900994]</span></span>
 <span><span class="co">#&gt; zone1temp: mean 12.1713 sd 2.6675</span></span>
 <span><span class="co">#&gt; zone2temp: mean 13.6852 sd 3.0489</span></span>
 <span><span class="co">#&gt; lw_factor: mean 0.9473 sd 0.0617</span></span>
-<span><span class="co">#&gt; Running time step 13/20 : 2022-10-10 00:00 - 2022-10-11 00:00 [2024-08-26 13:30:45.838466]</span></span>
+<span><span class="co">#&gt; Running time step 13/20 : 2022-10-10 00:00 - 2022-10-11 00:00 [2024-08-27 07:11:17.707174]</span></span>
 <span><span class="co">#&gt; zone1temp: mean 12.4468 sd 2.8761</span></span>
 <span><span class="co">#&gt; zone2temp: mean 13.9476 sd 3.3064</span></span>
 <span><span class="co">#&gt; lw_factor: mean 0.9457 sd 0.0679</span></span>
-<span><span class="co">#&gt; Running time step 14/20 : 2022-10-11 00:00 - 2022-10-12 00:00 [2024-08-26 13:30:47.688687]</span></span>
+<span><span class="co">#&gt; Running time step 14/20 : 2022-10-11 00:00 - 2022-10-12 00:00 [2024-08-27 07:11:19.510767]</span></span>
 <span><span class="co">#&gt; zone1temp: mean 12.5876 sd 3.5795</span></span>
 <span><span class="co">#&gt; zone2temp: mean 13.9964 sd 3.0148</span></span>
 <span><span class="co">#&gt; lw_factor: mean 0.9519 sd 0.0646</span></span>
-<span><span class="co">#&gt; Running time step 15/20 : 2022-10-12 00:00 - 2022-10-13 00:00 [2024-08-26 13:30:49.51248]</span></span>
+<span><span class="co">#&gt; Running time step 15/20 : 2022-10-12 00:00 - 2022-10-13 00:00 [2024-08-27 07:11:21.33385]</span></span>
 <span><span class="co">#&gt; zone1temp: mean 12.4809 sd 3.646</span></span>
 <span><span class="co">#&gt; zone2temp: mean 13.9342 sd 3.3116</span></span>
 <span><span class="co">#&gt; lw_factor: mean 0.949 sd 0.0719</span></span>
-<span><span class="co">#&gt; Running time step 16/20 : 2022-10-13 00:00 - 2022-10-14 00:00 [2024-08-26 13:30:51.359679]</span></span>
+<span><span class="co">#&gt; Running time step 16/20 : 2022-10-13 00:00 - 2022-10-14 00:00 [2024-08-27 07:11:23.118942]</span></span>
 <span><span class="co">#&gt; zone1temp: mean 12.7317 sd 3.5974</span></span>
 <span><span class="co">#&gt; zone2temp: mean 13.8041 sd 2.9973</span></span>
 <span><span class="co">#&gt; lw_factor: mean 0.9447 sd 0.0855</span></span>
-<span><span class="co">#&gt; Running time step 17/20 : 2022-10-14 00:00 - 2022-10-15 00:00 [2024-08-26 13:30:53.186368]</span></span>
+<span><span class="co">#&gt; Running time step 17/20 : 2022-10-14 00:00 - 2022-10-15 00:00 [2024-08-27 07:11:24.987436]</span></span>
 <span><span class="co">#&gt; zone1temp: mean 12.743 sd 3.8068</span></span>
 <span><span class="co">#&gt; zone2temp: mean 13.7729 sd 2.9052</span></span>
 <span><span class="co">#&gt; lw_factor: mean 0.9477 sd 0.0863</span></span>
-<span><span class="co">#&gt; Running time step 18/20 : 2022-10-15 00:00 - 2022-10-16 00:00 [2024-08-26 13:30:55.006551]</span></span>
+<span><span class="co">#&gt; Running time step 18/20 : 2022-10-15 00:00 - 2022-10-16 00:00 [2024-08-27 07:11:26.871182]</span></span>
 <span><span class="co">#&gt; zone1temp: mean 12.7494 sd 3.8094</span></span>
 <span><span class="co">#&gt; zone2temp: mean 13.7964 sd 2.8735</span></span>
 <span><span class="co">#&gt; lw_factor: mean 0.9499 sd 0.0869</span></span>
-<span><span class="co">#&gt; Running time step 19/20 : 2022-10-16 00:00 - 2022-10-17 00:00 [2024-08-26 13:30:56.859172]</span></span>
+<span><span class="co">#&gt; Running time step 19/20 : 2022-10-16 00:00 - 2022-10-17 00:00 [2024-08-27 07:11:28.690417]</span></span>
 <span><span class="co">#&gt; zone1temp: mean 12.5893 sd 3.7333</span></span>
 <span><span class="co">#&gt; zone2temp: mean 13.8922 sd 2.8682</span></span>
 <span><span class="co">#&gt; lw_factor: mean 0.9506 sd 0.0896</span></span>
-<span><span class="co">#&gt; Running time step 20/20 : 2022-10-17 00:00 - 2022-10-18 00:00 [2024-08-26 13:30:58.745394]</span></span>
+<span><span class="co">#&gt; Running time step 20/20 : 2022-10-17 00:00 - 2022-10-18 00:00 [2024-08-27 07:11:30.505973]</span></span>
 <span><span class="co">#&gt; zone1temp: mean 12.623 sd 3.9417</span></span>
 <span><span class="co">#&gt; zone2temp: mean 14.1163 sd 2.8204</span></span>
 <span><span class="co">#&gt; lw_factor: mean 0.9421 sd 0.0922</span></span>
@@ -416,15 +417,6 @@ file and not overwrite them.</p>
 <span><span class="co">#&gt; Writing forecast</span></span>
 <span><span class="co">#&gt; starting writing dataset</span></span>
 <span><span class="co">#&gt; ending writing dataset</span></span>
-<span><span class="co">#&gt; Generating plot</span></span>
-<span><span class="co">#&gt; Warning: Removed 7161 rows containing missing values or values outside the scale range</span></span>
-<span><span class="co">#&gt; (`geom_point()`).</span></span>
-<span><span class="co">#&gt; Warning: Removed 1209 rows containing missing values or values outside the scale range</span></span>
-<span><span class="co">#&gt; (`geom_point()`).</span></span>
-<span><span class="co">#&gt; Warning: Removed 31 rows containing missing values or values outside the scale range</span></span>
-<span><span class="co">#&gt; (`geom_line()`).</span></span>
-<span><span class="co">#&gt; Warning: Removed 10 rows containing missing values or values outside the scale range</span></span>
-<span><span class="co">#&gt; (`geom_line()`).</span></span>
 <span><span class="co">#&gt; Putting forecast</span></span>
 <span><span class="co">#&gt; successfully generated flare forecats for: fcre-2022-10-02-test</span></span></code></pre></div>
 <p>Visualizing output</p>
@@ -433,14 +425,14 @@ file and not overwrite them.</p>
 <div class="sourceCode" id="cb12"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/utils/head.html" class="external-link">head</a></span><span class="op">(</span><span class="va">df</span><span class="op">)</span></span>
 <span><span class="co">#&gt; <span style="color: #949494;"># A tibble: 6 × 14</span></span></span>
-<span><span class="co">#&gt;   reference_datetime  datetime            pub_date            depth family  </span></span>
+<span><span class="co">#&gt;   reference_datetime  datetime            pub_datetime        depth family  </span></span>
 <span><span class="co">#&gt;   <span style="color: #949494; font-style: italic;">&lt;dttm&gt;</span>              <span style="color: #949494; font-style: italic;">&lt;dttm&gt;</span>              <span style="color: #949494; font-style: italic;">&lt;dttm&gt;</span>              <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span> <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>   </span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;">1</span> 2022-10-02 <span style="color: #949494;">00:00:00</span> 2022-09-28 <span style="color: #949494;">00:00:00</span> 2024-08-26 <span style="color: #949494;">17:31:00</span>     0 ensemble</span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;">2</span> 2022-10-02 <span style="color: #949494;">00:00:00</span> 2022-09-28 <span style="color: #949494;">00:00:00</span> 2024-08-26 <span style="color: #949494;">17:31:00</span>     0 ensemble</span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;">3</span> 2022-10-02 <span style="color: #949494;">00:00:00</span> 2022-09-28 <span style="color: #949494;">00:00:00</span> 2024-08-26 <span style="color: #949494;">17:31:00</span>     0 ensemble</span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;">4</span> 2022-10-02 <span style="color: #949494;">00:00:00</span> 2022-09-28 <span style="color: #949494;">00:00:00</span> 2024-08-26 <span style="color: #949494;">17:31:00</span>     0 ensemble</span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;">5</span> 2022-10-02 <span style="color: #949494;">00:00:00</span> 2022-09-28 <span style="color: #949494;">00:00:00</span> 2024-08-26 <span style="color: #949494;">17:31:00</span>     0 ensemble</span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;">6</span> 2022-10-02 <span style="color: #949494;">00:00:00</span> 2022-09-28 <span style="color: #949494;">00:00:00</span> 2024-08-26 <span style="color: #949494;">17:31:00</span>     0 ensemble</span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;">1</span> 2022-10-02 <span style="color: #949494;">00:00:00</span> 2022-09-28 <span style="color: #949494;">00:00:00</span> 2024-08-27 <span style="color: #949494;">11:11:32</span>     0 ensemble</span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;">2</span> 2022-10-02 <span style="color: #949494;">00:00:00</span> 2022-09-28 <span style="color: #949494;">00:00:00</span> 2024-08-27 <span style="color: #949494;">11:11:32</span>     0 ensemble</span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;">3</span> 2022-10-02 <span style="color: #949494;">00:00:00</span> 2022-09-28 <span style="color: #949494;">00:00:00</span> 2024-08-27 <span style="color: #949494;">11:11:32</span>     0 ensemble</span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;">4</span> 2022-10-02 <span style="color: #949494;">00:00:00</span> 2022-09-28 <span style="color: #949494;">00:00:00</span> 2024-08-27 <span style="color: #949494;">11:11:32</span>     0 ensemble</span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;">5</span> 2022-10-02 <span style="color: #949494;">00:00:00</span> 2022-09-28 <span style="color: #949494;">00:00:00</span> 2024-08-27 <span style="color: #949494;">11:11:32</span>     0 ensemble</span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;">6</span> 2022-10-02 <span style="color: #949494;">00:00:00</span> 2022-09-28 <span style="color: #949494;">00:00:00</span> 2024-08-27 <span style="color: #949494;">11:11:32</span>     0 ensemble</span></span>
 <span><span class="co">#&gt; <span style="color: #949494;"># ℹ 9 more variables: parameter &lt;int&gt;, variable &lt;chr&gt;, prediction &lt;dbl&gt;,</span></span></span>
 <span><span class="co">#&gt; <span style="color: #949494;">#   forecast &lt;dbl&gt;, variable_type &lt;chr&gt;, log_weight &lt;dbl&gt;, site_id &lt;chr&gt;,</span></span></span>
 <span><span class="co">#&gt; <span style="color: #949494;">#   model_id &lt;chr&gt;, reference_date &lt;chr&gt;</span></span></span></code></pre></div>

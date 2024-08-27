@@ -35,6 +35,7 @@
   <ul class="dropdown-menu" aria-labelledby="dropdown-articles">
 <li><a class="dropdown-item" href="../articles/flare-config-vignette.html">FLAREr configurations</a></li>
     <li><a class="dropdown-item" href="../articles/flare-example-vignette.html">FLAREr example</a></li>
+    <li><a class="dropdown-item" href="../articles/flare-upgrade-vignette.html">FLAREr upgrade</a></li>
   </ul>
 </li>
       </ul>
@@ -71,6 +72,9 @@ the <code>observations_config.csv</code>,
 <div class="section level2">
 <h2 id="configure_flare-yml">configure_flare.yml<a class="anchor" aria-label="anchor" href="#configure_flare-yml"></a>
 </h2>
+<p><code>configure_flare.yml</code> is required to be located in your
+<code>{lake_directory}/configurations/{config_set_name}</code>
+directory.</p>
 <div class="section level3">
 <h3 id="location">location:<a class="anchor" aria-label="anchor" href="#location"></a>
 </h3>
@@ -293,20 +297,10 @@ forecast (<code>TRUE</code> or <code>FALSE</code>)</p></li>
 <ul>
 <li><p><strong>diagnostics_names:</strong> names of non-state GLM
 variables to save</p></li>
-<li><p><strong>evaluate_past:</strong> score past forecasts with
-reference_datetimes within the forecast horizon (<code>TRUE</code> or
-<code>FALSE</code>)</p></li>
-<li><p><strong>variables_in_scores:</strong> Variable types to include
-in scores. Options are <code>state</code>, <code>parameter</code>,
-and/or <code>diagnostic</code></p></li>
-</ul>
-</div>
-<div class="section level3">
-<h3 id="s3">s3<a class="anchor" aria-label="anchor" href="#s3"></a>
-</h3>
-<ul>
+<li><p><strong>generate_plots</strong>: generate diagnostic plots
+(<code>TRUE</code> or <code>FALSE</code>) ### s3</p></li>
 <li>
-<strong>drivers:</strong>
+<p><strong>drivers:</strong></p>
 <ul>
 <li>
 <strong>endpoint:</strong> s3 endpoint of met drivers</li>
@@ -315,7 +309,7 @@ and/or <code>diagnostic</code></p></li>
 </ul>
 </li>
 <li>
-<strong>inflow_drivers:</strong>
+<p><strong>inflow_drivers:</strong></p>
 <ul>
 <li>
 <strong>endpoint:</strong> s3 endpoint of inflow drivers</li>
@@ -324,7 +318,7 @@ and/or <code>diagnostic</code></p></li>
 </ul>
 </li>
 <li>
-<strong>outflow_drivers:</strong>
+<p><strong>outflow_drivers:</strong></p>
 <ul>
 <li>
 <strong>endpoint:</strong> s3 endpoint of outflow drivers</li>
@@ -333,7 +327,7 @@ and/or <code>diagnostic</code></p></li>
 </ul>
 </li>
 <li>
-<strong>targets:</strong>
+<p><strong>targets:</strong></p>
 <ul>
 <li>
 <strong>endpoint:</strong> s3 endpoint of target files</li>
@@ -342,7 +336,7 @@ and/or <code>diagnostic</code></p></li>
 </ul>
 </li>
 <li>
-<strong>forecasts:</strong>
+<p><strong>forecasts:</strong></p>
 <ul>
 <li>
 <strong>endpoint:</strong> s3 endpoint of forecast netcdf restart
@@ -353,7 +347,7 @@ files</li>
 </ul>
 </li>
 <li>
-<strong>forecasts_parquet:</strong>
+<p><strong>forecasts_parquet:</strong></p>
 <ul>
 <li>
 <strong>endpoint:</strong> s3 endpoint of forecast parquet
@@ -363,7 +357,7 @@ files</li>
 </ul>
 </li>
 <li>
-<strong>warm_start:</strong>
+<p><strong>warm_start:</strong></p>
 <ul>
 <li>
 <strong>endpoint:</strong> s3 endpoint of restart yaml file</li>
@@ -372,7 +366,7 @@ files</li>
 </ul>
 </li>
 <li>
-<strong>scores:</strong>
+<p><strong>scores:</strong></p>
 <ul>
 <li>
 <strong>endpoint:</strong> s3 endpoint of scores</li>
@@ -386,6 +380,10 @@ files</li>
 <div class="section level2">
 <h2 id="parameter_calibration_config-csv">parameter_calibration_config.csv<a class="anchor" aria-label="anchor" href="#parameter_calibration_config-csv"></a>
 </h2>
+<p><code>parameter_calibration_config.csv</code> is required to be
+located in your
+<code>{lake_directory}/configurations/{config_set_name}</code>
+directory.</p>
 <ul>
 <li>
 <strong>par_names:</strong> vector of GLM names of parameter values
@@ -412,11 +410,14 @@ parameter can have</li>
 <strong>par_upperbound:</strong> vector of upper bounds that a
 parameter can have</li>
 <li>
-<strong>inflat_pars:</strong> The variance inflation factor applied
-to the parameter component of the ensemble. Value greater than 1.</li>
-<li>
-<strong>perturb_par:</strong> The standard deviation of the normally
-distributed random noise that is added to parameters</li>
+<strong>perturb_par:</strong> The parameter controlling the noise or
+spread in the parameters. If the parameter fitting method is
+<code>perturb</code> then it is the standard deviation of the normally
+distributed random noise that is added to parameters. If the parameter
+fitting method is <code>perturb_const</code>, then it is the standard
+deviation of the parameter distribution. If the parameter fitting method
+is <code>inflate</code> it is the The variance inflation factor applied
+to the parameter component of the ensemble (Value greater than 1).</li>
 <li>
 <strong>par_units:</strong> Units of parameter for plotting</li>
 <li>
@@ -428,6 +429,9 @@ distributed random noise that is added to parameters</li>
 <div class="section level2">
 <h2 id="states_config-csv">states_config.csv<a class="anchor" aria-label="anchor" href="#states_config-csv"></a>
 </h2>
+<p><code>states_config.csv</code> is required to be located in your
+<code>{lake_directory}/configurations/{config_set_name}</code>
+directory.</p>
 <ul>
 <li>
 <strong>state_names:</strong> name of states.</li>
@@ -481,6 +485,9 @@ proportion of the observation that is assigned to each state.</li>
 <div class="section level3">
 <h3 id="depth_model_sd-csv">depth_model_sd.csv:<a class="anchor" aria-label="anchor" href="#depth_model_sd-csv"></a>
 </h3>
+<p><code>depth_model_sd.csv</code> is optional and should be located in
+your <code>{lake_directory}/configurations/{config_set_name}</code>
+directory.</p>
 <ul>
 <li>
 <strong>depth:</strong> depth (m)</li>
@@ -494,6 +501,9 @@ provided.</li>
 <div class="section level2">
 <h2 id="observations_config-csv">observations_config.csv<a class="anchor" aria-label="anchor" href="#observations_config-csv"></a>
 </h2>
+<p><code>observations_config.csv</code> is required to be located in
+your <code>{lake_directory}/configurations/{config_set_name}</code>
+directory.</p>
 <ul>
 <li>
 <strong>state_names_obs</strong>: names of states with

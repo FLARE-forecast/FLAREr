@@ -35,7 +35,7 @@ A guide to upgrading to FLAREr 3.0.0.
 
 ### met:
 
-This is a "bigish" change.  
+Your historical met needs to be a model.  If you are using stage 3 noaa then you just need to point the `historical_met_model` and `local_met_directory` to that.  If you were using obervations as the historical met you need to create a "model" from the observations.  The model needs to a parameter and prediction column.  The number of ensemble members in the historical model needs to match the number in the future model.
 
 -   **future_met_model:** path to met model used for forecast days
     (relative to `s3$drivers$bucket` path or **local_met_directory**)
@@ -58,7 +58,7 @@ This is a "bigish" change.
 
 ### inflow:
 
-This is a big 
+You inflow and outflows need to be separate models
 
 -   **include_inflow:** Include inflows in simulations (`TRUE` or
     `FALSE`)
@@ -142,7 +142,8 @@ max_layer_thick = 0.8
 
 ## Other changes
 
-The scoring part of `FLAREr` has been removed.  You will need to add it in to your workflow script.  The code was:
+The scoring part of `FLAREr` has been removed.  You will need to add it in to your workflow script and install `remotes::install_github("eco4cast/score4cast")`  The code was:
+
 
 ```
 generate_forecast_score_arrow <- function(targets_file,
