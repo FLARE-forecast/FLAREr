@@ -664,6 +664,22 @@ run_da_forecast <- function(states_init,
       avg_surf_temp[i , ] <-  updates$avg_surf_temp_updated
       mixing_vars[, i, ] <-  updates$mixing_vars_updated
       mixer_count[i, ] <-  updates$mixer_count_updated
+
+      for(s in 1:nstates){
+        for(m in 1:nmembers){
+          depth_index <- which(config$model_settings$modeled_depths > lake_depth[i, m])
+          states_depth[i, s, depth_index, m ] <- NA
+        }
+      }
+    }
+
+    if(length(config$output_settings$diagnostics_names) > 0){
+      for(d in 1:dim(diagnostics)[1]){
+        for(m in 1:nmembers){
+          depth_index <- which(config$model_settings$modeled_depths > lake_depth[i, m])
+          diagnostics[d,i, depth_index, m] <- NA
+        }
+      }
     }
 
     ###############

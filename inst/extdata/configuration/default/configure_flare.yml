@@ -73,5 +73,5 @@ uncertainty:
    parameter: TRUE
    inflow: TRUE
 output_settings:
-   generate_plot: TRUE
+   generate_plot: FALSE
    diagnostics_names:  [extc]

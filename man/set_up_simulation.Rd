@@ -40,7 +40,7 @@ file.copy(system.file("extdata", package = "FLAREr"),
 
 set_up_simulation(configure_run_file = "configure_run.yml",
                   lake_directory = lake_directory,
-                   clean_start = FALSE
+                   clean_start = FALSE,
                    config_set_name = "default",
                    sim_name = NA)
 

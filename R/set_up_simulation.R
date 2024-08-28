@@ -20,7 +20,7 @@
 #'
 #' set_up_simulation(configure_run_file = "configure_run.yml",
 #'                   lake_directory = lake_directory,
-#'                    clean_start = FALSE
+#'                    clean_start = FALSE,
 #'                    config_set_name = "default",
 #'                    sim_name = NA)
 #'
@@ -45,7 +45,7 @@ set_up_simulation <- function(configure_run_file = "configure_run.yml", lake_dir
   dir.create(config$file_path$inflow_directory, recursive = TRUE, showWarnings = FALSE)
   dir.create(config$file_path$plots_directory, recursive = TRUE, showWarnings = FALSE)
 
-  run_config <- FLAREr:::get_run_config(configure_run_file, lake_directory, config, clean_start, config_set_name = config_set_name, sim_name = sim_name)
+  run_config <- get_run_config(configure_run_file, lake_directory, config, clean_start, config_set_name = config_set_name, sim_name = sim_name)
 
   config$run_config <- run_config
 

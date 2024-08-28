@@ -6,7 +6,7 @@ test_that("met files are generated", {
   configure_run_file <- "configure_run.yml"
   config_set_name <- "default"
   file.copy(system.file("extdata", package = "FLAREr"), dir, recursive = TRUE)
-  config <- FLAREr:::set_configuration(configure_run_file, lake_directory, config_set_name = config_set_name)
+  config <- FLAREr:::set_up_simulation(configure_run_file, lake_directory, config_set_name = config_set_name)
   config <- FLAREr:::get_restart_file(config, lake_directory)
   pars_config <- readr::read_csv(file.path(config$file_path$configuration_directory, config$model_settings$par_config_file), col_types = readr::cols())
   obs_config <- readr::read_csv(file.path(config$file_path$configuration_directory, config$model_settings$obs_config_file), col_types = readr::cols())
@@ -36,7 +36,7 @@ test_that("open-meteo met files are generated", {
   config_set_name <- "default"
 
   file.copy(system.file("extdata", package = "FLAREr"), dir, recursive = TRUE)
-  config <- FLAREr:::set_configuration(configure_run_file, lake_directory, config_set_name = config_set_name)
+  config <- FLAREr:::set_up_simulation(configure_run_file, lake_directory, config_set_name = config_set_name)
   config <- FLAREr:::get_restart_file(config, lake_directory)
   pars_config <- readr::read_csv(file.path(config$file_path$configuration_directory, config$model_settings$par_config_file), col_types = readr::cols())
   obs_config <- readr::read_csv(file.path(config$file_path$configuration_directory, config$model_settings$obs_config_file), col_types = readr::cols())
@@ -76,7 +76,7 @@ test_that("inflow files are generated", {
   config_set_name <- "default"
 
   file.copy(system.file("extdata", package = "FLAREr"), dir, recursive = TRUE)
-  config <- FLAREr:::set_configuration(configure_run_file, lake_directory, config_set_name = config_set_name)
+  config <- FLAREr:::set_up_simulation(configure_run_file, lake_directory, config_set_name = config_set_name)
   config <- FLAREr:::get_restart_file(config, lake_directory)
   pars_config <- readr::read_csv(file.path(config$file_path$configuration_directory, config$model_settings$par_config_file), col_types = readr::cols())
   obs_config <- readr::read_csv(file.path(config$file_path$configuration_directory, config$model_settings$obs_config_file), col_types = readr::cols())
@@ -102,7 +102,7 @@ test_that("observation matrix is created", {
   config_set_name <- "default"
 
   file.copy(system.file("extdata", package = "FLAREr"), dir, recursive = TRUE)
-  config <- FLAREr:::set_configuration(configure_run_file, lake_directory, config_set_name = config_set_name)
+  config <- FLAREr:::set_up_simulation(configure_run_file, lake_directory, config_set_name = config_set_name)
   config <- FLAREr:::get_restart_file(config, lake_directory)
   pars_config <- readr::read_csv(file.path(config$file_path$configuration_directory, config$model_settings$par_config_file), col_types = readr::cols())
   obs_config <- readr::read_csv(file.path(config$file_path$configuration_directory, config$model_settings$obs_config_file), col_types = readr::cols())
@@ -130,7 +130,7 @@ test_that("observation non-vertical list is created", {
   config_set_name <- "default"
 
   file.copy(system.file("extdata", package = "FLAREr"), dir, recursive = TRUE)
-  config <- FLAREr:::set_configuration(configure_run_file, lake_directory, config_set_name = config_set_name)
+  config <- FLAREr:::set_up_simulation(configure_run_file, lake_directory, config_set_name = config_set_name)
   config <- FLAREr:::get_restart_file(config, lake_directory)
   pars_config <- readr::read_csv(file.path(config$file_path$configuration_directory, config$model_settings$par_config_file), col_types = readr::cols())
   obs_config <- readr::read_csv(file.path(config$file_path$configuration_directory, config$model_settings$obs_config_file), col_types = readr::cols())
@@ -160,7 +160,7 @@ test_that("state set up", {
   config_set_name <- "default"
 
   file.copy(system.file("extdata", package = "FLAREr"), dir, recursive = TRUE)
-  config <- FLAREr:::set_configuration(configure_run_file, lake_directory, config_set_name = config_set_name)
+  config <- FLAREr:::set_up_simulation(configure_run_file, lake_directory, config_set_name = config_set_name)
   config <- FLAREr:::get_restart_file(config, lake_directory)
   pars_config <- readr::read_csv(file.path(config$file_path$configuration_directory, config$model_settings$par_config_file), col_types = readr::cols())
   obs_config <- readr::read_csv(file.path(config$file_path$configuration_directory, config$model_settings$obs_config_file), col_types = readr::cols())
@@ -188,7 +188,7 @@ test_that("initial conditions", {
   config_set_name <- "default"
 
   file.copy(system.file("extdata", package = "FLAREr"), dir, recursive = TRUE)
-  config <- FLAREr:::set_configuration(configure_run_file, lake_directory, config_set_name = config_set_name)
+  config <- FLAREr:::set_up_simulation(configure_run_file, lake_directory, config_set_name = config_set_name)
   config <- FLAREr:::get_restart_file(config, lake_directory)
   pars_config <- readr::read_csv(file.path(config$file_path$configuration_directory, config$model_settings$par_config_file), col_types = readr::cols())
   obs_config <- readr::read_csv(file.path(config$file_path$configuration_directory, config$model_settings$obs_config_file), col_types = readr::cols())
@@ -237,12 +237,8 @@ test_that("run_flare enkf and restart works", {
   configure_run_file <- "configure_run.yml"
   config_set_name <- "default"
 
-  if(file.exists(file.path(lake_directory, "restart", "fcre","test", "configure_run.yml"))){
-    unlink(file.path(lake_directory, "restart", "fcre","test", "configure_run.yml"))
-  }
-
   file.copy(system.file("extdata", package = "FLAREr"), dir, recursive = TRUE)
-  config <- FLAREr:::set_configuration(configure_run_file, lake_directory, config_set_name = config_set_name)
+  config <- FLAREr:::set_up_simulation(configure_run_file, lake_directory, clean_start = TRUE, config_set_name = config_set_name)
   config <- FLAREr:::get_restart_file(config, lake_directory)
   pars_config <- readr::read_csv(file.path(config$file_path$configuration_directory, config$model_settings$par_config_file), col_types = readr::cols())
   obs_config <- readr::read_csv(file.path(config$file_path$configuration_directory, config$model_settings$obs_config_file), col_types = readr::cols())
@@ -259,7 +255,7 @@ test_that("run_flare enkf and restart works", {
 
   testthat::expect_true(min(lubridate::as_date(df$datetime)) == lubridate::as_date("2022-09-28"))
 
-  testthat::expect_true(file.exists(file.path(lake_directory, "forecasts/fcre/fcre-2022-10-02-test.nc")))
+  testthat::expect_true(file.exists(file.path(config$file_path$restart_directory, "fcre-2022-10-02-test.nc")))
 
   FLAREr:::update_run_config(lake_directory,
                              configure_run_file,
@@ -270,7 +266,7 @@ test_that("run_flare enkf and restart works", {
                              forecast_horizon = 5,
                              sim_name = "test",
                              site_id = "fcre",
-                             configure_flare = "config_flare.yml",
+                             configure_flare = "configure_flare.yml",
                              configure_obs = NA,
                              use_s3 = FALSE,
                              bucket = NULL,
@@ -301,7 +297,7 @@ test_that("run_flare aed works", {
   config_set_name <- "aed"
 
   file.copy(system.file("extdata", package = "FLAREr"), dir, recursive = TRUE)
-  config <- FLAREr:::set_configuration(configure_run_file, lake_directory, config_set_name = config_set_name)
+  config <- FLAREr:::set_up_simulation(configure_run_file, lake_directory, config_set_name = config_set_name)
   config <- FLAREr:::get_restart_file(config, lake_directory)
   pars_config <- readr::read_csv(file.path(config$file_path$configuration_directory, config$model_settings$par_config_file), col_types = readr::cols())
   obs_config <- readr::read_csv(file.path(config$file_path$configuration_directory, config$model_settings$obs_config_file), col_types = readr::cols())
@@ -313,7 +309,7 @@ test_that("run_flare aed works", {
 
   testthat::expect_true(file.exists(file.path(lake_directory, "forecasts/parquet/site_id=fcre/model_id=test_aed/reference_date=2022-10-02/part-0.parquet")))
 
-  testthat::expect_true(file.exists(file.path(lake_directory, "forecasts/fcre/fcre-2022-10-02-test_aed.nc")))
+  testthat::expect_true(file.exists(file.path(lake_directory, "restart/fcre/test_aed/fcre-2022-10-02-test_aed.nc")))
 
   })
 
@@ -331,7 +327,7 @@ test_that("particle filter works", {
   config_set_name <- "default_pf"
 
   file.copy(system.file("extdata", package = "FLAREr"), dir, recursive = TRUE)
-  config <- FLAREr:::set_configuration(configure_run_file, lake_directory, config_set_name = config_set_name)
+  config <- FLAREr:::set_up_simulation(configure_run_file, lake_directory, config_set_name = config_set_name)
   config <- FLAREr:::get_restart_file(config, lake_directory)
   pars_config <- readr::read_csv(file.path(config$file_path$configuration_directory, config$model_settings$par_config_file), col_types = readr::cols())
   obs_config <- readr::read_csv(file.path(config$file_path$configuration_directory, config$model_settings$obs_config_file), col_types = readr::cols())
@@ -343,7 +339,7 @@ test_that("particle filter works", {
 
   testthat::expect_true(file.exists(file.path(lake_directory, "forecasts/parquet/site_id=fcre/model_id=test_pf/reference_date=2022-10-02/part-0.parquet")))
 
-  testthat::expect_true(file.exists(file.path(lake_directory, "forecasts/fcre/fcre-2022-10-02-test_pf.nc")))
+  testthat::expect_true(file.exists(file.path(lake_directory, "restart/fcre/test_pf/fcre-2022-10-02-test_pf.nc")))
 
 })
 

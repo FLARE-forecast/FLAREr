@@ -23,7 +23,9 @@ get_run_config <- function(configure_run_file = "configure_run.yml", lake_direct
 
   if(!config$run_config$use_s3 | clean_start){
     restart_exists <- file.exists(file.path(lake_directory, "restart", config$location$site_id, sim_name, configure_run_file))
-    if(!restart_exists | !clean_start){
+    if(!restart_exists){
+      yaml::write_yaml(run_config, file.path(lake_directory,"restart", config$location$site_id, sim_name, configure_run_file))
+    }else if(clean_start){
       yaml::write_yaml(run_config, file.path(lake_directory,"restart", config$location$site_id, sim_name, configure_run_file))
     }
   }else if(config$run_config$use_s3 & !clean_start){
@@ -168,14 +170,14 @@ get_restart_file <- function(config, lake_directory){
   if(!is.na(config$run_config$restart_file)){
     restart_file <- basename(config$run_config$restart_file)
     if(config$run_config$use_s3){
-      aws.s3::save_object(object = file.path(stringr::str_split_fixed(config$s3$restart$bucket, "/", n = 2)[2], config$location$site_id, restart_file),
+      aws.s3::save_object(object = file.path(stringr::str_split_fixed(config$s3$restart$bucket, "/", n = 2)[2], config$run_config$sim_name, restart_file),
                           bucket = stringr::str_split_fixed(config$s3$restart$bucket, "/", n = 2)[1],
-                          file = file.path(lake_directory, "restart", config$location$site_id, restart_file),
+                          file = file.path(lake_directory, "restart", config$location$site_id, config$run_config$sim_name, restart_file),
                           region = stringr::str_split_fixed(config$s3$restart$endpoint, pattern = "\\.", n = 2)[1],
                           base_url = stringr::str_split_fixed(config$s3$restart$endpoint, pattern = "\\.", n = 2)[2],
                           use_https = TRUE)
     }
-    config$run_config$restart_file <- file.path(lake_directory, "restart", config$location$site_id, restart_file)
+    config$run_config$restart_file <- file.path(lake_directory, "restart", config$location$site_id, config$run_config$sim_name, restart_file)
   }
   return(config)
 }
@@ -422,7 +424,7 @@ initialize_obs_processing <- function(lake_directory, observation_yml = NA, conf
 
 check_noaa_present <- function(lake_directory, configure_run_file = "configure_run.yml", config_set_name = "default"){
 
-  config <- set_configuration(configure_run_file, lake_directory, config_set_name = config_set_name)
+  config <- set_up_simulation(configure_run_file, lake_directory, config_set_name = config_set_name)
 
   if(config$run_config$forecast_horizon > 0 & config$met$future_met_model == 'gefs-v12/stage2'){
 
