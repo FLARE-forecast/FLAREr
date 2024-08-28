@@ -84,7 +84,7 @@ plotting_general <- function(forecast_df,
         geom_point(data = obs, aes(x = datetime, y = observation), color = "red") +
         geom_vline(aes(xintercept = reference_datetime)) +
         theme_bw() +
-        facet_wrap(~depth, scales = "free") +
+        facet_wrap(~depth) +
         ggtitle(var) +
         theme(plot.title = element_text(hjust = 0.5))
 
@@ -118,7 +118,7 @@ plotting_general <- function(forecast_df,
     geom_point(data = obs, aes(x = datetime, y = observation), color = "red") +
     geom_vline(aes(xintercept = reference_datetime)) +
     theme_bw() +
-    facet_wrap(~variable, scales = "free")
+    facet_wrap(~variable, scales = "free_y")
 
   plot(state_non_depth_plot)
 
@@ -142,7 +142,7 @@ plotting_general <- function(forecast_df,
     geom_line(data = single_ensemble, aes(x = datetime, y = prediction, group = parameter)) +
     geom_vline(aes(xintercept = reference_datetime)) +
     theme_bw() +
-    facet_wrap(~variable, scales = "free") +
+    facet_wrap(~variable, scales = "free_y") +
     labs(y = "value")
 
   plot(parameter_plot)
@@ -179,7 +179,7 @@ plotting_general <- function(forecast_df,
       geom_line(data = single_ensemble, aes(x = datetime, y = prediction, group = parameter)) +
       geom_vline(aes(xintercept = reference_datetime)) +
       theme_bw() +
-      facet_wrap(~depth, scales = "free") +
+      facet_wrap(~depth) +
       ggtitle(var) +
       theme(plot.title = element_text(hjust = 0.5))
 
