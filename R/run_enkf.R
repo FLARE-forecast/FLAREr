@@ -141,6 +141,8 @@ run_enkf <- function(x_matrix,
   states_depth_updated<- update[1:(ndepths_modeled*nstates), ]
   states_depth_updated<- aperm(array(c(states_depth_updated), dim = c(ndepths_modeled, nstates, nmembers)), perm = c(2,1,3))
 
+  model_internal_heights_updated <- model_internal_heights_start
+
   if(depth_index > 0){
     lake_depth_updated<- update[(ndepths_modeled*nstates + depth_index), ]
     nml <- read_nml(file.path(config$file_path$configuration_directory, config$model_settings$base_GLM_nml))
@@ -156,7 +158,6 @@ run_enkf <- function(x_matrix,
     }
   }else{
     lake_depth_updated <- lake_depth_start
-    model_internal_heights_updated <- model_internal_heights_start
   }
 
 

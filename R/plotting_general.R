@@ -11,16 +11,19 @@
 ##' @keywords internal
 
 plotting_general <- function(forecast_df,
-                               targets_df,
-                               file_name){
+                              targets_df,
+                              file_name,
+                              plots_directory){
 
-  pdf_file_name <- paste0(tools::file_path_sans_ext(file_name),".pdf")
+
+  pdf_file_name <- file.path(plots_directory, file_name)
 
   combined_df <- left_join(forecast_df, targets_df, by = join_by(datetime, site_id, depth, variable))
 
   focal_depths_plotting <- unique(combined_df$depth)
+  max_ensembles <- max(combined_df$parameter)
 
-  focal_ensemebles <- 1:10
+  focal_ensemebles <- 1:min(c(10, max_ensembles))
 
   if(length(focal_depths_plotting) < 4){
     plot_height <- 3
@@ -45,15 +48,12 @@ plotting_general <- function(forecast_df,
       distinct(depth) |>
       pull(depth)
 
-
     single_ensemble <- combined_df |>
       filter(variable == var,
              depth %in% var_target_depths,
              parameter %in% focal_ensemebles)
 
     if (length(var_target_depths) == 0){
-
-
 
       state_plot <- combined_df |>
         filter(variable == var,
@@ -68,13 +68,19 @@ plotting_general <- function(forecast_df,
 
 
     }else{
+
+      obs <- combined_df |>
+        filter(variable == var,
+               depth %in% var_target_depths) |>
+        distinct(datetime, site_id, depth, variable, observation)
+
       state_plot <- combined_df |>
         filter(variable == var,
                depth %in% var_target_depths) |>
         ggplot(aes(x = datetime)) +
         geom_line(aes(y = prediction, group = parameter), color = "gray") +
         geom_line(data = single_ensemble, aes(x = datetime, y = prediction, group = parameter)) +
-        geom_point(aes(y = observation), color = "red") +
+        geom_point(data = obs, aes(x = datetime, y = observation), color = "red") +
         geom_vline(aes(xintercept = reference_datetime)) +
         theme_bw() +
         facet_wrap(~depth, scales = "free") +
@@ -97,13 +103,18 @@ plotting_general <- function(forecast_df,
     filter(variable %in% state_non_depth_variables,
            parameter %in% focal_ensemebles)
 
+
+  obs <- combined_df |>
+    filter(variable %in% state_non_depth_variables) |>
+    distinct(datetime, site_id, depth, variable, observation)
+
   state_non_depth_plot <- combined_df |>
     filter(variable %in% state_non_depth_variables) |>
     #dplyr::filter(variable %in% c("temperature","secchi", "chla", "lw_factor") & (depth == 1.5 | is.na(depth))) |>
     ggplot(aes(x = datetime)) +
     geom_line(aes(y = prediction, group = parameter), color = "gray") +
     geom_line(data = single_ensemble, aes(x = datetime, y = prediction, group = parameter)) +
-    geom_point(aes(y = observation), color = "red") +
+    geom_point(data = obs, aes(x = datetime, y = observation), color = "red") +
     geom_vline(aes(xintercept = reference_datetime)) +
     theme_bw() +
     facet_wrap(~variable, scales = "free")

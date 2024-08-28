@@ -205,13 +205,10 @@ A guide to the variables in `configure_flare.yml` and in the
 -   **targets:**
     -   **endpoint:** s3 endpoint of target files
     -   **bucket:** s3 bucket of target files
--   **forecasts:**
-    -   **endpoint:** s3 endpoint of forecast netcdf restart files
-    -   **bucket:** s3 bucket of forecast netcdf restart files
 -   **forecasts_parquet:**
     -   **endpoint:** s3 endpoint of forecast parquet files
     -   **bucket:** s3 bucket of forecast parquet files
--   **warm_start:**
+-   **restart:**
     -   **endpoint:** s3 endpoint of restart yaml file
     -   **bucket:** s3 bucket of restart yaml file
 -   **scores:**

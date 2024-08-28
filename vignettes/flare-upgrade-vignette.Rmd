@@ -114,6 +114,17 @@ This section now has `inflow_drivers` and `outflow_drivers`.
     -   **endpoint:** s3 endpoint of outflow drivers
     -   **bucket:** s3 bucket of outflow drivers
 
+Change
+
+-   **warm_start:**
+    -   **endpoint:** s3 endpoint of restart files
+    -   **bucket:** s3 bucket of restart files
+to
+
+-   **restart:**
+    -   **endpoint:** s3 endpoint of restart files
+    -   **bucket:** s3 bucket of restart files
+
 ## parameter_calibration_config.csv
 
 Remove the column `inflat_par` from `parameter_calibration_config.csv`
@@ -213,7 +224,15 @@ The `update_run_config2` function has been replaced by the `update_run_config` f
 
 The `check_noaa_present_arrow` function has been replaced by the `check_noaa_present` function
 
+The `set_configuration` function has been replaced by the `set_up_simulation` function
+
 Other `FLAREr` functions now require `:::` because they are not exported by the package.
 
 The forecast parquet output has `pub_datetime` rather than `pub_date` and it has a new column `log_weight`
+
+Plots saved in the plots subdirectory
+
+Netcdf restart files are saved in the restart directory
+
+
   

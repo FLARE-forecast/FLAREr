@@ -39,7 +39,7 @@ model_settings:
    states_config_file: states_config.csv
    depth_model_sd_config_file: depth_model_sd.csv
 default_init:
-   lake_depth: 9.4
+   lake_depth: 9.1
    temp: [25.667, 24.9101, 23.067, 21.8815, 19.6658, 16.5739, 12.9292, 12.8456, 12.8127, 12.8079, 12.778]
    temp_depths: [0.127, 1.004, 2.005, 3.021, 4.002, 5.004, 6.004, 7.01, 8.001, 9.015, 9.518]
    salinity: 0.0

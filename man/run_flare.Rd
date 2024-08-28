@@ -4,7 +4,12 @@
 \alias{run_flare}
 \title{Run FLARE for a single forecast}
 \usage{
-run_flare(lake_directory, configure_run_file, config_set_name)
+run_flare(
+  lake_directory,
+  configure_run_file,
+  config_set_name,
+  clean_start = FALSE
+)
 }
 \arguments{
 \item{lake_directory}{full path to repository directory}
@@ -12,6 +17,8 @@ run_flare(lake_directory, configure_run_file, config_set_name)
 \item{configure_run_file}{flare configuration object}
 
 \item{config_set_name}{directory within configuration/workflow with run configuration files}
+
+\item{clean_start}{logical: TRUE = reset run configuration with the file in the configuration directory within repository}
 }
 \value{
 the full path to save netcdf file that is used to restart following forecast
