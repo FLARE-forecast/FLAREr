@@ -147,8 +147,16 @@ run_enkf <- function(x_matrix,
     max_depth <- nml$morphometry$H[length(nml$morphometry$H)] - nml$morphometry$H[1]
     index <- which(lake_depth_updated > max_depth)
     lake_depth_updated[index] <- max_depth
+    for(m in 1:nmembers){
+      non_na_heights <- which(!is.na(model_internal_heights_start[ , m]))
+      diff_height <- lake_depth_updated[m] - model_internal_heights_start[1, m]
+      model_internal_heights_updated[non_na_heights, m] <- model_internal_heights_start[non_na_heights, m ] +  diff_height
+      index <- which(model_internal_heights_updated[, m] < 0)
+      model_internal_heights_updated[index, m] <- NA
+    }
   }else{
     lake_depth_updated <- lake_depth_start
+    model_internal_heights_updated <- model_internal_heights_start
   }
 
 
@@ -180,7 +188,7 @@ run_enkf <- function(x_matrix,
     }
   }
 
-  model_internal_heights_updated <- model_internal_heights_start
+
 
   if(length(config$output_settings$diagnostics_names) > 1){
     diagnostics_updated <- diagnostics_start[ , ,]
