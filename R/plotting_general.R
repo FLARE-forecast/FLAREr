@@ -1,8 +1,9 @@
 ##' @title Generate diagnostic plot of FLARE output with observations
 ##' @details Function combines the netcdf output with the long-format observation file to produce a set of plots for each state variable, calibrated parameter, and diagnostic variable
-##' @param file_name string; full path to file containing plotting output
 ##' @param targets_df dataframe; data frame containing all observations (targets)
 ##' @param forecast_df dataframe; data frame containing the forecast predictions
+##' @param file_name string; name of pdf file that will be saved
+##' @param plots_directory full path of directory where plot will be saved
 ##' @return None
 ##' @import dplyr
 ##' @import ggplot2

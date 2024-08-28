@@ -4,14 +4,16 @@
 \alias{plotting_general}
 \title{Generate diagnostic plot of FLARE output with observations}
 \usage{
-plotting_general(forecast_df, targets_df, file_name)
+plotting_general(forecast_df, targets_df, file_name, plots_directory)
 }
 \arguments{
 \item{forecast_df}{dataframe; data frame containing the forecast predictions}
 
 \item{targets_df}{dataframe; data frame containing all observations (targets)}
 
-\item{file_name}{string; full path to file containing plotting output}
+\item{file_name}{string; name of pdf file that will be saved}
+
+\item{plots_directory}{full path of directory where plot will be saved}
 }
 \value{
 None
