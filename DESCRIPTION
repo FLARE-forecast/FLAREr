@@ -53,8 +53,8 @@ Imports:
     tidyr,
     tsibble,
     zoo,
-    RopenMeteo
-Remotes: FLARE-forecast/GLM3r, eco4cast/score4cast, eco4cast/read4cast, FLARE-forecast/RopenMeteo
+    ropenmeteo
+Remotes: FLARE-forecast/GLM3r, eco4cast/score4cast, eco4cast/read4cast, FLARE-forecast/ropenmeteo
 Suggests: 
     knitr,
     rmarkdown,
