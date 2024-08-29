@@ -52,13 +52,13 @@ generate_met_files_openmet <- function(out_dir,
 
     }else{
 
-      df <- RopenMeteo::get_seasonal_forecast(
+      df <- ropenmeteo::get_seasonal_forecast(
         latitude = latitude,
         longitude = longitude,
         site_id = site_id,
         forecast_days = forecast_horizon,
         past_days = as.numeric(forecast_start_datetime - start_datetime),
-        variables = RopenMeteo::glm_variables(product = "seasonal_forecast",
+        variables = ropenmeteo::glm_variables(product = "seasonal_forecast",
                                               time_step = "6hourly"))
     }
 
@@ -76,9 +76,9 @@ generate_met_files_openmet <- function(out_dir,
     }
 
     df |>
-      RopenMeteo::six_hourly_to_hourly(latitude = latitude, longitude = longitude, use_solar_geom = TRUE) |>
-      RopenMeteo::add_longwave() |>
-      RopenMeteo::write_glm_format(path = out_dir)
+      ropenmeteo::six_hourly_to_hourly(latitude = latitude, longitude = longitude, use_solar_geom = TRUE) |>
+      ropenmeteo::add_longwave() |>
+      ropenmeteo::write_glm_format(path = out_dir)
 
   }else if(openmeteo_api == "ensemble_forecast"){
 
@@ -101,14 +101,14 @@ generate_met_files_openmet <- function(out_dir,
 
     }else{
 
-      df <- RopenMeteo::get_ensemble_forecast(
+      df <- ropenmeteo::get_ensemble_forecast(
         latitude = latitude,
         longitude = longitude,
         site_id = site_id,
         forecast_days = forecast_horizon,
         past_days = as.numeric(forecast_start_datetime - start_datetime),
         model = model,
-        variables = RopenMeteo::glm_variables(product = "ensemble_forecast",
+        variables = ropenmeteo::glm_variables(product = "ensemble_forecast",
                                               time_step = "hourly"))
     }
 
@@ -137,7 +137,7 @@ generate_met_files_openmet <- function(out_dir,
 
       }else{
 
-        shortwave_df <-  RopenMeteo::get_ensemble_forecast(
+        shortwave_df <-  ropenmeteo::get_ensemble_forecast(
           latitude = latitude,
           longitude = longitude,
           site_id = site_id,
@@ -161,8 +161,8 @@ generate_met_files_openmet <- function(out_dir,
     }
 
     df |>
-      RopenMeteo::add_longwave() |>
-      RopenMeteo::write_glm_format(path = out_dir)
+      ropenmeteo::add_longwave() |>
+      ropenmeteo::write_glm_format(path = out_dir)
 
   }else if(openmeteo_api == "historical"){
 
@@ -172,33 +172,33 @@ generate_met_files_openmet <- function(out_dir,
 
     #warning("Not tested")
 
-    RopenMeteo::get_historical_weather(
+    ropenmeteo::get_historical_weather(
       latitude = latitude,
       longitude = longitude,
       site_id = site_id,
       start_date = start_datetime,
       end_date = end_datetime,
-      variables = RopenMeteo::glm_variables(product = "historical",
+      variables = ropenmeteo::glm_variables(product = "historical",
                                             time_step = "hourly")) |>
-      RopenMeteo::add_longwave() |>
-      RopenMeteo::write_glm_format(path = out_dir)
+      ropenmeteo::add_longwave() |>
+      ropenmeteo::write_glm_format(path = out_dir)
 
   }else if(openmeteo_api == "climate"){
 
     if(is.null(model)) warning("no model provided for climate projection and no default is assumed")
 
-    RopenMeteo::get_climate_projections(
+    ropenmeteo::get_climate_projections(
       latitude = latitude,
       longitude = longitude,
       site_id = site_id,
       start_date = start_datetime,
       end_date = forecast_start_datetime + lubridate::days(forecast_horizon),
       model = model,
-      variables = RopenMeteo::glm_variables(product = "climate_projection",
+      variables = ropenmeteo::glm_variables(product = "climate_projection",
                                             time_step = "daily")) |>
-      RopenMeteo::daily_to_hourly(latitude = latitude, longitude = longitude) |>
-      RopenMeteo::add_longwave() |>
-      RopenMeteo::write_glm_format(path = out_dir)
+      ropenmeteo::daily_to_hourly(latitude = latitude, longitude = longitude) |>
+      ropenmeteo::add_longwave() |>
+      ropenmeteo::write_glm_format(path = out_dir)
   }
 
   current_filenames <- fs::dir_ls(path = out_dir, glob = "*/met*.csv")
