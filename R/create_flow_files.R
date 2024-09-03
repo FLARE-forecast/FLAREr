@@ -73,7 +73,23 @@ create_flow_files <- function(flow_forecast_dir = NULL,
       future_s3 <- NULL
       hist_s3 <-  arrow::SubTreeFileSystem$create(file.path(local_directory, flow_historical_dir))
     }
-  }else {
+  }else if (!is.null(flow_forecast_dir) & is.null(flow_historical_dir)) {
+    if (use_s3) {
+      if (is.null(bucket) | is.null(endpoint)) {
+        stop("needs bucket and endpoint if use_s3=TRUE")
+      }
+      vars <- arrow_env_vars()
+      hist_s3 <- NULL
+      future_s3 <- arrow::s3_bucket(bucket = file.path(bucket,flow_forecast_dir), endpoint_override = endpoint)
+      unset_arrow_vars(vars)
+    } else {
+      if (is.null(local_directory)) {
+        stop("needs local_directory if use_s3=FALSE")
+      }
+      hist_s3 <- NULL
+      future_s3 <-  arrow::SubTreeFileSystem$create(file.path(local_directory, flow_forecast_dir))
+    }
+  } else {
     future_s3 <- NULL
     hist_s3 <- NULL
   }
