@@ -41,12 +41,12 @@ jobs:
           http-user-agent: ${{ matrix.config.http-user-agent }}
           use-public-rspm: true
 
-      - name: Install system dependencies
-        if: runner.os == 'macOS'
-        run: |
-          brew reinstall gcc
-          brew install netcdf
-          brew install gd
+      #- name: Install system dependencies
+      #  if: runner.os == 'macOS'
+      #  run: |
+      #    brew reinstall gcc
+      #    brew install netcdf
+      #    brew install gd
 
       - uses: r-lib/actions/setup-r-dependencies@v2
         with:
