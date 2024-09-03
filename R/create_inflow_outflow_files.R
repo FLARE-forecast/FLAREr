@@ -7,10 +7,7 @@
 #' @keywords internal
 #'
 create_inflow_outflow_files  <- function(config, config_set_name, lake_directory) {
-  # set use_s3 to T if missing
-  if(is.null(config$run_config$use_s3)){
-    config$run_config$use_s3 <- TRUE
-  }
+
 
   # The variables differ between inflow and outflow
   #variables_in <- unique(c('time',
@@ -40,12 +37,21 @@ create_inflow_outflow_files  <- function(config, config_set_name, lake_directory
   # Specify inflow AND outflow
   if (config$flows$include_inflow & config$flows$include_outflow) {
 
-    # the model directories for historical flows (before forecast_start_datetime)
-    inflow_historical_dir <- file.path(config$flows$historical_inflow_model,
-                                       paste0("site_id=", config$location$site_id))
+    # Historical flow?
+    if (config$run_config$start_datetime == config$run_config$forecast_start_datetime) {
+      # the model directories for historical flows (before forecast_start_datetime)
+      inflow_historical_dir <- NULL
 
-    outflow_historical_dir <- file.path(config$flows$historical_outflow_model,
-                                        paste0("site_id=", config$location$site_id))
+      outflow_historical_dir <- NULL
+    } else {
+      # the model directories for historical flows (before forecast_start_datetime)
+      inflow_historical_dir <- file.path(config$flows$historical_inflow_model,
+                                         paste0("site_id=", config$location$site_id))
+
+      outflow_historical_dir <- file.path(config$flows$historical_outflow_model,
+                                          paste0("site_id=", config$location$site_id))
+    }
+
 
     # do we need future flow?
     if (config$run_config$forecast_horizon > 0) {
@@ -78,7 +84,7 @@ create_inflow_outflow_files  <- function(config, config_set_name, lake_directory
     # forecast_start_datetime = config$run_config$forecast_start_datetime
     # forecast_horizon = config$run_config$forecast_horizon
     # site_id = config$location$site_id
-    # use_s3 = config$run_config$use_s3
+    # use_s3 = config$flows$use_flows_s3
     # bucket = config$s3$inflow_drivers$bucket
     # endpoint = config$s3$inflow_drivers$endpoint
     # local_directory = file.path(lake_directory, config$flows$local_inflow_directory)
@@ -96,7 +102,7 @@ create_inflow_outflow_files  <- function(config, config_set_name, lake_directory
                                              forecast_start_datetime = config$run_config$forecast_start_datetime ,
                                              forecast_horizon = config$run_config$forecast_horizon ,
                                              site_id = config$location$site_id ,
-                                             use_s3 = config$run_config$use_s3 ,
+                                             use_s3 = config$flows$use_flows_s3 ,
                                              bucket = list(config$s3$inflow_drivers$bucket , config$s3$outflow_drivers$bucket),
                                              endpoint = list(config$s3$inflow_drivers$endpoint , config$s3$outflow_drivers$endpoint) ,
                                              local_directory = list(file.path(lake_directory, config$flows$local_inflow_directory),
@@ -109,9 +115,16 @@ create_inflow_outflow_files  <- function(config, config_set_name, lake_directory
   } else if (config$flows$include_inflow & !config$flows$include_outflow) { # Specify INFLOW only
 
     # the model directories for historical flows (before forecast_start_datetime)
-    inflow_historical_dir <- file.path(config$flows$historical_inflow_model,
-                                       paste0("site_id=", config$location$site_id))
+    # Historical flow?
+    if (config$run_config$start_datetime == config$run_config$forecast_start_datetime) {
+      # the model directories for historical flows (before forecast_start_datetime)
+      inflow_historical_dir <- NULL
 
+    } else {
+      # the model directories for historical flows (before forecast_start_datetime)
+      inflow_historical_dir <- file.path(config$flows$historical_inflow_model,
+                                         paste0("site_id=", config$location$site_id))
+    }
 
     # do we need future flow?
     if (config$run_config$forecast_horizon > 0 ) {
@@ -138,7 +151,7 @@ create_inflow_outflow_files  <- function(config, config_set_name, lake_directory
                                              forecast_start_datetime = config$run_config$forecast_start_datetime ,
                                              forecast_horizon = config$run_config$forecast_horizon ,
                                              site_id = config$location$site_id ,
-                                             use_s3 = config$run_config$use_s3 ,
+                                             use_s3 = config$flows$use_flows_s3 ,
                                              bucket = list(config$s3$inflow_drivers$bucket , config$s3$outflow_drivers$bucket),
                                              endpoint = config$s3$inflow_drivers$endpoint ,
                                              local_directory = list(file.path(lake_directory, config$flows$local_inflow_directory),
@@ -151,8 +164,16 @@ create_inflow_outflow_files  <- function(config, config_set_name, lake_directory
   } else if (!config$flows$include_inflow & config$flows$include_outflow) { # Specify OUTFLOW only
 
     # the model directories for historical flows (before forecast_start_datetime)
-    outflow_historical_dir <- file.path(config$flows$historical_outflow_model,
-                                        paste0("site_id=", config$location$site_id))
+    # Historical flow?
+    if (config$run_config$start_datetime == config$run_config$forecast_start_datetime) {
+      # the model directories for historical flows (before forecast_start_datetime)
+      outflow_historical_dir <- NULL
+
+    } else {
+      # the model directories for historical flows (before forecast_start_datetime)
+      outflow_historical_dir <- file.path(config$flows$historical_outflow_model,
+                                         paste0("site_id=", config$location$site_id))
+    }
 
     # do we need future flow?
     if (config$run_config$forecast_horizon > 0 ) {
@@ -179,7 +200,7 @@ create_inflow_outflow_files  <- function(config, config_set_name, lake_directory
                                              forecast_start_datetime = config$run_config$forecast_start_datetime ,
                                              forecast_horizon = config$run_config$forecast_horizon ,
                                              site_id = config$location$site_id ,
-                                             use_s3 = config$run_config$use_s3 ,
+                                             use_s3 = config$flows$use_flows_s3 ,
                                              bucket = list(config$s3$inflow_drivers$bucket , config$s3$outflow_drivers$bucket),
                                              endpoint = config$s3$inflow_drivers$endpoint ,
                                              local_directory = list(file.path(lake_directory, config$flows$local_inflow_directory),
