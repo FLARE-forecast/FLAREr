@@ -46,7 +46,6 @@ Imports:
     ggplot2,
     tibble,
     arrow
-Remotes: FLARE-forecast/ropenmeteo
 Suggests: 
     knitr,
     rmarkdown,
