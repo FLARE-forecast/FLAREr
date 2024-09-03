@@ -134,7 +134,7 @@ A guide to the variables in `configure_flare.yml` and in the
     forecast
 -   **use_ler_vars:** use LER standardized met names (`TRUE` or `FALSE`)
 -   **historical_met_use_s3:** access historical met data on s3 bucket (`TRUE` or `FALSE`)
--   **future_met_use_s3:** access future met data on s3 bucket (`TRUE` or `FALSE`)
+-   **future_met_use_s3:** access met data on s3 bucket (`TRUE` or `FALSE`)
 -   **use_openmeteo:** use openmeteo for meterology inputs (`TRUE` or `FALSE`)
 -   **openmeteo_api:** the name of the openmeteo api to use (only used if `openmeteo = TRUE`); `seasonal`, `ensemble_forecast`,
     `historical`, `climate`
@@ -166,6 +166,7 @@ A guide to the variables in `configure_flare.yml` and in the
     **local_outflow_directory**)
 -   **local_outflow_directory:** directory where outflow forecasts are
     saved if not using s3 access. Relative to the lake_directory.
+-  **use_flows_s3:** access flow models on an s3 bucket (`TRUE` or `FALSE`)
 
 ### uncertainty:
 

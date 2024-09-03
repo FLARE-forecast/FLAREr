@@ -53,6 +53,7 @@ flows:
    historical_outflow_model:  h/model_id=h
    local_outflow_directory: drivers/oflow
    use_ler_vars: FALSE
+   use_flows_s3: FALSE
 met:
    future_met_model: gefs/st2
    future_met_use_s3: FALSE
