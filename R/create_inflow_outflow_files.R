@@ -118,9 +118,16 @@ create_inflow_outflow_files  <- function(config, config_set_name, lake_directory
   } else if (config$flows$include_inflow & !config$flows$include_outflow) { # Specify INFLOW only
 
     # the model directories for historical flows (before forecast_start_datetime)
-    inflow_historical_dir <- file.path(config$flows$historical_inflow_model,
-                                       paste0("site_id=", config$location$site_id))
+    # Historical flow?
+    if (config$run_config$start_datetime == config$run_config$forecast_start_datetime) {
+      # the model directories for historical flows (before forecast_start_datetime)
+      inflow_historical_dir <- NULL
 
+    } else {
+      # the model directories for historical flows (before forecast_start_datetime)
+      inflow_historical_dir <- file.path(config$flows$historical_inflow_model,
+                                         paste0("site_id=", config$location$site_id))
+    }
 
     # do we need future flow?
     if (config$run_config$forecast_horizon > 0 ) {
@@ -160,8 +167,16 @@ create_inflow_outflow_files  <- function(config, config_set_name, lake_directory
   } else if (!config$flows$include_inflow & config$flows$include_outflow) { # Specify OUTFLOW only
 
     # the model directories for historical flows (before forecast_start_datetime)
-    outflow_historical_dir <- file.path(config$flows$historical_outflow_model,
-                                        paste0("site_id=", config$location$site_id))
+    # Historical flow?
+    if (config$run_config$start_datetime == config$run_config$forecast_start_datetime) {
+      # the model directories for historical flows (before forecast_start_datetime)
+      outflow_historical_dir <- NULL
+
+    } else {
+      # the model directories for historical flows (before forecast_start_datetime)
+      outflow_historical_dir <- file.path(config$flows$historical_outflow_model,
+                                         paste0("site_id=", config$location$site_id))
+    }
 
     # do we need future flow?
     if (config$run_config$forecast_horizon > 0 ) {
