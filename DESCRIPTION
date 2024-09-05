@@ -42,7 +42,6 @@ Imports:
     aws.s3,
     tidyr,
     tsibble,
-    ropenmeteo,
     ggplot2,
     tibble,
     arrow 
@@ -50,7 +49,8 @@ Suggests:
     knitr,
     rmarkdown,
     testthat (>= 3.0.0),
-    remotes
+    remotes,
+    ropenmeteo
 VignetteBuilder: knitr
 Config/testthat/edition: 3
 URL: http://flare-forecast.org/FLAREr/

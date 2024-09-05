@@ -30,6 +30,10 @@ create_met_files_openmet <- function(out_dir,
                                        bucket = NULL,
                                        endpoint = NULL){
 
+  if (!requireNamespace("ropenmeteo", quietly = TRUE)) {
+    stop("Package ropenmeteo needed.")
+  }
+
   if(openmeteo_api == "seasonal"){
 
     if(use_archive){
