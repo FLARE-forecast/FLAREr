@@ -101,6 +101,8 @@ You inflow and outflows need to be separate models.
 
 -   **generate_plots**: generate diagnostic plots (`TRUE` or `FALSE`)
 
+remove `score_past` and `
+
 ### s3
 
 This section now has `inflow_drivers` and `outflow_drivers`.
@@ -148,13 +150,21 @@ Add the following column to `observations_config.csv`
 -   **multi_depth:** 1 = observation has multiple depths, 0 =
     observation does not have a depth associated with it.
     
+Remove the column `distance_theshold`
+    
 ## GLM3.nml
 
-Add the following variable to the `&morphometry` section
+Add the following variable to the `&init_profiles` section
 
 ```
 restart_mixer_count = 0
 ```
+
+Change the following variables in the `init_profiles` section to:
+
+`the_depth` to `the_heights`
+
+`num_depths` to `num_heights`
 
 Change the following variables in the `glm_setup` section to:
 
@@ -163,12 +173,6 @@ min_layer_vol = 0.025
 min_layer_thick = 0.2
 max_layer_thick = 0.8
 ```
-
-Change the following variables in the `init_profiles` section to:
-
-`the_depth` to `the_heights`
-
-`num_depths` to `num_heights`
 
 ## Other changes
 

@@ -17,11 +17,10 @@ da_setup:
 model_settings:
    ncore: 4
    max_model_layers: 75
-   model_name: glm_aed
    base_GLM_nml: glm3.nml
    base_AED_nml: aed2.nml
    base_AED_phyto_pars_nml: aed_phyto_pars.csv
-   base_AED_zoop_pars_nml: aed2_zoop_pars.nml
+   base_AED_zoop_pars_nml:
    modeled_depths:
     - 0.00
     - 1.00

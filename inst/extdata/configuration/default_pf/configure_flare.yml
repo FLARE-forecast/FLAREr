@@ -17,7 +17,6 @@ da_setup:
 model_settings:
    ncore: 4
    max_model_layers: 75
-   model_name: glm
    base_GLM_nml: glm3.nml
    modeled_depths:
     - 0.00
