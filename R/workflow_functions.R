@@ -113,7 +113,7 @@ put_targets <- function(site_id, cleaned_insitu_file = NA, cleaned_met_file = NA
 
 #' Download target data from s3
 #'
-#' @param lake_directory full path to repository directory
+#' @param lake_directory full path to the repository directory
 #' @param config flare configuration object
 #' @keywords internal
 #'
@@ -170,7 +170,7 @@ get_restart_file <- function(config, lake_directory){
   if(!is.na(config$run_config$restart_file)){
     restart_file <- basename(config$run_config$restart_file)
     if(config$run_config$use_s3){
-      aws.s3::save_object(object = file.path(stringr::str_split_fixed(config$s3$restart$bucket, "/", n = 2)[2], config$run_config$sim_name, restart_file),
+      aws.s3::save_object(object = file.path(stringr::str_split_fixed(config$s3$restart$bucket, "/", n = 2)[2], config$location$site_id, config$run_config$sim_name, restart_file),
                           bucket = stringr::str_split_fixed(config$s3$restart$bucket, "/", n = 2)[1],
                           file = file.path(lake_directory, "restart", config$location$site_id, config$run_config$sim_name, restart_file),
                           region = stringr::str_split_fixed(config$s3$restart$endpoint, pattern = "\\.", n = 2)[1],
