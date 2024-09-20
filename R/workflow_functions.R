@@ -299,7 +299,7 @@ update_run_config <- function(lake_directory,
 put_restart_file <- function(saved_file, config){
   if(config$run_config$use_s3){
     success <- aws.s3::put_object(file = saved_file,
-                                  object = file.path(stringr::str_split_fixed(config$s3$restart$bucket, "/", n = 2)[2], config$location$site_id, basename(saved_file)),
+                                  object = file.path(stringr::str_split_fixed(config$s3$restart$bucket, "/", n = 2)[2], config$location$site_id, config$run_config$sim_name, basename(saved_file)),
                                   bucket = stringr::str_split_fixed(config$s3$restart$bucket, "/", n = 2)[1],
                                   region = stringr::str_split_fixed(config$s3$restart$endpoint, pattern = "\\.", n = 2)[1],
                                   base_url = stringr::str_split_fixed(config$s3$restart$endpoint, pattern = "\\.", n = 2)[2],
