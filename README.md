@@ -5,7 +5,7 @@
 
 # FLAREr
 
-This document serves as a users guide and a tutorial for the FLARE (Forecasting Lake and Reservoir Ecosystems) system ([Thomas et al. 2020](https://agupubs.onlinelibrary.wiley.com/doi/abs/10.1029/2019WR026138)). FLARE generates forecasts and forecast uncertainty of water temperature and water quality for 1 to 35-day ahead time horizon at multiple depths of a lake or reservoir. It uses data assimilation to update the initial starting point for a forecast and the model parameters based a real-time statistical comparisons to observations.  It has been developed, tested, and evaluated for Falling  Creek Reservoir in Virginia ([Thomas et al. 2020](https://agupubs.onlinelibrary.wiley.com/doi/abs/10.1029/2019WR026138)), Beaverdam Reservoir in Virginia ([Wander et al 2024](https://doi.org/10.1002/ecs2.4752)), Lake Sunapee in New Hampshire ([Woelmer et al. 2024](http://dx.doi.org/10.2139/ssrn.4699835)) and National Ecological Observatory Network lakes across the United States ([Thomas et al. 2023](https://doi.org/10.1002/fee.2623)).
+This document serves as a user guide and a tutorial for the FLARE (Forecasting Lake and Reservoir Ecosystems) system ([Thomas et al. 2020](https://agupubs.onlinelibrary.wiley.com/doi/abs/10.1029/2019WR026138)). FLARE generates forecasts with uncertainty of water temperature and water quality for 1- to 35-day-ahead time horizon at multiple depths of a lake or reservoir. It uses data assimilation to update the initial starting point for a forecast and the model parameters based a real-time statistical comparisons to observations.  It has been developed, tested, and evaluated for Falling Creek Reservoir in Virginia ([Thomas et al. 2020](https://agupubs.onlinelibrary.wiley.com/doi/abs/10.1029/2019WR026138)), Beaverdam Reservoir in Virginia ([Wander et al 2024](https://doi.org/10.1002/ecs2.4752)), Lake Sunapee in New Hampshire ([Woelmer et al. 2024](https://doi.org/10.1016/j.ecoinf.2024.102825)), National Ecological Observatory Network lakes across the United States ([Thomas et al. 2023](https://doi.org/10.1002/fee.2623) and [Olsson et al. 2024](https://doi.org/10.22541/essoar.171458144.44104603/v1), and Lough Feeagh in Ireland ([Paíza et al. 2024](http://dx.doi.org/10.2139/ssrn.4888712)).
 
 FLAREr is a set of R scripts that
 
@@ -26,13 +26,13 @@ FLARE development has been supported by grants from the U.S. National Science Fo
 
 ## Installation
 
-You will need to download the necessary packages prior to running.
+You will need to download the necessary packages before running.
 
 ```
 remotes::install_github("FLARE-forecast/FLAREr")
 ```
 
-Next you need the GLM model.  You can get in using multiple pathways
+Next, you need the GLM model.  You can get in using multiple pathways
 
 The easiest way is to install the `GLM3r` package from Github using
 
@@ -40,7 +40,7 @@ The easiest way is to install the `GLM3r` package from Github using
 remotes::install_github("rqthomas/GLM3r")
 ```
 
-or you can download from the AquaticEcoDynamics GitHub organization.  This code assumes you are in the directory with the FLARE configurations and workflow subdirectories
+or you can download it from the AquaticEcoDynamics GitHub organization.  This code assumes you are in the directory with the FLARE configurations and workflow subdirectories
 
 ```
 download.file("https://github.com/rqthomas/glm-aed/archive/refs/heads/main.zip", "glm_aed.zip")
@@ -69,7 +69,7 @@ FLAREr is a set of functions that address key steps in the forecasting workflow.
 
 ### Requires
 
-User generated *insitu* observations, meteorology, and inflow/outflow in a specified format.  See FLARE example vignette for format specification.
+User-generated *insitu* observations, meteorology, and inflow/outflow in a specified format.  See the FLARE example vignette for format specification.
 You are required to set a directory structure as follows:
 
 
