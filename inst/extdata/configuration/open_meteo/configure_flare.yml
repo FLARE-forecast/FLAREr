@@ -43,8 +43,8 @@ default_init:
    white_ice_thickness: 0.0
    blue_ice_thickness: 0.0
 flows:
-   include_inflow: TRUE
-   include_outflow: TRUE
+   include_inflow: FALSE
+   include_outflow: FALSE
    future_inflow_model: f/model_id=h/reference_datetime={reference_date}/site_id={site_id}
    historical_inflow_model: h/model_id=h/site_id={site_id}
    local_inflow_directory: drivers/iflow
@@ -60,9 +60,9 @@ met:
    historical_met_use_s3: FALSE
    forecast_lag_days: 0
    use_ler_vars: FALSE
-   use_openmeteo: FALSE
-   openmeteo_api: "ensemble_forecast"
-   openmeteo_model: "gfs_seamless"
+   use_openmeteo: TRUE
+   openmeteo_api: "seasonal"
+   openmeteo_model: "cfs"
    use_openmeteo_archive: FALSE
    local_met_directory: drivers/met
 uncertainty:
@@ -75,7 +75,3 @@ uncertainty:
 output_settings:
    generate_plot: FALSE
    diagnostics_names:  [extc]
-   diagnostics_daily:
-    csv_names: ['Tot Inflow Vol', 'Tot Outflow Vol', 'Overflow Vol', 'temp', 'salt']
-    save_names: ['inflow', 'outflow','overflow', 'temp_outflow', 'salt_outflow']
-    csv_file: ['lake.csv', 'lake.csv','lake.csv', 'outlet_00.csv','outlet_00.csv']

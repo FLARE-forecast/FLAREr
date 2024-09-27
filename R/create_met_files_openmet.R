@@ -17,21 +17,26 @@
 #'
 #' @return list of meteorology file names
 create_met_files_openmet <- function(out_dir,
-                                       start_datetime,
-                                       end_datetime = NA,
-                                       forecast_start_datetime = NA,
-                                       forecast_horizon = 0,
-                                       latitude,
-                                       longitude,
-                                       site_id,
-                                       openmeteo_api = "ensemble",
-                                       model = NULL,
-                                       use_archive = FALSE,
-                                       bucket = NULL,
-                                       endpoint = NULL){
+                                     start_datetime,
+                                     end_datetime = NA,
+                                     forecast_start_datetime = NA,
+                                     forecast_horizon = 0,
+                                     latitude,
+                                     longitude,
+                                     site_id,
+                                     openmeteo_api = "ensemble",
+                                     model = NULL,
+                                     use_archive = FALSE,
+                                     bucket = NULL,
+                                     endpoint = NULL){
 
   if (!requireNamespace("ropenmeteo", quietly = TRUE)) {
     stop("Package ropenmeteo needed.")
+  }
+
+
+  if(lubridate::as_date(forecast_start_datetime) != Sys.Date() & !use_archive){
+    warning(paste0("forecast_start_datetime needs to be current day (", Sys.Date(),") when using the real-time openmeteo"))
   }
 
   if(openmeteo_api == "seasonal"){
