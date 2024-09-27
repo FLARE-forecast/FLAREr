@@ -98,7 +98,7 @@ file.copy(system.file("extdata", "configuration", "default", "depth_model_sd.csv
 file.copy(system.file("extdata", "configuration", "default", "observations_config.csv", package = "FLAREr"), file.path(lake_directory, "configuration", "default", "observations_config.csv"))
 ```
 
-Third, FLAREr requires GLM specific configurations files.  For applications that require on water temperature, only the GLM namelist file is needed.  Applications that require other water quality variables will require additional namelist files that are associated with the AED model.
+Third, FLAREr requires GLM specific configurations files.  For applications that require on water temperature, only the GLM namelist file is needed.  Applications that require other water quality variables will require additional namelist files that are associated with the aed model.
 
 ```{r}
 file.copy(system.file("extdata", "configuration", "default", "glm3.nml", package = "FLAREr"), file.path(lake_directory, "configuration", "default", "glm3.nml"))
@@ -197,8 +197,9 @@ df |>
   geom_line() +
   geom_vline(aes(xintercept = as_datetime(reference_datetime))) +
   labs(title = "1 m water temperature forecast")
-
 ```
+
+
 ```{r}
 targets_df <- read_csv(file.path(lake_directory, "targets/fcre/fcre-targets-insitu.csv"), show_col_types = FALSE)
 combined_df <- left_join(df, targets_df, by = join_by(datetime, depth, variable, site_id))

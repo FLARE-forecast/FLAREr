@@ -78,3 +78,8 @@ uncertainty:
 output_settings:
    generate_plot: FALSE
    diagnostics_names:  [extc]
+   diagnostics_daily:
+    names: ['CAR_ch4_atm']
+    save_names: ['ch4_flux_mean']
+    file: ['output.nc']
+    depth: .na

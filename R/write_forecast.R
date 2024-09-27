@@ -147,7 +147,7 @@ write_forecast <- function(da_forecast_output,
 
 
 
-  if(length(config$output_settings$diagnostics_daily$csv_names) > 0){
+  if(length(config$output_settings$diagnostics_daily$names) > 0){
 
     indexes <- expand.grid(diag = 1:dim(diagnostics_daily)[1], time = 1:dim(diagnostics_daily)[2])
 

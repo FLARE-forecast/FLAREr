@@ -135,8 +135,8 @@ run_da_forecast <- function(states_init,
     diagnostics <- NA
   }
 
-  if(length(config$output_settings$diagnostics_daily$csv_names) > 0){
-    diagnostics_daily <- array(NA, dim=c(length(config$output_settings$diagnostics_daily$csv_names), nsteps, nmembers))
+  if(length(config$output_settings$diagnostics_daily$names) > 0){
+    diagnostics_daily <- array(NA, dim=c(length(config$output_settings$diagnostics_daily$names), nsteps, nmembers))
   }else{
     diagnostics_daily <- NA
   }
@@ -358,7 +358,7 @@ run_da_forecast <- function(states_init,
           }
         }
 
-        if(length(config$output_settings$diagnostics_daily$csv_names) > 0){
+        if(length(config$output_settings$diagnostics_daily$names) > 0){
           for(d in 1:dim(diagnostics_daily)[1]){
             diagnostics_daily[d, i, m] <- out[[m]]$diagnostics_daily_end[d]
           }
@@ -613,7 +613,7 @@ run_da_forecast <- function(states_init,
         diagnostics <- NA
       }
 
-      if(length(config$output_settings$diagnostics_daily$csv_names) > 0){
+      if(length(config$output_settings$diagnostics_daily$names) > 0){
         diagnostics_daily_start <- diagnostics_daily[ ,i, ]
       }else{
         diagnostics_daily_start <- NA
@@ -692,7 +692,7 @@ run_da_forecast <- function(states_init,
         diagnostics <-  updates$diagnostics_updated
       }
 
-      if(length(config$output_settings$diagnostics_daily$csv_names) > 0){
+      if(length(config$output_settings$diagnostics_daily$names) > 0){
         diagnostics_daily[ ,i, ] <- updates$diagnostics_daily_updated
       }else{
         diagnostics_daily <- updates$diagnostics_daily_updated

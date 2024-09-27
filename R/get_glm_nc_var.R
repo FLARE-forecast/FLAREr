@@ -3,10 +3,11 @@ get_glm_nc_var <- function(ncFile, working_dir, z_out, vars_depth, vars_no_depth
 {
   glm_nc <- ncdf4::nc_open(paste0(working_dir, ncFile))
   glm_vars <- names(glm_nc$var)
-  tallest_layer <- ncdf4::ncvar_get(glm_nc, "NS")
-  final_time_step <- length(tallest_layer)
-  tallest_layer <- tallest_layer[final_time_step]
-  heights <- matrix(ncdf4::ncvar_get(glm_nc, "z"), ncol = final_time_step)
+  tallest_layer_all <- ncdf4::ncvar_get(glm_nc, "NS")
+  final_time_step <- length(tallest_layer_all)
+  tallest_layer <- tallest_layer_all[final_time_step]
+  heights_all <- ncdf4::ncvar_get(glm_nc, "z")
+  heights <- matrix(heights_all, ncol = final_time_step)
   heights_surf <- heights[tallest_layer, final_time_step]
   heights <- heights[1:tallest_layer, final_time_step]
 
@@ -51,17 +52,48 @@ get_glm_nc_var <- function(ncFile, working_dir, z_out, vars_depth, vars_no_depth
     salt <- c(salt, salt)
   }
 
-  ncdf4::nc_close(glm_nc)
+  if(length(diagnostics_daily_config$names) > 0){
+    diagnostics_daily_output <- array(NA, dim = c(length(diagnostics_daily_config$names)))
+    for(v in 1:length(diagnostics_daily_config$names)){
+      if(tools::file_ext(diagnostics_daily_config$file[v]) == "csv"){
+        diagnostics_daily_output[v] <- readr::read_csv(file.path(working_dir, diagnostics_daily_config$file[v]), show_col_types = FALSE) |>
+          dplyr::pull(diagnostics_daily_config$names[v])
+      }else if(tools::file_ext(diagnostics_daily_config$file[v]) == "nc"){
 
-  if(length(diagnostics_daily_config$csv_names) > 0){
-    diagnostics_daily_output <- array(NA, dim = c(length(diagnostics_daily_config$csv_names)))
-    for(v in 1:length(diagnostics_daily_config$csv_names)){
-      diagnostics_daily_output[v] <- readr::read_csv(file.path(working_dir, diagnostics_daily_config$csv_file[v]), show_col_types = FALSE) |>
-      dplyr::pull(diagnostics_daily_config$csv_names[v])
+        if(!is.na(diagnostics_daily_config$depth[v])){
+          time <- ncdf4::ncvar_get(glm_nc, "time" )
+          var <- ncdf4::ncvar_get(glm_nc, diagnostics_daily_config$names[v])
+          var2 <- rep(NA, length(time))
+          for(t in 1:length(time)){
+            max_height <- max(heights_all[1:tallest_layer_all[t], t])
+            depths <- max_height - heights_all[1:tallest_layer_all[t], t]
+            var2[t] <- approx(depths, var[1:tallest_layer_all[t], t], diagnostics_daily_config$depth[v])$y
+          }
+
+        }else{
+          var2 <- ncdf4::ncvar_get(glm_nc, diagnostics_daily_config$names[v])
+        }
+
+        if(stringr::str_detect(diagnostics_daily_config$save_names[v], "mean")){
+
+          diagnostics_daily_output[v] <- mean(var2, na.rm = TRUE)
+
+        }else if(stringr::str_detect(diagnostics_daily_config$save_names[v], "max")){
+
+          diagnostics_daily_output[v] <- max(var2, na.rm = TRUE)
+
+        }else if(stringr::str_detect(diagnostics_daily_config$save_names[v], "min")){
+
+          diagnostics_daily_output[v] <- min(var2, na.rm = TRUE)
+
+        }
+      }
     }
   }else{
     diagnostics_daily_output <- NA
   }
+
+  ncdf4::nc_close(glm_nc)
 
   return(list(output = output,
               output_no_depth = output_no_depth,

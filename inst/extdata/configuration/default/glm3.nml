@@ -45,7 +45,7 @@
 &output
    out_dir = "./"
    out_fn = "output"
-   nsave = 24
+   nsave = 1
    csv_lake_fname = 'lake'
    csv_outlet_allinone = .false.
    csv_outlet_fname = 'outlet_'

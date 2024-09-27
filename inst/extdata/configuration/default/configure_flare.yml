@@ -76,6 +76,7 @@ output_settings:
    generate_plot: FALSE
    diagnostics_names:  [extc]
    diagnostics_daily:
-    csv_names: ['Tot Inflow Vol', 'Tot Outflow Vol', 'Overflow Vol', 'temp', 'salt']
-    save_names: ['inflow', 'outflow','overflow', 'temp_outflow', 'salt_outflow']
-    csv_file: ['lake.csv', 'lake.csv','lake.csv', 'outlet_00.csv','outlet_00.csv']
+    names: ['Tot Inflow Vol', 'Tot Outflow Vol', 'Overflow Vol', 'temp', 'salt','temp']
+    save_names: ['inflow', 'outflow','overflow', 'temp_outflow', 'salt_outflow','temp_1m_max']
+    file: ['lake.csv', 'lake.csv','lake.csv', 'outlet_00.csv','outlet_00.csv','output.nc']
+    depth: [NA, NA, NA, NA, NA, 1.0]

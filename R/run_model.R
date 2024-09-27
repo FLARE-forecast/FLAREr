@@ -296,7 +296,7 @@ run_model <- function(i,
                                          diagnostic_vars = diagnostics_names,
                                          diagnostics_daily_config = diagnostics_daily_config)
 
-      unlink(paste0(ens_working_directory, "/output.nc"))
+      #unlink(paste0(ens_working_directory, "/output.nc"))
 
       num_glm_heights <- length(GLM_temp_wq_out$heights)
       glm_heights_end[1:num_glm_heights] <- rev(GLM_temp_wq_out$heights)

@@ -8,4 +8,5 @@
 * Updates to restart capacity that now requires GLM-AED version 3.4 or higher
 * Access to daily summaries (e.g., lake.csv) from GLM-AED in FLAREr output
 * Flexible paths for directory and partitioning of driver files.  Uses `glue::glue` to create path from internal variables.
+* Capacity to save subdaily statistics (like max temperature at a depth or mean co2 flux)
 
