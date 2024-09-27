@@ -128,10 +128,17 @@ run_da_forecast <- function(states_init,
     num_wq_vars <- 0
   }
 
+
   if(length(config$output_settings$diagnostics_names) > 0){
     diagnostics <- array(NA, dim=c(length(config$output_settings$diagnostics_names), nsteps, ndepths_modeled, nmembers))
   }else{
     diagnostics <- NA
+  }
+
+  if(length(config$output_settings$diagnostics_daily$csv_names) > 0){
+    diagnostics_daily <- array(NA, dim=c(length(config$output_settings$diagnostics_daily$csv_names), nsteps, nmembers))
+  }else{
+    diagnostics_daily <- NA
   }
 
   num_phytos <- length(which(stringr::str_detect(states_config$state_names,"PHY_") & !stringr::str_detect(states_config$state_names,"_IP") & !stringr::str_detect(states_config$state_names,"_IN")))
@@ -307,6 +314,7 @@ run_da_forecast <- function(states_init,
                           outflow_file_name = outflow_file_name,
                           glm_output_vars = output_vars,
                           diagnostics_names = config$output_settings$diagnostics_names,
+                          diagnostics_daily_config = config$output_settings$diagnostics_daily,
                           npars,
                           num_wq_vars,
                           snow_ice_thickness_start = snow_ice_thickness[, i-1, m ],
@@ -347,6 +355,12 @@ run_da_forecast <- function(states_init,
         if(length(config$output_settings$diagnostics_names) > 0){
           for(d in 1:dim(diagnostics)[1]){
             diagnostics[d, i, , m] <- approx(glm_depths,out[[m]]$diagnostics_end[d,non_na_heights_index], config$model_settings$modeled_depths, rule = 2)$y
+          }
+        }
+
+        if(length(config$output_settings$diagnostics_daily$csv_names) > 0){
+          for(d in 1:dim(diagnostics_daily)[1]){
+            diagnostics_daily[d, i, m] <- out[[m]]$diagnostics_daily_end[d]
           }
         }
 
@@ -593,6 +607,18 @@ run_da_forecast <- function(states_init,
         psi[vertical_obs * ndepths_modeled + depth_index +secchi_index] <- obs_secchi$secchi_sd
       }
 
+      if(length(config$output_settings$diagnostics_names) > 0){
+        diagnostics_start <- diagnostics[ ,i, , ]
+      }else{
+        diagnostics <- NA
+      }
+
+      if(length(config$output_settings$diagnostics_daily$csv_names) > 0){
+        diagnostics_daily_start <- diagnostics_daily[ ,i, ]
+      }else{
+        diagnostics_daily_start <- NA
+      }
+
       if(da_method == "enkf"){
 
         updates <- run_enkf(x_matrix,
@@ -610,7 +636,8 @@ run_da_forecast <- function(states_init,
                             avg_surf_temp_start = avg_surf_temp[i, ],
                             mixer_count_start = mixer_count[i, ],
                             mixing_vars_start = mixing_vars[, i, ],
-                            diagnostics_start = diagnostics[ ,i, , ],
+                            diagnostics_start = diagnostics_start,
+                            diagnostics_daily_start = diagnostics_daily_start,
                             pars_config,
                             config,
                             depth_index,
@@ -636,7 +663,8 @@ run_da_forecast <- function(states_init,
                                        avg_surf_temp_start = avg_surf_temp[i, ],
                                        mixer_count_start = mixer_count[i, ],
                                        mixing_vars_start = mixing_vars[, i, ],
-                                       diagnostics_start = diagnostics[ ,i, , ],
+                                       diagnostics_start = diagnostics_start,
+                                       diagnostics_daily_start = diagnostics_daily_start,
                                        pars_config,
                                        config,
                                        depth_index,
@@ -657,7 +685,19 @@ run_da_forecast <- function(states_init,
       model_internal_heights[i, ,] <- updates$model_internal_heights_updated
       states_height[i,,,] <- updates$states_height_updated
       states_depth[i, , ,  ] <- updates$states_depth_updated
-      diagnostics[,i, , ] <-  updates$diagnostics_updated
+
+      if(length(config$output_settings$diagnostics_names) > 0){
+        diagnostics[,i, , ] <-  updates$diagnostics_updated
+      }else{
+        diagnostics <-  updates$diagnostics_updated
+      }
+
+      if(length(config$output_settings$diagnostics_daily$csv_names) > 0){
+        diagnostics_daily[ ,i, ] <- updates$diagnostics_daily_updated
+      }else{
+        diagnostics_daily <- updates$diagnostics_daily_updated
+
+      }
       lake_depth[i, ] <-  updates$lake_depth_updated
       log_particle_weights[i, ] <-  updates$log_particle_weights_updated
       snow_ice_thickness[,i ,] <-  updates$snow_ice_thickness_updated
@@ -716,6 +756,7 @@ run_da_forecast <- function(states_init,
               lake_depth = lake_depth,
               model_internal_heights = model_internal_heights,
               diagnostics = diagnostics,
+              diagnostics_daily = diagnostics_daily,
               data_assimilation_flag = data_assimilation_flag,
               forecast_flag = forecast_flag,
               da_qc_flag = da_qc_flag,

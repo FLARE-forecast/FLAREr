@@ -45,6 +45,7 @@ run_flare <- function(lake_directory,
                       config_set_name,
                       clean_start = FALSE){
 
+
   if(!dir.exists(file.path(lake_directory, "configuration", config_set_name))){
     stop(paste0("lake_directory is missing the configuration/",config_set_name," directory"))
   }

@@ -57,6 +57,7 @@ run_model <- function(i,
                       outflow_file_name,
                       glm_output_vars,
                       diagnostics_names,
+                      diagnostics_daily_config,
                       npars,
                       num_wq_vars,
                       snow_ice_thickness_start,
@@ -292,7 +293,8 @@ run_model <- function(i,
                                          z_out = modeled_depths,
                                          vars_depth = output_vars_multi_depth,
                                          vars_no_depth = output_vars_no_depth,
-                                         diagnostic_vars = diagnostics_names)
+                                         diagnostic_vars = diagnostics_names,
+                                         diagnostics_daily_config = diagnostics_daily_config)
 
       unlink(paste0(ens_working_directory, "/output.nc"))
 
@@ -339,6 +341,7 @@ run_model <- function(i,
               mixing_vars_end = GLM_temp_wq_out$mixing_vars,
               mixer_count_end = GLM_temp_wq_out$mixer_count,
               diagnostics_end  = diagnostics,
+              diagnostics_daily_end = GLM_temp_wq_out$diagnostics_daily_output,
               model_internal_heights  = glm_heights_end,
               curr_pars = curr_pars
   ))

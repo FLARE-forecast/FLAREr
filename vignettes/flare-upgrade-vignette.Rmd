@@ -50,9 +50,9 @@ hist_interp_met <- readr::read_csv(cleaned_met_file) |>
 ```
 
 -   **future_met_model:** path to met model used for forecast days
-    (relative to `s3$drivers$bucket` path or **local_met_directory**)
+    (relative to `s3$drivers$bucket` path or **local_met_directory**).  It defines the form of the path partitioning. For example `met/gefs-v12/stage2/reference_datetime={reference_date}/site_id={site_id}` provides the path with the the part in the brackets being updated within the FLARE run
 -   **historical_met_model:** path to met model used for historical days
-    (relative to `s3$drivers$bucket` path or **local_met_directory**)
+    (relative to `s3$drivers$bucket` path or **local_met_directory**).  It defines the form of the path partitioning. For example `met/gefs-v12/stage3/site_id={site_id}` provides the path with the the part in the brackets being updated within the FLARE run
 -   **forecast_lag_days:** number of days to look backward for a
     forecast
 -   **use_ler_vars:** use LER standardized met names (`TRUE` or `FALSE`)
@@ -77,9 +77,9 @@ You inflow and outflows need to be separate models.
 -   **include_outflow:** Include outflows in simulations (`TRUE` or
     `FALSE`)
 -   **future_inflow_model:** path to inflow model used for forecast days
-    (relative to `s3$inflow$bucket` path or **local_inflow_directory**)
+    (relative to `s3$inflow$bucket` path or **local_inflow_directory**). It defines the form of the path partitioning. For example `inflow/model_id=historical/reference_datetime={reference_date}/site_id={site_id}` provides the path with the the part in the brackets being updated within the FLARE run
 -   **historical_inflow_model:** path to inflow model used for
-    historical days (relative to `s3$inflow$bucket` path or
+    historical days (relative to `s3$inflow$bucket` path).  It defines the form of the path partitioning. For example `inflow/model_id=historical/site_id={site_id}` provides the path with the the part in the brackets being updated within the FLARE run.
     **local_inflow_directory**)
 -   **local_inflow_directory:** directory where inflow forecasts are
     saved if not using s3 access. Relative to the lake_directory.

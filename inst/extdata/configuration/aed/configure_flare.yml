@@ -48,18 +48,18 @@ default_init:
 flows:
    include_inflow: FALSE
    include_outflow: FALSE
-   future_inflow_model: f/model_id=h
-   historical_inflow_model: h/model_id=h
+   future_inflow_model: f/model_id=h/reference_datetime={reference_date}/site_id={site_id}
+   historical_inflow_model: h/model_id=h/site_id={site_id}
    local_inflow_directory: drivers/iflow
-   future_outflow_model: f/model_id=h
-   historical_outflow_model:  h/model_id=h
+   future_outflow_model: f/model_id=h/reference_datetime={reference_date}/site_id={site_id}
+   historical_outflow_model:  h/model_id=h/site_id={site_id}
    local_outflow_directory: drivers/oflow
    use_ler_vars: FALSE
    use_flows_s3: FALSE
 met:
-   future_met_model: gefs/st2
+   future_met_model: gefs/st2/reference_datetime={reference_date}/site_id={site_id}
    future_met_use_s3: FALSE
-   historical_met_model: gefs/stage3 # or historical_met_model: gets-v12/stage3
+   historical_met_model: gefs/stage3/site_id={site_id} # or historical_met_model: gets-v12/stage3
    historical_met_use_s3: FALSE
    forecast_lag_days: 0
    use_ler_vars: FALSE

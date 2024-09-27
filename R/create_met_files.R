@@ -21,10 +21,10 @@ create_met_files <- function(config, lake_directory, met_forecast_start_datetime
   endpoint <- config$s3$drivers$endpoint
   local_directory <- config$met$local_met_directory
   use_ler_vars <- config$met$use_ler_vars
-
-  lake_name_code <-  config$location$site_id
+  site_id <- config$location$site_id
 
   start_datetime <- lubridate::as_datetime(met_start_datetime)
+
   if(is.na(met_forecast_start_datetime)){
     end_datetime <- lubridate::as_datetime(config$run_config$end_datetime) #- lubridate::hours(1)
     forecast_start_datetime <- end_datetime
@@ -38,6 +38,8 @@ create_met_files <- function(config, lake_directory, met_forecast_start_datetime
     forecast_date <- lubridate::as_date(forecast_start_datetime)
     forecast_hour <- lubridate::hour(forecast_start_datetime)
 
+    reference_date <- forecast_date
+
     if(forecast_hour != 0){
       stop("Only forecasts that start at 00:00:00 UTC are currently supported")
     }
@@ -49,7 +51,9 @@ create_met_files <- function(config, lake_directory, met_forecast_start_datetime
       }
       vars <- arrow_env_vars()
 
-      forecast_dir <- arrow::s3_bucket(bucket = file.path(bucket, paste0(config$met$future_met_model,"/reference_datetime=",forecast_date),paste0("site_id=",lake_name_code)),
+      reference_date <- forecast_date
+
+      forecast_dir <- arrow::s3_bucket(bucket = glue::glue(bucket, "/", config$met$future_met_model),
                                        endpoint_override =  endpoint, anonymous = TRUE)
 
       unset_arrow_vars(vars)
@@ -57,7 +61,12 @@ create_met_files <- function(config, lake_directory, met_forecast_start_datetime
       if(is.null(local_directory)){
         stop("met forecast function needs local_directory if use_s3=FALSE")
       }
-      forecast_dir <- arrow::SubTreeFileSystem$create(file.path(lake_directory, local_directory,paste0(config$met$future_met_model,"/reference_datetime=",forecast_date),paste0("site_id=",lake_name_code)))
+
+
+
+      forecast_dir <- arrow::SubTreeFileSystem$create(glue::glue(lake_directory, "/",
+                                                                 local_directory, "/",
+                                                                 config$met$future_met_model))
     }
   }
 
@@ -68,11 +77,15 @@ create_met_files <- function(config, lake_directory, met_forecast_start_datetime
   if(start_datetime < forecast_start_datetime){
     if(config$met$historical_met_use_s3){
 
-      past_dir <- arrow::s3_bucket(bucket = file.path(bucket, paste0(config$met$historical_met_model,"/site_id=",lake_name_code)),
-                                   endpoint_override =  endpoint, anonymous = TRUE)
+      past_dir <- arrow::s3_bucket(bucket =  glue::glue(bucket, "/",
+                                                        config$met$historical_met_model),
+                                   endpoint_override =  endpoint,
+                                   anonymous = TRUE)
 
     }else{
-      past_dir <-  arrow::SubTreeFileSystem$create(file.path(lake_directory, local_directory, paste0(config$met$historical_met_model,"/site_id=",lake_name_code)))
+      past_dir <-  arrow::SubTreeFileSystem$create(glue::glue(lake_directory, "/",
+                                                              local_directory, "/",
+                                                              config$met$historical_met_model))
     }
   }else{
     past_dir <- NULL

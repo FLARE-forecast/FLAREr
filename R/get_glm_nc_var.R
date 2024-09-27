@@ -1,5 +1,5 @@
 get_glm_nc_var <- function(ncFile, working_dir, z_out, vars_depth, vars_no_depth,
-                           diagnostic_vars)
+                           diagnostic_vars, diagnostics_daily_config)
 {
   glm_nc <- ncdf4::nc_open(paste0(working_dir, ncFile))
   glm_vars <- names(glm_nc$var)
@@ -37,6 +37,7 @@ get_glm_nc_var <- function(ncFile, working_dir, z_out, vars_depth, vars_no_depth
   }else {
     diagnostics_output <- NA
   }
+
   mixing_vars <- ncdf4::ncvar_get(glm_nc, "restart_variables")
   salt <- matrix(ncdf4::ncvar_get(glm_nc, "salt"), ncol = final_time_step)[1:tallest_layer,
                                                                            final_time_step]
@@ -52,6 +53,16 @@ get_glm_nc_var <- function(ncFile, working_dir, z_out, vars_depth, vars_no_depth
 
   ncdf4::nc_close(glm_nc)
 
+  if(length(diagnostics_daily_config$csv_names) > 0){
+    diagnostics_daily_output <- array(NA, dim = c(length(diagnostics_daily_config$csv_names)))
+    for(v in 1:length(diagnostics_daily_config$csv_names)){
+      diagnostics_daily_output[v] <- readr::read_csv(file.path(working_dir, diagnostics_daily_config$csv_file[v]), show_col_types = FALSE) |>
+      dplyr::pull(diagnostics_daily_config$csv_names[v])
+    }
+  }else{
+    diagnostics_daily_output <- NA
+  }
+
   return(list(output = output,
               output_no_depth = output_no_depth,
               lake_depth = heights_surf,
@@ -61,6 +72,7 @@ get_glm_nc_var <- function(ncFile, working_dir, z_out, vars_depth, vars_no_depth
               mixing_vars = mixing_vars,
               salt = salt,
               diagnostics_output = diagnostics_output,
+              diagnostics_daily_output = diagnostics_daily_output,
               mixer_count = mixer_count))
 }
 

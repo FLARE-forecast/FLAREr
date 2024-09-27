@@ -46,6 +46,7 @@ run_particle_filter <- function(x_matrix,
                                 mixer_count_start,
                                 mixing_vars_start,
                                 diagnostics_start,
+                                diagnostics_daily_start,
                                 pars_config,
                                 config,
                                 depth_index,
@@ -127,10 +128,28 @@ run_particle_filter <- function(x_matrix,
     mixing_vars_updated <- mixing_vars_start[, samples]
 
     if(length(config$output_settings$diagnostics_names) > 1){
-      diagnostics_updated <- diagnostics_start[ , ,samples]
-    }else if(length(config$output_settings$diagnostics_names) == 1){
-      diagnostics_updated <- array(NA, dim = c(1, dim(diagnostics_start)))
-      diagnostics_updated[1, , ] <- diagnostics_start[ ,samples]
+      if(length(config$output_settings$diagnostics_names) > 1){
+        diagnostics_updated <- diagnostics_start[ , ,samples]
+      }else if(length(config$output_settings$diagnostics_names) == 1){
+        diagnostics_updated <- array(NA, dim = c(1, dim(diagnostics_start)))
+        diagnostics_updated[1, , ] <- diagnostics_start[ ,samples]
+      }
+    }else{
+      diagnostics_updated <- diagnostics_start
+
+    }
+
+    if(length(config$output_settings$diagnostics_daily$csv_names) > 0){
+      if(length(config$output_settings$diagnostics_daily$csv_names) > 1){
+        diagnostics_daily_updated <- diagnostics_daily_start[ , samples]
+      }else if(length(config$output_settings$diagnostics_daily$csv_names) == 1){
+        diagnostics_daily_updated <- array(NA, dim = c(1, dim(diagnostics_daily_start)))
+        diagnostics_daily_updated[1, , ] <- diagnostics_daily_start[ , samples]
+      }else{
+        diagnostics_daily_updated <- diagnostics_daily_start
+      }
+    }else{
+      diagnostics_daily_updated <- diagnostics_daily_start
     }
 
   }else{
@@ -150,11 +169,29 @@ run_particle_filter <- function(x_matrix,
     mixer_count_updated <- mixer_count_start[]
     mixing_vars_updated <- mixing_vars_start[, ]
 
-    if(length(config$output_settings$diagnostics_names) > 1){
-      diagnostics_updated <- diagnostics_start[ , ,]
-    }else if(length(config$output_settings$diagnostics_names) == 1){
-      diagnostics_updated <- array(NA, dim = c(1, dim(diagnostics_start)))
-      diagnostics_updated[1, , ] <- diagnostics_start[ , ]
+    if(length(config$output_settings$diagnostics_names) > 0){
+
+      if(length(config$output_settings$diagnostics_names) > 1){
+        diagnostics_updated <- diagnostics_start[ , ,]
+      }else if(length(config$output_settings$diagnostics_names) == 1){
+        diagnostics_updated <- array(NA, dim = c(1, dim(diagnostics_start)))
+        diagnostics_updated[1, , ] <- diagnostics_start[ , ]
+      }
+    }else{
+      diagnostics_updated <- diagnostics_start
+    }
+
+    if(length(config$output_settings$diagnostics_daily$csv_names) > 0){
+      if(length(config$output_settings$diagnostics_daily$csv_names) > 1){
+        diagnostics_daily_updated <- diagnostics_daily_start[ , ]
+      }else if(length(config$output_settings$diagnostics_daily$csv_names) == 1){
+        diagnostics_daily_updated <- array(NA, dim = c(1, dim(diagnostics_daily_start)))
+        diagnostics_daily_updated[1, , ] <- diagnostics_daily_start[ , ]
+      }else{
+        diagnostics_daily_updated <- diagnostics_daily_start
+      }
+    }else{
+      diagnostics_daily_updated <- diagnostics_daily_start
     }
 
   }
@@ -167,6 +204,7 @@ run_particle_filter <- function(x_matrix,
               model_internal_heights_updated = model_internal_heights_updated,
               log_particle_weights_updated = log_particle_weights_updated,
               diagnostics_updated = diagnostics_updated,
+              diagnostics_daily_updated = diagnostics_daily_updated,
               snow_ice_thickness_updated = snow_ice_thickness_updated,
               avg_surf_temp_updated = avg_surf_temp_updated,
               mixer_count_updated = mixer_count_updated,

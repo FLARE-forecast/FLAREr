@@ -42,6 +42,7 @@ run_enkf <- function(x_matrix,
                      mixer_count_start,
                      mixing_vars_start,
                      diagnostics_start,
+                     diagnostics_daily_start,
                      pars_config,
                      config,
                      depth_index,
@@ -190,23 +191,36 @@ run_enkf <- function(x_matrix,
   }
 
 
-
-  if(length(config$output_settings$diagnostics_names) > 1){
-    diagnostics_updated <- diagnostics_start[ , ,]
-  }else if(length(config$output_settings$diagnostics_names) == 1){
-    diagnostics_updated <- array(NA, dim = c(1, dim(diagnostics_start)))
-    diagnostics_updated[1, , ] <- diagnostics_start[ , ]
-  }else{
-    diagnostics_updated <- diagnostics_start
-  }
-
   if(length(config$output_settings$diagnostics_names) > 0){
+    if(length(config$output_settings$diagnostics_names) > 1){
+      diagnostics_updated <- diagnostics_start[ , ,]
+    }else if(length(config$output_settings$diagnostics_names) == 1){
+      diagnostics_updated <- array(NA, dim = c(1, dim(diagnostics_start)))
+      diagnostics_updated[1, , ] <- diagnostics_start[ , ]
+    }else{
+      diagnostics_updated <- diagnostics_start
+    }
     for(d in 1:dim(diagnostics_updated)[1]){
       for(m in 1:nmembers){
         depth_index <- which(config$model_settings$modeled_depths > lake_depth_updated[m])
         diagnostics_updated[d,depth_index, m] <- NA
       }
     }
+  }else{
+    diagnostics_updated <- diagnostics_start
+  }
+
+  if(length(config$output_settings$diagnostics_daily$csv_names) > 0){
+    if(length(config$output_settings$diagnostics_daily$csv_names) > 1){
+      diagnostics_daily_updated <- diagnostics_daily_start[ , ]
+    }else if(length(config$output_settings$diagnostics_daily$csv_names) == 1){
+      diagnostics_daily_updated <- array(NA, dim = c(1, dim(diagnostics_daily_start)))
+      diagnostics_daily_updated[1, , ] <- diagnostics_daily_start[ , ]
+    }else{
+      diagnostics_daily_updated <- diagnostics_daily_start
+    }
+  }else{
+    diagnostics_daily_updated <- diagnostics_daily_start
   }
 
   log_particle_weights_updated <-rep(log(1.0), nmembers)
@@ -235,6 +249,7 @@ run_enkf <- function(x_matrix,
               model_internal_heights_updated = model_internal_heights_updated,
               log_particle_weights_updated = log_particle_weights_updated,
               diagnostics_updated = diagnostics_updated,
+              diagnostics_daily_updated = diagnostics_daily_updated,
               snow_ice_thickness_updated = snow_ice_thickness_updated,
               avg_surf_temp_updated = avg_surf_temp_updated,
               mixer_count_updated = mixer_count_updated,

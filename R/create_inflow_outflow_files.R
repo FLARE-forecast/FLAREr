@@ -34,6 +34,8 @@ create_inflow_outflow_files  <- function(config, config_set_name, lake_directory
 
   variables_out <- c('time', 'FLOW')
 
+  site_id <- config$location$site_id
+
   # Specify inflow AND outflow
   if (config$flows$include_inflow & config$flows$include_outflow) {
 
@@ -45,11 +47,10 @@ create_inflow_outflow_files  <- function(config, config_set_name, lake_directory
       outflow_historical_dir <- NULL
     } else {
       # the model directories for historical flows (before forecast_start_datetime)
-      inflow_historical_dir <- file.path(config$flows$historical_inflow_model,
-                                         paste0("site_id=", config$location$site_id))
 
-      outflow_historical_dir <- file.path(config$flows$historical_outflow_model,
-                                          paste0("site_id=", config$location$site_id))
+      inflow_historical_dir <- glue::glue(config$flows$historical_inflow_model)
+
+      outflow_historical_dir <- glue::glue(config$flows$historical_outflow_model)
     }
 
 
@@ -60,13 +61,11 @@ create_inflow_outflow_files  <- function(config, config_set_name, lake_directory
         stop("Need future flow model(s) when horizon > 0")
       }
 
-      # the model directories for historical flows (before forecast_start_datetime)
-      inflow_forecast_dir <- file.path(config$flows$future_inflow_model,
-                                       paste0("reference_datetime=", lubridate::as_date(config$run_config$forecast_start_datetime)),
-                                       paste0("site_id=", config$location$site_id))
-      outflow_forecast_dir <- file.path(config$flows$future_outflow_model,
-                                        paste0("reference_datetime=", lubridate::as_date(config$run_config$forecast_start_datetime)),
-                                        paste0("site_id=", config$location$site_id))
+      reference_date <- lubridate::as_date(config$run_config$forecast_start_datetime)
+
+      inflow_forecast_dir <- glue::glue(config$flows$future_inflow_model)
+
+      outflow_forecast_dir <- glue::glue(config$flows$future_outflow_model)
     } else {
       # if no forecast being run set to NULL
       inflow_forecast_dir <- NULL
@@ -122,8 +121,8 @@ create_inflow_outflow_files  <- function(config, config_set_name, lake_directory
 
     } else {
       # the model directories for historical flows (before forecast_start_datetime)
-      inflow_historical_dir <- file.path(config$flows$historical_inflow_model,
-                                         paste0("site_id=", config$location$site_id))
+      inflow_historical_dir <- glue::glue(config$flows$historical_inflow_model)
+
     }
 
     # do we need future flow?
@@ -133,9 +132,8 @@ create_inflow_outflow_files  <- function(config, config_set_name, lake_directory
         stop("Need future flow model(s) when horizon > 0")
       }
 
-      inflow_forecast_dir <- file.path(config$flows$future_inflow_model,
-                                       paste0("reference_datetime=", lubridate::as_date(config$run_config$forecast_start_datetime)),
-                                       paste0("site_id=", config$location$site_id))
+      inflow_forecast_dir <- glue::glue(config$flows$future_inflow_model)
+
     } else {
       inflow_forecast_dir <- NULL
     }
@@ -171,8 +169,8 @@ create_inflow_outflow_files  <- function(config, config_set_name, lake_directory
 
     } else {
       # the model directories for historical flows (before forecast_start_datetime)
-      outflow_historical_dir <- file.path(config$flows$historical_outflow_model,
-                                         paste0("site_id=", config$location$site_id))
+      outflow_historical_dir <- glue::glue(config$flows$historical_outflow_model)
+
     }
 
     # do we need future flow?
@@ -182,9 +180,8 @@ create_inflow_outflow_files  <- function(config, config_set_name, lake_directory
         stop("Need future flow model(s) when horizon > 0")
       }
 
-      outflow_forecast_dir <- file.path(config$flows$future_outflow_model,
-                                        paste0("reference_datetime=", lubridate::as_date(config$run_config$forecast_start_datetime)),
-                                        paste0("site_id=", config$location$site_id))
+      outflow_forecast_dir <- glue::glue(config$flows$future_outflow_model)
+
     } else {
       outflow_forecast_dir <- NULL
     }

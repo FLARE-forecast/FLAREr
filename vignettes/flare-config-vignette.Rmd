@@ -127,9 +127,9 @@ A guide to the variables in `configure_flare.yml` and in the
 ### met:
 
 -   **future_met_model:** path to met model used for forecast days
-    (relative to `s3$drivers$bucket` path or **local_met_directory**)
+    (relative to `s3$drivers$bucket` path or **local_met_directory**).  It defines the form of the path partitioning. For example `met/gefs-v12/stage2/reference_datetime={reference_date}/site_id={site_id}` provides the path with the the part in the brackets being updated within the FLARE run
 -   **historical_met_model:** path to met model used for historical days
-    (relative to `s3$drivers$bucket` path or **local_met_directory**)
+    (relative to `s3$drivers$bucket` path or **local_met_directory**).  It defines the form of the path partitioning. For example `met/gefs-v12/stage3/site_id={site_id}` provides the path with the the part in the brackets being updated within the FLARE run.
 -   **forecast_lag_days:** number of days to look backward for a
     forecast
 -   **use_ler_vars:** use LER standardized met names (`TRUE` or `FALSE`)
@@ -152,10 +152,9 @@ A guide to the variables in `configure_flare.yml` and in the
 -   **include_outflow:** Include outflows in simulations (`TRUE` or
     `FALSE`)
 -   **future_inflow_model:** path to inflow model used for forecast days
-    (relative to `s3$inflow$bucket` path or **local_inflow_directory**)
+    (relative to `s3$inflow$bucket` path or **local_inflow_directory**). It defines the form of the path partitioning. For example `inflow/model_id=historical/reference_datetime={reference_date}/site_id={site_id}` provides the path with the the part in the brackets being updated within the FLARE run
 -   **historical_inflow_model:** path to inflow model used for
-    historical days (relative to `s3$inflow$bucket` path or
-    **local_inflow_directory**)
+    historical days (relative to `s3$inflow$bucket` path).  It defines the form of the path partitioning. For example `inflow/model_id=historical/site_id={site_id}` provides the path with the the part in the brackets being updated within the FLARE run.
 -   **local_inflow_directory:** directory where inflow forecasts are
     saved if not using s3 access. Relative to the lake_directory.
 -   **future_outflow_model:** path to outflow model used for forecast
@@ -192,6 +191,11 @@ A guide to the variables in `configure_flare.yml` and in the
 
 -   **diagnostics_names:** names of non-state GLM variables to save
 -   **generate_plots**: generate diagnostic plots (`TRUE` or `FALSE`)
+-   **diagnostics_daily**: 
+    - **csv_names:** the variable names in the csv file produced by GLM. Options are at <https://github.com/AquaticEcoDynamics/glm-aed/wiki/Navigating-GLM-outputs>
+    - **save_names**: the name of the variable in the FLARE forecast output.  This may differ from `csv_name` when you want to add more information to the variable name.  For example the csv may have `temp` but you want to save it as `outflow_temp` so you know it is from the outflow.
+    - **csv_file**: the name of the GLM output csv that has the variable.  This is defined in the GLM nml. Example are `lake.csv` and `outlet_00.csv`.
+    
 ### s3
 
 -   **drivers:**

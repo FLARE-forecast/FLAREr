@@ -46,6 +46,11 @@
    out_dir = "./"
    out_fn = "output"
    nsave = 24
+   csv_lake_fname = 'lake'
+   csv_outlet_allinone = .false.
+   csv_outlet_fname = 'outlet_'
+   csv_outlet_nvars = 3
+   csv_outlet_vars = 'flow', 'temp', 'salt'
 /
 &init_profiles
    num_heights = 28
@@ -101,7 +106,7 @@
 &outflow
    num_outlet = 1
    flt_off_sw = .false.
-   outl_elvs = 506.9
+   outl_elvs = 504.9
    bsn_len_outl = 711.699
    bsn_wid_outl = 226.03
    outflow_fl = 'outflow_file1.csv'

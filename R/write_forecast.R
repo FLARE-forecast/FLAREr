@@ -47,6 +47,7 @@ write_forecast <- function(da_forecast_output,
   obs_config <- da_forecast_output$obs_config
   pars_config <- da_forecast_output$pars_config
   diagnostics <- da_forecast_output$diagnostics
+  diagnostics_daily <- da_forecast_output$diagnostics_daily
   log_particle_weights <- da_forecast_output$log_particle_weights
 
   forecast_flag[which(is.na(forecast_flag))] <- 0
@@ -134,6 +135,29 @@ write_forecast <- function(da_forecast_output,
                      time  = full_time[var2],
                      depth = config$model_settings$modeled_depths[var3],
                      variable = config$output_settings$diagnostics_names[var1],
+                     forecast = forecast_flag[var2],
+                     ensemble = ensembles,
+                     variable_type = "diagnostic",
+                     log_weight = log_particle_weights[var2, ])
+    },
+    indexes = indexes
+    )
+    output_list <- dplyr::bind_rows(output_list, tmp)
+  }
+
+
+
+  if(length(config$output_settings$diagnostics_daily$csv_names) > 0){
+
+    indexes <- expand.grid(diag = 1:dim(diagnostics_daily)[1], time = 1:dim(diagnostics_daily)[2])
+
+    tmp <- furrr::future_map_dfr(1:nrow(indexes), function(i, indexes){
+      var1 <- indexes$diag[i]
+      var2 <- indexes$time[i]
+      tibble::tibble(predicted = diagnostics_daily[var1, var2, ],
+                     time  = full_time[var2],
+                     depth = NA,
+                     variable = config$output_settings$diagnostics_daily$save_names[var1],
                      forecast = forecast_flag[var2],
                      ensemble = ensembles,
                      variable_type = "diagnostic",
