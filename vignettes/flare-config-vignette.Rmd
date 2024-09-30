@@ -193,7 +193,7 @@ A guide to the variables in `configure_flare.yml` and in the
 -   **generate_plots**: generate diagnostic plots (`TRUE` or `FALSE`)
 -   **diagnostics_daily**: 
     - **names:** the variable names in the csv file produced by GLM. Options are at <https://github.com/AquaticEcoDynamics/glm-aed/wiki/Navigating-GLM-outputs>
-    - **save_names**: the name of the variable in the FLARE forecast output.  This may differ from `csv_name` when you want to add more information to the variable name.  For example the csv may have `temp` but you want to save it as `outflow_temp` so you know it is from the outflow.
+    - **save_names**: the name of the variable in the FLARE forecast output.  This may differ from `csv_name` when you want to add more information to the variable name.  For example the csv may have `temp` but you want to save it as `outflow_temp` so you know it is from the outflow.  If the output file is `output.nc` then the `save` name needs to the aggregation function (`mean`, `min`, and `max` are supported).  For example, a value of `temp_mean` would calculate the daily mean from the subdaily output.nc file.  `nsave` in the glm3.nml file needs adjusted to output at sub-daily time steps (`nsave = 1` would output hourly if `dt = 3600`).
     - **file**: the name of the GLM output csv that has the variable.  This is defined in the GLM nml. Example are `lake.csv`, `outlet_00.csv`, and `output.nc`
     - **depth**: Depth for daily diagnostic.  Use NA for variables that are not associated with a depth (like co2 flux).
     
