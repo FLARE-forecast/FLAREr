@@ -349,6 +349,7 @@ test_that("open meteo run works", {
   skip_on_cran()
 
   remotes::install_github("rqthomas/GLM3r")
+  install.packages('ropenmeteo')
   Sys.setenv('GLM_PATH'='GLM3r')
 
   dir <-  file.path(normalizePath(tempdir(),  winslash = "/"))
