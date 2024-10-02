@@ -36,6 +36,12 @@ test_that("open-meteo met files are generated", {
   config_set_name <- "default"
 
   file.copy(system.file("extdata", package = "FLAREr"), dir, recursive = TRUE)
+
+  run_config <- yaml::read_yaml(file.path(lake_directory, "configuration", config_set_name, configure_run_file))
+  run_config$start_datetime <- lubridate::as_datetime(Sys.Date()) - lubridate::days(5)
+  run_config$forecast_start_datetime <- lubridate::as_datetime(Sys.Date())
+  yaml::write_yaml(run_config, file.path(lake_directory, "configuration", config_set_name, configure_run_file))
+
   config <- FLAREr:::set_up_simulation(configure_run_file, lake_directory, config_set_name = config_set_name)
   config <- FLAREr:::get_restart_file(config, lake_directory)
   pars_config <- readr::read_csv(file.path(config$file_path$configuration_directory, config$model_settings$par_config_file), col_types = readr::cols())
@@ -349,7 +355,7 @@ test_that("open meteo run works", {
   skip_on_cran()
 
   remotes::install_github("rqthomas/GLM3r")
-  install.packages('ropenmeteo')
+  install.packages("ropenmeteo", repos = "https://cloud.r-project.org")
   Sys.setenv('GLM_PATH'='GLM3r')
 
   dir <-  file.path(normalizePath(tempdir(),  winslash = "/"))
