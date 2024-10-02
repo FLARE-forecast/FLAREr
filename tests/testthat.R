@@ -1,4 +1,4 @@
 library(testthat)
 library(FLAREr)
 
-#test_check("FLAREr")
+test_check("FLAREr")

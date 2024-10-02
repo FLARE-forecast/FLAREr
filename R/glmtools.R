@@ -256,6 +256,7 @@ class(nml) <- "nml"
 invisible(nml)
 }
 
+#'@noRd
 write_nml  <-	function(glm_nml,file){
   sink(file)
 
@@ -278,6 +279,14 @@ nml_template_path <- function(){
   return(system.file('sim_files/glm3.nml'))
 }
 
+#' Print NML
+#'
+#' @param x nml name
+#' @param ...
+#'
+#' @return text
+#'@noRd
+#'
 print.nml <- function(x, ...){
   glm_nml <- x
   for (i in seq_len(length(names(glm_nml)))){ # these are the blocks

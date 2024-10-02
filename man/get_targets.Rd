@@ -7,10 +7,11 @@
 get_targets(lake_directory, config)
 }
 \arguments{
-\item{lake_directory}{full path to repository directory}
+\item{lake_directory}{full path to the repository directory}
 
 \item{config}{flare configuration object}
 }
 \description{
 Download target data from s3
 }
+\keyword{internal}

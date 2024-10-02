@@ -23,7 +23,10 @@ put_targets(
 \item{cleaned_inflow_file}{full path of the cleaned inflow file}
 
 \item{use_s3}{logical; TRUE = use s3}
+
+\item{config}{list of FLARE configurations}
 }
 \description{
 Save target files to s3 bucket
 }
+\keyword{internal}

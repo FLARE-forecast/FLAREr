@@ -1,0 +1,85 @@
+location:
+   site_id: fcre
+   name: Falling Creek Reservoir
+   latitude: 37.307   #Degrees North
+   longitude: -79.837  #Degrees East
+da_setup:
+    da_method: enkf
+    par_fit_method: perturb
+    ensemble_size:  31
+    localization_distance: .na #distance in meters were covariances in the model error are used
+    pf_always_resample: FALSE
+    no_negative_states: FALSE
+    assimilate_first_step: FALSE
+    use_obs_constraint: TRUE
+    inflation_factor: 1.0
+    obs_filename: fcre-targets-insitu.csv
+model_settings:
+   ncore: 4
+   max_model_layers: 75
+   base_GLM_nml: glm3.nml
+   base_AED_nml: aed2.nml
+   base_AED_phyto_pars_nml: aed_phyto_pars.csv
+   base_AED_zoop_pars_nml:
+   modeled_depths:
+    - 0.00
+    - 1.00
+    - 1.50
+    - 2.00
+    - 3.00
+    - 4.00
+    - 5.00
+    - 6.00
+    - 7.00
+    - 8.00
+    - 9.00
+   par_config_file: parameter_calibration_config.csv
+   obs_config_file: observations_config.csv
+   states_config_file: states_config.csv
+   depth_model_sd_config_file: depth_model_sd.csv
+default_init:
+   lake_depth: 9.1
+   temp: [25.667, 24.9101, 23.067, 21.8815, 19.6658, 16.5739, 12.9292, 12.8456, 12.8127, 12.8079, 12.778]
+   temp_depths: [0.127, 1.004, 2.005, 3.021, 4.002, 5.004, 6.004, 7.01, 8.001, 9.015, 9.518]
+   salinity: 0.0
+   snow_thickness: 0.0
+   white_ice_thickness: 0.0
+   blue_ice_thickness: 0.0
+flows:
+   include_inflow: FALSE
+   include_outflow: FALSE
+   future_inflow_model: f/model_id=h/reference_datetime={reference_date}/site_id={site_id}
+   historical_inflow_model: h/model_id=h/site_id={site_id}
+   local_inflow_directory: drivers/iflow
+   future_outflow_model: f/model_id=h/reference_datetime={reference_date}/site_id={site_id}
+   historical_outflow_model:  h/model_id=h/site_id={site_id}
+   local_outflow_directory: drivers/oflow
+   use_ler_vars: FALSE
+   use_flows_s3: FALSE
+met:
+   future_met_model: gefs/st2/reference_datetime={reference_date}/site_id={site_id}
+   future_met_use_s3: FALSE
+   historical_met_model: gefs/stage3/site_id={site_id} # or historical_met_model: gets-v12/stage3
+   historical_met_use_s3: FALSE
+   forecast_lag_days: 0
+   use_ler_vars: FALSE
+   use_openmeteo: FALSE
+   openmeteo_api: "ensemble_forecast"
+   openmeteo_model: "gfs_seamless"
+   use_openmeteo_archive: FALSE
+   local_met_directory: drivers/met
+uncertainty:
+   observation: TRUE
+   process: TRUE
+   weather: TRUE
+   initial_condition: TRUE
+   parameter: TRUE
+   inflow: TRUE
+output_settings:
+   generate_plot: FALSE
+   diagnostics_names:  [extc]
+   diagnostics_daily:
+    names: ['CAR_ch4_atm']
+    save_names: ['ch4_flux_mean']
+    file: ['output.nc']
+    depth: .na

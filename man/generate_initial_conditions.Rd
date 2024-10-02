@@ -10,7 +10,7 @@ generate_initial_conditions(
   pars_config = NULL,
   obs,
   config,
-  historical_met_error = FALSE
+  obs_non_vertical
 )
 }
 \arguments{
@@ -24,9 +24,7 @@ generate_initial_conditions(
 
 \item{config}{list; list of configurations}
 
-\item{historical_met_error}{boolean; producted by generate_glm_met_files()}
-
-\item{restart_file}{string; netcdf file with full path from FLARE output that is used as initial conditions}
+\item{obs_non_vertical}{list; observations of variables that don't have vertical dimension.}
 }
 \value{
 list; list contains the initial conditions objects required by run_da_forecast()
@@ -37,13 +35,7 @@ Generate initial conditions for FLARE
 \details{
 Function to generate initial conditions from either default values in the states_config, observations (if available), or a previous run using the output as a restart file.
 }
-\examples{
-\dontrun{
-  init <- generate_initial_conditions(states_config, obs_config,
-    pars_config, obs, config, restart_file = config$run_config$restart_file,
-    historical_met_error = met_out$historical_met_error)
-  }
-}
 \author{
 Quinn Thomas
 }
+\keyword{internal}

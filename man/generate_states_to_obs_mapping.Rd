@@ -20,11 +20,7 @@ Map the states to the observations
 \details{
 Convert columns the map states to observations to a single vector.  This is necessary because not all states have observations, multiple states can contribute to the same observation, and one observation can be associated with multiple states. Function must be assigned to the states_config object
 }
-\examples{
-\dontrun{
-states_config <- generate_states_to_obs_mapping(states_config, obs_config)
-}
-}
 \author{
 Quinn Thomas
 }
+\keyword{internal}

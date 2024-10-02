@@ -11,38 +11,9 @@ reference:
   desc: Function for default application of FLARE
 - contents:
   - run_flare
-- subtitle: Building custom workflow
-  desc: Functions used to build a custom FLARE workflow
+- subtitle: Helpers
+  desc: Functions for automation
   contents:
-  - create_inflow_outflow_files_arrow
-  - create_obs_matrix
-  - generate_met_files_arrow
-  - generate_states_to_obs_mapping
-  - generate_initial_conditions
-  - initiate_model_error
-  - run_da_forecast
-  - set_configuration
-  - write_forecast_netcdf
-  - write_forecast_arrow
-  - generate_forecast_score_arrow
-  - plotting_general_2
-- subtitle: Iteration
-  desc: Functions for automation and interation
-  contents:
-  - check_noaa_present_arrow
-  - get_run_config
-  - update_run_config2
-  - get_git_repo
-  - get_edi_file
-- subtitle: S3 intergration
-  desc: Functions used for S3 intergration
-  contents:
-  - delete_restart
-  - delete_sim
-  - get_driver_forecast_path
-  - get_targets
-  - put_targets
-  - ignore_sigpipe
-  - put_forecast
-  - get_restart_file
-
+  - check_noaa_present
+  - update_run_config
+  - set_up_simulation

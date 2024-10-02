@@ -16,3 +16,4 @@ get_git_repo(lake_directory, directory, git_repo)
 \description{
 Get data from Github repository
 }
+\keyword{internal}

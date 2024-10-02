@@ -16,3 +16,4 @@ delete_sim(site_id, sim_name, config)
 \description{
 Delete simulation on s3 bucket
 }
+\keyword{internal}

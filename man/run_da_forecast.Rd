@@ -19,11 +19,8 @@ run_da_forecast(
   pars_config = NULL,
   states_config,
   obs_config,
-  management = NULL,
   da_method = "enkf",
-  par_fit_method = "inflate",
-  debug = FALSE,
-  log_wq = FALSE,
+  par_fit_method = "perturb",
   obs_secchi = NULL,
   obs_depth = NULL
 )
@@ -59,17 +56,16 @@ with a value in \code{model_sd}.}
 
 \item{obs_config}{list; list of observation configurations}
 
-\item{management}{list; list of management inputs and configuration  (Default = NULL)}
-
 \item{da_method}{string; data assimilation method (enkf or pf; Default = enkf)}
 
 \item{par_fit_method}{string; method for adding noise to parameters during calibration}
 
-\item{debug}{boolean; add extra diagnostics for debugging (Default = FALSE)}
+\item{obs_secchi}{list of secchi observations}
+
+\item{obs_depth}{list of depth observations}
 }
 \value{
-a list is passed to \code{write_forecast_netcdf()} to write the
-netcdf output and \code{create_flare_eml()} to generate the EML metadata
+a list
 }
 \description{
 Run ensemble data assimilation and/or produce forecasts
@@ -85,15 +81,4 @@ and pars_init can be created using the \code{generate_initial_conditions()} func
 starting from initial conditions in the  \code{states_config} data frame or from observations
 in first time column of the \code{obs} array.
 }
-\examples{
-\dontrun{
-da_forecast_output <- FLAREr::run_da_forecast(states_init = init$states,
-    pars_init = init$pars, aux_states_init = init$aux_states_init,
-    obs = obs, obs_sd = obs_config$obs_sd, model_sd = model_sd,
-    working_directory = config$file_path$execute_directory,
-    met_file_names = met_file_names, inflow_file_names = inflow_file_names,
-    outflow_file_names = outflow_file_names, config = config,
-    pars_config = pars_config, states_config = states_config,
-    obs_config = obs_config)
-}
-}
+\keyword{internal}

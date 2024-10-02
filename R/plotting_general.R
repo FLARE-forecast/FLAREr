@@ -1,329 +1,189 @@
 ##' @title Generate diagnostic plot of FLARE output with observations
 ##' @details Function combines the netcdf output with the long-format observation file to produce a set of plots for each state variable, calibrated parameter, and diagnostic variable
-##' @param file_name string; full path to output file produced by write_forecast_netcdf()
-##' @param qaqc_data_directory string; full path to processed long-format observation file
-##' @param ncore integer; number of computer cores for parallel processing
-##' @param plot_profile boolean; include profile plots in PDF
-##' @param obs_csv boolean; generate csv with the observed and predicted values for model states
+##' @param targets_df dataframe; data frame containing all observations (targets)
+##' @param forecast_df dataframe; data frame containing the forecast predictions
+##' @param file_name string; name of pdf file that will be saved
+##' @param plots_directory full path of directory where plot will be saved
 ##' @return None
-##' @export
 ##' @import dplyr
 ##' @import ggplot2
-##' @importFrom tools file_path_sans_ext
-##' @importFrom tibble tibble
 ##' @importFrom lubridate as_datetime
-##' @importFrom readr write_csv
-##' @importFrom patchwork wrap_plots
-##' @author Quinn Thomas
-##' @noRd
-##' @examples
-##' \dontrun{
-##' plotting_general(file_name = saved_file,
-##'   qaqc_data_directory = config$file_path$qaqc_data_directory,
-##'   ncore = config$model_settings$ncore, plot_profile = TRUE, obs_csv)
-##' }
+##' @author Austin Delany
+##' @keywords internal
 
-plotting_general <- function(file_name,
-                             qaqc_data_directory,
-                             ncore = 1,
-                             plot_profile = TRUE,
-                             obs_csv = TRUE){
-
-  pdf_file_name <- paste0(tools::file_path_sans_ext(file_name),".pdf")
-  csv_file_name <- paste0(tools::file_path_sans_ext(file_name),".csv")
-
-  target_file <- paste0(qaqc_data_directory,"/observations_postQAQC_long.csv")
+plotting_general <- function(forecast_df,
+                              targets_df,
+                              file_name,
+                              plots_directory){
 
 
-  output <- combine_forecast_observations(file_name,
-                                          target_file,
-                                          extra_historical_days = 0,
-                                          ncore = ncore)
-  obs <- output$obs
-  full_time_extended <- output$full_time_extended
-  diagnostic_list <- output$diagnostic_list
-  state_list <- output$state_list
-  forecast <- output$forecast
-  par_list <- output$par_list
-  obs_list <- output$obs_list
-  state_names <- output$state_names
-  par_names <- output$par_names
-  diagnostics_names <- output$diagnostics_names
-  full_time <- output$full_time
-  obs_long <- output$obs_long
-  depths <- output$depths
-  obs_names <- output$obs_names
+  pdf_file_name <- file.path(plots_directory, file_name)
 
+  combined_df <- left_join(forecast_df, targets_df, by = join_by(datetime, site_id, depth, variable))
 
-  if(length(which(forecast == 1)) > 0){
-    forecast_index <- which(forecast == 1)[1]
-  }else{
-    forecast_index <- 0
-  }
+  focal_depths_plotting <- unique(combined_df$depth)
+  max_ensembles <- max(combined_df$parameter)
 
-  focal_depths_plotting <- depths
-
+  focal_ensemebles <- 1:min(c(10, max_ensembles))
 
   if(length(focal_depths_plotting) < 4){
     plot_height <- 3
   }else{
     plot_height <- 8
   }
+
   pdf(pdf_file_name,width = 11, height = plot_height)
 
-  evaluation_df <- NULL
+  state_depth_variables <- combined_df |>
+    filter(variable_type == 'state',
+           !(variable %in% c('secchi', 'depth', "ice_thickness"))) |>
+    distinct(variable) |>
+    pull(variable)
 
-  for(i in 1:length(state_names)){
+  ## BUILD DEPTH-SPECIFIC STATE VARIABLE PLOTS
+  for (var in state_depth_variables){
 
-    curr_var <- state_list[[i]]
-    message(state_names[i])
+    var_target_depths <- combined_df |>
+      filter(variable == var,
+             !is.na(depth)) |>
+      distinct(depth) |>
+      pull(depth)
+
+    single_ensemble <- combined_df |>
+      filter(variable == var,
+             depth %in% var_target_depths,
+             parameter %in% focal_ensemebles)
+
+    if (length(var_target_depths) == 0){
+
+      state_plot <- combined_df |>
+        filter(variable == var,
+               depth %in% var_target_depths) |>
+        ggplot(aes(x = datetime)) +
+        geom_line(aes(y = prediction, group = parameter), color = "gray") +
+        geom_line(data = single_ensemble, aes(x = datetime, y = prediction, group = parameter)) +
+        geom_vline(aes(xintercept = reference_datetime)) +
+        theme_bw() +
+        ggtitle(var) +
+        theme(plot.title = element_text(hjust = 0.5))
 
 
-    mean_var <- array(NA, dim = c(length(depths), length(full_time)))
-    upper_var <- array(NA, dim = c(length(depths), length(full_time)))
-    lower_var <- array(NA,dim = c(length(depths), length(full_time)))
-    sd_var <- array(NA,dim = c(length(depths), length(full_time)))
-    for(j in 1:length(full_time)){
-      for(ii in 1:length(depths)){
-        mean_var[ii, j] <- mean(curr_var[j,ii , ], na.rm = TRUE)
-        sd_var[ii, j] <- sd(curr_var[j,ii , ], na.rm = TRUE)
-        upper_var[ii, j] <- quantile(curr_var[j,ii , ], 0.1, na.rm = TRUE)
-        lower_var[ii, j] <- quantile(curr_var[j,ii , ], 0.9, na.rm = TRUE)
-      }
-    }
-
-    date <- c()
-    for(j in 1:length(full_time)){
-      date <- c(date, rep(full_time[j], length(depths)))
-    }
-
-    if(state_names[i] %in% unlist(obs_names)){
-      obs_index <- which(obs_names == state_names[i])
-      obs_curr <- as.numeric(c(t(obs[, ,obs_index])))
     }else{
-      obs_curr <- as.numeric(rep(NA, length(date)))
+
+      obs <- combined_df |>
+        filter(variable == var,
+               depth %in% var_target_depths) |>
+        distinct(datetime, site_id, depth, variable, observation)
+
+      state_plot <- combined_df |>
+        filter(variable == var,
+               depth %in% var_target_depths) |>
+        ggplot(aes(x = datetime)) +
+        geom_line(aes(y = prediction, group = parameter), color = "gray") +
+        geom_line(data = single_ensemble, aes(x = datetime, y = prediction, group = parameter)) +
+        geom_point(data = obs, aes(x = datetime, y = observation), color = "red") +
+        geom_vline(aes(xintercept = reference_datetime)) +
+        theme_bw() +
+        facet_wrap(~depth) +
+        ggtitle(var) +
+        theme(plot.title = element_text(hjust = 0.5))
+
     }
 
-    if(forecast_index > 0){
-      forecast_start_day <- full_time[forecast_index-1]
-      forecast_start_day_alpha <- 1.0
-    }else{
-      forecast_start_day <- dplyr::last(full_time)
-      forecast_start_day_alpha <- 0.0
-    }
-
-    curr_tibble <- tibble::tibble(date = lubridate::as_datetime(date),
-                                  forecast_mean = round(c(mean_var),4),
-                                  forecast_sd = round(c(sd_var),4),
-                                  forecast_upper_95 = round(c(upper_var),4),
-                                  forecast_lower_95 = round(c(lower_var),4),
-                                  observed = round(obs_curr,4),
-                                  depth = rep(depths, length(full_time)),
-                                  state = state_names[i],
-                                  forecast_start_day = forecast_start_day) %>%
-      dplyr::filter(depth %in% focal_depths_plotting)
-
-
-    if(obs_csv){
-      only_with_obs <-  curr_tibble %>%
-        dplyr::filter(!is.na(observed))
-
-      evaluation_df <- dplyr::bind_rows(evaluation_df, only_with_obs)
-    }
-
-    p <- ggplot2::ggplot(curr_tibble, ggplot2::aes(x = date)) +
-      ggplot2::facet_wrap(~depth) +
-      ggplot2::geom_ribbon(ggplot2::aes(ymin = forecast_lower_95, ymax = forecast_upper_95),
-                           alpha = 0.70,
-                           fill = "gray") +
-      ggplot2::geom_line(ggplot2::aes(y = forecast_mean), size = 0.5) +
-      ggplot2::geom_vline(xintercept = forecast_start_day,
-                          alpha = forecast_start_day_alpha) +
-      ggplot2::geom_point(ggplot2::aes(y = observed), size = 0.5, color = "red") +
-      ggplot2::theme_light() +
-      ggplot2::labs(x = "Date", y = state_names[i], title = state_names[i]) +
-      ggplot2::theme(axis.text.x = ggplot2::element_text(angle = 90, size = 10))
-    print(p)
-
-    if(plot_profile){
-
-      p <- ggplot2::ggplot(curr_tibble, ggplot2::aes(y = depth, x = forecast_mean)) +
-        ggplot2::facet_wrap(~factor(date)) +
-        ggplot2::geom_ribbon(ggplot2::aes(xmin = forecast_upper_95, xmax = forecast_lower_95),
-                             alpha = 0.70,
-                             fill = "gray") +
-        ggplot2::geom_path() +
-        ggplot2::geom_point(ggplot2::aes(x = observed), size = 0.5, color = "red") +
-        ggplot2::scale_y_reverse() +
-        ggplot2::theme_light() +
-        ggplot2::labs(y = "Depth(m)", x = state_names[i], title = state_names[i])
-      print(p)
-    }
+    plot(state_plot)
   }
 
-  if(obs_csv){
-    readr::write_csv(evaluation_df, csv_file_name)
-  }
+  ## BUILD NON-DEPTH-SPECIFIC STATE VARIABLE PLOTS
+  state_non_depth_variables <- combined_df |>
+    filter(variable_type == 'state',
+           variable %in% c('secchi', 'depth', 'ice_thickness')) |>
+    distinct(variable) |>
+    pull(variable)
 
-  if(length(par_names) > 0){
-    plist <- list()
-
-    for(i in 1:length(par_names)){
-
-      message(par_names[i])
-
-
-      curr_var <- par_list[[i]]
-
-      mean_var <- array(NA, dim = c(length(full_time)))
-      upper_var <- array(NA, dim = c(length(full_time)))
-      lower_var <- array(NA, dim = c(length(full_time)))
-      for(j in 1:length(full_time)){
-        mean_var[j] <- mean(curr_var[j, ])
-        upper_var[j] <- quantile(curr_var[j, ], 0.1, na.rm = TRUE)
-        lower_var[j] <- quantile(curr_var[j, ], 0.9, na.rm = TRUE)
-      }
-
-      date <- full_time
-
-      if(forecast_index > 0){
-        forecast_start_day <- full_time[forecast_index-1]
-        forecast_start_day_alpha <- 1.0
-      }else{
-        forecast_start_day <- dplyr::last(full_time)
-        forecast_start_day_alpha <- 0.0
-      }
-
-      curr_tibble <- tibble::tibble(date = lubridate::as_datetime(date),
-                                    curr_var = c(mean_var),
-                                    upper_var = c(upper_var),
-                                    lower_var = c(lower_var))
-
-      plist[[i]] <- ggplot2::ggplot(curr_tibble, ggplot2::aes(x = date)) +
-        ggplot2::geom_ribbon(ggplot2::aes(ymin = lower_var, ymax = upper_var),
-                             alpha = 0.70,
-                             fill = "gray") +
-        ggplot2::geom_line(ggplot2::aes(y = curr_var), size = 0.5) +
-        ggplot2::geom_vline(xintercept = forecast_start_day,
-                            alpha = forecast_start_day_alpha) +
-        ggplot2::theme_bw() +
-        ggplot2::labs(x = "Date", y = par_names[i]) +
-        ggplot2::theme(axis.text.x = ggplot2::element_text(angle = 90, size = 10))
-    }
-
-    print(patchwork::wrap_plots(plist))
-  }
-
-  if(length(diagnostics_names) > 0 )
-    for(i in 1:length(diagnostics_names)){
-      message(diagnostics_names[i])
-      curr_var <- diagnostic_list[[i]]
-
-      mean_var <- array(NA, dim = c(length(depths), length(full_time)))
-      upper_var <- array(NA, dim = c(length(depths), length(full_time)))
-      lower_var <- array(NA,dim = c(length(depths), length(full_time)))
-      for(j in 1:length(full_time)){
-        for(ii in 1:length(depths)){
-          mean_var[ii, j] <- mean(curr_var[j,ii , ], na.rm = TRUE)
-          upper_var[ii, j] <- quantile(curr_var[j,ii , ], 0.1, na.rm = TRUE)
-          lower_var[ii, j] <- quantile(curr_var[j,ii , ], 0.9, na.rm = TRUE)
-        }
-      }
-
-      date <- c()
-      for(j in 1:length(full_time)){
-        date <- c(date, rep(full_time[j], length(depths)))
-      }
-
-      curr_tibble <- tibble::tibble(date = lubridate::as_datetime(date),
-                                    curr_var = c(mean_var),
-                                    upper_var = c(upper_var),
-                                    lower_var = c(lower_var),
-                                    depth = rep(depths, length(full_time))) %>%
-        dplyr::filter(depth %in% focal_depths_plotting)
-
-      if(forecast_index > 0){
-        forecast_start_day <- full_time[forecast_index-1]
-        forecast_start_day_alpha <- 1.0
-      }else{
-        forecast_start_day <- dplyr::last(full_time)
-        forecast_start_day_alpha <- 0.0
-      }
-
-      p <- ggplot2::ggplot(curr_tibble, ggplot2::aes(x = date)) +
-        ggplot2::facet_wrap(~depth) +
-        ggplot2::geom_ribbon(ggplot2::aes(ymin = lower_var, ymax = upper_var),
-                             alpha = 0.70,
-                             fill = "gray") +
-        ggplot2::geom_line(ggplot2::aes(y = curr_var), size = 0.5) +
-        ggplot2::geom_vline(xintercept = forecast_start_day,
-                            alpha = forecast_start_day_alpha) +
-        ggplot2::theme_light() +
-        ggplot2::labs(x = "Date", y = diagnostics_names[i], title = diagnostics_names[i]) +
-        ggplot2::theme(axis.text.x = ggplot2::element_text(angle = 90, size = 10))
-      print(p)
-    }
-
-  if(("extc_coef" %in% diagnostics_names) | ("extc" %in% diagnostics_names)){
-
-    message("secchi")
-
-    obs_date <- tibble::tibble(date = lubridate::as_date(full_time)) %>%
-      dplyr::mutate(date = as.character(date))
-
-    obs_secchi <- obs_long %>% dplyr::filter(variable == "secchi") %>%
-      dplyr::mutate(date = as.character(date))
-
-    if(nrow(obs_secchi) > 0){
-      obs_curr <- dplyr::left_join(obs_date, obs_secchi, by = "date")
-      obs_curr <- obs_curr$value
-    }else{
-      obs_curr <- rep(NA, length(obs_date))
-    }
-
-    i <- which(diagnostics_names == "extc_coef" | diagnostics_names == "extc")
-    ii <- which.min(abs(depths-1.0))
-    curr_var <- diagnostic_list[[i]]
+  single_ensemble <- combined_df |>
+    filter(variable %in% state_non_depth_variables,
+           parameter %in% focal_ensemebles)
 
 
-    mean_var <- array(NA, dim = c(length(full_time)))
-    upper_var <- array(NA, dim = c(length(full_time)))
-    lower_var <- array(NA,dim = c(length(full_time)))
-    for(j in 1:length(full_time)){
-      sechi <- 1.7 / curr_var[j,ii , ]
-      mean_var[j] <- mean(sechi, na.rm = TRUE)
-      upper_var[j] <- quantile(sechi, 0.1, na.rm = TRUE)
-      lower_var[j] <- quantile(sechi, 0.9, na.rm = TRUE)
-    }
+  obs <- combined_df |>
+    filter(variable %in% state_non_depth_variables) |>
+    distinct(datetime, site_id, depth, variable, observation)
+
+  state_non_depth_plot <- combined_df |>
+    filter(variable %in% state_non_depth_variables) |>
+    #dplyr::filter(variable %in% c("temperature","secchi", "chla", "lw_factor") & (depth == 1.5 | is.na(depth))) |>
+    ggplot(aes(x = datetime)) +
+    geom_line(aes(y = prediction, group = parameter), color = "gray") +
+    geom_line(data = single_ensemble, aes(x = datetime, y = prediction, group = parameter)) +
+    geom_point(data = obs, aes(x = datetime, y = observation), color = "red") +
+    geom_vline(aes(xintercept = reference_datetime)) +
+    theme_bw() +
+    facet_wrap(~variable, scales = "free_y")
+
+  plot(state_non_depth_plot)
 
 
-    curr_tibble <- tibble::tibble(date = lubridate::as_datetime(full_time),
-                                  curr_var = c(mean_var),
-                                  upper_var = c(upper_var),
-                                  lower_var = c(lower_var),
-                                  observed = unlist(obs_curr))
+  ## CREATE PARAMETER PLOTS
+  parameter_variables <- combined_df |>
+    filter(variable_type == 'parameter') |>
+    distinct(variable) |>
+    pull(variable)
 
-    if(forecast_index > 0){
-      forecast_start_day <- full_time[forecast_index-1]
-      forecast_start_day_alpha <- 1.0
-    }else{
-      forecast_start_day <- dplyr::last(full_time)
-      forecast_start_day_alpha <- 0.0
-    }
+  single_ensemble <- combined_df |>
+    filter(variable %in% parameter_variables,
+           parameter %in% focal_ensemebles)
 
-    p <- ggplot2::ggplot(curr_tibble, ggplot2::aes(x = date)) +
-      ggplot2::geom_ribbon(ggplot2::aes(ymin = lower_var, ymax = upper_var),
-                           alpha = 0.70,
-                           fill = "gray") +
-      ggplot2::geom_line(ggplot2::aes(y = curr_var), size = 0.5) +
-      ggplot2::scale_y_reverse() +
-      ggplot2::geom_vline(xintercept = forecast_start_day,
-                          alpha = forecast_start_day_alpha) +
-      ggplot2::geom_point(ggplot2::aes(y = observed), size = 1, color = "red") +
-      ggplot2::theme_light() +
-      ggplot2::labs(x = "Date", y = "Sechi depth (m)", title = "Sechi depth") +
-      ggplot2::theme(axis.text.x = ggplot2::element_text(angle = 90, size = 10))
-    print(p)
+  parameter_plot <- combined_df |>
+    filter(variable %in% parameter_variables) |>
+    #left_join(targets_df) |>
+    #dplyr::filter(variable %in% c("temperature","secchi", "chla", "lw_factor") & (depth == 1.5 | is.na(depth))) |>
+    ggplot(aes(x = datetime)) +
+    geom_line(aes(y = prediction, group = parameter), color = "gray") +
+    geom_line(data = single_ensemble, aes(x = datetime, y = prediction, group = parameter)) +
+    geom_vline(aes(xintercept = reference_datetime)) +
+    theme_bw() +
+    facet_wrap(~variable, scales = "free_y") +
+    labs(y = "value")
+
+  plot(parameter_plot)
+
+
+  ## CREATE DIAGNOSTIC PLOTS
+  diagnostic_variables <- combined_df |>
+    filter(variable_type == 'diagnostic') |>
+    distinct(variable) |>
+    pull(variable)
+
+
+
+  for (var in diagnostic_variables){
+
+
+
+    diagnostic_target_depths <- combined_df |>
+      filter(variable %in% state_depth_variables,
+             !is.na(depth)) |>
+      distinct(depth) |>
+      pull(depth)
+
+    single_ensemble <- combined_df |>
+      filter(variable == var,
+             depth %in% diagnostic_target_depths,
+             parameter %in% focal_ensemebles)
+
+    diagnostic_plot <- combined_df |>
+      filter(variable == var,
+             depth %in% diagnostic_target_depths) |>
+      ggplot(aes(x = datetime)) +
+      geom_line(aes(y = prediction, group = parameter), color = "gray") +
+      geom_line(data = single_ensemble, aes(x = datetime, y = prediction, group = parameter)) +
+      geom_vline(aes(xintercept = reference_datetime)) +
+      theme_bw() +
+      facet_wrap(~depth) +
+      ggtitle(var) +
+      theme(plot.title = element_text(hjust = 0.5))
+
+    plot(diagnostic_plot)
   }
 
   dev.off()
@@ -331,4 +191,3 @@ plotting_general <- function(file_name,
   invisible(pdf_file_name)
 
 }
-

@@ -16,7 +16,9 @@ knitr::opts_chunk$set(
 
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE)
-library(tidyverse)
+library(dplyr)
+library(ggplot2)
+library(readr)
 library(lubridate)
 set.seed(1)
 ```
@@ -55,10 +57,24 @@ First, install the `FLAREr` package from GitHub. There will be other required pa
 remotes::install_github("flare-forecast/FLAREr")
 ```
 
-Second, create a directory that will be your working directory for your FLARE run
+Second, download the General Lake Model (GLM) code.  You can get in using multiple pathways
+
+The easiest way is to install the `GLM3r` package from Github using
 
 ```{r}
-lake_directory <-  tempdir()
+remotes::install_github("rqthomas/GLM3r")
+```
+
+After installing GLM3r you need to set an environment variable that points to the GLM code.
+
+```{r}
+Sys.setenv('GLM_PATH'='GLM3r')
+```
+
+Third, create a directory that will be your working directory for your FLARE run.  To find this directory on your computer you can use `print(lake_directory)`
+
+```{r}
+lake_directory <-  normalizePath(tempdir(),  winslash = "/")
 dir.create(file.path(lake_directory, "configuration/default"), recursive = TRUE)
 dir.create(file.path(lake_directory, "targets")) # For QAQC data
 dir.create(file.path(lake_directory, "drivers")) # Weather and inflow forecasts
@@ -82,7 +98,7 @@ file.copy(system.file("extdata", "configuration", "default", "depth_model_sd.csv
 file.copy(system.file("extdata", "configuration", "default", "observations_config.csv", package = "FLAREr"), file.path(lake_directory, "configuration", "default", "observations_config.csv"))
 ```
 
-Third, FLAREr requires GLM specific configurations files.  For applications that require on water temperature, only the GLM namelist file is needed.  Applications that require other water quality variables will require additional namelist files that are associated with the AED model.
+Third, FLAREr requires GLM specific configurations files.  For applications that require on water temperature, only the GLM namelist file is needed.  Applications that require other water quality variables will require additional namelist files that are associated with the aed model.
 
 ```{r}
 file.copy(system.file("extdata", "configuration", "default", "glm3.nml", package = "FLAREr"), file.path(lake_directory, "configuration", "default", "glm3.nml"))
@@ -159,7 +175,6 @@ Read configuration files
 The following reads in the configuration files and overwrites the directory locations based on the lake_directory and directories provided above.  In practice you will specific these directories in the configure file and not overwrite them.
 
 ```{r}
-
 next_restart <- FLAREr::run_flare(lake_directory = lake_directory,configure_run_file = "configure_run.yml", config_set_name = "default")
   
 ```  
@@ -182,28 +197,34 @@ df |>
   geom_line() +
   geom_vline(aes(xintercept = as_datetime(reference_datetime))) +
   labs(title = "1 m water temperature forecast")
-
 ```
 
-```{r}
-df <- arrow::open_dataset(file.path(lake_directory,"scores/parquet")) |> collect()
-```
 
 ```{r}
-head(df)
+targets_df <- read_csv(file.path(lake_directory, "targets/fcre/fcre-targets-insitu.csv"), show_col_types = FALSE)
+combined_df <- left_join(df, targets_df, by = join_by(datetime, depth, variable, site_id))
+combined_df |> 
+  filter(variable == "temperature",
+         depth == 1) |> 
+  ggplot(aes(x = datetime, y = prediction, group = parameter)) +
+  geom_line() +
+  geom_vline(aes(xintercept = as_datetime(reference_datetime))) +
+  geom_point(aes(y = observation), color = "red") +
+  labs(title = "1 m water temperature forecast")
 ```
 
 ```{r}
 df |> 
-  filter(variable == "temperature",
-         depth == 1) |> 
-  ggplot(aes(x = datetime)) +
-  geom_ribbon(aes(ymin = quantile10, ymax = quantile90), alpha = 0.5, fill = "lightblue") +
-  geom_line(aes(y = median)) +
-  geom_point(aes(y = observation), color = "red") +
+  filter(variable == "lw_factor") |> 
+  ggplot(aes(x = datetime, y = prediction, group = parameter)) +
+  geom_line() +
   geom_vline(aes(xintercept = as_datetime(reference_datetime))) +
-  labs(title = "1 m water temperature forecast")
+  labs(title = "lw_factor parameter")
+
+
 ```
+## 5. Comparing to observations
+
 
 ## 6: Modifying FLARE
 
@@ -222,7 +243,3 @@ The second modification you will do is to to increase the observational uncertai
 ### Changing the ensemble size
 
 The variable `ensemble_size` allows you to adjust the size of the ensemble. 
-
-### Changing the number of depths simulated
-
-The variable `modeled_depths` allows you to adjust the depths that FLARE simulates.  If you used a restart file, then the `model_depths` are required to be equal to the model_depths in the restart file.

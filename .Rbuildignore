@@ -5,3 +5,5 @@
 ^pkgdown$
 ^\.github$
 ^cran-comments\.md$
+^LICENSE\.md$
+glm-aed*

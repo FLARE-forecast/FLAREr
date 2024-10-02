@@ -3,12 +3,8 @@
 #' @param config list; list from reading in configuration yaml
 #' @param states_config list; list from reading in states configuration csv
 #' @return matrix
-#' @export
-#' @importFrom readr read_csv cols
-##' @examples
-##' \dontrun{
-##' model_sd <- initiate_model_error(config, states_config)
-##' }
+#' @keywords internal
+#'
 initiate_model_error <- function(config, states_config){
   if(!is.null(config$model_settings$depth_model_sd_config_file)){
     model_sd <- array(NA, dim = c(nrow(states_config),length(config$model_settings$modeled_depths)))

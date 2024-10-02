@@ -21,7 +21,15 @@ get_run_config(
 \item{config}{flare configuration object}
 
 \item{clean_start}{logical; reset the configuration run to the base file in the configuration directory}
+
+\item{config_set_name}{name of configuration set}
+
+\item{sim_name}{name of simulation}
+}
+\value{
+list of configuration values
 }
 \description{
 Get run configuration from s3 bucket
 }
+\keyword{internal}

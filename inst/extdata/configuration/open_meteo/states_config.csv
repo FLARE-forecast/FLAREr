@@ -1,0 +1,3 @@
+state_names,initial_conditions,model_sd,vert_decorr_length,initial_model_sd,states_to_obs_1,states_to_obs_mapping_1,states_to_obs_2,states_to_obs_mapping_2,states_to_obs_3,states_to_obs_mapping_3,init_obs_name,init_obs_mapping
+temp,20,1.35,2,1.35,temp,1,NA,NA,NA,NA,temp,1
+salt,0.1,0.001,2,0.001,NA,NA,NA,NA,NA,NA,salt,1

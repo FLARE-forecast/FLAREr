@@ -4,40 +4,44 @@
 #' @param lake_directory full path to repository directory
 #' @param config flare configuration object
 #' @param clean_start logical; reset the configuration run to the base file in the configuration directory
+#' @param config_set_name name of configuration set
+#' @param sim_name name of simulation
+#' @keywords internal
 #'
-#' @return
+#' @return list of configuration values
 #' @export
 #'
 get_run_config <- function(configure_run_file = "configure_run.yml", lake_directory, config, clean_start = FALSE, config_set_name = "default", sim_name = NA){
 
-  run_config <- yaml::read_yaml(file.path(lake_directory,"configuration",config_set_name,configure_run_file))
+  run_config <- yaml::read_yaml(file.path(lake_directory,"configuration", config_set_name, configure_run_file))
+
   if(is.na(sim_name)){
     sim_name <- run_config$sim_name
   }
 
   dir.create(file.path(lake_directory, "restart", config$location$site_id, sim_name), recursive = TRUE, showWarnings = FALSE)
 
-  if(clean_start | !config$run_config$use_s3){
+  if(!config$run_config$use_s3 | clean_start){
     restart_exists <- file.exists(file.path(lake_directory, "restart", config$location$site_id, sim_name, configure_run_file))
     if(!restart_exists){
       yaml::write_yaml(run_config, file.path(lake_directory,"restart", config$location$site_id, sim_name, configure_run_file))
-    }else{
-      #message("Using existing restart file")
+    }else if(clean_start){
+      yaml::write_yaml(run_config, file.path(lake_directory,"restart", config$location$site_id, sim_name, configure_run_file))
     }
-  }else if(config$run_config$use_s3){
-    restart_exists <- suppressMessages(aws.s3::object_exists(object = file.path(stringr::str_split_fixed(config$s3$warm_start$bucket, "/", n = 2)[2],
+  }else if(config$run_config$use_s3 & !clean_start){
+    restart_exists <- suppressMessages(aws.s3::object_exists(object = file.path(stringr::str_split_fixed(config$s3$restart$bucket, "/", n = 2)[2],
                                                                                 config$location$site_id, sim_name, configure_run_file),
-                                                             bucket = stringr::str_split_fixed(config$s3$warm_start$bucket, "/", n = 2)[1],
-                                                             region = stringr::str_split_fixed(config$s3$warm_start$endpoint, pattern = "\\.", n = 2)[1],
-                                                             base_url = stringr::str_split_fixed(config$s3$warm_start$endpoint, pattern = "\\.", n = 2)[2],
+                                                             bucket = stringr::str_split_fixed(config$s3$restart$bucket, "/", n = 2)[1],
+                                                             region = stringr::str_split_fixed(config$s3$restart$endpoint, pattern = "\\.", n = 2)[1],
+                                                             base_url = stringr::str_split_fixed(config$s3$restart$endpoint, pattern = "\\.", n = 2)[2],
                                                              use_https = as.logical(Sys.getenv("USE_HTTPS"))))
 
     if(restart_exists){
-      aws.s3::save_object(object = file.path(stringr::str_split_fixed(config$s3$warm_start$bucket, "/", n = 2)[2], config$location$site_id, sim_name, configure_run_file),
-                          bucket = stringr::str_split_fixed(config$s3$warm_start$bucket, "/", n = 2)[1],
+      aws.s3::save_object(object = file.path(stringr::str_split_fixed(config$s3$restart$bucket, "/", n = 2)[2], config$location$site_id, sim_name, configure_run_file),
+                          bucket = stringr::str_split_fixed(config$s3$restart$bucket, "/", n = 2)[1],
                           file = file.path(lake_directory, "restart", config$location$site_id, sim_name, configure_run_file),
-                          region = stringr::str_split_fixed(config$s3$warm_start$endpoint, pattern = "\\.", n = 2)[1],
-                          base_url = stringr::str_split_fixed(config$s3$warm_start$endpoint, pattern = "\\.", n = 2)[2],
+                          region = stringr::str_split_fixed(config$s3$restart$endpoint, pattern = "\\.", n = 2)[1],
+                          base_url = stringr::str_split_fixed(config$s3$restart$endpoint, pattern = "\\.", n = 2)[2],
                           use_https = as.logical(Sys.getenv("USE_HTTPS")))
     }else{
       yaml::write_yaml(run_config, file.path(lake_directory,"restart", config$location$site_id, sim_name, configure_run_file))
@@ -53,9 +57,8 @@ get_run_config <- function(configure_run_file = "configure_run.yml", lake_direct
 #' @param lake_directory full path to repository directory
 #' @param directory the branch name on github
 #' @param git_repo https of the github repository
+#' @keywords internal
 #'
-#' @return
-#' @export
 #'
 get_git_repo <- function(lake_directory, directory, git_repo){
   setwd(file.path(lake_directory, "data_raw"))
@@ -68,28 +71,6 @@ get_git_repo <- function(lake_directory, directory, git_repo){
   setwd(lake_directory)
 }
 
-#' Download file from EDI data portal
-#'
-#' @param edi_https https of the EDI package
-#' @param file name of the file in the EDI package (not full path)
-#' @param lake_directory full path to repository directory
-#'
-#' @return
-#' @export
-#'
-get_edi_file <- function(edi_https, file, lake_directory){ #, curl_timeout = 60){
-
-  if(!file.exists(file.path(lake_directory, "data_raw", file))){
-    if(!dir.exists(dirname(file.path(lake_directory, "data_raw", file)))){
-      dir.create(dirname(file.path(lake_directory, "data_raw", file)))
-    }
-    url_download <- httr::RETRY("GET",edi_https, httr::timeout(1500), pause_base = 5, pause_cap = 20, pause_min = 5, times = 3, quiet = FALSE)
-    test_bin <- httr::content(url_download,'raw')
-    writeBin(test_bin, file.path(lake_directory, "data_raw", file))
-  }
-}
-
-
 #' Save target files to s3 bucket
 #'
 #' @param site_id four letter code for the site
@@ -97,9 +78,8 @@ get_edi_file <- function(edi_https, file, lake_directory){ #, curl_timeout = 60)
 #' @param cleaned_met_file full path of the cleaned met file
 #' @param cleaned_inflow_file full path of the cleaned inflow file
 #' @param use_s3 logical; TRUE = use s3
-#'
-#' @return
-#' @export
+#' @param config list of FLARE configurations
+#' @keywords internal
 #'
 put_targets <- function(site_id, cleaned_insitu_file = NA, cleaned_met_file = NA, cleaned_inflow_file = NA, use_s3 = FALSE, config){
 
@@ -133,11 +113,9 @@ put_targets <- function(site_id, cleaned_insitu_file = NA, cleaned_met_file = NA
 
 #' Download target data from s3
 #'
-#' @param lake_directory full path to repository directory
+#' @param lake_directory full path to the repository directory
 #' @param config flare configuration object
-#'
-#' @return
-#' @export
+#' @keywords internal
 #'
 get_targets <- function(lake_directory, config){
   if(config$run_config$use_s3){
@@ -155,7 +133,7 @@ get_targets <- function(lake_directory, config){
 #' @param forecast_model name of forecast model (i.e "noaa/NOAAGEFS_1hr); path relative to driver directory.
 #'
 #' @return full path to driver forecast
-#' @export
+#' @keywords internal
 #'
 get_driver_forecast_path <- function(config, forecast_model){
   if(config$run_config$forecast_horizon > 0){
@@ -180,144 +158,83 @@ get_driver_forecast_path <- function(config, forecast_model){
   return(forecast_path)
 }
 
-#' Set and create directories in the configuration file
-#'
-#' @param configure_run_file name of run configuration file (do not include full path)
-#' @param lake_directory full path to repository directory
-#' @param clean_start logical: TRUE = reset run configuration with the file in the configuration directory within repository
-#'
-#' @return
-#' @export
-#'
-set_configuration <- function(configure_run_file = "configure_run.yml", lake_directory, clean_start = FALSE, config_set_name = "default", sim_name = NA){
-
-  run_config <- yaml::read_yaml(file.path(lake_directory,"configuration",config_set_name,configure_run_file))
-  config <- yaml::read_yaml(file.path(lake_directory,"configuration",config_set_name,run_config$configure_flare))
-  config$run_config <- run_config
-  config$file_path$qaqc_data_directory <- file.path(lake_directory, "targets", config$location$site_id)
-  config$file_path$data_directory <- file.path(lake_directory, "data_raw")
-  config$file_path$noaa_directory <- file.path(lake_directory, "drivers")
-  config$file_path$configuration_directory <- file.path(lake_directory, "configuration",config_set_name)
-  config$file_path$inflow_directory <- file.path(lake_directory, "drivers")
-  config$file_path$analysis_directory <- file.path(lake_directory, "analysis")
-  config$file_path$forecast_output_directory <- file.path(lake_directory, "forecasts", config$location$site_id)
-  dir.create(config$file_path$qaqc_data_directory, recursive = TRUE, showWarnings = FALSE)
-  dir.create(config$file_path$forecast_output_directory, recursive = TRUE, showWarnings = FALSE)
-  dir.create(config$file_path$analysis_directory, recursive = TRUE, showWarnings = FALSE)
-  dir.create(config$file_path$data_directory, recursive = TRUE, showWarnings = FALSE)
-  dir.create(config$file_path$noaa_directory, recursive = TRUE, showWarnings = FALSE)
-  dir.create(config$file_path$inflow_directory, recursive = TRUE, showWarnings = FALSE)
-
-  run_config <- get_run_config(configure_run_file, lake_directory, config, clean_start, config_set_name = config_set_name, sim_name = sim_name)
-  config$run_config <- run_config
-  config$file_path$restart_directory <- file.path(lake_directory, "restart", config$location$site_id, config$run_config$sim_name)
-
-  config$file_path$execute_directory <- file.path(lake_directory, "flare_tempdir", config$location$site_id, config$run_config$sim_name)
-  dir.create(config$file_path$execute_directory, recursive = TRUE, showWarnings = FALSE)
-
-  if(Sys.getenv(x = "AWS_ACCESS_KEY_ID") == "" & config$run_config$use_s3 == TRUE){
-    warning(paste0(" Use s3 is set to TRUE in ",file.path(lake_directory,"configuration",config_set_name,configure_run_file),
-                   "AWS_ACCESS_KEY_ID environment variable is not set.  s3 can still be used for downloading"))
-  }
-
-  if(Sys.getenv(x = "AWS_SECRET_ACCESS_KEY") == "" & config$run_config$use_s3 == TRUE){
-    warning(paste0(" Use s3 is set to TRUE in ",file.path(lake_directory,"configuration",config_set_name,configure_run_file),
-                   "AWS_SECRET_ACCESS_KEY environment variable is not set.  s3 can still be used for downloading"))
-  }
-
-  invisible(config)
-}
-
 #' Download restart file from s3 bucket
 #'
 #' @param config flare configuration object
 #' @param lake_directory full path to repository directory
 #'
-#' @return
-#' @export
+#' @return list of updated configuration values
+#' @keywords internal
 #'
 get_restart_file <- function(config, lake_directory){
   if(!is.na(config$run_config$restart_file)){
     restart_file <- basename(config$run_config$restart_file)
     if(config$run_config$use_s3){
-      aws.s3::save_object(object = file.path(stringr::str_split_fixed(config$s3$forecasts$bucket, "/", n = 2)[2], config$location$site_id, restart_file),
-                          bucket = stringr::str_split_fixed(config$s3$forecasts$bucket, "/", n = 2)[1],
-                          file = file.path(lake_directory, "forecasts", config$location$site_id, restart_file),
-                          region = stringr::str_split_fixed(config$s3$forecasts$endpoint, pattern = "\\.", n = 2)[1],
-                          base_url = stringr::str_split_fixed(config$s3$forecasts$endpoint, pattern = "\\.", n = 2)[2],
-                          use_https = as.logical(Sys.getenv("USE_HTTPS")))
+      aws.s3::save_object(object = file.path(stringr::str_split_fixed(config$s3$restart$bucket, "/", n = 2)[2], config$location$site_id, config$run_config$sim_name, restart_file),
+                          bucket = stringr::str_split_fixed(config$s3$restart$bucket, "/", n = 2)[1],
+                          file = file.path(lake_directory, "restart", config$location$site_id, config$run_config$sim_name, restart_file),
+                          region = stringr::str_split_fixed(config$s3$restart$endpoint, pattern = "\\.", n = 2)[1],
+                          base_url = stringr::str_split_fixed(config$s3$restart$endpoint, pattern = "\\.", n = 2)[2],
+                          use_https = TRUE)
     }
-    config$run_config$restart_file <- file.path(lake_directory, "forecasts", config$location$site_id, restart_file)
+    config$run_config$restart_file <- file.path(lake_directory, "restart", config$location$site_id, config$run_config$sim_name, restart_file)
   }
   return(config)
 }
 
-#' Update run configuration and upload to s3 bucket
-#'
-#' @param config flare configuration object
-#' @param lake_directory full path to repository directory
-#' @param configure_run_file name of run configuration file (do not include full path)
-#' @param saved_file full path of saved FLARE netcdf
-#' @param new_horizon horizon (in days) to update the run configuration with
-#' @param day_advance number of days between forecast forecast generation (defaults to 1)
-#' @noRd
-#' @return configuration list
-#' @export
-#'
-update_run_config <- function(config, lake_directory, configure_run_file = "configure_run.yml", saved_file = NA, new_horizon = NA, day_advance = NA, new_start_datetime = TRUE){
-  if(new_start_datetime){
-    config$run_config$start_datetime <- config$run_config$forecast_start_datetime
-  }
-  if(!is.na(new_horizon)){
-    if(!is.na(config$run_config$forecast_horizon)){
-      config$run_config$forecast_horizon <- new_horizon
-    }
-  }
-  if(!is.na(day_advance)){
-    config$run_config$forecast_start_datetime <- as.character(lubridate::as_datetime(config$run_config$forecast_start_datetime) + lubridate::days(day_advance))
-    if(lubridate::hour(config$run_config$forecast_start_datetime) == 0){
-      config$run_config$forecast_start_datetime <- paste(config$run_config$forecast_start_datetime, "00:00:00")
-    }
-  }
-  if(!is.na(saved_file)){
-    config$run_config$restart_file <- basename(saved_file)
-  }
-  yaml::write_yaml(config$run_config, file = file.path(lake_directory,"restart",config$location$site_id,config$run_config$sim_name,configure_run_file))
-  if(config$run_config$use_s3){
-    aws.s3::put_object(file = file.path(lake_directory,"restart",config$location$site_id,config$run_config$sim_name, configure_run_file),
-                       object = file.path(stringr::str_split_fixed(config$s3$warm_start$bucket, "/", n = 2)[2], config$location$site_id,config$run_config$sim_name, configure_run_file),
-                       bucket = stringr::str_split_fixed(config$s3$warm_start$bucket, "/", n = 2)[1],
-                       region = stringr::str_split_fixed(config$s3$warm_start$endpoint, pattern = "\\.", n = 2)[1],
-                       base_url = stringr::str_split_fixed(config$s3$warm_start$endpoint, pattern = "\\.", n = 2)[2],
-                       use_https = as.logical(Sys.getenv("USE_HTTPS")))
-  }
-  invisible(config)
-}
-
 #' Update run configuration
 #'
-#' @param lake_directory
-#' @param configure_run_file
-#' @param restart_file
-#' @param start_datetime
-#' @param end_datetime
-#' @param forecast_start_datetime
-#' @param forecast_horizon
-#' @param sim_name
-#' @param site_id
-#' @param configure_flare
-#' @param configure_obs
-#' @param use_s3
-#' @param bucket
-#' @param endpoint
-#' @param use_https
+#' @param lake_directory full path to repository directory
+#' @param configure_run_file name of run configuration file (do not include full path)
+#' @param restart_file full path of saved FLARE netcdf
+#' @param start_datetime first datetime of the simulation
+#' @param end_datetime last datetime of the simulation
+#' @param forecast_start_datetime datetime that a forecast starts
+#' @param forecast_horizon number of days forecasted
+#' @param sim_name name of particular FLARE simulation
+#' @param site_id four letter code for the site
+#' @param configure_flare list of FLARE configurations
+#' @param configure_obs list of observation configurations
+#' @param use_s3 logical; TRUE = use s3
+#' @param bucket s3 bucket
+#' @param endpoint s3 endpoint
+#' @param use_https TRUE/FALSE use https when using s3
 
 #' @export
-#'
 #' @examples
 
-update_run_config2 <- function(lake_directory,
-                               configure_run_file = "configure_run.yml",
+#' dir <- normalizePath(tempdir(),  winslash = "/")
+#' lake_directory <- file.path(dir, "extdata")
+#' #Copy files to temporarly directory
+#' dir.create(dir,showWarnings = FALSE)
+#' file.copy(system.file("extdata", package = "FLAREr"),
+#'           tempdir(),
+#'           recursive = TRUE)
+#' print(lake_directory)
+#' dir.create(file.path(lake_directory, "restart/fcre/test"),
+#'            recursive = TRUE,
+#'            showWarnings = FALSE)
+#' file.copy(file.path(lake_directory, "configuration/default/configure_run.yml"),
+#'           file.path(lake_directory, "restart/fcre/test/configure_run.yml"),
+#'           overwrite = TRUE)
+
+#'update_run_config(lake_directory,
+#'                   configure_run_file = "configure_run.yml",
+#'                   restart_file = NA,
+#'                   start_datetime = "2022-10-01 00:00:00",
+#'                   end_datetime = NA,
+#'                   forecast_start_datetime = "2022-10-10 00:00:00",
+#'                   forecast_horizon = 20,
+#'                   sim_name = "test",
+#'                   site_id = "fcre",
+#'                   configure_flare = "configure_flare.yml",
+#'                   configure_obs = NULL,
+#'                   use_s3 = FALSE,
+#'                   bucket = NULL,
+#'                   endpoint = NULL)
+#'
+update_run_config <- function(lake_directory,
+                               configure_run_file,
                                restart_file,
                                start_datetime,
                                end_datetime,
@@ -372,54 +289,20 @@ update_run_config2 <- function(lake_directory,
   }
 }
 
-#' Upload forecast file and metadata to s3 bucket
+#' Upload restart netcdf file to s3 bucket
 #'
 #' @param saved_file full path of saved FLARE netcdf
-#' @param eml_file_name full path of saved FLARE metadata
 #' @param config flare configuration object
 #'
-#' @export
+#' @keywords internal
 #'
-put_forecast <- function(saved_file, eml_file_name = NULL, config){
+put_restart_file <- function(saved_file, config){
   if(config$run_config$use_s3){
     success <- aws.s3::put_object(file = saved_file,
-                                  object = file.path(stringr::str_split_fixed(config$s3$forecasts$bucket, "/", n = 2)[2], config$location$site_id, basename(saved_file)),
-                                  bucket = stringr::str_split_fixed(config$s3$forecasts$bucket, "/", n = 2)[1],
-                                  region = stringr::str_split_fixed(config$s3$forecasts$endpoint, pattern = "\\.", n = 2)[1],
-                                  base_url = stringr::str_split_fixed(config$s3$forecasts$endpoint, pattern = "\\.", n = 2)[2],
-                                  use_https = as.logical(Sys.getenv("USE_HTTPS")))
-    if(success){
-      unlink(saved_file)
-    }
-    if(!is.null(eml_file_name)){
-      success <- aws.s3::put_object(file = eml_file_name,
-                                    object = file.path(stringr::str_split_fixed(config$s3$forecasts$bucket, "/", n = 2)[2], config$location$site_id, basename(eml_file_name)),
-                                    bucket = stringr::str_split_fixed(config$s3$forecasts$bucket, "/", n = 2)[1],
-                                    region = stringr::str_split_fixed(config$s3$forecasts$endpoint, pattern = "\\.", n = 2)[1],
-                                    base_url = stringr::str_split_fixed(config$s3$forecasts$endpoint, pattern = "\\.", n = 2)[2],
-                                    use_https = as.logical(Sys.getenv("USE_HTTPS")))
-      if(success){
-        unlink(eml_file_name)
-      }
-    }
-  }
-}
-
-#' Upload score to s3 bucket
-#'
-#' @param score_file full path of saved FLARE netcdf
-#' @param config flare configuration object
-#' @noRd
-#' @return
-#' @export
-#'
-put_score <- function(saved_file, config){
-  if(config$run_config$use_s3){
-    success <- aws.s3::put_object(file = saved_file,
-                                  object = file.path(stringr::str_split_fixed(config$s3$scores$bucket, "/", n = 2)[2], config$location$site_id, basename(saved_file)),
-                                  bucket = stringr::str_split_fixed(config$s3$scores$bucket, "/", n = 2)[1],
-                                  region = stringr::str_split_fixed(config$s3$scores$endpoint, pattern = "\\.", n = 2)[1],
-                                  base_url = stringr::str_split_fixed(config$s3$scores$endpoint, pattern = "\\.", n = 2)[2],
+                                  object = file.path(stringr::str_split_fixed(config$s3$restart$bucket, "/", n = 2)[2], config$location$site_id, config$run_config$sim_name, basename(saved_file)),
+                                  bucket = stringr::str_split_fixed(config$s3$restart$bucket, "/", n = 2)[1],
+                                  region = stringr::str_split_fixed(config$s3$restart$endpoint, pattern = "\\.", n = 2)[1],
+                                  base_url = stringr::str_split_fixed(config$s3$restart$endpoint, pattern = "\\.", n = 2)[2],
                                   use_https = as.logical(Sys.getenv("USE_HTTPS")))
     if(success){
       unlink(saved_file)
@@ -427,31 +310,7 @@ put_score <- function(saved_file, config){
   }
 }
 
-#' Upload forecast csv to s3 bucket
-#'
-#' @param score_file full path of saved FLARE netcdf
-#' @param config flare configuration object
-#' @noRd
-#' @return
-#' @export
-#'
-
-put_forecast_csv <- function(saved_file, config){
-  if(config$run_config$use_s3){
-    success <- aws.s3::put_object(file = saved_file,
-                                  object = file.path(stringr::str_split_fixed(config$s3$forecasts_csv$bucket, "/", n = 2)[2], config$location$site_id, basename(saved_file)),
-                                  bucket = stringr::str_split_fixed(config$s3$forecasts_csv$bucket, "/", n = 2)[1],
-                                  region = stringr::str_split_fixed(config$s3$forecasts_csv$endpoint, pattern = "\\.", n = 2)[1],
-                                  base_url = stringr::str_split_fixed(config$s3$forecasts_csv$endpoint, pattern = "\\.", n = 2)[2],
-                                  use_https = as.logical(Sys.getenv("USE_HTTPS")))
-    if(success){
-      unlink(saved_file)
-    }
-  }
-}
-
-
-#' Download file from s3 bucket
+#' @title Download file from s3 bucket
 #'
 #' @param lake_directory full path to repository directory
 #' @param bucket name of s3 bucket
@@ -459,9 +318,7 @@ put_forecast_csv <- function(saved_file, config){
 #' @param region S3 region
 #' @param base_url S3 endpoint
 #' @noRd
-#' @return
-#' @export
-#'
+#' @keywords internal
 download_s3_objects <- function(lake_directory, bucket, prefix, region, base_url){
 
   files <- aws.s3::get_bucket(bucket = bucket,
@@ -486,12 +343,12 @@ download_s3_objects <- function(lake_directory, bucket, prefix, region, base_url
 
 #' Delete restart file on s3 bucket
 #'
-#' @param site four letter code for site
+#' @param site_id four letter code for site
 #' @param sim_name name of simulation
+#' @param bucket s3 bucket
 #' @param endpoint S3 endpoint
 #'
-#' @return
-#' @export
+#' @keywords internal
 #'
 delete_restart <- function(site_id, sim_name, bucket = "restart", endpoint){
   files <- aws.s3::get_bucket(bucket = stringr::str_split_fixed(bucket, "/", n = 2)[1],
@@ -517,8 +374,8 @@ delete_restart <- function(site_id, sim_name, bucket = "restart", endpoint){
 #'
 #' @param lake_directory full path to repository directory
 #' @noRd
-#' @return
-#' @export
+#' @return list of configuration values
+#' @keywords internal
 #'
 initialize_obs_processing <- function(lake_directory, observation_yml = NA, config_set_name = "default"){
 
@@ -543,66 +400,33 @@ initialize_obs_processing <- function(lake_directory, observation_yml = NA, conf
   return(config_obs)
 }
 
-#' Check if NOAA forecast is on s3 bucket
-#'
-#' @param lake_directory full path to repository directory
-#' @param configure_run_file file name (no path) of run configuration file
-#' @param config_set_name FLARE configuration object (needed for s3 buckets and endpoit)
-#'
-#' @return logical
-#'
-#' @noRd
-#'
-#'
-check_noaa_present <- function(lake_directory, configure_run_file = "configure_run.yml", config_set_name = "default"){
-
-  config <- set_configuration(configure_run_file,lake_directory, config_set_name = config_set_name)
-
-  noaa_forecast_path <- get_driver_forecast_path(config,
-                                                 forecast_model = config$met$forecast_met_model)
-
-  if(config$run_config$forecast_horizon > 0 & !is.null(noaa_forecast_path)){
-    noaa_files <- aws.s3::get_bucket(bucket = stringr::str_split_fixed(config$s3$drivers$bucket, "/", n = 2)[1],
-                                     prefix = file.path(stringr::str_split_fixed(config$s3$drivers$bucket, "/", n = 2)[2], noaa_forecast_path),
-                                     region = stringr::str_split_fixed(config$s3$drivers$endpoint, pattern = "\\.", n = 2)[1],
-                                     base_url = stringr::str_split_fixed(config$s3$drivers$endpoint, pattern = "\\.", n = 2)[2],
-                                     use_https = as.logical(Sys.getenv("USE_HTTPS")))
-    noaa_forecast_path <- file.path(lake_directory,"drivers", noaa_forecast_path)
-    keys <- vapply(noaa_files, `[[`, "", "Key", USE.NAMES = FALSE)
-    empty <- grepl("/$", keys)
-    forecast_files <- keys[!empty]
-    noaa_forecasts_ready <- FALSE
-  }else{
-    forecast_files <- NULL
-    noaa_forecasts_ready <- TRUE
-  }
-
-  if(length(forecast_files) == 31 | length(forecast_files) == 21){
-    noaa_forecasts_ready <- TRUE
-  }else{
-    if(config$run_config$forecast_horizon > 0){
-      message(paste0("waiting for NOAA forecast: ", config$run_config$forecast_start_datetime))
-    }
-  }
-  return(noaa_forecasts_ready)
-
-}
-
 #' Check if NOAA forecasts have been downloaded and processed
 #'
 #' @param lake_directory four-letter code for site
 #' @param configure_run_file name of simulation
 #' @param config_set_name FLARE configuration object (needed for s3 buckets and endpoit)
 #'
-#' @return
+#' @return logical
 #' @export
+#' @examplesIf interactive()
 #'
+#' dir <- normalizePath(tempdir(),  winslash = "/")
+#' lake_directory <- file.path(dir, "extdata")
+#' # Copy files to temporarly directory
+#' dir.create(dir,showWarnings = FALSE)
+#' file.copy(system.file("extdata", package = "FLAREr"),
+#'           tempdir(),
+#'           recursive = TRUE)
+#'
+#' check_noaa_present(lake_directory,
+#'                    configure_run_file = "configure_run.yml",
+#'                    config_set_name = "default")
 
-check_noaa_present_arrow <- function(lake_directory, configure_run_file = "configure_run.yml", config_set_name = "default"){
+check_noaa_present <- function(lake_directory, configure_run_file = "configure_run.yml", config_set_name = "default"){
 
-  config <- set_configuration(configure_run_file,lake_directory, config_set_name = config_set_name)
+  config <- set_up_simulation(configure_run_file, lake_directory, config_set_name = config_set_name)
 
-  if(config$run_config$forecast_horizon > 0 & config$met$use_forecasted_met){
+  if(config$run_config$forecast_horizon > 0 & config$met$future_met_model == 'gefs-v12/stage2'){
 
     met_start_datetime <- lubridate::as_datetime(config$run_config$start_datetime)
     met_forecast_start_datetime <- lubridate::as_datetime(config$run_config$forecast_start_datetime)
@@ -622,22 +446,22 @@ check_noaa_present_arrow <- function(lake_directory, configure_run_file = "confi
 
     vars <- arrow_env_vars()
 
-    forecast_dir <- arrow::s3_bucket(bucket = file.path(config$s3$drivers$bucket,  "stage2"),
+    forecast_dir <- arrow::s3_bucket(bucket = file.path(config$s3$drivers$bucket,  config$met$future_met_model),
                                          endpoint_override =  config$s3$drivers$endpoint, anonymous = TRUE)
     avail_dates <- gsub("reference_datetime=", "", forecast_dir$ls())
 
     unset_arrow_vars(vars)
 
     if(forecast_date %in% lubridate::as_date(avail_dates)){
-        avial_horizons <- arrow::open_dataset(forecast_dir$path(paste0("reference_datetime=",as.character(forecast_date)))) %>%
+        avial_horizons <- arrow::open_dataset(forecast_dir$path(paste0("reference_datetime=",as.character(forecast_date)))) |>
           filter(variable == "air_temperature",
-                 site_id == site) %>%
-          collect() %>%
-          mutate(horizon = as.numeric(datetime - lubridate::as_datetime(forecast_date)) / (60 * 60)) %>%
-          group_by(parameter) %>%
-          summarize(max_horizon = max(horizon)) %>%
-          ungroup() %>%
-          mutate(over = ifelse(max_horizon >= forecast_horizon * 24, 1, 0)) %>%
+                 site_id == site) |>
+          collect() |>
+          mutate(horizon = as.numeric(datetime - lubridate::as_datetime(forecast_date)) / (60 * 60)) |>
+          group_by(parameter) |>
+          summarize(max_horizon = max(horizon)) |>
+          ungroup() |>
+          mutate(over = ifelse(max_horizon >= forecast_horizon * 24, 1, 0)) |>
           summarize(sum = sum(over))
 
           if(avial_horizons$sum == 31){
@@ -665,8 +489,8 @@ check_noaa_present_arrow <- function(lake_directory, configure_run_file = "confi
 #' @param site_id four letter code for site
 #' @param sim_name name of simulation
 #' @param config FLARE configuration object (needed for s3 buckets and endpoit)
+#' @keywords internal
 #'
-#' @export
 #'
 delete_sim <- function(site_id, sim_name, config){
 
@@ -695,10 +519,10 @@ delete_sim <- function(site_id, sim_name, config){
 
     #forecasts
     message("deleting forecast files")
-    files <- aws.s3::get_bucket(bucket = stringr::str_split_fixed(config$s3$forecasts$bucket, "/", n = 2)[1],
-                                prefix = file.path(stringr::str_split_fixed(config$s3$forecasts$bucket, "/", n = 2)[2], site_id),
-                                region = stringr::str_split_fixed(config$s3$forecasts$endpoint, pattern = "\\.", n = 2)[1],
-                                base_url = stringr::str_split_fixed(config$s3$forecasts$endpoint, pattern = "\\.", n = 2)[2],
+    files <- aws.s3::get_bucket(bucket = stringr::str_split_fixed(config$s3$restart$bucket, "/", n = 2)[1],
+                                prefix = file.path(stringr::str_split_fixed(config$s3$restart$bucket, "/", n = 2)[2], site_id),
+                                region = stringr::str_split_fixed(config$s3$restart$endpoint, pattern = "\\.", n = 2)[1],
+                                base_url = stringr::str_split_fixed(config$s3$restart$endpoint, pattern = "\\.", n = 2)[2],
                                 use_https = as.logical(Sys.getenv("USE_HTTPS")))
     keys <- vapply(files, `[[`, "", "Key", USE.NAMES = FALSE)
     empty <- grepl("/$", keys)
@@ -707,18 +531,18 @@ delete_sim <- function(site_id, sim_name, config){
     if(length(keys > 0)){
       for(i in 1:length(keys)){
         aws.s3::delete_object(object = keys[i],
-                              bucket = stringr::str_split_fixed(config$s3$forecasts$bucket, "/", n = 2)[1],
-                              region = stringr::str_split_fixed(config$s3$forecasts$endpoint, pattern = "\\.", n = 2)[1],
-                              base_url = stringr::str_split_fixed(config$s3$forecasts$endpoint, pattern = "\\.", n = 2)[2],
+                              bucket = stringr::str_split_fixed(config$s3$restart$bucket, "/", n = 2)[1],
+                              region = stringr::str_split_fixed(config$s3$restart$endpoint, pattern = "\\.", n = 2)[1],
+                              base_url = stringr::str_split_fixed(config$s3$restart$endpoint, pattern = "\\.", n = 2)[2],
                               use_https = as.logical(Sys.getenv("USE_HTTPS")))
       }
     }
 
     message("deleting restart files")
-    files <- aws.s3::get_bucket(bucket = stringr::str_split_fixed(config$s3$warm_start$bucket, "/", n = 2)[1],
-                                prefix = file.path(stringr::str_split_fixed(config$s3$warm_start$bucket, "/", n = 2)[2], site_id, sim_name),
-                                region = stringr::str_split_fixed(config$s3$warm_start$endpoint, pattern = "\\.", n = 2)[1],
-                                base_url = stringr::str_split_fixed(config$s3$warm_start$endpoint, pattern = "\\.", n = 2)[2],
+    files <- aws.s3::get_bucket(bucket = stringr::str_split_fixed(config$s3$restart$bucket, "/", n = 2)[1],
+                                prefix = file.path(stringr::str_split_fixed(config$s3$restart$bucket, "/", n = 2)[2], site_id, sim_name),
+                                region = stringr::str_split_fixed(config$s3$restart$endpoint, pattern = "\\.", n = 2)[1],
+                                base_url = stringr::str_split_fixed(config$s3$restart$endpoint, pattern = "\\.", n = 2)[2],
                                 use_https = as.logical(Sys.getenv("USE_HTTPS")))
     keys <- vapply(files, `[[`, "", "Key", USE.NAMES = FALSE)
     empty <- grepl("/$", keys)
@@ -726,9 +550,9 @@ delete_sim <- function(site_id, sim_name, config){
     if(length(keys > 0)){
       for(i in 1:length(keys)){
         aws.s3::delete_object(object = keys[i],
-                              bucket = stringr::str_split_fixed(config$s3$warm_start$bucket, "/", n = 2)[1],
-                              region = stringr::str_split_fixed(config$s3$warm_start$endpoint, pattern = "\\.", n = 2)[1],
-                              base_url = stringr::str_split_fixed(config$s3$warm_start$endpoint, pattern = "\\.", n = 2)[2],
+                              bucket = stringr::str_split_fixed(config$s3$restart$bucket, "/", n = 2)[1],
+                              region = stringr::str_split_fixed(config$s3$restart$endpoint, pattern = "\\.", n = 2)[1],
+                              base_url = stringr::str_split_fixed(config$s3$restart$endpoint, pattern = "\\.", n = 2)[2],
                               use_https = as.logical(Sys.getenv("USE_HTTPS")))
       }
     }

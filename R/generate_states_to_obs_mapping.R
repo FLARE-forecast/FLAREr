@@ -3,13 +3,9 @@
 ##' @param states_config list; list of state configurations
 ##' @param obs_config list; list of observation configurations
 ##' @return updated states_config list
-##' @export
 ##' @importFrom stringr str_detect
 ##' @author Quinn Thomas
-##' @examples
-##' \dontrun{
-##' states_config <- generate_states_to_obs_mapping(states_config, obs_config)
-##' }
+##' @keywords internal
 
 generate_states_to_obs_mapping <- function(states_config, obs_config){
 

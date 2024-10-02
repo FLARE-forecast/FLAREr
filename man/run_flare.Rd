@@ -8,7 +8,7 @@ run_flare(
   lake_directory,
   configure_run_file,
   config_set_name,
-  use_depth_secchi = FALSE
+  clean_start = FALSE
 )
 }
 \arguments{
@@ -17,6 +17,8 @@ run_flare(
 \item{configure_run_file}{flare configuration object}
 
 \item{config_set_name}{directory within configuration/workflow with run configuration files}
+
+\item{clean_start}{logical: TRUE = reset run configuration with the file in the configuration directory within repository}
 }
 \value{
 the full path to save netcdf file that is used to restart following forecast
@@ -26,4 +28,35 @@ Run FLARE for a single forecast
 }
 \details{
 Combines functions necessary to do a complete execution of FLARE
+}
+\examples{
+\dontshow{if (interactive()) (if (getRversion() >= "3.4") withAutoprint else force)(\{ # examplesIf}
+#Load and install dependencies
+library(dplyr)
+library(ggplot2)
+library(readr)
+library(lubridate)
+remotes::install_github("rqthomas/GLM3r")
+Sys.setenv('GLM_PATH'='GLM3r')
+
+dir <- normalizePath(tempdir(),  winslash = "/")
+lake_directory <- file.path(dir, "extdata")
+#Copy files to temporarly directory
+dir.create(dir,showWarnings = FALSE)
+file.copy(system.file("extdata", package = "FLAREr"),
+          tempdir(),
+          recursive = TRUE)
+run_flare(lake_directory = lake_directory,
+          configure_run_file = "configure_run.yml",
+          config_set_name = "default")
+open_dataset(file.path(lake_directory,"forecasts/parquet")) |>
+  filter(variable == "temperature",
+        depth == 1) |>
+ collect() |>
+ ggplot(aes(x = datetime, y = prediction, group = parameter)) +
+ geom_line() +
+ geom_vline(aes(xintercept = as_datetime(reference_datetime))) +
+ labs(title = "1 m water temperature forecast")
+
+\dontshow{\}) # examplesIf}
 }

@@ -10,16 +10,29 @@ create_obs_non_vertical(
   start_datetime,
   end_datetime,
   forecast_start_datetime,
-  forecast_horizon,
-  secchi_sd = 0.5,
-  depth_sd = 0.1
+  forecast_horizon
 )
 }
 \arguments{
-\item{obs_config}{description}
+\item{cleaned_observations_file_long}{string; file name (with full path) of the long-format observation file}
 
-\item{depth_sd}{}
+\item{obs_config}{string; file name (with full path) of the long-format observation file}
+
+\item{start_datetime}{first datetime of the simulation}
+
+\item{end_datetime}{last datetime of the simulation}
+
+\item{forecast_start_datetime}{datetime that a forecast starts}
+
+\item{forecast_horizon}{number of days forecasted}
+}
+\value{
+list of secchi and depth observations for use in FLAREs
 }
 \description{
 Process observation for variables that don't have depth
 }
+\details{
+Process observation for variables that don't have depth
+}
+\keyword{internal}

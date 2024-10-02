@@ -7,12 +7,15 @@
 delete_restart(site_id, sim_name, bucket = "restart", endpoint)
 }
 \arguments{
+\item{site_id}{four letter code for site}
+
 \item{sim_name}{name of simulation}
 
-\item{endpoint}{S3 endpoint}
+\item{bucket}{s3 bucket}
 
-\item{site}{four letter code for site}
+\item{endpoint}{S3 endpoint}
 }
 \description{
 Delete restart file on s3 bucket
 }
+\keyword{internal}

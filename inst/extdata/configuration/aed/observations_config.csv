@@ -1,0 +1,12 @@
+state_names_obs,obs_units,obs_sd,target_variable, multi_depth
+temp,degC,0.5,temperature,1
+salt,g_kg,10,salt,1
+OXY_oxy,mmol m-3,25,oxygen,1
+NIT_amm,mmol m-3,0.5,NH4,1
+NIT_nit,mmol m-3,0.05,NO3NO2,1
+PHS_frp,mmol m-3,0.05,SRP,1
+OGM_doc_total,mmol m-3,18.7,fdom,1
+PHY_TCHLA,ugL,2,chla,1
+depth,m,0.5,depth,0
+secchi, unitless,0.5, secchi,0
+

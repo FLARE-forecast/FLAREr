@@ -1,0 +1,245 @@
+---
+title: "FLAREr upgrade"
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{FLAREr upgrade}
+  %\VignetteEncoding{UTF-8}
+  %\VignetteEngine{knitr::rmarkdown}
+editor_options: 
+  markdown: 
+    wrap: 72
+---
+
+```{r, include = FALSE}
+knitr::opts_chunk$set(
+  collapse = TRUE,
+  comment = "#>",
+  echo = TRUE
+)
+```
+
+A guide to upgrading to FLAREr 3.0.0. 
+
+## configure_flare.yml
+
+`configure_flare.yml` is required to be located in your `{lake_directory}/configurations/{config_set_name}` directory.
+
+
+### da_setup:
+
+-   **localization_distance:** set to NA
+
+### model_settings:
+
+-   **max_model_layers:** set to 75
+
+-   **modeled_depths"** are now the depth with observations or the depths that you want in your output (e.g., the depths used in data assimilation)  GLM internal sets the depth (actually now heights) that are modeled.
+
+### met:
+
+Your historical met needs to be a model.  If you are using stage 3 NOAA then you just need to point the `historical_met_model` and `local_met_directory` to that.  If you were using observations as the historical met you need to create a "model" from the observations.  The model needs to a parameter and prediction column.  The number of ensemble members in the historical model needs to match the number in the future model.  Here is some example code for converting a gapfilled meteorology file to a "model".
+
+```
+met_ensemble <- 31
+hist_interp_met <- readr::read_csv(cleaned_met_file) |>
+  mutate(parameter = 1) |>
+  reframe(prediction = rnorm(met_ensemble, mean = observation, sd = 0),
+          parameter = 0:(met_ensemble-1),
+          .by = c(site_id, datetime, variable)) |> 
+ arrow::write_dataset(path = file.path(lake_directory, "drivers/met/historical/model_id=obs_interp/site_id=fcre"))         
+```
+
+-   **future_met_model:** path to met model used for forecast days
+    (relative to `s3$drivers$bucket` path or **local_met_directory**).  It defines the form of the path partitioning. For example `met/gefs-v12/stage2/reference_datetime={reference_date}/site_id={site_id}` provides the path with the the part in the brackets being updated within the FLARE run
+-   **historical_met_model:** path to met model used for historical days
+    (relative to `s3$drivers$bucket` path or **local_met_directory**).  It defines the form of the path partitioning. For example `met/gefs-v12/stage3/site_id={site_id}` provides the path with the the part in the brackets being updated within the FLARE run
+-   **forecast_lag_days:** number of days to look backward for a
+    forecast
+-   **use_ler_vars:** use LER standardized met names (`TRUE` or `FALSE`)
+-   **historical_met_use_s3:** access historical met data on s3 bucket (`TRUE` or `FALSE`)
+-   **future_met_use_s3:** access future met data on s3 bucket (`TRUE` or `FALSE`)
+-   **use_openmeteo:** use openmeteo for meterology inputs (`TRUE` or `FALSE`)
+-   **openmeteo_api:** the name of the openmeteo api to use (only used if `openmeteo = TRUE`); `seasonal`, `ensemble_forecast`,
+    `historical`, `climate`
+-   **openmeteo_model:** name of the openmeteo model to use ( (only used if `openmeteo = TRUE`)); see <https://open-meteo.com/en/docs> for
+    list of models
+-   **use_openmeteo_archive:** use a archived version of openmeteo on s3
+    rather than directly using the api.  (only used if `openmeteo = TRUE`)
+-   **local_met_directory:** directory where meteorology forecasts are
+    saved if not using s3 access. Relative to the lake_directory.
+
+### inflow:
+
+You inflow and outflows need to be separate models.  
+
+-   **include_inflow:** Include inflows in simulations (`TRUE` or
+    `FALSE`)
+-   **include_outflow:** Include outflows in simulations (`TRUE` or
+    `FALSE`)
+-   **future_inflow_model:** path to inflow model used for forecast days
+    (relative to `s3$inflow$bucket` path or **local_inflow_directory**). It defines the form of the path partitioning. For example `inflow/model_id=historical/reference_datetime={reference_date}/site_id={site_id}` provides the path with the the part in the brackets being updated within the FLARE run
+-   **historical_inflow_model:** path to inflow model used for
+    historical days (relative to `s3$inflow$bucket` path).  It defines the form of the path partitioning. For example `inflow/model_id=historical/site_id={site_id}` provides the path with the the part in the brackets being updated within the FLARE run.
+    **local_inflow_directory**)
+-   **local_inflow_directory:** directory where inflow forecasts are
+    saved if not using s3 access. Relative to the lake_directory.
+-   **future_outflow_model:** path to outflow model used for forecast
+    days (relative to `s3$outflow$bucket` path or
+    **local_outflow_directory**)
+-   **historical_outflow_model:** path to outflow model used for
+    historical days (relative to `s3$outflow$bucket` path or
+    **local_outflow_directory**)
+-   **local_outflow_directory:** directory where outflow forecasts are
+    saved if not using s3 access. Relative to the lake_directory.
+
+### uncertainty:
+
+
+-   **inflow:** change name of variable from inflow_process
+
+### output_settings:
+
+-   **generate_plots**: generate diagnostic plots (`TRUE` or `FALSE`)
+
+remove `score_past` and `
+
+### s3
+
+This section now has `inflow_drivers` and `outflow_drivers`.
+-   **drivers:**
+    -   **endpoint:** s3 endpoint of met drivers
+    -   **bucket:** s3 bucket of met drivers
+-   **inflow_drivers:**
+    -   **endpoint:** s3 endpoint of inflow drivers
+    -   **bucket:** s3 bucket of inflow drivers
+-   **outflow_drivers:**
+    -   **endpoint:** s3 endpoint of outflow drivers
+    -   **bucket:** s3 bucket of outflow drivers
+
+Change
+
+-   **warm_start:**
+    -   **endpoint:** s3 endpoint of restart files
+    -   **bucket:** s3 bucket of restart files
+to
+
+-   **restart:**
+    -   **endpoint:** s3 endpoint of restart files
+    -   **bucket:** s3 bucket of restart files
+
+## parameter_calibration_config.csv
+
+Remove the column `inflat_par` from `parameter_calibration_config.csv`
+
+Add 
+
+-   **fix_par**: 0 = fit parameter, 1 = hold parameter at **par_init**
+
+## states_config.csv
+
+No change to `states_config.csv` 
+
+### depth_model_sd.csv:
+
+No change to `depth_model_sd.csv` .
+
+## observations_config.csv
+
+Add the following column to `observations_config.csv`
+
+-   **multi_depth:** 1 = observation has multiple depths, 0 =
+    observation does not have a depth associated with it.
+    
+Remove the column `distance_theshold`
+    
+## GLM3.nml
+
+Add the following variable to the `&init_profiles` section
+
+```
+restart_mixer_count = 0
+```
+
+Change the following variables in the `init_profiles` section to:
+
+`the_depth` to `the_heights`
+
+`num_depths` to `num_heights`
+
+Change the following variables in the `glm_setup` section to:
+
+```
+min_layer_vol = 0.025
+min_layer_thick = 0.2
+max_layer_thick = 0.8
+```
+
+## Other changes
+
+The scoring part of `FLAREr` has been removed.  You will need to add it in to your workflow script and install `remotes::install_github("eco4cast/score4cast")`  The code was:
+
+
+```
+generate_forecast_score_arrow <- function(targets_file,
+                                          forecast_df,
+                                          use_s3 = FALSE,
+                                          bucket = NULL,
+                                          endpoint = NULL,
+                                          local_directory = NULL,
+                                          variable_types = "state"){
+
+
+  if(use_s3){
+    output_directory <- arrow::s3_bucket(bucket = bucket,
+                                         endpoint_override =  endpoint)
+  }else{
+    output_directory <- arrow::SubTreeFileSystem$create(local_directory)
+  }
+  target <- readr::read_csv(targets_file, show_col_types = FALSE)
+
+  df <- forecast_df |>
+    dplyr::filter(variable_type %in% variable_types) |>
+    dplyr::mutate(family = as.character(family)) |>
+    score4cast::crps_logs_score(target, extra_groups = c('depth')) |>
+    dplyr::mutate(horizon = datetime-lubridate::as_datetime(reference_datetime)) |>
+    dplyr::mutate(horizon = as.numeric(lubridate::as.duration(horizon),
+                                units = "seconds"),
+           horizon = horizon / 86400)
+
+  df <- df |> dplyr::mutate(reference_date = lubridate::as_date(reference_datetime))
+
+  arrow::write_dataset(df, path = output_directory, partitioning = c("site_id","model_id","reference_date"))
+
+}
+```
+
+## Other changes
+
+The package does not depend on the `GLM3r` package anymore.  There are multiple options for getting a GLM binary.  The easiest is to install GLM3r from github (the README has more information about getting the GLM binary)
+
+```
+remotes::install_github("rqthomas/GLM3r")
+```
+
+you are require to set an environment variable in your workflow script that calls `run_flare`.
+
+```
+Sys.setenv('GLM_PATH'='GLM3r')
+```
+
+The `update_run_config2` function has been replaced by the `update_run_config` function
+
+The `check_noaa_present_arrow` function has been replaced by the `check_noaa_present` function
+
+The `set_configuration` function has been replaced by the `set_up_simulation` function
+
+Other `FLAREr` functions now require `:::` because they are not exported by the package.
+
+The forecast parquet output has `pub_datetime` rather than `pub_date` and it has a new column `log_weight`
+
+Plots saved in the plots subdirectory
+
+Netcdf restart files are saved in the restart directory
+
+
+  

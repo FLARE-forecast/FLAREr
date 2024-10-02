@@ -10,4 +10,7 @@ utils::globalVariables(c(".n", "AirTemp", "FLOW", "LongWave", "Rain", "RelHum", 
                          "reference_datetime", "relative_humidity", "rnorm", "runif", "saved_file",
                          "sd", "set_nml", "site_id", "str_split_fixed", "surface_downwelling_longwave_flux_in_air",
                          "surface_downwelling_shortwave_flux_in_air", "time", "time_precision",
-                         "variable", "variable_type", "wind_speed", "write.csv"))
+                         "variable", "variable_type", "wind_speed", "write.csv",
+                         "lake_directory","multi_depth", "set_names", "force_tz", "as_vector", "pub_datetime", "log_weight", "reference_date",
+                         "na.omit", "max_datetime", "reference_date", "reference_date", "obs_config", "multi_depth",
+                         "secchi_index", "working_directory"))
