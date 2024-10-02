@@ -38,24 +38,15 @@ test_that("open-meteo met files are generated", {
 
   file.copy(system.file("extdata", package = "FLAREr"), dir, recursive = TRUE)
 
-  run_config <- yaml::read_yaml(file.path(lake_directory, "configuration", config_set_name, configure_run_file))
-  run_config$start_datetime <- lubridate::as_datetime(Sys.Date()) - lubridate::days(5)
-  run_config$forecast_start_datetime <- lubridate::as_datetime(Sys.Date())
-  yaml::write_yaml(run_config, file.path(lake_directory, "configuration", config_set_name, configure_run_file))
-
-  config <- FLAREr:::set_up_simulation(configure_run_file, lake_directory, config_set_name = config_set_name)
-  config <- FLAREr:::get_restart_file(config, lake_directory)
+  config <- FLAREr::set_up_simulation(configure_run_file, lake_directory, config_set_name = config_set_name, clean_start = TRUE)
   pars_config <- readr::read_csv(file.path(config$file_path$configuration_directory, config$model_settings$par_config_file), col_types = readr::cols())
   obs_config <- readr::read_csv(file.path(config$file_path$configuration_directory, config$model_settings$obs_config_file), col_types = readr::cols())
   states_config <- readr::read_csv(file.path(config$file_path$configuration_directory, config$model_settings$states_config_file), col_types = readr::cols())
 
-  met_start_datetime <- lubridate::as_datetime(config$run_config$start_datetime)
-  met_forecast_start_datetime <- lubridate::as_datetime(config$run_config$forecast_start_datetime)
-
   met_out <- FLAREr:::create_met_files_openmet(out_dir = config$file_path$execute_directory,
-                                               start_datetime = met_start_datetime,
+                                               start_datetime = lubridate::as_datetime(Sys.Date()) - lubridate::days(5),
                                                end_datetime = config$run_config$end_datetime,
-                                               forecast_start_datetime = met_forecast_start_datetime,
+                                               forecast_start_datetime = lubridate::as_datetime(Sys.Date()),
                                                forecast_horizon =  config$run_config$forecast_horizon,
                                                latitude = config$location$latitude,
                                                longitude = config$location$longitude,
