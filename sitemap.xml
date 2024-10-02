@@ -1,114 +1,39 @@
-<?xml version="1.0" encoding="UTF-8"?>
-<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
-  <url>
-    <loc>http://flare-forecast.org/FLAREr/404.html</loc>
-  </url>
-  <url>
-    <loc>http://flare-forecast.org/FLAREr/LICENSE-text.html</loc>
-  </url>
-  <url>
-    <loc>http://flare-forecast.org/FLAREr/articles/flare-config-vignette.html</loc>
-  </url>
-  <url>
-    <loc>http://flare-forecast.org/FLAREr/articles/flare-drivers-vignette.html</loc>
-  </url>
-  <url>
-    <loc>http://flare-forecast.org/FLAREr/articles/flare-example-vignette.html</loc>
-  </url>
-  <url>
-    <loc>http://flare-forecast.org/FLAREr/articles/flare-workflow-vignette.html</loc>
-  </url>
-  <url>
-    <loc>http://flare-forecast.org/FLAREr/articles/index.html</loc>
-  </url>
-  <url>
-    <loc>http://flare-forecast.org/FLAREr/authors.html</loc>
-  </url>
-  <url>
-    <loc>http://flare-forecast.org/FLAREr/index.html</loc>
-  </url>
-  <url>
-    <loc>http://flare-forecast.org/FLAREr/news/index.html</loc>
-  </url>
-  <url>
-    <loc>http://flare-forecast.org/FLAREr/reference/check_noaa_present_arrow.html</loc>
-  </url>
-  <url>
-    <loc>http://flare-forecast.org/FLAREr/reference/create_inflow_outflow_files_arrow.html</loc>
-  </url>
-  <url>
-    <loc>http://flare-forecast.org/FLAREr/reference/create_obs_matrix.html</loc>
-  </url>
-  <url>
-    <loc>http://flare-forecast.org/FLAREr/reference/delete_restart.html</loc>
-  </url>
-  <url>
-    <loc>http://flare-forecast.org/FLAREr/reference/delete_sim.html</loc>
-  </url>
-  <url>
-    <loc>http://flare-forecast.org/FLAREr/reference/generate_forecast_score_arrow.html</loc>
-  </url>
-  <url>
-    <loc>http://flare-forecast.org/FLAREr/reference/generate_initial_conditions.html</loc>
-  </url>
-  <url>
-    <loc>http://flare-forecast.org/FLAREr/reference/generate_met_files_arrow.html</loc>
-  </url>
-  <url>
-    <loc>http://flare-forecast.org/FLAREr/reference/generate_states_to_obs_mapping.html</loc>
-  </url>
-  <url>
-    <loc>http://flare-forecast.org/FLAREr/reference/get_driver_forecast_path.html</loc>
-  </url>
-  <url>
-    <loc>http://flare-forecast.org/FLAREr/reference/get_edi_file.html</loc>
-  </url>
-  <url>
-    <loc>http://flare-forecast.org/FLAREr/reference/get_git_repo.html</loc>
-  </url>
-  <url>
-    <loc>http://flare-forecast.org/FLAREr/reference/get_restart_file.html</loc>
-  </url>
-  <url>
-    <loc>http://flare-forecast.org/FLAREr/reference/get_run_config.html</loc>
-  </url>
-  <url>
-    <loc>http://flare-forecast.org/FLAREr/reference/get_targets.html</loc>
-  </url>
-  <url>
-    <loc>http://flare-forecast.org/FLAREr/reference/ignore_sigpipe.html</loc>
-  </url>
-  <url>
-    <loc>http://flare-forecast.org/FLAREr/reference/index.html</loc>
-  </url>
-  <url>
-    <loc>http://flare-forecast.org/FLAREr/reference/initiate_model_error.html</loc>
-  </url>
-  <url>
-    <loc>http://flare-forecast.org/FLAREr/reference/plotting_general_2.html</loc>
-  </url>
-  <url>
-    <loc>http://flare-forecast.org/FLAREr/reference/put_forecast.html</loc>
-  </url>
-  <url>
-    <loc>http://flare-forecast.org/FLAREr/reference/put_targets.html</loc>
-  </url>
-  <url>
-    <loc>http://flare-forecast.org/FLAREr/reference/run_da_forecast.html</loc>
-  </url>
-  <url>
-    <loc>http://flare-forecast.org/FLAREr/reference/run_flare.html</loc>
-  </url>
-  <url>
-    <loc>http://flare-forecast.org/FLAREr/reference/set_configuration.html</loc>
-  </url>
-  <url>
-    <loc>http://flare-forecast.org/FLAREr/reference/update_run_config2.html</loc>
-  </url>
-  <url>
-    <loc>http://flare-forecast.org/FLAREr/reference/write_forecast_arrow.html</loc>
-  </url>
-  <url>
-    <loc>http://flare-forecast.org/FLAREr/reference/write_forecast_netcdf.html</loc>
-  </url>
+<urlset xmlns = 'http://www.sitemaps.org/schemas/sitemap/0.9'>
+<url><loc>http://flare-forecast.org/FLAREr/404.html</loc></url>
+<url><loc>http://flare-forecast.org/FLAREr/LICENSE-text.html</loc></url>
+<url><loc>http://flare-forecast.org/FLAREr/LICENSE.html</loc></url>
+<url><loc>http://flare-forecast.org/FLAREr/articles/flare-config-vignette.html</loc></url>
+<url><loc>http://flare-forecast.org/FLAREr/articles/flare-example-vignette.html</loc></url>
+<url><loc>http://flare-forecast.org/FLAREr/articles/flare-upgrade-vignette.html</loc></url>
+<url><loc>http://flare-forecast.org/FLAREr/articles/index.html</loc></url>
+<url><loc>http://flare-forecast.org/FLAREr/authors.html</loc></url>
+<url><loc>http://flare-forecast.org/FLAREr/index.html</loc></url>
+<url><loc>http://flare-forecast.org/FLAREr/news/index.html</loc></url>
+<url><loc>http://flare-forecast.org/FLAREr/reference/check_noaa_present.html</loc></url>
+<url><loc>http://flare-forecast.org/FLAREr/reference/create_inflow_outflow_files.html</loc></url>
+<url><loc>http://flare-forecast.org/FLAREr/reference/create_met_files.html</loc></url>
+<url><loc>http://flare-forecast.org/FLAREr/reference/create_met_files_openmet.html</loc></url>
+<url><loc>http://flare-forecast.org/FLAREr/reference/create_obs_matrix.html</loc></url>
+<url><loc>http://flare-forecast.org/FLAREr/reference/create_obs_non_vertical.html</loc></url>
+<url><loc>http://flare-forecast.org/FLAREr/reference/delete_restart.html</loc></url>
+<url><loc>http://flare-forecast.org/FLAREr/reference/delete_sim.html</loc></url>
+<url><loc>http://flare-forecast.org/FLAREr/reference/generate_initial_conditions.html</loc></url>
+<url><loc>http://flare-forecast.org/FLAREr/reference/generate_states_to_obs_mapping.html</loc></url>
+<url><loc>http://flare-forecast.org/FLAREr/reference/get_driver_forecast_path.html</loc></url>
+<url><loc>http://flare-forecast.org/FLAREr/reference/get_git_repo.html</loc></url>
+<url><loc>http://flare-forecast.org/FLAREr/reference/get_restart_file.html</loc></url>
+<url><loc>http://flare-forecast.org/FLAREr/reference/get_run_config.html</loc></url>
+<url><loc>http://flare-forecast.org/FLAREr/reference/get_targets.html</loc></url>
+<url><loc>http://flare-forecast.org/FLAREr/reference/index.html</loc></url>
+<url><loc>http://flare-forecast.org/FLAREr/reference/initiate_model_error.html</loc></url>
+<url><loc>http://flare-forecast.org/FLAREr/reference/plotting_general.html</loc></url>
+<url><loc>http://flare-forecast.org/FLAREr/reference/put_restart_file.html</loc></url>
+<url><loc>http://flare-forecast.org/FLAREr/reference/put_targets.html</loc></url>
+<url><loc>http://flare-forecast.org/FLAREr/reference/run_da_forecast.html</loc></url>
+<url><loc>http://flare-forecast.org/FLAREr/reference/run_flare.html</loc></url>
+<url><loc>http://flare-forecast.org/FLAREr/reference/set_up_simulation.html</loc></url>
+<url><loc>http://flare-forecast.org/FLAREr/reference/update_run_config.html</loc></url>
+<url><loc>http://flare-forecast.org/FLAREr/reference/write_forecast.html</loc></url>
+<url><loc>http://flare-forecast.org/FLAREr/reference/write_restart.html</loc></url>
 </urlset>
+
