@@ -110,15 +110,18 @@ create_flow_files <- function(flow_forecast_dir = NULL,
   if (!is.null(future_s3)) {
     future_df <- dplyr::collect(arrow::open_dataset(future_s3)) |>
       filter(datetime >= forecast_start_datetime,
-             datetime <= end_datetime)
+             datetime <= end_datetime) |>
+      dplyr::distinct()
   } else {
     future_df <- NULL # No future data
   }
 
   if (!is.null(hist_s3)) {
     hist_df <- dplyr::collect(arrow::open_dataset(hist_s3)) |>
-      filter(datetime < forecast_start_datetime,
-             datetime >= start_datetime)
+      dplyr::filter(datetime < forecast_start_datetime,
+             datetime >= start_datetime) |>
+      dplyr::distinct()
+
 
     if(!("parameter" %in% colnames(hist_df))){
       hist_df <- hist_df |> mutate(parameter = 1)
@@ -136,7 +139,9 @@ create_flow_files <- function(flow_forecast_dir = NULL,
 
   if (!is.null(future_df) & !is.null(hist_df)) { # when there is historical and future data
     if (!setequal(unique(future_df$flow_number), unique(hist_df$flow_number))) { # Checks the data are consistent across the periods (same number of flows)
-      stop('need the same number of flows in historical and future periods')
+        print(tail(future_df))
+        print(tail(hist_df))
+            stop('need the same number of flows in historical and future periods')
     } else {
       num_flows <- max(future_df$flow_number)
     }

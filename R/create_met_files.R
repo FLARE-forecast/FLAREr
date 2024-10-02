@@ -109,6 +109,7 @@ create_met_files <- function(config, lake_directory, met_forecast_start_datetime
       dplyr::select(datetime, parameter,variable,prediction) |>
       dplyr::collect() |>
       dplyr::filter(datetime %in% lubridate::as_datetime(full_time_hist)) |>
+      dplyr::distinct() |>
       tidyr::pivot_wider(names_from = variable, values_from = prediction) |>
       dplyr::arrange(parameter, datetime)
 
@@ -220,6 +221,7 @@ create_met_files <- function(config, lake_directory, met_forecast_start_datetime
     })
 
     forecast <- forecast |>
+      dplyr::distinct() |>
       tidyr::pivot_wider(names_from = variable, values_from = prediction) |>
       dplyr::arrange(parameter, datetime)
 
