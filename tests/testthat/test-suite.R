@@ -31,6 +31,7 @@ test_that("open-meteo met files are generated", {
   skip_if_offline()
 
   dir <-  file.path(normalizePath(tempdir(),  winslash = "/"))
+  install.packages("ropenmeteo", repos = "https://cloud.r-project.org")
   lake_directory <- file.path(dir, "extdata")
   configure_run_file <- "configure_run.yml"
   config_set_name <- "default"
@@ -377,9 +378,6 @@ test_that("open meteo run works", {
   obs_config <- readr::read_csv(file.path(config$file_path$configuration_directory, config$model_settings$obs_config_file), col_types = readr::cols())
   states_config <- readr::read_csv(file.path(config$file_path$configuration_directory, config$model_settings$states_config_file), col_types = readr::cols())
 
-
-  met_start_datetime <- lubridate::as_datetime(config$run_config$start_datetime)
-  met_forecast_start_datetime <- lubridate::as_datetime(config$run_config$forecast_start_datetime)
   next_restart <- FLAREr::run_flare(lake_directory = lake_directory, configure_run_file = configure_run_file, config_set_name = config_set_name)
 
   testthat::expect_true(file.exists(file.path(lake_directory, "forecasts/parquet/site_id=fcre/model_id=test_pf/reference_date=2022-10-02/part-0.parquet")))
