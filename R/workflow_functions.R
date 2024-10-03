@@ -426,6 +426,7 @@ check_noaa_present <- function(lake_directory, configure_run_file = "configure_r
 
   config <- set_up_simulation(configure_run_file, lake_directory, config_set_name = config_set_name)
 
+  noaa_forecasts_ready <- TRUE
   if(config$run_config$forecast_horizon > 0){
 
     met_start_datetime <- lubridate::as_datetime(config$run_config$start_datetime)
@@ -439,42 +440,35 @@ check_noaa_present <- function(lake_directory, configure_run_file = "configure_r
       }
     }
 
-    forecast_date <- lubridate::as_date(met_forecast_start_datetime)
+    reference_date <- lubridate::as_date(met_forecast_start_datetime)# - lubridate::days(1)
     forecast_hour <- lubridate::hour(met_forecast_start_datetime)
-    site <- config$location$site_id
+    site_id <- config$location$site_id
     forecast_horizon <- config$run_config$forecast_horizon
 
-    vars <- arrow_env_vars()
 
-    forecast_dir <- arrow::s3_bucket(bucket = file.path(config$s3$drivers$bucket,  config$met$future_met_model),
-                                         endpoint_override =  config$s3$drivers$endpoint, anonymous = TRUE)
-    avail_dates <- gsub("reference_datetime=", "", forecast_dir$ls())
+    forecast_dir <- arrow::s3_bucket(bucket = glue::glue(config$s3$drivers$bucket, "/", config$met$future_met_model),
+                                     endpoint_override =  config$s3$drivers$endpoint, anonymous = TRUE)
 
-    unset_arrow_vars(vars)
+    check_date <- function(forecast_dir){
 
-    if(forecast_date %in% lubridate::as_date(avail_dates)){
-        avial_horizons <- arrow::open_dataset(forecast_dir$path(paste0("reference_datetime=",as.character(forecast_date)))) |>
-          filter(variable == "air_temperature",
-                 site_id == site) |>
-          collect() |>
-          mutate(horizon = as.numeric(datetime - lubridate::as_datetime(forecast_date)) / (60 * 60)) |>
-          group_by(parameter) |>
-          summarize(max_horizon = max(horizon)) |>
-          ungroup() |>
-          mutate(over = ifelse(max_horizon >= forecast_horizon * 24, 1, 0)) |>
-          summarize(sum = sum(over))
-
-          if(avial_horizons$sum == 31){
-            noaa_forecasts_ready <- TRUE
-          }else{
-            noaa_forecasts_ready <- FALSE
-          }
-      }else{
-        noaa_forecasts_ready <- FALSE
-      }
-    }else{
-      noaa_forecasts_ready <- TRUE
+      tryCatch(
+        # This is what I want to do...
+        {
+          forecast_dir$ls()
+          return(TRUE)
+        },
+        # ... but if an error occurs, tell me what happened:
+        error=function(error_message) {
+          message("NOAA Forecast is not avialable.")
+          message("And below is the error message from R:")
+          message(error_message)
+          return(FALSE)
+        })
     }
+
+    noaa_forecasts_ready <- check_date(forecast_dir)
+
+  }
 
   if(!noaa_forecasts_ready){
     message(paste0("waiting for NOAA forecast: ", config$run_config$forecast_start_datetime))
