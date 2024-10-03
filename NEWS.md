@@ -10,3 +10,8 @@
 * Flexible paths for directory and partitioning of driver files.  Uses `glue::glue` to create path from internal variables.
 * Capacity to save subdaily statistics (like max temperature at a depth or mean co2 flux)
 
+# FLAREr 3.0.1
+
+* Fix bug in `check_noaa_ready()` that assumed a specific value for `future_met_model`
+* Fixes to testing suite
+
