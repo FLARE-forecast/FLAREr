@@ -426,7 +426,7 @@ check_noaa_present <- function(lake_directory, configure_run_file = "configure_r
 
   config <- set_up_simulation(configure_run_file, lake_directory, config_set_name = config_set_name)
 
-  if(config$run_config$forecast_horizon > 0 & config$met$future_met_model == 'gefs-v12/stage2'){
+  if(config$run_config$forecast_horizon > 0){
 
     met_start_datetime <- lubridate::as_datetime(config$run_config$start_datetime)
     met_forecast_start_datetime <- lubridate::as_datetime(config$run_config$forecast_start_datetime)
