@@ -158,11 +158,8 @@ plotting_general <- function(forecast_df,
 
   for (var in diagnostic_variables){
 
-
-
     diagnostic_target_depths <- combined_df |>
-      filter(variable %in% state_depth_variables,
-             !is.na(depth)) |>
+      filter(variable %in% diagnostic_variables) |>
       distinct(depth) |>
       pull(depth)
 

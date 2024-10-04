@@ -15,3 +15,7 @@
 * Fix bug in `check_noaa_ready()` that assumed a specific value for `future_met_model`
 * Fixes to testing suite
 
+# FLAREr 3.0.2
+
+* Fixed bug associated with the daily diagnostics where the depths defaulted to a logical if all depth values were NA
+* Fixed bug associated with plotting daily diagnostics
