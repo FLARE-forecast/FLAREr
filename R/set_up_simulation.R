@@ -46,7 +46,7 @@ set_up_simulation <- function(configure_run_file = "configure_run.yml", lake_dir
   dir.create(config$file_path$plots_directory, recursive = TRUE, showWarnings = FALSE)
 
   if(!is.null(config$output_settings$diagnostics_daily$depth)){
-    config$output_settings$diagnostics_daily$depth <- as.numeric(d$output_settings$diagnostics_daily$depth)
+    config$output_settings$diagnostics_daily$depth <- as.numeric(config$output_settings$diagnostics_daily$depth)
   }
 
   run_config <- get_run_config(configure_run_file, lake_directory, config, clean_start, config_set_name = config_set_name, sim_name = sim_name)
