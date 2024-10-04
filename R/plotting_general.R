@@ -174,6 +174,8 @@ plotting_general <- function(forecast_df,
     diagnostic_plot <- combined_df |>
       filter(variable == var,
              depth %in% diagnostic_target_depths) |>
+      mutate(depth = as.character(depth),
+             depth = ifelse(is.na(depth), "no depth", depth))
       ggplot(aes(x = datetime)) +
       geom_line(aes(y = prediction, group = parameter), color = "gray") +
       geom_line(data = single_ensemble, aes(x = datetime, y = prediction, group = parameter)) +
