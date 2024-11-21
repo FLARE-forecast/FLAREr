@@ -38,6 +38,8 @@ create_flow_files <- function(flow_forecast_dir = NULL,
 
   lake_name_code <- site_id
 
+  round_level <- 10
+
   # set locations of flow drivers (s3 or local)
   if (!is.null(flow_forecast_dir) & !is.null(flow_historical_dir)) {
     if (use_s3) {
@@ -173,7 +175,7 @@ create_flow_files <- function(flow_forecast_dir = NULL,
           tidyr::pivot_wider(names_from = variable, values_from = prediction) |>
           dplyr::rename(time = datetime) |>
           dplyr::select(dplyr::all_of(variables)) |>
-          dplyr::mutate_if(where(is.numeric), list(~round(., 4)))
+          dplyr::mutate_if(where(is.numeric), list(~round(., round_level)))
 
         # generate the historical period
         hist_ens <- hist_df |>
@@ -184,7 +186,7 @@ create_flow_files <- function(flow_forecast_dir = NULL,
           tidyr::pivot_wider(names_from = variable, values_from = prediction) |>
           dplyr::rename(time = datetime) |>
           dplyr::select(dplyr::all_of(variables)) |>
-          dplyr::mutate_if(where(is.numeric), list(~round(., 4)))
+          dplyr::mutate_if(where(is.numeric), list(~round(., round_level)))
 
         # combine to single df
         flow <- dplyr::bind_rows(hist_ens,
@@ -235,7 +237,7 @@ create_flow_files <- function(flow_forecast_dir = NULL,
           tidyr::pivot_wider(names_from = variable, values_from = prediction) |>
           dplyr::rename(time = datetime) |>
           dplyr::select(dplyr::all_of(variables)) |>
-          dplyr::mutate_if(where(is.numeric), list(~round(., 4)))
+          dplyr::mutate_if(where(is.numeric), list(~round(., round_level)))
 
 
         flow <- hist_ens |>
@@ -282,7 +284,7 @@ create_flow_files <- function(flow_forecast_dir = NULL,
           tidyr::pivot_wider(names_from = variable, values_from = prediction) |>
           dplyr::rename(time = datetime) |>
           dplyr::select(dplyr::all_of(variables)) |>
-          dplyr::mutate_if(where(is.numeric), list(~round(., 4)))
+          dplyr::mutate_if(where(is.numeric), list(~round(., round_level)))
 
 
         flow <- future_ens |>
