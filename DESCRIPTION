@@ -45,7 +45,9 @@ Imports:
     ggplot2,
     tibble,
     arrow,
-    glue
+    glue,
+    FaaSr,
+    mockery
 Suggests: 
     knitr,
     rmarkdown,

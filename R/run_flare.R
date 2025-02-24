@@ -45,16 +45,14 @@ run_flare <- function(lake_directory,
                       config_set_name,
                       clean_start = FALSE){
 
-
   if(!dir.exists(file.path(lake_directory, "configuration", config_set_name))){
     stop(paste0("lake_directory is missing the configuration/",config_set_name," directory"))
   }
 
   config <- set_up_simulation(configure_run_file, lake_directory, clean_start = clean_start, config_set_name = config_set_name)
-
   config <- get_restart_file(config, lake_directory)
 
-  message(paste0("     Running forecast that starts on: ", config$run_config$start_datetime))
+  message(paste0("Running forecast that starts on: ", config$run_config$start_datetime))
 
   if(!is.null(config$model_settings$par_config_file)){
     if(!is.na(config$model_settings$par_config_file)){
@@ -105,7 +103,8 @@ run_flare <- function(lake_directory,
                                           model = config$met$openmeteo_model,
                                           use_archive = config$met$use_openmeteo_archive,
                                           bucket = config$s3$drivers$bucket,
-                                          endpoint = config$s3$drivers$endpoint)
+                                          endpoint = config$s3$drivers$endpoint,
+                                        config= config)
   }else{
 
     met_out <- create_met_files(config, lake_directory, met_forecast_start_datetime, met_start_datetime)
@@ -173,12 +172,14 @@ run_flare <- function(lake_directory,
                                               forecast_output_directory = config$file_path$restart_directory,
                                               use_short_filename = TRUE)
 
-  message("Writing forecast")
+  message("writing forecast")
+
+
   forecast_df <- write_forecast(da_forecast_output = da_forecast_output,
                                               use_s3 = config$run_config$use_s3,
                                               bucket = config$s3$forecasts_parquet$bucket,
                                               endpoint = config$s3$forecasts_parquet$endpoint,
-                                              local_directory = file.path(lake_directory, "forecasts/parquet"))
+                                              local_directory = file.path(lake_directory, "forecasts/parquet"),config)
 
   rm(da_forecast_output)
   gc()
