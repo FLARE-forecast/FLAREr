@@ -41,8 +41,7 @@ create_inflow_outflow_files  <- function(config, config_set_name, lake_directory
 
     # Historical flow?
     if (config$run_config$start_datetime == config$run_config$forecast_start_datetime) {
-      
-      message("datetimes are equal")
+
       # the model directories for historical flows (before forecast_start_datetime)
       inflow_historical_dir <- NULL
 
@@ -58,11 +57,11 @@ create_inflow_outflow_files  <- function(config, config_set_name, lake_directory
 
     # do we need future flow?
     if (config$run_config$forecast_horizon > 0) {
-      
+
       if (is.null(config$flows$future_inflow_model) | is.null(config$flows$future_outflow_model)) {
         stop("Need future flow model(s) when horizon > 0")
       }
-      
+
       reference_date <- lubridate::as_date(config$run_config$forecast_start_datetime)
       inflow_forecast_dir <- glue::glue(config$flows$future_inflow_model)
 
@@ -133,7 +132,7 @@ create_inflow_outflow_files  <- function(config, config_set_name, lake_directory
       if (is.null(config$flows$future_inflow_model)) {
         stop("Need future flow model(s) when horizon > 0")
       }
-      
+
       #check about this one's correctness
       reference_date <- lubridate::as_date(config$run_config$forecast_start_datetime)
 
@@ -176,7 +175,7 @@ create_inflow_outflow_files  <- function(config, config_set_name, lake_directory
     } else {
       # the model directories for historical flows (before forecast_start_datetime)
       outflow_historical_dir <- glue::glue(config$flows$historical_outflow_model)
-      
+
 
     }
 
@@ -194,7 +193,7 @@ create_inflow_outflow_files  <- function(config, config_set_name, lake_directory
     } else {
       outflow_forecast_dir <- NULL
     }
-    
+
 
     # Generate inflow/outflow files
     inflow_outflow_files <- purrr::pmap(list(flow_forecast_dir = list(NULL, outflow_forecast_dir),
