@@ -46,8 +46,7 @@ Imports:
     tibble,
     arrow,
     glue,
-    FaaSr,
-    mockery
+    FaaSr
 Suggests: 
     knitr,
     rmarkdown,
