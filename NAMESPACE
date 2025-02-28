@@ -2,6 +2,7 @@
 
 export(check_noaa_present)
 export(get_run_config)
+export(initialize_faasr)
 export(run_flare)
 export(set_up_simulation)
 export(update_run_config)
