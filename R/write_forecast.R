@@ -15,9 +15,11 @@ write_forecast <- function(da_forecast_output,
                                  use_s3 = FALSE,
                                  bucket = NULL,
                                  endpoint = NULL,
-                                 local_directory = NULL,config){
+                                 local_directory = NULL,config = NULL){
 
-  .faasr <- config$faasr
+  if(!is.null(config) && !is.null(config$faasr)) {
+    .faasr <<- config$faasr
+  }
 
   if(use_s3){
     if(is.null(bucket) | is.null(endpoint)){
