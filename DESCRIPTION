@@ -45,7 +45,8 @@ Imports:
     ggplot2,
     tibble,
     arrow,
-    glue
+    glue,
+    FaaSr
 Suggests: 
     knitr,
     rmarkdown,

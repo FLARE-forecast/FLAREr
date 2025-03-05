@@ -19,6 +19,7 @@ update_run_config(
   use_s3,
   bucket,
   endpoint,
+  config,
   use_https = TRUE
 )
 }
