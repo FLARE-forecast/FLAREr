@@ -33,6 +33,7 @@ get_run_config <- function(configure_run_file = "configure_run.yml", lake_direct
     }
   }else if(config$run_config$use_s3 & !clean_start){
 
+
     .faasr <<- config$faasr
     server_name <- "restart"
     remote_folder <- file.path(stringr::str_split_fixed(config$s3$restart$bucket, "/", n = 2)[2], config$location$site_id, sim_name)
@@ -118,10 +119,13 @@ get_git_repo <- function(lake_directory, directory, git_repo){
 #' @param config list of FLARE configurations
 #' @keywords internal
 #'
-put_targets <- function(site_id, cleaned_insitu_file = NA, cleaned_met_file = NA, cleaned_inflow_file = NA, use_s3 = FALSE, config){
+put_targets <- function(site_id, cleaned_insitu_file = NA, cleaned_met_file = NA, cleaned_inflow_file = NA, use_s3 = FALSE, config=NULL){
 
   if(use_s3){
-    .faasr <<- config$faasr
+
+    if(!is.null(config) && !is.null(config$faasr)) {
+      .faasr <<- config$faasr
+    }
     if(!is.na(cleaned_insitu_file)){
 
       # aws.s3::put_object(file = cleaned_insitu_file,
@@ -198,10 +202,12 @@ put_targets <- function(site_id, cleaned_insitu_file = NA, cleaned_met_file = NA
 #' @param config flare configuration object
 #' @keywords internal
 #'
-get_targets <- function(lake_directory, config){
+get_targets <- function(lake_directory, config=NULL){
   if(config$run_config$use_s3){
 
-    .faasr <- config$faasr
+    if(!is.null(config) && !is.null(config$faasr)) {
+      .faasr <<- config$faasr
+    }
 
     download_s3_objects(lake_directory,
                         bucket = stringr::str_split_fixed(config$s3$targets$bucket, "/", n = 2)[1],
@@ -539,9 +545,11 @@ download_s3_objects <- function(lake_directory, bucket, prefix, region, base_url
 #'
 #' @keywords internal
 #'
-delete_restart <- function(site_id, sim_name, bucket = "restart", endpoint,config){
+delete_restart <- function(site_id, sim_name, bucket = "restart", endpoint,config=NULL){
 
-  .faasr <<- config$faasr
+  if(!is.null(config) && !is.null(config$faasr)) {
+    .faasr <<- config$faasr
+  }
   server_name <- "restart"
   prefix <- file.path(stringr::str_split_fixed(bucket, "/", n = 2)[2], site_id, sim_name)
 

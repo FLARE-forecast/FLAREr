@@ -29,9 +29,11 @@ create_met_files_openmet <- function(out_dir,
                                      use_archive = FALSE,
                                      bucket = NULL,
                                      endpoint = NULL,
-                                     config){
-  
-  .faasr <<- config$faasr
+                                     config = NULL){
+
+  if(!is.null(config) && !is.null(config$faasr)) {
+    .faasr <<- config$faasr
+  }
 
   if (!requireNamespace("ropenmeteo", quietly = TRUE)) {
     stop("Package ropenmeteo needed.")
@@ -48,14 +50,14 @@ create_met_files_openmet <- function(out_dir,
 
       if(is.null(bucket)) warning("missing s3 bucket for config$s3$drivers")
       if(is.null(endpoint)) warning("missing s3 endpoint for config$s3$drivers")
-      
+
       prefix <- file.path(stringr::str_split_fixed(bucket, "/", n = 2)[2],"seasonal_forecast","model_id=cfs",
                           paste0("reference_date=", lubridate::as_date(forecast_start_datetime)),
                           paste0("site_id=", site_id))
-      
+
       server_name <- "drivers"
       .faasr$DataStores$drivers$Anonymous <<- "TRUE"
-      
+
       s3 <- FaaSr::faasr_arrow_s3_bucket(server_name = server_name,faasr_prefix = prefix)
       .faasr$DataStores$drivers$Anonymous <<- ""
 
@@ -106,23 +108,23 @@ create_met_files_openmet <- function(out_dir,
     if(is.null(model)) model <- "gfs_seamless"
 
     if(use_archive){
-      
+
       prefix <- file.path(stringr::str_split_fixed(bucket, "/", n = 2)[2],"ensemble_forecast",paste0("model_id=",model),
                           paste0("reference_date=", lubridate::as_date(forecast_start_datetime)),
                           paste0("site_id=", site_id))
-      
-      
+
+
       # bucket <- file.path(bucket,
       #                     "ensemble_forecast",
       #                     paste0("model_id=",model),
       #                     paste0("reference_date=", lubridate::as_date(forecast_start_datetime)),
       #                     paste0("site_id=", site_id))
-    
-      
+
+
       server_name <- "drivers"
       .faasr$DataStores$drivers$Anonymous <<- "TRUE"
       #s3 <- arrow::s3_bucket(bucket = bucket, endpoint_override = endpoint, anonymous = TRUE)
-      
+
       s3 <- FaaSr::faasr_arrow_s3_bucket(server_name = "drivers",faasr_prefix = prefix)
       df <- arrow::open_dataset(s3) |>
         dplyr::collect() |>
@@ -152,15 +154,15 @@ create_met_files_openmet <- function(out_dir,
         pull("max_datetime")
 
       if(use_archive){
-        
+
         prefix <- file.path(stringr::str_split_fixed(bucket, "/", n = 2)[2],"ensemble_forecast",
                             paste0("model_id=gfs_seamless"),
                             paste0("reference_date=", lubridate::as_date(forecast_start_datetime)),
                             paste0("site_id=", site_id))
-        
+
         server_name <- "drivers"
         .faasr$DataStores$drivers$Anonymous <<- "TRUE"
-        
+
         s3 <- FaaSr::faasr_arrow_s3_bucket(server_name = "drivers",faasr_prefix = prefix)
         .faasr$DataStores$drivers$Anonymous <<- ""
 
@@ -169,8 +171,8 @@ create_met_files_openmet <- function(out_dir,
         #                     paste0("model_id=gfs_seamless"),
         #                     paste0("reference_date=", lubridate::as_date(forecast_start_datetime)),
         #                     paste0("site_id=", site_id))
-        
-        
+
+
 
        # s3 <- arrow::s3_bucket(bucket = bucket, endpoint_override = endpoint, anonymous = TRUE)
         shortwave_df <- arrow::open_dataset(s3) |>
