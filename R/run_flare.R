@@ -43,14 +43,16 @@
 run_flare <- function(lake_directory,
                       configure_run_file,
                       config_set_name,
-                      clean_start = FALSE){
+                      clean_start = FALSE,
+                      sim_name = NA){
 
 
   if(!dir.exists(file.path(lake_directory, "configuration", config_set_name))){
     stop(paste0("lake_directory is missing the configuration/",config_set_name," directory"))
   }
 
-  config <- set_up_simulation(configure_run_file, lake_directory, clean_start = clean_start, config_set_name = config_set_name)
+  config <- set_up_simulation(configure_run_file, lake_directory, clean_start = clean_start, config_set_name = config_set_name,
+                              sim_name = sim_name)
 
   config <- get_restart_file(config, lake_directory)
 
