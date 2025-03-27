@@ -6,6 +6,9 @@
 #' @param configure_run_file flare configuration object
 #' @param config_set_name directory within configuration/workflow with run configuration files
 #' @param clean_start logical: TRUE = reset run configuration with the file in the configuration directory within repository
+#' @param sim_name sim_name to use to run FLARE and find restart files. Deafult = NA (uses the sim_name from run_config)
+#' Set the sim_name here when multiple simulations are being run from the same config_set_name (e.g. scenario forecasting)
+#' rather than modifying the configuration/configure_run file each time
 #'
 #' @return the full path to save netcdf file that is used to restart following forecast
 #' @export
@@ -43,14 +46,16 @@
 run_flare <- function(lake_directory,
                       configure_run_file,
                       config_set_name,
-                      clean_start = FALSE){
+                      clean_start = FALSE,
+                      sim_name = NA){
 
 
   if(!dir.exists(file.path(lake_directory, "configuration", config_set_name))){
     stop(paste0("lake_directory is missing the configuration/",config_set_name," directory"))
   }
 
-  config <- set_up_simulation(configure_run_file, lake_directory, clean_start = clean_start, config_set_name = config_set_name)
+  config <- set_up_simulation(configure_run_file, lake_directory, clean_start = clean_start, config_set_name = config_set_name,
+                              sim_name = sim_name)
 
   config <- get_restart_file(config, lake_directory)
 
