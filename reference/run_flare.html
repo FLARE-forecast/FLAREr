@@ -47,7 +47,8 @@
 <span>  <span class="va">lake_directory</span>,</span>
 <span>  <span class="va">configure_run_file</span>,</span>
 <span>  <span class="va">config_set_name</span>,</span>
-<span>  clean_start <span class="op">=</span> <span class="cn">FALSE</span></span>
+<span>  clean_start <span class="op">=</span> <span class="cn">FALSE</span>,</span>
+<span>  sim_name <span class="op">=</span> <span class="cn">NA</span></span>
 <span><span class="op">)</span></span></code></pre></div>
     </div>
 
@@ -69,6 +70,12 @@
 
 <dt id="arg-clean-start">clean_start<a class="anchor" aria-label="anchor" href="#arg-clean-start"></a></dt>
 <dd><p>logical: TRUE = reset run configuration with the file in the configuration directory within repository</p></dd>
+
+
+<dt id="arg-sim-name">sim_name<a class="anchor" aria-label="anchor" href="#arg-sim-name"></a></dt>
+<dd><p>sim_name to use to run FLARE and find restart files. Deafult = NA (uses the sim_name from run_config)
+Set the sim_name here when multiple simulations are being run from the same config_set_name (e.g. scenario forecasting)
+rather than modifying the configuration/configure_run file each time</p></dd>
 
 </dl></div>
     <div class="section level2">
