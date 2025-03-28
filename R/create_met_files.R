@@ -113,6 +113,11 @@ create_met_files <- function(config, lake_directory, met_forecast_start_datetime
       tidyr::pivot_wider(names_from = variable, values_from = prediction) |>
       dplyr::arrange(parameter, datetime)
 
+    if(!config$uncertainty$weather){
+      hist_met <- hist_met |>
+        dplyr::filter(parameter == 1)
+    }
+
     if(!("wind_speed" %in% colnames(hist_met))){
       hist_met <- hist_met |>
         dplyr::mutate(WindSpeed = sqrt(eastward_wind^2 + northward_wind^2))
@@ -224,6 +229,11 @@ create_met_files <- function(config, lake_directory, met_forecast_start_datetime
       dplyr::distinct() |>
       tidyr::pivot_wider(names_from = variable, values_from = prediction) |>
       dplyr::arrange(parameter, datetime)
+
+    if(!config$uncertainty$weather){
+      forecast <- forecast |>
+        dplyr::filter(parameter == 1)
+    }
 
     if(!("wind_speed" %in% colnames(forecast))){
       forecast <- forecast |>
