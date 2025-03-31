@@ -63,6 +63,11 @@ get_glm_nc_var <- function(ncFile, working_dir, z_out, vars_depth, vars_no_depth
         if(!is.na(diagnostics_daily_config$depth[v])){
           time <- ncdf4::ncvar_get(glm_nc, "time" )
           var <- ncdf4::ncvar_get(glm_nc, diagnostics_daily_config$names[v])
+          if(length(time) == 0){
+            stop("You requested a diagnostics_daily_config from the output.nc but
+                 the nsave value in the base glm.nml only allows one output value
+                 per day (thus can't calculate a daily statistic). Decrease the nsave value")
+          }
           var2 <- rep(NA, length(time))
           for(t in 1:length(time)){
             max_height <- max(heights_all[1:tallest_layer_all[t], t])
