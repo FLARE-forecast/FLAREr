@@ -18,7 +18,7 @@ create_met_files_openmet(
   use_archive = FALSE,
   bucket = NULL,
   endpoint = NULL,
-  config
+  config = NULL
 )
 }
 \arguments{

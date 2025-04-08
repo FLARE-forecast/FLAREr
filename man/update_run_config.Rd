@@ -52,6 +52,8 @@ update_run_config(
 
 \item{endpoint}{s3 endpoint}
 
+\item{config}{Configuration object to be updated}
+
 \item{use_https}{TRUE/FALSE use https when using s3}
 }
 \description{

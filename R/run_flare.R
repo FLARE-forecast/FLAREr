@@ -38,8 +38,7 @@
 #'  geom_line() +
 #'  geom_vline(aes(xintercept = as_datetime(reference_datetime))) +
 #'  labs(title = "1 m water temperature forecast")
-#'
-#'
+
 run_flare <- function(lake_directory,
                       configure_run_file,
                       config_set_name,

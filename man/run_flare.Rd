@@ -57,6 +57,5 @@ open_dataset(file.path(lake_directory,"forecasts/parquet")) |>
  geom_line() +
  geom_vline(aes(xintercept = as_datetime(reference_datetime))) +
  labs(title = "1 m water temperature forecast")
-
 \dontshow{\}) # examplesIf}
 }
