@@ -39,7 +39,6 @@ Imports:
     future,
     purrr,
     zoo,
-    aws.s3,
     tidyr,
     tsibble,
     ggplot2,
