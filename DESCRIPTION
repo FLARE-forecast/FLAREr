@@ -40,13 +40,13 @@ Imports:
     future,
     purrr,
     zoo,
-    aws.s3,
     tidyr,
     tsibble,
     ggplot2,
     tibble,
     arrow,
-    glue
+    glue,
+    FaaSr
 Suggests: 
     knitr,
     rmarkdown,
