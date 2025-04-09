@@ -32,10 +32,6 @@ get_run_config <- function(configure_run_file = "configure_run.yml", lake_direct
     }
   }else if(config$run_config$use_s3 & !clean_start){
 
-    message("run config s3")
-    message(config$run_config$use_s3)
-
-
     server_name <- "restart"
     remote_folder <- file.path(stringr::str_split_fixed(config$s3$restart$bucket, "/", n = 2)[2], config$location$site_id, sim_name)
     remote_file <- configure_run_file
@@ -462,7 +458,7 @@ put_restart_file <- function(saved_file, config){
     })
 
     if(success){
-      message("success in putting restart file")
+      #message("success in putting restart file")
       unlink(saved_file)
     }
   }
