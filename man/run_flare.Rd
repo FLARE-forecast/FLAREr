@@ -8,7 +8,8 @@ run_flare(
   lake_directory,
   configure_run_file,
   config_set_name,
-  clean_start = FALSE
+  clean_start = FALSE,
+  sim_name = NA
 )
 }
 \arguments{
@@ -19,6 +20,10 @@ run_flare(
 \item{config_set_name}{directory within configuration/workflow with run configuration files}
 
 \item{clean_start}{logical: TRUE = reset run configuration with the file in the configuration directory within repository}
+
+\item{sim_name}{sim_name to use to run FLARE and find restart files. Deafult = NA (uses the sim_name from run_config)
+Set the sim_name here when multiple simulations are being run from the same config_set_name (e.g. scenario forecasting)
+rather than modifying the configuration/configure_run file each time}
 }
 \value{
 the full path to save netcdf file that is used to restart following forecast
