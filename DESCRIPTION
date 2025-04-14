@@ -53,6 +53,8 @@ Suggests:
     testthat (>= 3.0.0),
     remotes,
     ropenmeteo
+Remotes:
+    github::flare-forecast/ropenmeteo
 VignetteBuilder: knitr
 Config/testthat/edition: 3
 URL: http://flare-forecast.org/FLAREr/
