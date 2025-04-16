@@ -28,7 +28,7 @@
 #' )
 #' initialize_faasr(config)
 #' }
-#'
+#' @keywords internal
 #' @export
 initialize_faasr <- function(config) {
 
