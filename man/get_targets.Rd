@@ -4,7 +4,7 @@
 \alias{get_targets}
 \title{Download target data from s3}
 \usage{
-get_targets(lake_directory, config)
+get_targets(lake_directory, config = NULL)
 }
 \arguments{
 \item{lake_directory}{full path to the repository directory}
