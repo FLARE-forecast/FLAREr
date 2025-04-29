@@ -26,7 +26,8 @@ create_obs_matrix <- function(cleaned_observations_file_long,
 
 
   if(!is.null(cleaned_observations_file_long)){
-    d <- readr::read_csv(cleaned_observations_file_long, show_col_types = FALSE, guess_max = 1000000)
+    d <- readr::read_csv(cleaned_observations_file_long, show_col_types = FALSE, guess_max = 1000000) |>
+       mutate(datetime = lubridate::as_datetime(datetime))
 
      if(!("multi_depth" %in% names(obs_config))){
        obs_config <- obs_config |> dplyr::mutate(multi_depth = 1)
