@@ -38,6 +38,7 @@ create_obs_matrix <- function(cleaned_observations_file_long,
 
      df <- as_tibble(expand.grid(variable = obs_config$target_variable, datetime = full_time, depth = config$model_settings$modeled_depths)) |>
       dplyr::mutate(variable = as.character(variable),
+             datetime = lubridate::as_datetime(datetime),
              datetime = lubridate::force_tz(datetime, "UTC")) |>
       dplyr::left_join(d, by = dplyr::join_by(variable, datetime, depth))
 
