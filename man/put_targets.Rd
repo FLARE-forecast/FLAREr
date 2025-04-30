@@ -10,7 +10,7 @@ put_targets(
   cleaned_met_file = NA,
   cleaned_inflow_file = NA,
   use_s3 = FALSE,
-  config
+  config = NULL
 )
 }
 \arguments{

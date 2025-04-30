@@ -9,7 +9,8 @@ write_forecast(
   use_s3 = FALSE,
   bucket = NULL,
   endpoint = NULL,
-  local_directory = NULL
+  local_directory = NULL,
+  config = NULL
 )
 }
 \arguments{

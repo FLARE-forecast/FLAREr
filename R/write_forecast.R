@@ -15,8 +15,12 @@ write_forecast <- function(da_forecast_output,
                                  use_s3 = FALSE,
                                  bucket = NULL,
                                  endpoint = NULL,
-                                 local_directory = NULL){
+                                 local_directory = NULL,config = NULL){
 
+  if(!is.null(config) && !is.null(config$faasr)) {
+
+    faasr_config <- config$faasr
+  }
 
   if(use_s3){
     if(is.null(bucket) | is.null(endpoint)){
@@ -24,8 +28,12 @@ write_forecast <- function(da_forecast_output,
     }
 
     vars <- arrow_env_vars()
-    output_directory <- arrow::s3_bucket(bucket = bucket,
-                                         endpoint_override =  endpoint)
+    server_name <-  "forecasts_parquet"
+    prefix <- glue::glue(stringr::str_split_fixed(bucket, "/", n = 2)[2])
+
+    output_directory <- FaaSr::faasr_arrow_s3_bucket(server_name = server_name,faasr_prefix = prefix,faasr_config=faasr_config)
+    #output_directory <- arrow::s3_bucket(bucket = bucket,
+                                         #endpoint_override =  endpoint)
     on.exit(unset_arrow_vars(vars))
   }else{
     if(is.null(local_directory)){
@@ -256,10 +264,9 @@ write_forecast <- function(da_forecast_output,
   output_list <- output_list |>
     mutate(reference_date = lubridate::as_date(reference_datetime))
 
-  message("starting writing dataset")
   arrow::write_dataset(dataset = output_list,
                        path = output_directory,
                        partitioning = c("site_id", "model_id","reference_date"))
-  message("ending writing dataset")
+
   return(output_list)
 }
