@@ -44,7 +44,7 @@ initialize_faasr <- function(config) {
         AccessKey = Sys.getenv("AWS_ACCESS_KEY_ID"),
         SecretKey = Sys.getenv("AWS_SECRET_ACCESS_KEY"),
         Bucket = stringr::str_split_fixed(config$s3[[datastore_name]]$bucket, "/", n = 2)[1],
-        Region = stringr::str_split_fixed(endpoint_str, pattern = "\\.", n = 2)[2],
+        Region = stringr::str_split_fixed(endpoint_str, pattern = "\\.", n = 3)[2],
         Anonymous = "FALSE"
       )
 
