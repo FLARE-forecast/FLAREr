@@ -45,7 +45,7 @@ set_up_model <- function(config,
 
   if(!is.null(config$model_settings$base_AED_zoop_pars_nml)){
     file.copy(from = file.path(config$file_path$configuration_directory, config$model_settings$base_AED_zoop_pars_nml),
-              to = file.path(ens_working_directory, "aed2_zoop_pars.nml"), overwrite = TRUE)
+              to = file.path(ens_working_directory, "aed2_zoop_pars.csv"), overwrite = TRUE)
   }
 
   #update_var(length(config$modeled_depths), "num_depths", ens_working_directory, "glm3.nml") #GLM SPECIFIC

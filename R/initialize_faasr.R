@@ -1,3 +1,34 @@
+#' Initialize FaaSr configuration
+#'
+#' @description Creates a FaaSr configuration object with proper settings for
+#' data storage and S3 connections based on the provided configuration.
+#'
+#' @param config A list containing configuration settings, including S3 bucket information.
+#'               Should have elements `s3` (optional) and `run_config$use_s3`.
+#'
+#' @details This function initializes the global `.faasr` object with default data store
+#' settings and configures S3 connections based on the provided configuration. It sets up
+#' access keys, buckets, regions, and endpoints for each data store specified in the configuration.
+#' The function also provides warnings if AWS credentials are missing when S3 usage is enabled.
+#'
+#' @return Returns (invisibly) the created `.faasr` configuration object.
+#'
+#' @examples
+#' \dontrun{
+#' config <- list(
+#'   s3 = list(
+#'     forecast_output = list(
+#'       endpoint = "s3.us-east-1.amazonaws.com",
+#'       bucket = "my-forecast-bucket"
+#'     )
+#'   ),
+#'   run_config = list(
+#'     use_s3 = TRUE
+#'   )
+#' )
+#' initialize_faasr(config)
+#' }
+#' @keywords internal
 #' @export
 initialize_faasr <- function(config) {
 
@@ -13,7 +44,7 @@ initialize_faasr <- function(config) {
         AccessKey = Sys.getenv("AWS_ACCESS_KEY_ID"),
         SecretKey = Sys.getenv("AWS_SECRET_ACCESS_KEY"),
         Bucket = stringr::str_split_fixed(config$s3[[datastore_name]]$bucket, "/", n = 2)[1],
-        Region = stringr::str_split_fixed(endpoint_str, pattern = "\\.", n = 2)[1],
+        Region = stringr::str_split_fixed(endpoint_str, pattern = "\\.", n = 3)[2],
         Anonymous = "FALSE"
       )
 

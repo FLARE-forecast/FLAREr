@@ -32,7 +32,7 @@ create_met_files_openmet <- function(out_dir,
                                      config = NULL){
 
   if(!is.null(config) && !is.null(config$faasr)) {
-    .faasr <<- config$faasr
+    faasr_config <- config$faasr
   }
 
   if (!requireNamespace("ropenmeteo", quietly = TRUE)) {
@@ -56,10 +56,10 @@ create_met_files_openmet <- function(out_dir,
                           paste0("site_id=", site_id))
 
       server_name <- "drivers"
-      .faasr$DataStores$drivers$Anonymous <<- "TRUE"
+      config$faasr$DataStores$drivers$Anonymous <- "TRUE"
 
-      s3 <- FaaSr::faasr_arrow_s3_bucket(server_name = server_name,faasr_prefix = prefix)
-      .faasr$DataStores$drivers$Anonymous <<- ""
+      s3 <- FaaSr::faasr_arrow_s3_bucket(server_name = server_name,faasr_prefix = prefix,faasr_config=config$faasr)
+      config$faasr$DataStores$drivers$Anonymous <- ""
 
       # bucket <- file.path(bucket,
       #                     "seasonal_forecast",
@@ -122,10 +122,10 @@ create_met_files_openmet <- function(out_dir,
 
 
       server_name <- "drivers"
-      .faasr$DataStores$drivers$Anonymous <<- "TRUE"
+      config$faasr$DataStores$drivers$Anonymous <- "TRUE"
       #s3 <- arrow::s3_bucket(bucket = bucket, endpoint_override = endpoint, anonymous = TRUE)
 
-      s3 <- FaaSr::faasr_arrow_s3_bucket(server_name = "drivers",faasr_prefix = prefix)
+      s3 <- FaaSr::faasr_arrow_s3_bucket(server_name = "drivers",faasr_prefix = prefix,faasr_config=config$faasr)
       df <- arrow::open_dataset(s3) |>
         dplyr::collect() |>
         mutate(model_id = model,
@@ -161,10 +161,10 @@ create_met_files_openmet <- function(out_dir,
                             paste0("site_id=", site_id))
 
         server_name <- "drivers"
-        .faasr$DataStores$drivers$Anonymous <<- "TRUE"
+        config$faasr$DataStores$drivers$Anonymous <- "TRUE"
 
-        s3 <- FaaSr::faasr_arrow_s3_bucket(server_name = "drivers",faasr_prefix = prefix)
-        .faasr$DataStores$drivers$Anonymous <<- ""
+        s3 <- FaaSr::faasr_arrow_s3_bucket(server_name = "drivers",faasr_prefix = prefix,faasr_config=config$faasr)
+        config$faasr$DataStores$drivers$Anonymous <- ""
 
         # bucket <- file.path(bucket,
         #                     "ensemble_forecast",

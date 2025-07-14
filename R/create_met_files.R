@@ -25,7 +25,6 @@ create_met_files <- function(config, lake_directory, met_forecast_start_datetime
 
   start_datetime <- lubridate::as_datetime(met_start_datetime)
 
-  .faasr <<- config$faasr
   if(is.na(met_forecast_start_datetime)){
     end_datetime <- lubridate::as_datetime(config$run_config$end_datetime) #- lubridate::hours(1)
     forecast_start_datetime <- end_datetime
@@ -55,7 +54,7 @@ create_met_files <- function(config, lake_directory, met_forecast_start_datetime
       reference_date <- forecast_date
       prefix <- glue::glue(stringr::str_split_fixed(bucket, "/", n = 2)[2],"/",config$met$future_met_model)
       server_name <- "drivers"
-      forecast_dir <- FaaSr::faasr_arrow_s3_bucket(server_name = server_name, faasr_prefix = prefix)
+      forecast_dir <- FaaSr::faasr_arrow_s3_bucket(server_name = server_name, faasr_prefix = prefix,faasr_config=config$faasr)
 
       #forecast_dir <- arrow::s3_bucket(bucket = glue::glue(bucket, "/", config$met$future_met_model),
                                        #endpoint_override =  endpoint, anonymous = FALSE)
@@ -84,7 +83,7 @@ create_met_files <- function(config, lake_directory, met_forecast_start_datetime
       server_name = "drivers"
       prefix = glue::glue(stringr::str_split_fixed(bucket, "/", n = 2)[2], "/",
                           config$met$historical_met_model)
-    past_dir <- FaaSr::faasr_arrow_s3_bucket(server_name = server_name, faasr_prefix = prefix)
+    past_dir <- FaaSr::faasr_arrow_s3_bucket(server_name = server_name, faasr_prefix = prefix,faasr_config=config$faasr)
 
     # #past_dir <- arrow::s3_bucket(bucket =  glue::glue(bucket, "/",
     #                                                     config$met$historical_met_model),

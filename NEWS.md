@@ -19,3 +19,7 @@
 
 * Fixed bug associated with the daily diagnostics where the depths defaulted to a logical if all depth values were NA
 * Fixed bug associated with plotting daily diagnostics
+
+# FLAREr 3.0.2
+
+* Added sim_name option to `run_flare()` to support scenario based forecasting workflows.

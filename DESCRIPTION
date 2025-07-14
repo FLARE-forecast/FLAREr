@@ -1,6 +1,6 @@
 Package: FLAREr
 Title: Forecasting Lake and Reservoir Ecosystems in R
-Version: 3.0.2
+Version: 3.0.3
 Authors@R: 
     c(person(given = "R. Quinn",
            family = "Thomas",
@@ -25,6 +25,7 @@ Encoding: UTF-8
 LazyData: true
 Roxygen: list(markdown = TRUE)
 RoxygenNote: 7.3.2
+Depends: R (>= 4.1.0)
 Imports:
     ncdf4,
     dplyr,
@@ -39,7 +40,6 @@ Imports:
     future,
     purrr,
     zoo,
-    aws.s3,
     tidyr,
     tsibble,
     ggplot2,
@@ -53,6 +53,8 @@ Suggests:
     testthat (>= 3.0.0),
     remotes,
     ropenmeteo
+Remotes:
+    github::flare-forecast/ropenmeteo
 VignetteBuilder: knitr
 Config/testthat/edition: 3
 URL: http://flare-forecast.org/FLAREr/

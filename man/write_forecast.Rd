@@ -10,7 +10,7 @@ write_forecast(
   bucket = NULL,
   endpoint = NULL,
   local_directory = NULL,
-  config
+  config = NULL
 )
 }
 \arguments{

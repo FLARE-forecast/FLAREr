@@ -18,7 +18,8 @@ write_forecast <- function(da_forecast_output,
                                  local_directory = NULL,config = NULL){
 
   if(!is.null(config) && !is.null(config$faasr)) {
-    .faasr <<- config$faasr
+
+    faasr_config <- config$faasr
   }
 
   if(use_s3){
@@ -27,10 +28,10 @@ write_forecast <- function(da_forecast_output,
     }
 
     vars <- arrow_env_vars()
-    server_name <<-  "forecasts_parquet"
+    server_name <-  "forecasts_parquet"
     prefix <- glue::glue(stringr::str_split_fixed(bucket, "/", n = 2)[2])
 
-    output_directory <- FaaSr::faasr_arrow_s3_bucket(server_name = server_name,faasr_prefix = prefix)
+    output_directory <- FaaSr::faasr_arrow_s3_bucket(server_name = server_name,faasr_prefix = prefix,faasr_config=faasr_config)
     #output_directory <- arrow::s3_bucket(bucket = bucket,
                                          #endpoint_override =  endpoint)
     on.exit(unset_arrow_vars(vars))
