@@ -65,11 +65,11 @@ create_flow_files <- function(flow_forecast_dir = NULL,
       future_s3 <- FaaSr::faasr_arrow_s3_bucket(server_name = server_name,faasr_prefix = prefix,faasr_config=config$faasr)
 
       #future_s3 <- arrow::s3_bucket(bucket = file.path(bucket, flow_forecast_dir),
-                                    #endpoint_override = endpoint)
+      #endpoint_override = endpoint)
       prefix <- file.path(stringr::str_split_fixed(bucket, "/", n = 2)[2],flow_historical_dir)
       hist_s3 <- FaaSr::faasr_arrow_s3_bucket(server_name = server_name,faasr_prefix = prefix,faasr_config=config$faasr)
       #hist_s3 <- arrow::s3_bucket(bucket = file.path(bucket,flow_historical_dir),
-                                  #endpoint_override = endpoint)
+      #endpoint_override = endpoint)
       unset_arrow_vars(vars)
     } else {
       if (is.null(local_directory)) {
@@ -148,7 +148,7 @@ create_flow_files <- function(flow_forecast_dir = NULL,
   if (!is.null(hist_s3)) {
     hist_df <- dplyr::collect(arrow::open_dataset(hist_s3)) |>
       dplyr::filter(datetime < forecast_start_datetime,
-             datetime >= start_datetime) |>
+                    datetime >= start_datetime) |>
       dplyr::distinct()
 
 
@@ -168,9 +168,9 @@ create_flow_files <- function(flow_forecast_dir = NULL,
 
   if (!is.null(future_df) & !is.null(hist_df)) { # when there is historical and future data
     if (!setequal(unique(future_df$flow_number), unique(hist_df$flow_number))) { # Checks the data are consistent across the periods (same number of flows)
-        print(tail(future_df))
-        print(tail(hist_df))
-            stop('need the same number of flows in historical and future periods')
+      print(tail(future_df))
+      print(tail(hist_df))
+      stop('need the same number of flows in historical and future periods')
     } else {
       num_flows <- max(future_df$flow_number)
     }
@@ -212,6 +212,12 @@ create_flow_files <- function(flow_forecast_dir = NULL,
                         datetime < lubridate::as_date(forecast_start_datetime)) |>
           tidyr::pivot_wider(names_from = variable, values_from = prediction) |>
           dplyr::rename(time = datetime) |>
+          dplyr::mutate(PHY_cyano_IN = 0,
+                        PHY_green_IN = 0,
+                        PHY_diatom_IN = 0,
+                        PHY_cyano_IP = 0,
+                        PHY_green_IP = 0,
+                        PHY_diatom_IP = 0) |>
           dplyr::select(dplyr::all_of(variables)) |>
           dplyr::mutate_if(where(is.numeric), list(~round(., round_level)))
 
@@ -263,6 +269,12 @@ create_flow_files <- function(flow_forecast_dir = NULL,
                         datetime < lubridate::as_date(forecast_start_datetime)) |>
           tidyr::pivot_wider(names_from = variable, values_from = prediction) |>
           dplyr::rename(time = datetime) |>
+          dplyr::mutate(PHY_cyano_IN = 0,
+                        PHY_green_IN = 0,
+                        PHY_diatom_IN = 0,
+                        PHY_cyano_IP = 0,
+                        PHY_green_IP = 0,
+                        PHY_diatom_IP = 0) |>
           dplyr::select(dplyr::all_of(variables)) |>
           dplyr::mutate_if(where(is.numeric), list(~round(., round_level)))
 
@@ -310,6 +322,12 @@ create_flow_files <- function(flow_forecast_dir = NULL,
                         datetime >= lubridate::as_date(forecast_start_datetime)) |>
           tidyr::pivot_wider(names_from = variable, values_from = prediction) |>
           dplyr::rename(time = datetime) |>
+          dplyr::mutate(PHY_cyano_IN = 0,
+                        PHY_green_IN = 0,
+                        PHY_diatom_IN = 0,
+                        PHY_cyano_IP = 0,
+                        PHY_green_IP = 0,
+                        PHY_diatom_IP = 0) |>
           dplyr::select(dplyr::all_of(variables)) |>
           dplyr::mutate_if(where(is.numeric), list(~round(., round_level)))
 

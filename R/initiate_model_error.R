@@ -6,8 +6,9 @@
 #' @keywords internal
 #'
 initiate_model_error <- function(config, states_config){
+  model_sd <- array(NA, dim = c(nrow(states_config),length(config$model_settings$modeled_depths)))
   if(!is.null(config$model_settings$depth_model_sd_config_file)){
-    model_sd <- array(NA, dim = c(nrow(states_config),length(config$model_settings$modeled_depths)))
+
     config_process_error <- readr::read_csv(file.path(config$file_path$configuration_directory,
                                                       config$model_settings$depth_model_sd_config_file), col_type = readr::cols())
     for(s in 1:nrow(states_config)){
@@ -18,7 +19,6 @@ initiate_model_error <- function(config, states_config){
       }
     }
   }else{
-    model_sd <- array(NA, dim = c(nrow(states_config),length(config$modeled_depths)))
     for(s in 1:nrow(states_config)){
       model_sd[s, ] <- states_config$model_sd[s]
     }

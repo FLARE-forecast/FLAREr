@@ -57,7 +57,7 @@ create_met_files <- function(config, lake_directory, met_forecast_start_datetime
       forecast_dir <- FaaSr::faasr_arrow_s3_bucket(server_name = server_name, faasr_prefix = prefix,faasr_config=config$faasr)
 
       #forecast_dir <- arrow::s3_bucket(bucket = glue::glue(bucket, "/", config$met$future_met_model),
-                                       #endpoint_override =  endpoint, anonymous = FALSE)
+      #endpoint_override =  endpoint, anonymous = FALSE)
 
       unset_arrow_vars(vars)
     }else{
@@ -83,12 +83,12 @@ create_met_files <- function(config, lake_directory, met_forecast_start_datetime
       server_name = "drivers"
       prefix = glue::glue(stringr::str_split_fixed(bucket, "/", n = 2)[2], "/",
                           config$met$historical_met_model)
-    past_dir <- FaaSr::faasr_arrow_s3_bucket(server_name = server_name, faasr_prefix = prefix,faasr_config=config$faasr)
+      past_dir <- FaaSr::faasr_arrow_s3_bucket(server_name = server_name, faasr_prefix = prefix,faasr_config=config$faasr)
 
-    # #past_dir <- arrow::s3_bucket(bucket =  glue::glue(bucket, "/",
-    #                                                     config$met$historical_met_model),
-    #                                endpoint_override =  endpoint,
-    #                                anonymous = FALSE)
+      # #past_dir <- arrow::s3_bucket(bucket =  glue::glue(bucket, "/",
+      #                                                     config$met$historical_met_model),
+      #                                endpoint_override =  endpoint,
+      #                                anonymous = FALSE)
 
 
 
@@ -123,11 +123,6 @@ create_met_files <- function(config, lake_directory, met_forecast_start_datetime
       dplyr::distinct() |>
       tidyr::pivot_wider(names_from = variable, values_from = prediction) |>
       dplyr::arrange(parameter, datetime)
-
-    if(!config$uncertainty$weather){
-      hist_met <- hist_met |>
-        dplyr::filter(parameter == 1)
-    }
 
     if(!("wind_speed" %in% colnames(hist_met))){
       hist_met <- hist_met |>
@@ -237,14 +232,10 @@ create_met_files <- function(config, lake_directory, met_forecast_start_datetime
     })
 
     forecast <- forecast |>
+      dplyr::filter(datetime > config$run_config$forecast_start_datetime) |>
       dplyr::distinct() |>
       tidyr::pivot_wider(names_from = variable, values_from = prediction) |>
       dplyr::arrange(parameter, datetime)
-
-    if(!config$uncertainty$weather){
-      forecast <- forecast |>
-        dplyr::filter(parameter == 1)
-    }
 
     if(!("wind_speed" %in% colnames(forecast))){
       forecast <- forecast |>
@@ -274,6 +265,7 @@ create_met_files <- function(config, lake_directory, met_forecast_start_datetime
       dplyr::group_by(ensemble) |>
       dplyr::slice(-dplyr::n()) |>
       dplyr::ungroup()
+
 
     ensemble_members <- unique(forecast$ensemble)
 
@@ -310,7 +302,7 @@ create_met_files <- function(config, lake_directory, met_forecast_start_datetime
       }
 
       # check for bad data
-      missing_data_check(df)
+      FLAREr:::missing_data_check(df)
 
       fn <- paste0("met_",stringr::str_pad(ens, width = 2, side = "left", pad = "0"),".csv")
       fn <- file.path(out_dir, fn)

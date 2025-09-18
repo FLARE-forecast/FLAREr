@@ -49,7 +49,8 @@ run_enkf <- function(x_matrix,
                      secchi_index,
                      depth_obs,
                      depth_sd,
-                     par_fit_method){
+                     par_fit_method,
+                     inflation_start){
 
   #Extract the data uncertainty for the data
   #types present during the time-step
@@ -79,7 +80,7 @@ run_enkf <- function(x_matrix,
 
   if(npars > 0){
     par_mean <- apply(pars_corr, 1, mean)
-    if(par_fit_method == "inflate"){
+    if(par_fit_method == "inflate" & !(config$da_setup$use_inflation_factor)){
       for(m in 1:nmembers){
         pars_corr[, m] <- pars_config$perturb_par * (pars_corr[, m] - par_mean) + par_mean
       }
@@ -111,19 +112,15 @@ run_enkf <- function(x_matrix,
     }
   }
 
-  if(is.null(config$da_setup$inflation_factor)){
-    config$da_setup$inflation_factor <- 1.0
-  }
-
   #estimate covariance
-  p_t <- config$da_setup$inflation_factor * (p_it / (nmembers - 1))
+  p_t <- (p_it / (nmembers - 1))
   if(npars > 0){
-    p_t_pars <- config$da_setup$inflation_factor * (p_it_pars / (nmembers - 1))
+    p_t_pars <- (p_it_pars / (nmembers - 1))
   }
 
   if(!is.null(config$da_setup$localization_distance)){
     if(!is.na(config$da_setup$localization_distance)){
-      p_t <- localization(mat = p_t,
+      p_t <- FLAREr:::localization(mat = p_t,
                           nstates = nstates,
                           modeled_depths = config$model_settings$modeled_depths,
                           localization_distance = config$da_setup$localization_distance,
@@ -135,6 +132,35 @@ run_enkf <- function(x_matrix,
   if(npars > 0){
     k_t_pars <- p_t_pars %*% t(h) %*% solve(h %*% p_t %*% t(h) + psi_t, tol = 1e-17)
   }
+
+  # Adaptive inflation factor
+  inflation_update <- inflation_start
+  #Y <- h %*% x_matrix
+  #y_mean <- rowMeans(Y)
+  #Y_prime <- Y - y_mean
+  #d <- zt - y_mean
+  #Py <- (1 / (nmembers - 1)) * Y_prime %*% t(Y_prime)
+  #innovation_norm <- sum(d^2)
+  #expected_innovation <- sum(diag(Py + psi_t))
+  #inflation_update <- config$da_setup$inflation_alpha * inflation_start + (1-config$da_setup$inflation_alpha) * (innovation_norm / expected_innovation)
+  #inflation_update <- min(max(1.0, inflation_update), 1.3)
+  #print("innovation_norm")
+  #print(innovation_norm)
+  #print("y_mean")
+  #print(y_mean)
+  #print("zt")
+  #print(zt)
+  #print("d")
+  #print(d)
+  #print("d^2")
+  #print(d^2)
+  #print("diag(Py + psi_t)")
+  #print(diag(Py + psi_t))
+  #print("median(d^2 / diag(Py + psi_t))")
+  #print(median(d^2 / diag(Py + psi_t)))
+  #print(expected_innovation)
+  #print((innovation_norm / expected_innovation))
+  #print(inflation_update)
 
   #Update states array (transposes are necessary to convert
   #between the dims here and the dims in the EnKF formulations)
@@ -253,5 +279,6 @@ run_enkf <- function(x_matrix,
               snow_ice_thickness_updated = snow_ice_thickness_updated,
               avg_surf_temp_updated = avg_surf_temp_updated,
               mixer_count_updated = mixer_count_updated,
-              mixing_vars_updated = mixing_vars_updated))
+              mixing_vars_updated = mixing_vars_updated,
+              inflation_update = inflation_update))
 }

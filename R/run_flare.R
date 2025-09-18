@@ -192,6 +192,15 @@ run_flare <- function(lake_directory,
   if(config$output_settings$generate_plot){
     message("Generating plot")
     targets_df <- read_csv(file.path(config$file_path$qaqc_data_directory,paste0(config$location$site_id, "-targets-insitu.csv")), show_col_types = FALSE)
+
+    targets_df <- obs_config |>
+      rename(variable = target_variable) |>
+      select(variable, obs_sd) |>
+      right_join(targets_df, by = "variable") |>
+      mutate(up95 = observation + 1.96 * obs_sd,
+             low95 = observation - 1.96 * obs_sd,
+             low95 = ifelse(variable != "temperature" & low95 < 0, 0, low95))
+
     plotting_general(forecast_df,
                      targets_df,
                      file_name = paste0(tools::file_path_sans_ext(basename(saved_file)),".pdf"),

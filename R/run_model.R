@@ -6,7 +6,7 @@
 #' @param curr_start datetime of current time step
 #' @param curr_stop datetime of end of run
 #' @param par_names names of parameters that are being calibrated
-#' @param curr_pars value for the parameters
+#' @param curr_pars_ens value for the parameters
 #' @param ens_working_directory full path to the directory where the model is executed
 #' @param par_nml vector of namelist names associated with each parameter being calibrated
 #' @param num_phytos number of phytoplankton groups
@@ -42,7 +42,7 @@ run_model <- function(i,
                       curr_start,
                       curr_stop,
                       par_names,
-                      curr_pars,
+                      curr_pars_ens,
                       ens_working_directory,
                       par_nml,
                       num_phytos,
@@ -111,15 +111,15 @@ run_model <- function(i,
       curr_par_set <- which(par_names == unique_pars[par])
       curr_nml <- par_nml[curr_par_set[1]]
       if(curr_nml == "glm3.nml"){
-        update_glm_nml_list[[list_index]] <- round(curr_pars[curr_par_set], rounding_level)
+        update_glm_nml_list[[list_index]] <- round(curr_pars_ens[curr_par_set], rounding_level)
         update_glm_nml_names[list_index] <- unique_pars[par]
         list_index <- list_index + 1
       }else if(curr_nml == "aed2.nml"){
-        update_aed_nml_list[[list_index_aed]] <- round(curr_pars[curr_par_set], rounding_level)
+        update_aed_nml_list[[list_index_aed]] <- round(curr_pars_ens[curr_par_set], rounding_level)
         update_aed_nml_names[list_index_aed] <- unique_pars[par]
         list_index_aed <- list_index_aed + 1
       }else if(curr_nml == "aed_phyto_pars.csv"){
-        update_phyto_nml_list[[list_index_phyto]] <- rep(round(curr_pars[curr_par_set],rounding_level), num_phytos)
+        update_phyto_nml_list[[list_index_phyto]] <- rep(round(curr_pars_ens[curr_par_set],rounding_level), num_phytos)
         update_phyto_nml_names[list_index_phyto] <- unique_pars[par]
         list_index_phyto <- list_index_phyto + 1
       }
@@ -343,6 +343,6 @@ run_model <- function(i,
               diagnostics_end  = diagnostics,
               diagnostics_daily_end = GLM_temp_wq_out$diagnostics_daily_output,
               model_internal_heights  = glm_heights_end,
-              curr_pars = curr_pars
+              curr_pars_ens = curr_pars_ens
   ))
 }

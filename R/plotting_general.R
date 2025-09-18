@@ -73,7 +73,7 @@ plotting_general <- function(forecast_df,
       obs <- combined_df |>
         filter(variable == var,
                depth %in% var_target_depths) |>
-        distinct(datetime, site_id, depth, variable, observation)
+        distinct(datetime, site_id, depth, variable, observation, up95, low95)
 
       state_plot <- combined_df |>
         filter(variable == var,
@@ -82,6 +82,7 @@ plotting_general <- function(forecast_df,
         geom_line(aes(y = prediction, group = parameter), color = "gray") +
         geom_line(data = single_ensemble, aes(x = datetime, y = prediction, group = parameter)) +
         geom_point(data = obs, aes(x = datetime, y = observation), color = "red") +
+        geom_errorbar(data = obs, aes(x = datetime, ymin = low95, ymax = up95), color = "red") +
         geom_vline(aes(xintercept = reference_datetime)) +
         theme_bw() +
         facet_wrap(~depth) +
@@ -107,7 +108,7 @@ plotting_general <- function(forecast_df,
 
   obs <- combined_df |>
     filter(variable %in% state_non_depth_variables) |>
-    distinct(datetime, site_id, depth, variable, observation)
+    distinct(datetime, site_id, depth, variable, observation, up95, low95)
 
   state_non_depth_plot <- combined_df |>
     filter(variable %in% state_non_depth_variables) |>
@@ -116,6 +117,7 @@ plotting_general <- function(forecast_df,
     geom_line(aes(y = prediction, group = parameter), color = "gray") +
     geom_line(data = single_ensemble, aes(x = datetime, y = prediction, group = parameter)) +
     geom_point(data = obs, aes(x = datetime, y = observation), color = "red") +
+    geom_errorbar(data = obs, aes(x = datetime, ymin = low95, ymax = up95), color = "red") +
     geom_vline(aes(xintercept = reference_datetime)) +
     theme_bw() +
     facet_wrap(~variable, scales = "free_y")

@@ -22,6 +22,7 @@ generate_restart_initial_conditions <- function(restart_file, state_names, par_n
   mixer_count <- ncdf4::ncvar_get(nc, "mixer_count")[restart_index, ]
   log_particle_weights <- ncdf4::ncvar_get(nc, "log_particle_weights")[restart_index, ]
   model_internal_heights  <- ncdf4::ncvar_get(nc, "model_internal_heights")[restart_index, , ]
+  inflation  <- ncdf4::ncvar_get(nc, "inflation")[restart_index]
 
   states_restart <- array(NA, dim = c(length(state_names), dim(model_internal_heights)[1], restart_nmembers))
   for(i in 1:length(state_names)){
@@ -47,6 +48,7 @@ generate_restart_initial_conditions <- function(restart_file, state_names, par_n
               mixing_vars = mixing_restart,
               mixer_count = mixer_count,
               model_internal_heights = model_internal_heights,
-              log_particle_weights = log_particle_weights)
+              log_particle_weights = log_particle_weights,
+              inflation = inflation)
   )
 }

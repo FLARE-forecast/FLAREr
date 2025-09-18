@@ -23,10 +23,10 @@ localization <- function(mat,nstates,modeled_depths, localization_distance, num_
     }
   }
 
-  distance_differ_matrix <- distance_matrix - diag(distance_matrix)
+  distance_differ_matrix <-abs(distance_matrix - diag(distance_matrix))
 
   for(i in 1:dim(distance_matrix)[1]){
-    distance_differ_matrix[i, ] <- exp(-(distance_differ_matrix[i, ]/localization_distance)^2)
+    distance_differ_matrix[i, ] <- exp((-distance_differ_matrix[i, ]^2)/(2*localization_distance^2))
   }
   if(num_single_states > 0){
     for(i in 1:num_single_states){

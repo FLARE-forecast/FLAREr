@@ -42,6 +42,7 @@ generate_initial_conditions <- function(states_config,
     init$salt <- array(NA, dim = c(ndepths_modeled, nmembers))
     init$mixer_count <- array(NA, dim=c(nmembers))
     init$log_particle_weights <- array(NA, dim=c(nmembers))
+    init$inflation <- NA
 
     init$lake_depth[] <- round(config$default_init$lake_depth, 4)
     nml <- read_nml(file.path(config$file_path$configuration_directory, config$model_settings$base_GLM_nml))
@@ -122,6 +123,9 @@ generate_initial_conditions <- function(states_config,
     init$mixer_count[] <- 0
     init$salt[, ] <- config$default_init$salinity
     init$log_particle_weights[] <- log(1.0)
+    init$inflation[] <- config$da_setup$inflation_factor
+
+
 
 
     aux_states_init <- list()
@@ -134,6 +138,7 @@ generate_initial_conditions <- function(states_config,
     aux_states_init$lake_depth <- init$lake_depth
     aux_states_init$salt <- init$salt
     aux_states_init$log_particle_weights <- init$log_particle_weights
+    aux_states_init$inflation <- init$inflation
 
     init <- list(states = init$states,
                  pars = init$pars,
@@ -171,6 +176,7 @@ generate_initial_conditions <- function(states_config,
     aux_states_init$model_internal_heights <- out$model_internal_heights
     aux_states_init$lake_depth <- out$lake_depth
     aux_states_init$log_particle_weights <- out$log_particle_weights
+    aux_states_init$inflation <- out$inflation
 
     init <- list(states = out$states,
                  pars = out$pars,
