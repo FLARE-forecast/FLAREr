@@ -399,38 +399,40 @@ run_da_forecast <- function(states_init,
       } # END ENSEMBLE LOOP
 
 
-    ### SETTING OBSERVATIONS FOR POTENTAIL DATA ASSIMILATION
+      ### SETTING OBSERVATIONS FOR POTENTAIL DATA ASSIMILATION
 
-    if(dim(obs)[1] > 1){
-      obs_count <- length(which(!is.na(c(aperm(obs[,i , ], perm = c(2,1))))))
-    }else{
-      obs_count <- length(which(!is.na(c(obs[1,i , ]))))
-    }
+      if(dim(obs)[1] > 1){
+        obs_count <- length(which(!is.na(c(aperm(obs[,i , ], perm = c(2,1))))))
+      }else{
+        obs_count <- length(which(!is.na(c(obs[1,i , ]))))
+      }
 
-    if(i > 1){
-      #DON"T USE SECCHI ON DAY 1 BECAUSE THE DIAGONOSTIC OF LIGHT EXTINCTION
-      #IS NOT IN THE RESTART FILE
-      if(!is.null(obs_secchi$obs)){
-        if(!is.na(obs_secchi$obs[i])){
+      if(i > 1){
+        #DON"T USE SECCHI ON DAY 1 BECAUSE THE DIAGONOSTIC OF LIGHT EXTINCTION
+        #IS NOT IN THE RESTART FILE
+        if(!is.null(obs_secchi$obs)){
+          if(!is.na(obs_secchi$obs[i])){
+            obs_count <- obs_count + 1
+          }
+        }
+      }
+
+      if(!is.null(obs_depth)){
+        if(!is.na(obs_depth$obs[i])){
           obs_count <- obs_count + 1
         }
       }
-    }
 
-    if(!is.null(obs_depth)){
-      if(!is.na(obs_depth$obs[i])){
-        obs_count <- obs_count + 1
-      }
-    }
-
-    #if no observations at a time step then just propagate model uncertainty
+      #if no observations at a time step then just propagate model uncertainty
 
       if(config$da_setup$use_inflation_factor){
 
         if(config$da_setup$inflation_only_at_da & (obs_count == 0 | config$da_setup$da_method == "none" | !config$da_setup$use_obs_constraint)){
           curr_inflation <- 1.0
+          curr_par_inflation <- 1.0
         }else{
           curr_inflation <- inflation[i-1]
+          curr_par_inflation <- pars_config$inflation
         }
 
         for(s in 1:nstates){
@@ -463,7 +465,7 @@ run_da_forecast <- function(states_init,
         }
         if(npars > 0){
           pars_mean <- apply(curr_pars, 1, mean)
-          pars_corr <- sqrt(pars_config$inflation) * (curr_pars - pars_mean) + pars_mean
+          pars_corr <- sqrt(curr_par_inflation) * (curr_pars - pars_mean) + pars_mean
         }
       }else{
 
