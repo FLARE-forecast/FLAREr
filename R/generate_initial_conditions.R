@@ -45,7 +45,7 @@ generate_initial_conditions <- function(states_config,
     init$inflation <- NA
 
     init$lake_depth[] <- round(config$default_init$lake_depth, 4)
-    nml <- read_nml(file.path(config$file_path$configuration_directory, config$model_settings$base_GLM_nml))
+    nml <- FLAREr:::read_nml(file.path(config$file_path$configuration_directory, config$model_settings$base_GLM_nml))
     max_depth <- nml$morphometry$H[length(nml$morphometry$H)] - nml$morphometry$H[1]
     if(!is.null(obs_non_vertical$obs_depth)){
       if(!is.na(obs_non_vertical$obs_depth$obs[1])){
@@ -57,8 +57,8 @@ generate_initial_conditions <- function(states_config,
 
     for(m in 1:nmembers){
       init$model_internal_heights[1:ndepths_modeled, m] <- init$lake_depth[m] - config$model_settings$modeled_depths
+      init$model_internal_heights[which(init$model_internal_heights[1:ndepths_modeled, m] < 0) , m] <- NA
     }
-
 
 
     init_depth <- array(NA, dim = c(nrow(states_config),ndepths_modeled))
@@ -90,8 +90,10 @@ generate_initial_conditions <- function(states_config,
     for(m in 1:nmembers){
 
       init$model_internal_heights[1:ndepths_modeled, m] <- init$lake_depth[m] - config$model_settings$modeled_depths
+      init$model_internal_heights[which(init$model_internal_heights[1:ndepths_modeled, m] < 0) , m] <- NA
 
-      with_noise <- add_process_noise(states_height_ens = init_depth,
+
+      with_noise <- FLAREr:::add_process_noise(states_height_ens = init_depth,
                                       model_sd = model_sd,
                                       model_internal_heights_ens =  init$model_internal_heights[ ,m],
                                       lake_depth_ens = init$lake_depth[m],

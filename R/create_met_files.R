@@ -52,9 +52,29 @@ create_met_files <- function(config, lake_directory, met_forecast_start_datetime
       vars <- arrow_env_vars()
 
       reference_date <- forecast_date
-      prefix <- glue::glue(stringr::str_split_fixed(bucket, "/", n = 2)[2],"/",config$met$future_met_model)
+      faasr_prefix <- glue::glue(stringr::str_split_fixed(bucket, "/", n = 2)[2],"/",config$met$future_met_model)
       server_name <- "drivers"
-      forecast_dir <- FaaSr::faasr_arrow_s3_bucket(server_name = server_name, faasr_prefix = prefix,faasr_config=config$faasr)
+      #forecast_dir <- FaaSr::faasr_arrow_s3_bucket(server_name = server_name, faasr_prefix = prefix,faasr_config=config$faasr)
+
+      faasr_config=config$faasr
+
+      target_s3 <- faasr_config$DataStores[[server_name]]
+      bucket <- paste0(target_s3$Bucket, "/", faasr_prefix)
+      if (is.null(target_s3$Anonymous)) {
+        faasr_anonymous <- FALSE
+      }else {
+        faasr_anonymous <- as.logical(target_s3$Anonymous)
+      }
+      if (faasr_anonymous) {
+        s3 <- arrow::s3_bucket(bucket = bucket, endpoint_override = target_s3$Endpoint,
+                               region = target_s3$Region, anonymous = TRUE)
+      }else {
+        s3 <- arrow::s3_bucket(bucket = bucket, access_key = target_s3$AccessKey,
+                               secret_key = target_s3$SecretKey, endpoint_override = target_s3$Endpoint,
+                               region = target_s3$Region)
+      }
+
+      past_dir <- s3
 
       #forecast_dir <- arrow::s3_bucket(bucket = glue::glue(bucket, "/", config$met$future_met_model),
       #endpoint_override =  endpoint, anonymous = FALSE)
@@ -81,9 +101,29 @@ create_met_files <- function(config, lake_directory, met_forecast_start_datetime
     if(config$met$historical_met_use_s3){
 
       server_name = "drivers"
-      prefix = glue::glue(stringr::str_split_fixed(bucket, "/", n = 2)[2], "/",
+      faasr_prefix = glue::glue(stringr::str_split_fixed(bucket, "/", n = 2)[2], "/",
                           config$met$historical_met_model)
-      past_dir <- FaaSr::faasr_arrow_s3_bucket(server_name = server_name, faasr_prefix = prefix,faasr_config=config$faasr)
+      faasr_config=config$faasr
+
+      #past_dir <- FaaSr::faasr_arrow_s3_bucket(server_name = server_name, faasr_prefix = prefix,faasr_config=config$faasr)
+
+      target_s3 <- faasr_config$DataStores[[server_name]]
+      bucket <- paste0(target_s3$Bucket, "/", faasr_prefix)
+      if (is.null(target_s3$Anonymous)) {
+        faasr_anonymous <- FALSE
+      }else {
+        faasr_anonymous <- as.logical(target_s3$Anonymous)
+      }
+      if (faasr_anonymous) {
+        s3 <- arrow::s3_bucket(bucket = bucket, endpoint_override = target_s3$Endpoint,
+                               region = target_s3$Region, anonymous = TRUE)
+      }else {
+        s3 <- arrow::s3_bucket(bucket = bucket, access_key = target_s3$AccessKey,
+                               secret_key = target_s3$SecretKey, endpoint_override = target_s3$Endpoint,
+                               region = target_s3$Region)
+      }
+
+      past_dir <- s3
 
       # #past_dir <- arrow::s3_bucket(bucket =  glue::glue(bucket, "/",
       #                                                     config$met$historical_met_model),
