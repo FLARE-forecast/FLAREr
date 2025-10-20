@@ -59,22 +59,22 @@ create_met_files <- function(config, lake_directory, met_forecast_start_datetime
       faasr_config=config$faasr
 
       target_s3 <- faasr_config$DataStores[[server_name]]
-      bucket <- paste0(target_s3$Bucket, "/", faasr_prefix)
+      bucket_2 <- paste0(target_s3$Bucket, "/", faasr_prefix)
       if (is.null(target_s3$Anonymous)) {
         faasr_anonymous <- FALSE
       }else {
         faasr_anonymous <- as.logical(target_s3$Anonymous)
       }
       if (faasr_anonymous) {
-        s3 <- arrow::s3_bucket(bucket = bucket, endpoint_override = target_s3$Endpoint,
+        s3 <- arrow::s3_bucket(bucket = bucket_2, endpoint_override = target_s3$Endpoint,
                                region = target_s3$Region, anonymous = TRUE)
       }else {
-        s3 <- arrow::s3_bucket(bucket = bucket, access_key = target_s3$AccessKey,
+        s3 <- arrow::s3_bucket(bucket = bucket_2, access_key = target_s3$AccessKey,
                                secret_key = target_s3$SecretKey, endpoint_override = target_s3$Endpoint,
                                region = target_s3$Region)
       }
 
-      past_dir <- s3
+      forecast_dir <- s3
 
       #forecast_dir <- arrow::s3_bucket(bucket = glue::glue(bucket, "/", config$met$future_met_model),
       #endpoint_override =  endpoint, anonymous = FALSE)
@@ -108,17 +108,17 @@ create_met_files <- function(config, lake_directory, met_forecast_start_datetime
       #past_dir <- FaaSr::faasr_arrow_s3_bucket(server_name = server_name, faasr_prefix = prefix,faasr_config=config$faasr)
 
       target_s3 <- faasr_config$DataStores[[server_name]]
-      bucket <- paste0(target_s3$Bucket, "/", faasr_prefix)
+      bucket_2 <- paste0(target_s3$Bucket, "/", faasr_prefix)
       if (is.null(target_s3$Anonymous)) {
         faasr_anonymous <- FALSE
       }else {
         faasr_anonymous <- as.logical(target_s3$Anonymous)
       }
       if (faasr_anonymous) {
-        s3 <- arrow::s3_bucket(bucket = bucket, endpoint_override = target_s3$Endpoint,
+        s3 <- arrow::s3_bucket(bucket = bucket_2, endpoint_override = target_s3$Endpoint,
                                region = target_s3$Region, anonymous = TRUE)
       }else {
-        s3 <- arrow::s3_bucket(bucket = bucket, access_key = target_s3$AccessKey,
+        s3 <- arrow::s3_bucket(bucket = bucket_2, access_key = target_s3$AccessKey,
                                secret_key = target_s3$SecretKey, endpoint_override = target_s3$Endpoint,
                                region = target_s3$Region)
       }

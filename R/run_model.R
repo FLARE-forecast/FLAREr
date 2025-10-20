@@ -192,6 +192,11 @@ run_model <- function(i,
     update_glm_nml_names[list_index] <- "inflow_fl"
     list_index <- list_index + 1
 
+
+    update_glm_nml_list[[list_index]] <- rep(max(the_heights) - 0.1, length(unlist(inflow_file_name)))
+    update_glm_nml_names[list_index] <- "subm_elev"
+    list_index <- list_index + 1
+
     update_glm_nml_list[[list_index]] <- unlist(outflow_file_name)
     update_glm_nml_names[list_index] <- "outflow_fl"
     list_index <- list_index + 1
