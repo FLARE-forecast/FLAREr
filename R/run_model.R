@@ -69,7 +69,7 @@ run_model <- function(i,
                       max_layers,
                       glm_path){
 
-  rounding_level <- 10
+  rounding_level <- 5
 
   update_glm_nml_list <- list()
   update_aed_nml_list <- list()

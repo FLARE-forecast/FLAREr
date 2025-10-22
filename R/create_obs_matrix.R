@@ -38,10 +38,21 @@ create_obs_matrix <- function(cleaned_observations_file_long,
      df <- as_tibble(expand.grid(variable = obs_config$target_variable, datetime = full_time, depth = config$model_settings$modeled_depths)) |>
       dplyr::mutate(variable = as.character(variable),
              datetime = lubridate::force_tz(datetime, "UTC")) |>
-      dplyr::left_join(d, by = dplyr::join_by(variable, datetime, depth))
+      dplyr::left_join(d, by = dplyr::join_by(variable, datetime, depth)) |>
+      group_by(variable, datetime, depth) |>
+      slice_max(observation) |>
+       arrange(variable, depth, datetime)
 
+     sorted_df <- NULL
+     for(i in 1:nrow(obs_config)){
+       tmp_df <- df |> filter(variable == obs_config$target_variable[i]) |>
+         arrange(depth, datetime)
+       sorted_df <- bind_rows(sorted_df, tmp_df)
+     }
 
-    obs <- array(df$observation,dim = c(length(obs_config$target_variable), length(full_time), length(config$model_settings$modeled_depths)))
+    obs <- array(sorted_df$observation,dim = c(length(full_time), length(config$model_settings$modeled_depths), length(obs_config$target_variable)))
+
+    obs <- aperm(obs, perm = c(3,1,2))
 
     full_time_forecast <- seq(start_datetime, end_datetime, by = "1 day")
     obs[ , which(full_time_forecast > forecast_start_datetime), ] <- NA

@@ -25,11 +25,13 @@ run_glm <- function(dir, verbose = FALSE){
         if (verbose){
          # out <- system2(glm_path, wait = TRUE, stdout = "",
         #                 stderr = "", args = "--no-gui", env = paste0("DYLD_LIBRARY_PATH=", dylib_path))
-          out <- system2(glm_path, wait = TRUE, stdout = "", stderr = "", args = "--no-gui")
+          #out <- system2(glm_path, wait = TRUE, stdout = "", stderr = "", args = "--no-gui")
+          out <- system2(glm_path, wait = TRUE, stdout = "", stderr = "", args = "")
         }else{
           #out <- system2(glm_path, wait = TRUE, stdout = NULL,
           #               stderr = NULL, args = "--no-gui", env = paste0("DYLD_LIBRARY_PATH=", dylib_path))
-          out <- system2(glm_path, wait = TRUE, stdout = NULL, stderr = NULL, args = "--no-gui")
+          #out <- system2(glm_path, wait = TRUE, stdout = NULL, stderr = NULL, args = "--no-gui")
+          out <- system2(glm_path, wait = TRUE, stdout = NULL, stderr = NULL, args = "")
         }
       }, error = function(err) {
         print(paste("GLM_ERROR:  ",err))
