@@ -68,11 +68,16 @@ run_glm <- function(dir, verbose = FALSE){
 
       tryCatch({
         if (verbose){
+          #out <- system2(glm_path, wait = TRUE, stdout = "",
+          #               stderr = "", args = "--no-gui", env = paste0("DYLD_LIBRARY_PATH=", dylib_path))
           out <- system2(glm_path, wait = TRUE, stdout = "",
-                         stderr = "", args = "--no-gui", env = paste0("DYLD_LIBRARY_PATH=", dylib_path))
+                         stderr = "", args = "", env = paste0("DYLD_LIBRARY_PATH=", dylib_path))
         }else{
-          out <- system2(glm_path, wait = TRUE, stdout = NULL,
-                         stderr = NULL, args = "--no-gui", env = paste0("DYLD_LIBRARY_PATH=", dylib_path))
+          #out <- system2(glm_path, wait = TRUE, stdout = NULL,
+          #               stderr = NULL, args = "--no-gui", env = paste0("DYLD_LIBRARY_PATH=", dylib_path))
+
+         out <- system2(glm_path, wait = TRUE, stdout = NULL,
+                        stderr = NULL, args = "", env = paste0("DYLD_LIBRARY_PATH=", dylib_path))
         }
       }, error = function(err) {
         print(paste("GLM_ERROR:  ",err))
