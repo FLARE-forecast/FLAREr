@@ -61,7 +61,8 @@ propose_parameters <- function(i, m, pars, pars_config, npars, par_fit_method, d
           }
 
         }else{
-          message("parameter fitting method not supported.  inflate, perturb. perturb are supported")
+          #message("parameter fitting method not supported.  inflate, perturb. perturb are supported")
+          curr_pars_ens[par] <- pars[i-1, par, m]
         }
 
         if(curr_pars_ens[par] <  pars_config$par_lowerbound[par]) curr_pars_ens[par] <-  pars_config$par_lowerbound[par]

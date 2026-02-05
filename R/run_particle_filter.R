@@ -56,7 +56,8 @@ run_particle_filter <- function(x_matrix,
                                 par_fit_method,
                                 vertical_obs,
                                 working_directory,
-                                obs_config){
+                                obs_config,
+                                inflation_start){
 
   npars <- dim(pars_corr)[1]
   nmembers <- dim(states_depth_start)[3]
@@ -208,6 +209,7 @@ run_particle_filter <- function(x_matrix,
               snow_ice_thickness_updated = snow_ice_thickness_updated,
               avg_surf_temp_updated = avg_surf_temp_updated,
               mixer_count_updated = mixer_count_updated,
-              mixing_vars_updated = mixing_vars_updated))
+              mixing_vars_updated = mixing_vars_updated,
+              inflation_update = inflation_start))
 }
 

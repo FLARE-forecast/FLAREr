@@ -142,6 +142,8 @@ run_flare <- function(lake_directory,
 
   model_sd <- initiate_model_error(config, states_config)
 
+  states_non_vertical <- list(depth_sd = config$model_settings$depth_sd)
+
   init <- generate_initial_conditions(states_config,
                                               obs_config,
                                               pars_config,
@@ -165,8 +167,8 @@ run_flare <- function(lake_directory,
                                                 obs_config = obs_config,
                                                 da_method = config$da_setup$da_method,
                                                 par_fit_method = config$da_setup$par_fit_method,
-                                                obs_secchi = obs_non_vertical$obs_secchi,
-                                                obs_depth = obs_non_vertical$obs_depth)
+                                                obs_non_vertical = obs_non_vertical,
+                                                states_non_vertical = states_non_vertical)
 
   rm(init)
   rm(obs)

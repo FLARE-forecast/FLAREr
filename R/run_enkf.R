@@ -78,60 +78,34 @@ run_enkf <- function(x_matrix,
   #Ensemble mean
   ens_mean <- apply(x_matrix, 1, mean)
 
-  if(npars > 0){
-    par_mean <- apply(pars_corr, 1, mean)
-    if(par_fit_method == "inflate" & !(config$da_setup$use_inflation_factor)){
-      for(m in 1:nmembers){
-        pars_corr[, m] <- pars_config$perturb_par * (pars_corr[, m] - par_mean) + par_mean
-      }
-      par_mean <- apply(pars_corr, 1, mean)
-    }
-  }
-
   dit <- matrix(NA, nrow = nmembers, ncol = dim(x_matrix)[1])
-
-  if(npars > 0) dit_pars<- array(NA, dim = c(nmembers, npars))
 
   #Loop through ensemble members
   for(m in 1:nmembers){
     #  #Ensemble specific deviation
     dit[m, ] <- x_matrix[, m] - ens_mean
-    if(npars > 0){
-      dit_pars[m, ] <- pars_corr[, m] - par_mean
-    }
     if(m == 1){
       p_it <- dit[m, ] %*% t(dit[m, ])
-      if(npars > 0){
-        p_it_pars <- dit_pars[m, ] %*% t(dit[m, ])
-      }
     }else{
       p_it <- dit[m, ] %*% t(dit[m, ]) +  p_it
-      if(npars > 0){
-        p_it_pars <- dit_pars[m, ] %*% t(dit[m, ]) + p_it_pars
-      }
     }
   }
 
   #estimate covariance
   p_t <- (p_it / (nmembers - 1))
-  if(npars > 0){
-    p_t_pars <- (p_it_pars / (nmembers - 1))
-  }
 
   if(!is.null(config$da_setup$localization_distance)){
     if(!is.na(config$da_setup$localization_distance)){
       p_t <- FLAREr:::localization(mat = p_t,
-                          nstates = nstates,
-                          modeled_depths = config$model_settings$modeled_depths,
-                          localization_distance = config$da_setup$localization_distance,
-                          num_single_states = dim(p_t)[1] - nstates * length(config$model_settings$modeled_depths))
+                                   nstates = nstates,
+                                   modeled_depths = config$model_settings$modeled_depths,
+                                   localization_distance = config$da_setup$localization_distance,
+                                   num_single_states = dim(p_t)[1] - nstates * length(config$model_settings$modeled_depths))
     }
   }
+
   #Kalman gain
   k_t <- p_t %*% t(h) %*% solve(h %*% p_t %*% t(h) + psi_t, tol = 1e-17)
-  if(npars > 0){
-    k_t_pars <- p_t_pars %*% t(h) %*% solve(h %*% p_t %*% t(h) + psi_t, tol = 1e-17)
-  }
 
   # Adaptive inflation factor
   inflation_update <- inflation_start
@@ -164,6 +138,7 @@ run_enkf <- function(x_matrix,
 
   #Update states array (transposes are necessary to convert
   #between the dims here and the dims in the EnKF formulations)
+
   update <-  x_matrix + k_t %*% (d_mat - h %*% x_matrix)
   states_depth_updated<- update[1:(ndepths_modeled*nstates), ]
   states_depth_updated<- aperm(array(c(states_depth_updated), dim = c(ndepths_modeled, nstates, nmembers)), perm = c(2,1,3))
@@ -210,7 +185,7 @@ run_enkf <- function(x_matrix,
 
   if(npars > 0){
     if(par_fit_method != "perturb_init"){
-      pars_updated <- pars_corr + k_t_pars %*% (d_mat - h %*% x_matrix)
+      pars_updated <- update[(dim(update)[1]-npars+1):dim(update)[1], ]
     }else{
       pars_updated  <- pars_corr
     }

@@ -51,8 +51,8 @@ run_da_forecast <- function(states_init,
                             obs_config,
                             da_method = "enkf",
                             par_fit_method = "perturb",
-                            obs_secchi = NULL,
-                            obs_depth = NULL){
+                            obs_non_vertical = NULL,
+                            states_non_vertical = NULL){
 
   if(length(states_config$state_names) > 2){
     config$include_wq <- TRUE
@@ -343,8 +343,6 @@ run_da_forecast <- function(states_init,
       setwd(orgin)
 
 
-
-
       # Loop through output and assign to matrix
       for(m in 1:nmembers) {
         states_height[i, , , m] <- out[[m]]$x_star_end
@@ -352,7 +350,8 @@ run_da_forecast <- function(states_init,
         snow_ice_thickness[,i ,m] <- out[[m]]$snow_ice_thickness_end
         avg_surf_temp[i , m] <- out[[m]]$avg_surf_temp_end
         mixing_vars[, i, m] <- out[[m]]$mixing_vars_end
-        mixer_count[i, m] <- out[[m]]$mixer_count_end
+
+                mixer_count[i, m] <- out[[m]]$mixer_count_end
 
         curr_pars[, m] <- out[[m]]$curr_pars_ens
 
@@ -384,7 +383,9 @@ run_da_forecast <- function(states_init,
           include_process_uncertainty <- TRUE
         }
 
-        if(!config$da_setup$use_inflation_factor) {
+        if(config$da_setup$add_random_noise == 2) {
+
+          lake_depth[i,m] <- rnorm(1, lake_depth[i,m], states_non_vertical$depth_sd)
           with_noise <- FLAREr:::add_process_noise(states_height_ens = states_height[i, , , m],
                                                    model_sd = model_sd,
                                                    model_internal_heights_ens = model_internal_heights[i, ,m],
@@ -398,6 +399,57 @@ run_da_forecast <- function(states_init,
 
       } # END ENSEMBLE LOOP
 
+      if(config$da_setup$add_random_noise == 1) {
+        state_matrix <- matrix(NA, nrow = nmembers, ncol = length(c(states_depth_wo_noise[, ,1])))
+        for(m in 1:nmembers) {
+          curr_states <- states_depth_wo_noise[, ,m ]
+          for(s in 2:nstates){
+            curr_states[s,which(curr_states[s, ] <= 0)] <- runif(length(which(curr_states[s, ] <= 0)), 0, 0.0001)
+          }
+
+          state_matrix[m , ] = c(t(curr_states[, ]))
+        }
+
+        means <- apply(state_matrix, 2, mean)
+        sds <- apply(state_matrix, 2, sd)
+
+        zero_sds <- which(sds == 0)
+        for(bval in zero_sds){
+          if(means[bval] > 0){
+            state_matrix[ ,bval] <- rnorm(length(state_matrix[, bval]), means[bval], sd = 0.0001)
+          }else{
+            state_matrix[ ,bval] <- runif(length(state_matrix[, bval]), 0, 0.0001)
+          }
+        }
+
+
+
+        state_cor <- cor(state_matrix)
+        state_sd <- c(t(model_sd))
+
+        state_cov <- diag(state_sd) %*% state_cor %*% t(diag(state_sd))
+
+
+        #state_cov <- FLAREr:::localization(state_cov, nstates,
+        #                                   config$model_settings$modeled_depths,
+        #                                   config$da_setup$localization_distance, num_single_states = 0)
+
+        for(m in 1:nmembers) {
+          states_depth_w_noise[, ,m] <- t(matrix(mvtnorm::rmvnorm(1,
+                                                                  mean = c(t(states_depth_wo_noise[, ,m ])),
+                                                                  state_cov),
+                                                 ncol = nstates))
+          for(s in 2:nstates){
+            states_depth_w_noise[s,which(states_depth_w_noise[s, , m] < 0),m] <- 0.0
+          }
+
+          lake_depth[i, m] <- rnorm(1, lake_depth[i, ], states_non_vertical$depth_sd)
+        }
+
+
+      }else if(config$da_setup$add_random_noise == 0){
+        states_depth_w_noise <- states_depth_wo_noise
+      }
 
       ### SETTING OBSERVATIONS FOR POTENTAIL DATA ASSIMILATION
 
@@ -410,15 +462,15 @@ run_da_forecast <- function(states_init,
       if(i > 1){
         #DON"T USE SECCHI ON DAY 1 BECAUSE THE DIAGONOSTIC OF LIGHT EXTINCTION
         #IS NOT IN THE RESTART FILE
-        if(!is.null(obs_secchi$obs)){
-          if(!is.na(obs_secchi$obs[i])){
+        if(!is.null(obs_non_vertical$obs_secchi$obs)){
+          if(!is.na(obs_non_vertical$obs_secchi$obs[i])){
             obs_count <- obs_count + 1
           }
         }
       }
 
-      if(!is.null(obs_depth)){
-        if(!is.na(obs_depth$obs[i])){
+      if(!is.null(obs_non_vertical$obs_depth)){
+        if(!is.na(obs_non_vertical$obs_depth$obs[i])){
           obs_count <- obs_count + 1
         }
       }
@@ -427,6 +479,10 @@ run_da_forecast <- function(states_init,
 
       if(config$da_setup$use_inflation_factor){
 
+        if(config$da_setup$add_random_noise == 1){
+          states_depth_wo_noise <- states_depth_w_noise
+        }
+
         if(config$da_setup$inflation_only_at_da & (obs_count == 0 | config$da_setup$da_method == "none" | !config$da_setup$use_obs_constraint)){
           curr_inflation <- 1.0
           curr_par_inflation <- 1.0
@@ -434,6 +490,12 @@ run_da_forecast <- function(states_init,
           curr_inflation <- inflation[i-1]
           curr_par_inflation <- pars_config$inflation
         }
+
+        ens_mean <- mean(lake_depth[i, ], na.rm = TRUE)
+        print(lake_depth[i, ])
+        lake_depth[i, ] <- sqrt(curr_inflation) * (lake_depth[i, ]  - ens_mean) + ens_mean
+        print(lake_depth[i, ])
+
 
         for(s in 1:nstates){
           ens_mean <- apply(states_depth_wo_noise[s, , ], 1, mean, na.rm = TRUE)
@@ -450,6 +512,7 @@ run_da_forecast <- function(states_init,
                                                                 rule = 2)$y
           }
         }
+
         if(length(config$output_settings$diagnostics_names) > 0){
           ens_mean <- apply(diagnostics[d,i , ,], 1, mean)
           for(d in 1:dim(diagnostics)[1]){
@@ -556,16 +619,20 @@ run_da_forecast <- function(states_init,
       x_matrix <- apply(aperm(states_depth_w_noise[,1:ndepths_modeled,], perm = c(2,1,3)), 3, rbind)
 
       # Add depth to the x_matrix if in observations
-      if(!is.null(obs_depth)){
+      if(!is.null(obs_non_vertical$obs_depth)){
         x_matrix <- rbind(x_matrix, lake_depth[i, ])
       }
 
       # Add secchi depth to the x_matrix if in observations
       if(length(config$output_settings$diagnostics_names) > 0 & i > 1){
         modeled_secchi <- 1.7 / diagnostics[1, i, which.min(abs(config$model_settings$modeled_depths-1.0)), ]
-        if(!is.null(obs_secchi)){
+        if(!is.null(obs_non_vertical$obs_secchi)){
           x_matrix <- rbind(x_matrix, modeled_secchi)
         }
+      }
+
+      if(npars > 0){
+        x_matrix <- rbind(x_matrix, curr_pars)
       }
 
       data_assimilation_flag[i] <- 1
@@ -585,12 +652,12 @@ run_da_forecast <- function(states_init,
       zt <- zt[which(!is.na(zt))]
 
       depth_index <- 0
-      if(!is.null(obs_depth)){
+      if(!is.null(obs_non_vertical$obs_depth)){
         depth_index <- 1
-        if(!is.na(obs_depth$obs[i])){
-          zt <- c(zt, obs_depth$obs[i])
-          depth_obs <- obs_depth$obs[i]
-          depth_sd <- obs_depth$sd
+        if(!is.na(obs_non_vertical$obs_depth$obs[i])){
+          zt <- c(zt, obs_non_vertical$obs_depth$obs[i])
+          depth_obs <- obs_non_vertical$obs_depth$obs[i]
+          depth_sd <- obs_non_vertical$obs_depth$sd
         }
       }else{
         depth_obs <- NA
@@ -599,18 +666,19 @@ run_da_forecast <- function(states_init,
 
       secchi_index <- 0
       if(i > 1){
-        if(!is.null(obs_secchi)){
+        if(!is.null(obs_non_vertical$obs_secchi)){
           secchi_index <- 1
-          if(!is.na(obs_secchi$obs[i])){
-            if(!is.na(obs_secchi$obs[i])){
-              zt <- c(zt, obs_secchi$obs[i])
+          if(!is.na(obs_non_vertical$obs_secchi$obs[i])){
+            if(!is.na(obs_non_vertical$obs_secchi$obs[i])){
+              zt <- c(zt, obs_non_vertical$obs_secchi$obs[i])
             }
           }
         }
       }
 
       #Assign which states have obs in the time step
-      h <- matrix(0, nrow = vertical_obs * ndepths_modeled + secchi_index + depth_index, ncol = nstates * ndepths_modeled + secchi_index + depth_index)
+      h <- matrix(0, nrow = vertical_obs * ndepths_modeled + secchi_index + depth_index + npars, ncol = nstates * ndepths_modeled + secchi_index + depth_index + npars)
+      #h <- matrix(0, nrow = vertical_obs * ndepths_modeled + secchi_index + depth_index, ncol = nstates * ndepths_modeled + secchi_index + depth_index)
 
       index <- 0
       for(k in 1:nstates){
@@ -628,15 +696,15 @@ run_da_forecast <- function(states_init,
         }
       }
 
-      if(!is.null(obs_depth) & depth_index > 0){
-        if(!is.na(obs_depth$obs[i])){
-          h[dim(h)[1],dim(h)[2]] <- 1
+      if(!is.null(obs_non_vertical$obs_depth) & depth_index > 0){
+        if(!is.na(obs_non_vertical$obs_depth$obs[i])){
+          h[dim(h)[1] - npars,dim(h)[2] - npars] <- 1
         }
       }
 
-      if(!is.null(obs_secchi)){
-        if(!is.na(obs_secchi$obs[i])){
-          h[dim(h)[1] - depth_index, dim(h)[2] - depth_index] <- 1
+      if(!is.null(obs_non_vertical$obs_secchi)){
+        if(!is.na(obs_non_vertical$obs_secchi$obs[i])){
+          h[dim(h)[1] - depth_index - depth_index - npars, dim(h)[2] - depth_index - depth_index - npars] <- 1
         }
       }
 
@@ -667,12 +735,12 @@ run_da_forecast <- function(states_init,
       }
 
       if(depth_index > 0){
-        psi[vertical_obs * ndepths_modeled + depth_index] <- obs_depth$depth_sd
+        psi[vertical_obs * ndepths_modeled + depth_index] <- obs_non_vertical$obs_depth$depth_sd
       }
 
 
       if(secchi_index > 0){
-        psi[vertical_obs * ndepths_modeled + depth_index +secchi_index] <- obs_secchi$secchi_sd
+        psi[vertical_obs * ndepths_modeled + depth_index + secchi_index] <- obs_non_vertical$obs_secchi$secchi_sd
       }
 
       if(length(config$output_settings$diagnostics_names) > 0){
@@ -715,37 +783,36 @@ run_da_forecast <- function(states_init,
                                      par_fit_method,
                                      inflation_start = inflation[i-1])
 
-        inflation[i] <- updates$inflation_update
-
       }else if(da_method == "pf"){
 
-        updates <- run_particle_filter(x_matrix,
-                                       h,
-                                       pars_corr,
-                                       zt,
-                                       psi,
-                                       z_index,
-                                       states_depth_start = states_depth_w_noise,
-                                       states_height_start = states_height[i, , ,],
-                                       model_internal_heights_start = model_internal_heights[i, , ],
-                                       lake_depth_start = lake_depth[i, ],
-                                       log_particle_weights_start = log_particle_weights[i-1, ],
-                                       snow_ice_thickness_start =  snow_ice_thickness[ ,i, ],
-                                       avg_surf_temp_start = avg_surf_temp[i, ],
-                                       mixer_count_start = mixer_count[i, ],
-                                       mixing_vars_start = mixing_vars[, i, ],
-                                       diagnostics_start = diagnostics_start,
-                                       diagnostics_daily_start = diagnostics_daily_start,
-                                       pars_config,
-                                       config,
-                                       depth_index,
-                                       secchi_index,
-                                       depth_obs,
-                                       depth_sd,
-                                       par_fit_method,
-                                       vertical_obs,
-                                       working_directory,
-                                       obs_config)
+        updates <- FLAREr:::run_particle_filter(x_matrix,
+                                                h,
+                                                pars_corr,
+                                                zt,
+                                                psi,
+                                                z_index,
+                                                states_depth_start = states_depth_w_noise,
+                                                states_height_start = states_height[i, , ,],
+                                                model_internal_heights_start = model_internal_heights[i, , ],
+                                                lake_depth_start = lake_depth[i, ],
+                                                log_particle_weights_start = log_particle_weights[i-1, ],
+                                                snow_ice_thickness_start =  snow_ice_thickness[ ,i, ],
+                                                avg_surf_temp_start = avg_surf_temp[i, ],
+                                                mixer_count_start = mixer_count[i, ],
+                                                mixing_vars_start = mixing_vars[, i, ],
+                                                diagnostics_start = diagnostics_start,
+                                                diagnostics_daily_start = diagnostics_daily_start,
+                                                pars_config,
+                                                config,
+                                                depth_index,
+                                                secchi_index,
+                                                depth_obs,
+                                                depth_sd,
+                                                par_fit_method,
+                                                vertical_obs,
+                                                working_directory,
+                                                obs_config,
+                                                inflation_start = inflation[i-1])
 
       }else{
         stop("da_method not supported; select enkf or pf or none")
@@ -775,6 +842,8 @@ run_da_forecast <- function(states_init,
       avg_surf_temp[i , ] <-  updates$avg_surf_temp_updated
       mixing_vars[, i, ] <-  updates$mixing_vars_updated
       mixer_count[i, ] <-  updates$mixer_count_updated
+
+      inflation[i] <- updates$inflation_update
 
       for(s in 1:nstates){
         for(m in 1:nmembers){
