@@ -819,7 +819,9 @@ run_da_forecast <- function(states_init,
       }
 
       #Update states and parameters
-      pars[i, , ] <- updates$pars_updated
+      if(npars > 0){
+        pars[i, , ] <- updates$pars_updated
+      }
       model_internal_heights[i, ,] <- updates$model_internal_heights_updated
       states_height[i,,,] <- updates$states_height_updated
       states_depth[i, , ,  ] <- updates$states_depth_updated

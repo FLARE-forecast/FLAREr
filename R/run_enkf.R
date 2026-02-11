@@ -55,7 +55,11 @@ run_enkf <- function(x_matrix,
   #Extract the data uncertainty for the data
   #types present during the time-step
 
-  npars <- dim(pars_corr)[1]
+  if(!is.null(pars_config)){
+    npars <- dim(pars_corr)[1]
+  }else{
+    npars <- 0
+  }
   nmembers <- dim(states_depth_start)[3]
   nstates <- dim(states_depth_start)[1]
   ndepths_modeled <- length(config$model_settings$modeled_depths)
@@ -189,6 +193,8 @@ run_enkf <- function(x_matrix,
     }else{
       pars_updated  <- pars_corr
     }
+  }else{
+    pars_updated <- NULL
   }
 
 

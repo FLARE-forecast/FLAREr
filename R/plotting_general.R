@@ -131,6 +131,8 @@ plotting_general <- function(forecast_df,
     distinct(variable) |>
     pull(variable)
 
+  if(length(parameter_variables) > 0){
+
   single_ensemble <- combined_df |>
     filter(variable %in% parameter_variables,
            parameter %in% focal_ensemebles)
@@ -148,6 +150,8 @@ plotting_general <- function(forecast_df,
     labs(y = "value")
 
   plot(parameter_plot)
+
+  }
 
 
   ## CREATE DIAGNOSTIC PLOTS
