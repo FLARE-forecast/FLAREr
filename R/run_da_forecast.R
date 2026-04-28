@@ -30,9 +30,129 @@
 #' @param par_fit_method string; method for adding noise to parameters during calibration
 #' @param obs_secchi list of secchi observations
 #' @param obs_depth list of depth observations
-#' @return a list
+#' @return a named list with the following elements:
+#'   \describe{
+#'     \item{full_time}{vector of all modeled datetimes}
+#'     \item{forecast_start_datetime}{datetime when the forecast period begins}
+#'     \item{states_depth}{array \[states, depths, time, ensemble\] of DA-updated model states indexed by depth}
+#'     \item{states_height}{array \[states, heights, time, ensemble\] of DA-updated model states indexed by GLM internal height}
+#'     \item{pars}{array \[pars, ensemble\] of DA-updated parameter values}
+#'     \item{obs}{observation array passed through unchanged}
+#'     \item{save_file_name}{full output filename stem (includes history period)}
+#'     \item{save_file_name_short}{short output filename stem (forecast start date only)}
+#'     \item{forecast_iteration_id}{timestamp string identifying this forecast run}
+#'     \item{forecast_project_id}{sim_name from run config}
+#'     \item{time_of_forecast}{POSIXct timestamp when forecast was generated}
+#'     \item{mixing_vars, mixer_count, snow_ice_thickness, avg_surf_temp}{GLM restart variables}
+#'     \item{lake_depth}{array \[time, ensemble\] of lake depths}
+#'     \item{model_internal_heights}{array of GLM internal layer heights}
+#'     \item{diagnostics}{array of per-timestep diagnostic variables}
+#'     \item{diagnostics_daily}{array of daily diagnostic variables}
+#'     \item{data_assimilation_flag, forecast_flag, da_qc_flag}{integer vectors flagging DA/forecast/QC status per timestep}
+#'     \item{config, states_config, pars_config, obs_config}{configuration lists passed through}
+#'     \item{met_file_names}{meteorology file paths used}
+#'     \item{log_particle_weights}{log particle weights (particle filter only; NULL for EnKF)}
+#'     \item{inflation}{covariance inflation factor}
+#'     \item{glm_restart_staged}{path to the staged GLM restart file}
+#'   }
 #'
 #' @keywords internal
+
+# Allocate and fill all output arrays with initial conditions before the main
+# data-assimilation loop.  Keeping this separate lets the loop body focus on
+# updating state rather than housekeeping.
+#
+# @return named list of pre-allocated arrays ready for the DA loop
+# @noRd
+initialize_forecast_arrays <- function(nsteps, nstates, ndepths_modeled,
+                                        nmembers, npars, pars_init,
+                                        config, aux_states_init, states_init) {
+
+  states_height <- array(
+    NA,
+    dim = c(nsteps, nstates, config$model_settings$max_model_layers, nmembers)
+  )
+  states_depth <- array(NA, dim = c(nsteps, nstates, ndepths_modeled, nmembers))
+
+  for (m in 1:nmembers) {
+    for (s in 1:nstates) {
+      states_height[1, s, , m] <- states_init[s, , m]
+      non_na_heights <- which(!is.na(aux_states_init$model_internal_heights[, m]))
+      glm_depths <- aux_states_init$lake_depth[m] -
+        aux_states_init$model_internal_heights[non_na_heights, m]
+      states_depth[1, s, , m] <- approx(
+        glm_depths, states_height[1, s, non_na_heights, m],
+        config$model_settings$modeled_depths, rule = 2
+      )$y
+    }
+  }
+
+  pars <- if (npars > 0) {
+    p <- array(NA, dim = c(nsteps, npars, nmembers))
+    p[1, , ] <- pars_init
+    p
+  } else {
+    NULL
+  }
+
+  num_wq_vars <- if (config$include_wq) dim(states_depth)[2] - 2L else 0L
+
+  diagnostics <- if (length(config$output_settings$diagnostics_names) > 0) {
+    array(
+      NA,
+      dim = c(length(config$output_settings$diagnostics_names),
+              nsteps, ndepths_modeled, nmembers)
+    )
+  } else {
+    NA
+  }
+
+  diagnostics_daily <- if (length(config$output_settings$diagnostics_daily$names) > 0) {
+    array(
+      NA,
+      dim = c(length(config$output_settings$diagnostics_daily$names), nsteps, nmembers)
+    )
+  } else {
+    NA
+  }
+
+  mixing_vars            <- array(NA, dim = c(17, nsteps, nmembers))
+  mixer_count            <- array(NA, dim = c(nsteps, nmembers))
+  model_internal_heights <- array(
+    NA, dim = c(nsteps, config$model_settings$max_model_layers, nmembers)
+  )
+  lake_depth             <- array(NA, dim = c(nsteps, nmembers))
+  snow_ice_thickness     <- array(NA, dim = c(3, nsteps, nmembers))
+  avg_surf_temp          <- array(NA, dim = c(nsteps, nmembers))
+  log_particle_weights   <- array(NA, dim = c(nsteps, nmembers))
+  inflation              <- rep(NA, nsteps)
+
+  mixing_vars[, 1, ]          <- aux_states_init$mixing_vars
+  mixer_count[1, ]            <- aux_states_init$mixer_count
+  model_internal_heights[1, , ] <- aux_states_init$model_internal_heights
+  lake_depth[1, ]             <- aux_states_init$lake_depth
+  snow_ice_thickness[, 1, ]   <- aux_states_init$snow_ice_thickness
+  avg_surf_temp[1, ]          <- aux_states_init$avg_surf_temp
+  log_particle_weights[1, ]   <- aux_states_init$log_particle_weights
+  inflation[1]                <- aux_states_init$inflation
+
+  list(
+    states_depth           = states_depth,
+    states_height          = states_height,
+    pars                   = pars,
+    num_wq_vars            = num_wq_vars,
+    diagnostics            = diagnostics,
+    diagnostics_daily      = diagnostics_daily,
+    mixing_vars            = mixing_vars,
+    mixer_count            = mixer_count,
+    model_internal_heights = model_internal_heights,
+    lake_depth             = lake_depth,
+    snow_ice_thickness     = snow_ice_thickness,
+    avg_surf_temp          = avg_surf_temp,
+    log_particle_weights   = log_particle_weights,
+    inflation              = inflation
+  )
+}
 
 
 run_da_forecast <- function(states_init,
@@ -67,7 +187,6 @@ run_da_forecast <- function(states_init,
   nstates <- dim(states_init)[1]
   ndepths_modeled <- length(config$model_settings$modeled_depths)
   nmembers <- dim(states_init)[3]
-  n_met_members <- length(met_file_names)
   model <- config$model_settings$model
   if(!is.null(pars_config)){
     if("model" %in% names(pars_config)){
@@ -101,102 +220,68 @@ run_da_forecast <- function(states_init,
   forecast_flag <- rep(NA, nsteps)
   da_qc_flag <- rep(NA, nsteps)
 
-  states_depth  <- array(NA, dim=c(nsteps, nstates, ndepths_modeled, nmembers))
-  states_height <- array(NA, dim=c(nsteps, nstates, config$model_settings$max_model_layers, nmembers))
-
-  for(m in 1:nmembers){
-    for(s in 1:nstates){
-      states_height[1,s , , m] <- states_init[s , ,m ]
-      non_na_heights <- which(!is.na(aux_states_init$model_internal_heights[ ,m]))
-      glm_depths <- aux_states_init$lake_depth[m] - aux_states_init$model_internal_heights[non_na_heights ,m]
-      states_depth[1,s, , m] <- approx(glm_depths, states_height[1, s, non_na_heights, m], config$model_settings$modeled_depths, rule = 2)$y
-    }
-  }
-
-
-  if(npars > 0){
-    pars <- array(NA, dim=c(nsteps, npars, nmembers))
-    pars[1, , ] <- pars_init
-  }else{
-    pars <- NULL
-  }
+  # --- Array initialisation ---
+  arrs <- initialize_forecast_arrays(
+    nsteps, nstates, ndepths_modeled, nmembers, npars, pars_init,
+    config, aux_states_init, states_init
+  )
+  states_depth           <- arrs$states_depth
+  states_height          <- arrs$states_height
+  pars                   <- arrs$pars
+  num_wq_vars            <- arrs$num_wq_vars
+  diagnostics            <- arrs$diagnostics
+  diagnostics_daily      <- arrs$diagnostics_daily
+  mixing_vars            <- arrs$mixing_vars
+  mixer_count            <- arrs$mixer_count
+  model_internal_heights <- arrs$model_internal_heights
+  lake_depth             <- arrs$lake_depth
+  snow_ice_thickness     <- arrs$snow_ice_thickness
+  avg_surf_temp          <- arrs$avg_surf_temp
+  log_particle_weights   <- arrs$log_particle_weights
+  inflation              <- arrs$inflation
 
   output_vars <- states_config$state_names
 
-  if(config$include_wq){
-    num_wq_vars <- dim(states_depth)[2] - 2
-  }else{
-    num_wq_vars <- 0
-  }
+  num_phytos <- length(which(
+    stringr::str_detect(states_config$state_names, "PHY_") &
+      !stringr::str_detect(states_config$state_names, "_IP") &
+      !stringr::str_detect(states_config$state_names, "_IN")
+  ))
 
+  full_time_char <- strftime(full_time, format = "%Y-%m-%d %H:%M", tz = "UTC")
 
-  if(length(config$output_settings$diagnostics_names) > 0){
-    diagnostics <- array(NA, dim=c(length(config$output_settings$diagnostics_names), nsteps, ndepths_modeled, nmembers))
-  }else{
-    diagnostics <- NA
-  }
-
-  if(length(config$output_settings$diagnostics_daily$names) > 0){
-    diagnostics_daily <- array(NA, dim=c(length(config$output_settings$diagnostics_daily$names), nsteps, nmembers))
-  }else{
-    diagnostics_daily <- NA
-  }
-
-  num_phytos <- length(which(stringr::str_detect(states_config$state_names,"PHY_") & !stringr::str_detect(states_config$state_names,"_IP") & !stringr::str_detect(states_config$state_names,"_IN")))
-
-  full_time_char <- strftime(full_time,
-                             format="%Y-%m-%d %H:%M",
-                             tz = "UTC")
-
-  if(!is.null(inflow_file_names)){
-    inflow_file_names <- as.matrix(inflow_file_names)
+  if (!is.null(inflow_file_names)) {
+    inflow_file_names  <- as.matrix(inflow_file_names)
     outflow_file_names <- as.matrix(outflow_file_names)
-  }else{
-    inflow_file_names <- NULL
+  } else {
+    inflow_file_names  <- NULL
     outflow_file_names <- NULL
   }
 
-  config$model_settings$ncore <- min(c(config$model_settings$ncore, future::availableCores()))
-  # Only preserve glm_restart.nc files that were intentionally placed by a zip
-  # restart; don't carry over stale files from previous runs
+  # --- Per-member working directory setup ---
+  config$model_settings$ncore <- min(
+    c(config$model_settings$ncore, future::availableCores())
+  )
+  # Preserve glm_restart.nc files placed by a zip restart; discard stale ones
   has_zip_restart <- !is.null(config$run_config$restart_zip_file) &&
     !is.na(config$run_config$restart_zip_file)
   purrr::walk(1:nmembers, function(m) {
     dir_path <- file.path(working_directory, m)
     rst_path <- file.path(dir_path, paste0("glm_restart_", m, ".nc"))
-    rst_tmp <- if(has_zip_restart && file.exists(rst_path)) {
+    rst_tmp <- if (has_zip_restart && file.exists(rst_path)) {
       tmp <- tempfile(fileext = ".nc")
       file.copy(rst_path, tmp)
       tmp
     } else NULL
-    if(dir.exists(dir_path)) unlink(dir_path, recursive = TRUE)
+    if (dir.exists(dir_path)) unlink(dir_path, recursive = TRUE)
     dir.create(dir_path, showWarnings = FALSE)
-    if(!is.null(rst_tmp)) file.copy(rst_tmp, rst_path)
+    if (!is.null(rst_tmp)) file.copy(rst_tmp, rst_path)
     FLAREr:::set_up_model(config,
                           ens_working_directory = dir_path,
                           state_names = states_config$state_names,
                           inflow_file_names = inflow_file_names,
                           outflow_file_names = outflow_file_names)
   })
-
-
-  mixing_vars <- array(NA, dim = c(17, nsteps, nmembers))
-  mixer_count <- array(NA, dim = c(nsteps, nmembers))
-  model_internal_heights <- array(NA, dim = c(nsteps, config$model_settings$max_model_layers, nmembers))
-  lake_depth <- array(NA, dim = c(nsteps, nmembers))
-  snow_ice_thickness <- array(NA, dim = c(3, nsteps, nmembers))
-  avg_surf_temp <- array(NA, dim = c(nsteps, nmembers))
-  log_particle_weights <- array(NA, dim=c(nsteps, nmembers))
-  inflation <- rep(NA, nsteps)
-
-  mixing_vars[,1, ] <- aux_states_init$mixing_vars
-  mixer_count[1, ] <- aux_states_init$mixer_count
-  model_internal_heights[1, ,] <- aux_states_init$model_internal_heights
-  lake_depth[1, ] <- aux_states_init$lake_depth
-  snow_ice_thickness[,1 , ] <- aux_states_init$snow_ice_thickness
-  avg_surf_temp[1, ] <- aux_states_init$avg_surf_temp
-  log_particle_weights[1, ] <- aux_states_init$log_particle_weights
-  inflation[1] <- aux_states_init$inflation
 
   if(config$da_setup$assimilate_first_step){
     start_step <- 1

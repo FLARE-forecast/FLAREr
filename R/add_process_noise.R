@@ -6,7 +6,7 @@
 #' @param lake_depth_ens depth of lake for ensemble member
 #' @param modeled_depths vector of depths modeled using FLARE
 #' @param vert_decorr_length vector of vertical decorrelation length for each model state
-#' @param include_uncertainty Boolen to include process uncertainty
+#' @param include_uncertainty Boolean to include process uncertainty
 #'
 #' @noRd
 #' @return list of updated states with respect to depth and height
@@ -37,7 +37,7 @@ add_process_noise <- function(states_height_ens, model_sd, model_internal_height
                               rule = 2)$y
 
     w[] <- rnorm(num_out_heights, 0, 1)
-    if(include_uncertainty == FALSE){
+    if(!include_uncertainty) {
       w[] <- 0.0
     }
     for(kk in 1:num_out_heights){
@@ -50,7 +50,7 @@ add_process_noise <- function(states_height_ens, model_sd, model_internal_height
       q_v[kk] <- w_new[kk] * model_sd_height[kk]
       states_height_ens[jj, kk] <- states_height_ens[jj, kk] + q_v[kk]
 
-      if(jj > 1 & states_height_ens[jj, kk] < 0){
+      if(jj > 1 && states_height_ens[jj, kk] < 0){
         states_height_ens[jj, kk] <- 0.0
       }
     }

@@ -16,6 +16,7 @@
 #' @param mixer_count_start mix count (a restart variable)
 #' @param mixing_vars_start mixing variables (a restart variable)
 #' @param diagnostics_start diagnostics
+#' @param diagnostics_daily_start daily diagnostics (a restart variable)
 #' @param pars_config parameter configuration list
 #' @param config FLARE configuration list
 #' @param depth_index index in x matrix with depth values
@@ -26,6 +27,7 @@
 #' @param vertical_obs number of vertical observations (i.e. states not associated with a depth)
 #' @param working_directory current working directory for simulation
 #' @param obs_config list of observation configurations
+#' @param inflation_start covariance inflation factor (a restart variable)
 #'
 #' @return list of updated model states, diagnostics, and parameters
 #' @noRd
@@ -94,7 +96,7 @@ run_particle_filter <- function(x_matrix,
       obs_names <- c(obs_names,"depth")
     }
     if(secchi_index > 0){
-      obs_names <- c(obs_names,"seechi")
+      obs_names <- c(obs_names, "secchi")
     }
     readr::write_csv(x = tibble(obs_names = obs_names,
                                 obs = zt,
@@ -112,6 +114,34 @@ run_particle_filter <- function(x_matrix,
   if(Neff < nmembers/2 | config$da_setup$pf_always_resample){
     samples <- sample.int(nmembers, replace = TRUE, prob = exp(log_particle_weights_updated))
     log_particle_weights_updated[] <- log(1.0)
+
+    # Resample GLM restart files to match particle resampling.
+    # Stage unique sources to temp files first to avoid overwrite conflicts
+    # (e.g. when two members swap their restart files).
+    rst_name <- function(dir, idx) {
+      file.path(working_directory, dir, paste0("glm_restart_", idx, ".nc"))
+    }
+    src_paths <- rst_name(samples, samples)
+    have_restart <- file.exists(src_paths)
+    if (any(have_restart)) {
+      unique_sources <- unique(samples[have_restart])
+      tmp_files <- setNames(
+        vapply(unique_sources, function(s) {
+          tmp <- tempfile(fileext = ".nc")
+          file.copy(rst_name(s, s), tmp)
+          tmp
+        }, character(1)),
+        as.character(unique_sources)
+      )
+      for (m in seq_len(nmembers)) {
+        key <- as.character(samples[m])
+        if (key %in% names(tmp_files)) {
+          file.copy(tmp_files[[key]], rst_name(m, m),
+                    overwrite = TRUE)
+        }
+      }
+      unlink(tmp_files)
+    }
 
     update <- x_matrix[1:(ndepths_modeled*nstates), samples]
     states_depth_updated <- aperm(array(c(update), dim = c(ndepths_modeled, nstates, nmembers)), perm = c(2,1,3))

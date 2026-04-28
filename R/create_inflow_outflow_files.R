@@ -216,7 +216,7 @@ create_inflow_outflow_files  <- function(config, config_set_name, lake_directory
                                         create_flow_files) |>
       purrr::set_names('inflow_file_names', 'outflow_file_names')
 
-  } else if (!config$flows$include_inflow & !config$flows$include_inflow) {  # don't specify inflows or outflows
+  } else if (!config$flows$include_inflow & !config$flows$include_outflow) {  # don't specify inflows or outflows
     inflow_outflow_files <- list()
     inflow_outflow_files$inflow_file_names <- NULL
     inflow_outflow_files$outflow_file_names <- NULL
