@@ -157,33 +157,27 @@ run_da_forecast <- function(states_init,
   }
 
   config$model_settings$ncore <- min(c(config$model_settings$ncore, future::availableCores()))
-  if(config$model_settings$ncore == 1) {
-    if(!dir.exists(file.path(working_directory, "1"))) {
-      dir.create(file.path(working_directory, "1"), showWarnings = FALSE)
-    } else {
-      unlink(file.path(working_directory, "1"), recursive = TRUE)
-      dir.create(file.path(working_directory, "1"), showWarnings = FALSE)
-    }
+  # Only preserve glm_restart.nc files that were intentionally placed by a zip
+  # restart; don't carry over stale files from previous runs
+  has_zip_restart <- !is.null(config$run_config$restart_zip_file) &&
+    !is.na(config$run_config$restart_zip_file)
+  purrr::walk(1:nmembers, function(m) {
+    dir_path <- file.path(working_directory, m)
+    rst_path <- file.path(dir_path, paste0("glm_restart_", m, ".nc"))
+    rst_tmp <- if(has_zip_restart && file.exists(rst_path)) {
+      tmp <- tempfile(fileext = ".nc")
+      file.copy(rst_path, tmp)
+      tmp
+    } else NULL
+    if(dir.exists(dir_path)) unlink(dir_path, recursive = TRUE)
+    dir.create(dir_path, showWarnings = FALSE)
+    if(!is.null(rst_tmp)) file.copy(rst_tmp, rst_path)
     FLAREr:::set_up_model(config,
-                          ens_working_directory = file.path(working_directory,"1"),
+                          ens_working_directory = dir_path,
                           state_names = states_config$state_names,
                           inflow_file_names = inflow_file_names,
                           outflow_file_names = outflow_file_names)
-  } else {
-    purrr::walk(1:nmembers, function(m){
-      if(!dir.exists(file.path(working_directory, m))) {
-        dir.create(file.path(working_directory, m), showWarnings = FALSE)
-      } else {
-        unlink(file.path(working_directory, m), recursive = TRUE)
-        dir.create(file.path(working_directory, m), showWarnings = FALSE)
-      }
-      FLAREr:::set_up_model(config,
-                            ens_working_directory = file.path(working_directory, m),
-                            state_names = states_config$state_names,
-                            inflow_file_names = inflow_file_names,
-                            outflow_file_names = outflow_file_names)
-    })
-  }
+  })
 
 
   mixing_vars <- array(NA, dim = c(17, nsteps, nmembers))
@@ -226,6 +220,8 @@ run_da_forecast <- function(states_init,
 
   ###START EnKF
 
+  glm_restart_staged <- list()
+
   for(i in start_step:nsteps){
 
     if(i > 1){
@@ -263,7 +259,7 @@ run_da_forecast <- function(states_init,
     if(i > 1){
 
       if(config$model_settings$ncore == 1){
-        future::plan("future::sequential", workers = config$model_settings$ncore)
+        future::plan("future::sequential")
       }else{
         future::plan("future::multisession", workers = config$model_settings$ncore)
       }
@@ -271,9 +267,6 @@ run_da_forecast <- function(states_init,
       orgin <- getwd()
 
       out <- furrr::future_map(1:nmembers, function(m) {
-
-        ens_dir_index <- m
-        if(config$model_settings$ncore == 1) ens_dir_index <- 1
 
         if(!config$uncertainty$weather & i >= (hist_days + 1)){
           curr_met_file <- met_file_names[met_index[1]]
@@ -311,7 +304,7 @@ run_da_forecast <- function(states_init,
                                    curr_stop,
                                    par_names,
                                    curr_pars_ens = curr_pars_ens,
-                                   ens_working_directory = file.path(working_directory, ens_dir_index),
+                                   ens_working_directory = file.path(working_directory, m),
                                    par_nml = par_file,
                                    num_phytos,
                                    glm_heights_start = model_internal_heights[i-1, ,m ],
@@ -335,13 +328,26 @@ run_da_forecast <- function(states_init,
                                    include_wq = config$include_wq,
                                    max_layers = config$model_settings$max_model_layers,
                                    states_heights_start = states_height[i-1, , ,m],
-                                   glm_path = config$model_settings$glm_path
+                                   glm_path = config$model_settings$glm_path,
+                                   use_glm_restart = i > start_step
         )
 
       }, .options = furrr::furrr_options(seed = TRUE))
 
       setwd(orgin)
 
+      # Capture GLM restart files for this timestep (keyed by date string)
+      date_label <- format(as.Date(full_time[i]), "%Y-%m-%d")
+      glm_restart_staged[[date_label]] <- list()
+      for(m in seq_len(nmembers)) {
+        rst_name <- paste0("glm_restart_", m, ".nc")
+        rst_src <- file.path(working_directory, m, rst_name)
+        if(file.exists(rst_src)) {
+          glm_restart_staged[[date_label]][[rst_name]] <- readBin(
+            rst_src, "raw", file.info(rst_src)$size
+          )
+        }
+      }
 
       # Loop through output and assign to matrix
       for(m in 1:nmembers) {
@@ -849,20 +855,26 @@ run_da_forecast <- function(states_init,
 
       for(s in 1:nstates){
         for(m in 1:nmembers){
-          depth_index <- which(config$model_settings$modeled_depths > lake_depth[i, m])
-          states_depth[i, s, depth_index, m ] <- NA
+              depth_index <- which(config$model_settings$modeled_depths > lake_depth[i, m])
+              states_depth[i, s, depth_index, m ] <- NA
+              non_na_heights <- which(!is.na(model_internal_heights[i, ,m]))
+              glm_depths <- lake_depth[i, m] - model_internal_heights[i, non_na_heights ,m]
+              states_depth[i,s, , m] <- approx(glm_depths, states_height[i, s, non_na_heights, m], config$model_settings$modeled_depths, rule = 2)$y
+            }
+          }
+
+
+      if(length(config$output_settings$diagnostics_names) > 0){
+        for(d in 1:dim(diagnostics)[1]){
+          for(m in 1:nmembers){
+            depth_index <- which(config$model_settings$modeled_depths > lake_depth[i, m])
+            diagnostics[d,i, depth_index, m] <- NA
+          }
         }
       }
+
     }
 
-    if(length(config$output_settings$diagnostics_names) > 0){
-      for(d in 1:dim(diagnostics)[1]){
-        for(m in 1:nmembers){
-          depth_index <- which(config$model_settings$modeled_depths > lake_depth[i, m])
-          diagnostics[d,i, depth_index, m] <- NA
-        }
-      }
-    }
 
     ###############
 
@@ -877,16 +889,17 @@ run_da_forecast <- function(states_init,
       }
     }
 
-    #print(states_depth[i, 1, 1,  ])
-    #print(pars[i,1 ,])
-    #print(mixer_count[i, ])
-    #print(mixing_vars[1, i, ])
-    #print(lake_depth[i, ])
-    #print(model_internal_heights[i,1 ,])
-    #print(states_height[i,1,1,])
+    print("end")
+    print(i)
+    print(states_depth[i, 1, ,  1])
+    print(model_internal_heights[i, ,1])
+    print(states_height[i,1,,1])
   }
 
   file_names <- create_filenames(full_time, hist_days, forecast_days, config)
+
+
+
 
   return(list(full_time = full_time,
               forecast_start_datetime = forecast_start_datetime,
@@ -916,5 +929,6 @@ run_da_forecast <- function(states_init,
               obs_config = obs_config,
               met_file_names = met_file_names,
               log_particle_weights = log_particle_weights,
-              inflation = inflation))
+              inflation = inflation,
+              glm_restart_staged = glm_restart_staged))
 }

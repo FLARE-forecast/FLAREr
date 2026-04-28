@@ -14,6 +14,7 @@ da_setup:
     use_obs_constraint: TRUE
     inflation_factor: 1.0
     obs_filename: fcre-targets-insitu.csv
+    add_random_noise: 2
 model_settings:
    ncore: 4
    max_model_layers: 75
@@ -42,6 +43,7 @@ default_init:
    snow_thickness: 0.0
    white_ice_thickness: 0.0
    blue_ice_thickness: 0.0
+   depth_sd: 0.01
 flows:
    include_inflow: TRUE
    include_outflow: TRUE

@@ -1,4 +1,77 @@
 
+#' Update GLM restart file with FLARE DA-corrected state
+#'
+#' Overwrites lake layer arrays, ice/snow state, and WQ variables in an
+#' existing GLM restart NetCDF with the current FLARE ensemble state.
+#' Mixer state, avg_surf_temp, and mixer_count are left untouched — they
+#' are already correct from the previous GLM run.
+#' Does nothing if no glm_restart.nc exists in the directory.
+#' @noRd
+update_glm_restart_file <- function(ens_working_directory,
+                                    m,
+                                    states_heights_start,
+                                    glm_heights_start,
+                                    snow_ice_thickness_start,
+                                    num_wq_vars,
+                                    include_wq,
+                                    state_names = NULL) {
+  rst_path <- file.path(ens_working_directory, paste0("glm_restart_", m, ".nc"))
+  if(!file.exists(rst_path)) return(invisible(NULL))
+
+  nc <- ncdf4::nc_open(rst_path, write = TRUE)
+  native_idx <- which(!is.na(glm_heights_start))
+  nlev <- length(native_idx)
+  max_layers_rst <- nc$dim[["nlev"]]$len
+
+  temp_buf <- rep(0.0, max_layers_rst)
+  salt_buf <- rep(0.0, max_layers_rst)
+  hgt_buf  <- rep(0.0, max_layers_rst)
+  temp_buf[seq_len(nlev)] <- rev(states_heights_start[1, native_idx])
+  salt_buf[seq_len(nlev)] <- rev(states_heights_start[2, native_idx])
+  hgt_buf[seq_len(nlev)]  <- rev(glm_heights_start[native_idx])
+
+  ncdf4::ncvar_put(nc, "lake_temp",   temp_buf)
+  ncdf4::ncvar_put(nc, "lake_salt",   salt_buf)
+  ncdf4::ncvar_put(nc, "lake_height", hgt_buf)
+
+  ncdf4::ncvar_put(nc, "blue_ice",       snow_ice_thickness_start[3])
+  ncdf4::ncvar_put(nc, "white_ice",      snow_ice_thickness_start[2])
+  ncdf4::ncvar_put(nc, "snow_thickness", 0.0)
+
+  if(include_wq && num_wq_vars > 0 &&
+     "wq_vars" %in% names(nc$var)) {
+    # Read the existing full WQ array [num_wq_vars_glm, MaxLayers]
+    wq_buf <- ncdf4::ncvar_get(nc, "wq_vars")
+    # Read GLM WQ variable names and map FLARE state names to positions
+    if(!is.null(state_names) && "wq_var_names" %in% names(nc$var)) {
+      glm_wq_names <- trimws(ncdf4::ncvar_get(nc, "wq_var_names"))
+      flare_wq_names <- state_names[seq(3, 2 + num_wq_vars)]
+      for(wq in seq_len(num_wq_vars)) {
+        glm_idx <- which(glm_wq_names == flare_wq_names[wq])
+        if(length(glm_idx) == 1) {
+          wq_buf[seq_len(nlev), glm_idx] <- rev(states_heights_start[2 + wq, native_idx])
+          if(nlev < max_layers_rst) {
+            wq_buf[(nlev + 1):max_layers_rst, glm_idx] <- 0.0
+          }
+        }
+      }
+    } else {
+      # Fallback: assume FLARE WQ vars are the first num_wq_vars in GLM
+      for(wq in seq_len(min(num_wq_vars, nrow(wq_buf)))) {
+        wq_buf[seq_len(nlev), wq] <- rev(states_heights_start[2 + wq, native_idx])
+        if(nlev < max_layers_rst) {
+          wq_buf[(nlev + 1):max_layers_rst, wq] <- 0.0
+        }
+      }
+    }
+    ncdf4::ncvar_put(nc, "wq_vars", wq_buf)
+  }
+
+  ncdf4::ncatt_put(nc, 0, "NumLayers", nlev, prec = "int")
+  ncdf4::nc_close(nc)
+  invisible(rst_path)
+}
+
 #' Run GLM
 #' @param i time step index
 #' @param m ensemble index
@@ -67,7 +140,8 @@ run_model <- function(i,
                       include_wq,
                       states_heights_start,
                       max_layers,
-                      glm_path){
+                      glm_path,
+                      use_glm_restart = FALSE){
 
   rounding_level <- 5
 
@@ -210,13 +284,26 @@ run_model <- function(i,
     list_index <- list_index + 1
   }
 
-  update_nml(var_list = update_glm_nml_list,
+  update_glm_nml_list[[list_index]] <- as.integer(use_glm_restart)
+  update_glm_nml_names[list_index] <- "init_restart_from_file"
+  list_index <- list_index + 1
+
+  rst_filename <- paste0("glm_restart_", m, ".nc")
+  update_glm_nml_list[[list_index]] <- rst_filename
+  update_glm_nml_names[list_index] <- "restart_fname"
+  list_index <- list_index + 1
+
+  update_glm_nml_list[[list_index]] <- rst_filename
+  update_glm_nml_names[list_index] <- "init_restart_fname"
+  list_index <- list_index + 1
+
+  FLAREr:::update_nml(var_list = update_glm_nml_list,
              var_name_list = update_glm_nml_names,
              working_directory = ens_working_directory,
              nml = "glm3.nml")
 
   if(list_index_aed > 1){
-    update_nml(update_aed_nml_list,
+    FLAREr:::update_nml(update_aed_nml_list,
                update_aed_nml_names,
                working_directory = ens_working_directory,
                "aed2.nml")
@@ -230,6 +317,28 @@ run_model <- function(i,
     }
 
     readr::write_csv(phytos, file.path(ens_working_directory, "aed_phyto_pars.csv"))
+  }
+
+  # Update GLM restart file with FLARE DA-corrected state (no-op if absent)
+  if(use_glm_restart){
+  update_glm_restart_file(
+    ens_working_directory    = ens_working_directory,
+    m                        = m,
+    states_heights_start     = states_heights_start,
+    glm_heights_start        = glm_heights_start,
+    snow_ice_thickness_start = snow_ice_thickness_start,
+    num_wq_vars              = num_wq_vars,
+    include_wq               = include_wq,
+    state_names              = state_names
+  )
+  }
+
+
+  if(m == 1){
+    print("initialzed")
+    print(i)
+  print(glm_heights_start)
+  print(states_heights_start[1,native_heights_index])
   }
 
   #Use GLM NML files to run GLM for a day

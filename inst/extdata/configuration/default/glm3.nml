@@ -51,6 +51,8 @@
    csv_outlet_fname = 'outlet_'
    csv_outlet_nvars = 3
    csv_outlet_vars = 'flow', 'temp', 'salt'
+   restart_fname = 'glm_restart.nc'
+   restart_nsave = 1
 /
 &init_profiles
    num_heights = 28
@@ -67,6 +69,8 @@
    avg_surf_temp = 6
    restart_variables = 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
    restart_mixer_count = 0
+   init_restart_fname = 'glm_restart.nc'
+   init_restart_from_file = 0
 /
 &meteorology
    met_sw = .true.

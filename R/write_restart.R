@@ -213,6 +213,35 @@ write_restart <- function(da_forecast_output,
 
   ncdf4::nc_close(ncout)
 
-  invisible(ncfname)
+  # Build restart zip containing the FLARE NetCDF and per-date GLM restart files
+  glm_restart_staged <- da_forecast_output$glm_restart_staged
+
+  if(!is.null(glm_restart_staged) && length(glm_restart_staged) > 0) {
+    tmp_dir <- tempfile()
+    dir.create(tmp_dir, recursive = TRUE)
+    file.copy(ncfname, tmp_dir)
+
+    for(date_label in names(glm_restart_staged)) {
+      date_dir <- file.path(tmp_dir, date_label)
+      dir.create(date_dir, recursive = TRUE)
+      for(rst_name in names(glm_restart_staged[[date_label]])) {
+        raw_data <- glm_restart_staged[[date_label]][[rst_name]]
+        if(!is.null(raw_data)) {
+          writeBin(raw_data, file.path(date_dir, rst_name))
+        }
+      }
+    }
+
+    zip_name <- paste0(da_forecast_output$save_file_name_short, ".zip")
+    zip_path <- file.path(forecast_output_directory, zip_name)
+    all_files <- list.files(tmp_dir, recursive = TRUE)
+    zip::zip(zipfile = zip_path, files = all_files,
+             recurse = TRUE, root = tmp_dir, mode = "mirror")
+    message("GLM restart zip written to: ", zip_path)
+    unlink(tmp_dir, recursive = TRUE)
+    invisible(zip_path)
+  } else {
+    invisible(ncfname)
+  }
 
 }

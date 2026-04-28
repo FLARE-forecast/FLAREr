@@ -46,7 +46,8 @@ Imports:
     tibble,
     arrow,
     glue,
-    FaaSr
+    FaaSr,
+    zip
 Suggests: 
     knitr,
     rmarkdown,

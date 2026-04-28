@@ -16,7 +16,61 @@ generate_initial_conditions <- function(states_config,
                                         obs,
                                         config,
                                         obs_non_vertical){
-  if(is.na(config$run_config$restart_file)){
+  has_zip_restart <- !is.null(config$run_config$restart_zip_file) &&
+    !is.na(config$run_config$restart_zip_file)
+
+  if(has_zip_restart){
+
+    nmembers <- config$da_setup$ensemble_size
+
+    # Determine restart_index by matching start_datetime against the FLARE
+    # NetCDF time dimension inside the zip
+    tmp_peek <- tempfile()
+    dir.create(tmp_peek, recursive = TRUE)
+    zip::unzip(config$run_config$restart_zip_file, exdir = tmp_peek)
+    flare_nc_peek <- list.files(tmp_peek, pattern = "\\.nc$",
+                                full.names = TRUE, recursive = FALSE)[1]
+    nc_peek <- ncdf4::nc_open(flare_nc_peek)
+    t_peek <- ncdf4::ncvar_get(nc_peek, "time")
+    ncdf4::nc_close(nc_peek)
+    unlink(tmp_peek, recursive = TRUE)
+    datetime_peek <- as.POSIXct(t_peek,
+                                origin = "1970-01-01 00:00.00 UTC",
+                                tz = "UTC")
+    restart_index <- which(
+      datetime_peek == lubridate::as_datetime(config$run_config$start_datetime)
+    )
+    if(length(restart_index) != 1){
+      warning("start_datetime for this simulation is missing from restart zip file")
+    }
+
+    out <- generate_restart_initial_conditions_from_zip(
+      restart_zip_file  = config$run_config$restart_zip_file,
+      state_names       = states_config$state_names,
+      par_names         = pars_config$par_names_save,
+      restart_index     = restart_index,
+      restart_date      = format(as.Date(config$run_config$start_datetime),
+                                 "%Y-%m-%d"),
+      working_directory = config$file_path$execute_directory,
+      nmembers          = nmembers
+    )
+
+    aux_states_init <- list()
+    aux_states_init$snow_ice_thickness    <- out$snow_ice_thickness
+    aux_states_init$avg_surf_temp         <- rep(0.0, nmembers)
+    aux_states_init$the_sals_init         <- config$the_sals_init
+    aux_states_init$mixing_vars           <- array(0.0, dim = c(17, nmembers))
+    aux_states_init$mixer_count           <- rep(0L, nmembers)
+    aux_states_init$model_internal_heights <- out$model_internal_heights
+    aux_states_init$lake_depth            <- out$lake_depth
+    aux_states_init$log_particle_weights  <- out$log_particle_weights
+    aux_states_init$inflation             <- out$inflation
+
+    init <- list(states         = out$states,
+                 pars           = out$pars,
+                 aux_states_init = aux_states_init)
+
+  } else if(is.na(config$run_config$restart_file)){
 
     init <- list()
     if(!is.null(pars_config)){
@@ -146,7 +200,7 @@ generate_initial_conditions <- function(states_config,
                  pars = init$pars,
                  aux_states_init = aux_states_init)
 
-  }else{
+  }else if(!is.na(config$run_config$restart_file)){
     nc <- ncdf4::nc_open(config$run_config$restart_file)
     #forecast <- ncdf4::ncvar_get(nc, "forecast")
     t <- ncdf4::ncvar_get(nc,'time')
