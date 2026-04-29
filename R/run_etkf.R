@@ -1,10 +1,10 @@
-#' @title Run Ensemble Kalman filter on model predictions
+#' @title Run Ensemble Transform Kalman Filter on model predictions
 #'
 #' @param x_matrix matrix of model states (includes secchi and depths)
 #' @param h matrix to map x matrix to zt vector
 #' @param pars_corr matrix of parameters
 #' @param zt vector of observations
-#' @param psi_t vector of observation standard deviations
+#' @param psi vector of observation standard deviations
 #' @param z_index indexes of observations
 #' @param states_depth_start states orientated by depth
 #' @param states_height_start states orientated by height
@@ -12,21 +12,24 @@
 #' @param lake_depth_start lake depth
 #' @param log_particle_weights_start log of particle weights
 #' @param snow_ice_thickness_start vector of snow and ice thickness
-#' @param avg_surf_temp_start average surface temperature (a restart variable)
-#' @param mixer_count_start mix count (a restart variable)
-#' @param mixing_vars_start mixing variables (a restart variable)
+#' @param avg_surf_temp_start average surface temperature
+#' @param mixer_count_start mix count
+#' @param mixing_vars_start mixing variables
 #' @param diagnostics_start diagnostics
+#' @param diagnostics_daily_start daily diagnostics
 #' @param pars_config parameter configuration list
 #' @param config FLARE configuration list
 #' @param depth_index index in x matrix with depth values
-#' @param secchi_index in x matrix with secchi values
+#' @param secchi_index index in x matrix with secchi values
 #' @param depth_obs observed depth
 #' @param depth_sd observed depth standard deviation
 #' @param par_fit_method method for fixing parameters
+#' @param inflation_start inflation array from prior
+#' @param lake_max_depth maximum lake depth
 #' @noRd
 #'
 #' @return list of updated model states, diagnostics, and parameters
-run_enkf <- function(x_matrix,
+run_etkf <- function(x_matrix,
                      h,
                      pars_corr,
                      zt,
@@ -51,83 +54,64 @@ run_enkf <- function(x_matrix,
                      depth_sd,
                      par_fit_method,
                      inflation_start,
-                     lake_max_depth){
+                     lake_max_depth) {
 
-  #Extract the data uncertainty for the data
-  #types present during the time-step
-
-  if(!is.null(pars_config)){
+  if (!is.null(pars_config)) {
     npars <- dim(pars_corr)[1]
-  }else{
+  } else {
     npars <- 0
   }
-  nmembers <- dim(states_depth_start)[3]
-  nstates <- dim(states_depth_start)[1]
+  nmembers        <- dim(states_depth_start)[3]
+  nstates         <- dim(states_depth_start)[1]
   ndepths_modeled <- length(config$model_settings$modeled_depths)
 
-  curr_psi <- psi[z_index] ^ 2
+  R        <- FLAREr:::build_R_matrix(psi, z_index)
+  ens_mean <- rowMeans(x_matrix)
+  A        <- x_matrix - ens_mean  # [nx, N]
+  Y        <- h %*% A              # [nobs, N]
+  d        <- zt - h %*% ens_mean  # [nobs]
 
-  if(length(z_index) > 1){
-    psi_t <- diag(curr_psi)
-  }else{
-    #Special case where there is only one data
-    #type during the time-step
-    psi_t <- curr_psi
-  }
+  if (!is.null(config$da_setup$localization_distance) &&
+      !is.na(config$da_setup$localization_distance)) {
 
-  d_mat <- t(mvtnorm::rmvnorm(n = nmembers, mean = zt, sigma=as.matrix(psi_t)))
+    # Localized path: materialize P_t, apply Schur taper, then use
+    # a deterministic (noise-free) Kalman update on the ensemble.
+    p_t <- A %*% t(A) / (nmembers - 1)
+    p_t <- FLAREr:::localization(
+      mat                   = p_t,
+      nstates               = nstates,
+      modeled_depths        = config$model_settings$modeled_depths,
+      localization_distance = config$da_setup$localization_distance,
+      num_single_states     = dim(p_t)[1] - nstates * ndepths_modeled
+    )
+    s_mat <- h %*% p_t %*% t(h) + R
+    k_t   <- t(solve(s_mat, h %*% p_t, tol = .Machine$double.eps))
 
-  if(isTRUE(config$da_setup$log_transform_wq_obs)){
-    wq_rows <- which(z_index > ndepths_modeled)
-    if(length(wq_rows) > 0){
-      pos_rows  <- wq_rows[zt[wq_rows] > 0]
-      zero_rows <- wq_rows[zt[wq_rows] <= 0]
-      for(row_idx in pos_rows){
-        yt_i      <- zt[row_idx]
-        sig_i     <- sqrt(curr_psi[row_idx])
-        sigma_log <- sqrt(log(1 + (sig_i / yt_i)^2))
-        mu_log    <- log(yt_i) - sigma_log^2 / 2
-        d_mat[row_idx, ] <- exp(stats::rnorm(nmembers, mean = mu_log, sd = sigma_log))
-      }
-      if(length(zero_rows) > 0){
-        if(isTRUE(config$da_setup$log_transform_wq_zero_collapse)){
-          d_mat[zero_rows, ] <- 0.0
-        } else {
-          d_mat[zero_rows, ][d_mat[zero_rows, ] < 0] <- 0.0
-        }
-      }
-    }
+    ens_mean_upd <- ens_mean + k_t %*% d
+
+    # (I - KH) A without forming the [nx, nx] identity matrix
+    update <- matrix(ens_mean_upd, nrow(x_matrix), nmembers) + A - k_t %*% Y
+
   } else {
-    d_mat[which(z_index > ndepths_modeled & d_mat < 0.0)] <- 0.0
+
+    # Standard ETKF: efficient [N, N] eigendecomposition avoids
+    # materializing the full [nx, nx] state covariance.
+    C   <- crossprod(Y, solve(R, Y)) + (nmembers - 1) * diag(nmembers)
+    eig <- eigen(C, symmetric = TRUE)
+
+    # Symmetric matrix square root C^{-1/2}
+    T_mat <- eig$vectors %*%
+             diag(1 / sqrt(eig$values)) %*%
+             t(eig$vectors)
+
+    # Mean update: x̄_a = x̄_f + A C^{-1} Y^T R^{-1} d  (Hunt et al. 2007 eq. 5)
+    w_mean       <- solve(C, crossprod(Y, solve(R, d)))
+    ens_mean_upd <- ens_mean + A %*% w_mean
+
+    # Deterministic ensemble perturbations: A sqrt(N-1) C^{-1/2}
+    update <- matrix(ens_mean_upd, nrow(x_matrix), nmembers) +
+              sqrt(nmembers - 1) * A %*% T_mat
   }
-
-  #Ensemble mean
-  ens_mean <- apply(x_matrix, 1, mean)
-
-  #Ensemble perturbation matrix and sample covariance via BLAS dgemm
-  a_mat <- x_matrix - ens_mean
-  p_t   <- a_mat %*% t(a_mat) / (nmembers - 1)
-
-  if(!is.null(config$da_setup$localization_distance)){
-    if(!is.na(config$da_setup$localization_distance)){
-      p_t <- FLAREr:::localization(mat = p_t,
-                                   nstates = nstates,
-                                   modeled_depths = config$model_settings$modeled_depths,
-                                   localization_distance = config$da_setup$localization_distance,
-                                   num_single_states = dim(p_t)[1] - nstates * length(config$model_settings$modeled_depths))
-    }
-  }
-
-  #Kalman gain: solve the linear system directly to avoid forming the explicit
-  #inverse; uses standard tolerance so near-singularity is detected rather than
-  #silently producing extreme values.
-  s_mat <- h %*% p_t %*% t(h) + psi_t
-  k_t   <- t(solve(s_mat, h %*% p_t, tol = .Machine$double.eps))
-
-  #Update states array (transposes are necessary to convert
-  #between the dims here and the dims in the EnKF formulations)
-
-  update <-  x_matrix + k_t %*% (d_mat - h %*% x_matrix)
 
   FLAREr:::apply_da_updates(
     update                       = update,

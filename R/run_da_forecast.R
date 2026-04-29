@@ -301,6 +301,10 @@ run_da_forecast <- function(states_init,
     config$da_setup$log_transform_wq_zero_collapse <- FALSE
   }
 
+  if (is.null(config$da_setup$esmda_iterations)) {
+    config$da_setup$esmda_iterations <- 4L
+  }
+
 
 
 
@@ -918,8 +922,95 @@ run_da_forecast <- function(states_init,
                                                 obs_config,
                                                 inflation_start = inflation[i-1])
 
+      }else if(da_method == "etkf"){
+
+        updates <- FLAREr:::run_etkf(x_matrix,
+                                     h,
+                                     pars_corr,
+                                     zt,
+                                     psi,
+                                     z_index,
+                                     states_depth_start = states_depth[i, , , ],
+                                     states_height_start = states_height[i, , ,],
+                                     model_internal_heights_start = model_internal_heights[i, , ],
+                                     lake_depth_start = lake_depth[i, ],
+                                     log_particle_weights_start = log_particle_weights[i-1, ],
+                                     snow_ice_thickness_start =  snow_ice_thickness[ ,i, ],
+                                     avg_surf_temp_start = avg_surf_temp[i, ],
+                                     mixer_count_start = mixer_count[i, ],
+                                     mixing_vars_start = mixing_vars[, i, ],
+                                     diagnostics_start,
+                                     diagnostics_daily_start,
+                                     pars_config,
+                                     config,
+                                     depth_index,
+                                     secchi_index,
+                                     depth_obs,
+                                     depth_sd,
+                                     par_fit_method,
+                                     inflation_start = inflation[i-1],
+                                     lake_max_depth = lake_max_depth)
+
+      }else if(da_method == "esmda"){
+
+        updates <- FLAREr:::run_esmda(x_matrix,
+                                      h,
+                                      pars_corr,
+                                      zt,
+                                      psi,
+                                      z_index,
+                                      states_depth_start = states_depth[i, , , ],
+                                      states_height_start = states_height[i, , ,],
+                                      model_internal_heights_start = model_internal_heights[i, , ],
+                                      lake_depth_start = lake_depth[i, ],
+                                      log_particle_weights_start = log_particle_weights[i-1, ],
+                                      snow_ice_thickness_start =  snow_ice_thickness[ ,i, ],
+                                      avg_surf_temp_start = avg_surf_temp[i, ],
+                                      mixer_count_start = mixer_count[i, ],
+                                      mixing_vars_start = mixing_vars[, i, ],
+                                      diagnostics_start,
+                                      diagnostics_daily_start,
+                                      pars_config,
+                                      config,
+                                      depth_index,
+                                      secchi_index,
+                                      depth_obs,
+                                      depth_sd,
+                                      par_fit_method,
+                                      inflation_start = inflation[i-1],
+                                      lake_max_depth = lake_max_depth)
+
+      }else if(da_method == "letkf"){
+
+        updates <- FLAREr:::run_letkf(x_matrix,
+                                      h,
+                                      pars_corr,
+                                      zt,
+                                      psi,
+                                      z_index,
+                                      states_depth_start = states_depth[i, , , ],
+                                      states_height_start = states_height[i, , ,],
+                                      model_internal_heights_start = model_internal_heights[i, , ],
+                                      lake_depth_start = lake_depth[i, ],
+                                      log_particle_weights_start = log_particle_weights[i-1, ],
+                                      snow_ice_thickness_start =  snow_ice_thickness[ ,i, ],
+                                      avg_surf_temp_start = avg_surf_temp[i, ],
+                                      mixer_count_start = mixer_count[i, ],
+                                      mixing_vars_start = mixing_vars[, i, ],
+                                      diagnostics_start,
+                                      diagnostics_daily_start,
+                                      pars_config,
+                                      config,
+                                      depth_index,
+                                      secchi_index,
+                                      depth_obs,
+                                      depth_sd,
+                                      par_fit_method,
+                                      inflation_start = inflation[i-1],
+                                      lake_max_depth = lake_max_depth)
+
       }else{
-        stop("da_method not supported; select enkf or pf or none")
+        stop("da_method not supported; select enkf, etkf, esmda, letkf, or pf or none")
       }
 
       #Update states and parameters

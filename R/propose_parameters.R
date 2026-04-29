@@ -27,7 +27,7 @@ propose_parameters <- function(i, m, pars, pars_config, npars, par_fit_method, d
       if(pars_config$fix_par[par] == 1){
         curr_pars_ens[par] <- pars_config$par_init[par]
       }else{
-        if(par_fit_method == "inflate" & da_method == "enkf"){
+        if(par_fit_method == "inflate" & da_method %in% c("enkf", "etkf", "esmda", "nudging", "letkf")){
           curr_pars_ens[par] <-  pars[i-1, par , m]
           if(i > (hist_days + 1) & !include_uncertainty){
             curr_pars_ens[par] <- mean(pars[i-1, par, ])
