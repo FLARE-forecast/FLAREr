@@ -15,6 +15,8 @@ da_setup:
     inflation_factor: 1.0
     obs_filename: fcre-targets-insitu.csv
     add_random_noise: 2
+    log_transform_wq_obs: FALSE #sample WQ perturbed observations in log space to avoid zero-clamping bias
+    log_transform_wq_zero_collapse: FALSE #when yt=0, collapse d_mat to 0 (unbiased) instead of clamping
 model_settings:
    ncore: 4
    max_model_layers: 75
@@ -76,4 +78,5 @@ uncertainty:
    inflow: TRUE
 output_settings:
    generate_plot: FALSE
+   restart_save_timesteps: [0]  # days relative to forecast_start_datetime; use "all" to save every timestep
    diagnostics_names:  [extc]

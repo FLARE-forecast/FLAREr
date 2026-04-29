@@ -15,9 +15,6 @@ add_process_noise <- function(states_height_ens, model_sd, model_internal_height
 
   states_depth_ens <- array(NA, dim = c(nrow(model_sd), length(modeled_depths)))
 
-  alpha_v <- 1 - exp(-vert_decorr_length)
-
-
   non_na_heights_index <- which(!is.na(model_internal_heights_ens))
 
   num_out_heights <- length(non_na_heights_index)
@@ -45,7 +42,7 @@ add_process_noise <- function(states_height_ens, model_sd, model_internal_height
         w_new[kk] <- w[kk]
       }else{
         alpha <- exp(-vert_decorr_length[jj] / abs((model_internal_heights_ens[kk]-model_internal_heights_ens[kk-1])))
-        w_new[kk] <- ((1 - alpha) * w_new[kk-1] +  alpha * w[kk])
+        w_new[kk] <- (1 - alpha) * w_new[kk-1] + sqrt(1 - (1 - alpha)^2) * w[kk]
       }
       q_v[kk] <- w_new[kk] * model_sd_height[kk]
       states_height_ens[jj, kk] <- states_height_ens[jj, kk] + q_v[kk]

@@ -98,21 +98,23 @@ generate_restart_initial_conditions_from_zip <- function(restart_zip_file,
   message(paste0("Using GLM restart zip with restart index ", restart_index,
                  " (date: ", restart_date, ")"))
 
-  lake_depth_restart        <- ncdf4::ncvar_get(nc, "lake_depth")[restart_index, ]
-  snow_ice_thickness_restart <- ncdf4::ncvar_get(nc, "snow_ice_thickness")[, restart_index, ]
-  log_particle_weights      <- ncdf4::ncvar_get(nc, "log_particle_weights")[restart_index, ]
-  model_internal_heights    <- ncdf4::ncvar_get(nc, "model_internal_heights")[restart_index, , ]
-  inflation                 <- ncdf4::ncvar_get(nc, "inflation")[restart_index]
+  # collapse_degen = FALSE prevents ncdf4 from dropping the time dimension when
+  # the restart file contains only a single timestep (the common default case).
+  lake_depth_restart        <- ncdf4::ncvar_get(nc, "lake_depth",           collapse_degen = FALSE)[restart_index, ]
+  snow_ice_thickness_restart <- ncdf4::ncvar_get(nc, "snow_ice_thickness",  collapse_degen = FALSE)[, restart_index, ]
+  log_particle_weights      <- ncdf4::ncvar_get(nc, "log_particle_weights", collapse_degen = FALSE)[restart_index, ]
+  model_internal_heights    <- ncdf4::ncvar_get(nc, "model_internal_heights", collapse_degen = FALSE)[restart_index, , ]
+  inflation                 <- ncdf4::ncvar_get(nc, "inflation",             collapse_degen = FALSE)[restart_index]
 
   states_restart <- array(NA, dim = c(length(state_names), dim(model_internal_heights)[1], restart_nmembers))
   for (i in seq_along(state_names)) {
-    states_restart[i, , ] <- ncdf4::ncvar_get(nc, paste0(state_names[i], "_heights"))[restart_index, , ]
+    states_restart[i, , ] <- ncdf4::ncvar_get(nc, paste0(state_names[i], "_heights"), collapse_degen = FALSE)[restart_index, , ]
   }
 
   if (!is.null(par_names)) {
     pars_restart <- array(NA, dim = c(length(par_names), restart_nmembers))
     for (p in seq_along(par_names)) {
-      pars_restart[p, ] <- ncdf4::ncvar_get(nc, par_names[p])[restart_index, ]
+      pars_restart[p, ] <- ncdf4::ncvar_get(nc, par_names[p], collapse_degen = FALSE)[restart_index, ]
     }
   } else {
     pars_restart <- NULL

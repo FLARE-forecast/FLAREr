@@ -65,8 +65,11 @@ propose_parameters <- function(i, m, pars, pars_config, npars, par_fit_method, d
           curr_pars_ens[par] <- pars[i-1, par, m]
         }
 
-        if(curr_pars_ens[par] <  pars_config$par_lowerbound[par]) curr_pars_ens[par] <-  pars_config$par_lowerbound[par]
-        if(curr_pars_ens[par] >  pars_config$par_upperbound[par]) curr_pars_ens[par] <-  pars_config$par_upperbound[par]
+        lb <- pars_config$par_lowerbound[par]
+        ub <- pars_config$par_upperbound[par]
+        if(curr_pars_ens[par] < lb) curr_pars_ens[par] <- 2 * lb - curr_pars_ens[par]
+        if(curr_pars_ens[par] > ub) curr_pars_ens[par] <- 2 * ub - curr_pars_ens[par]
+        curr_pars_ens[par] <- max(lb, min(ub, curr_pars_ens[par]))
       }
     }
   }

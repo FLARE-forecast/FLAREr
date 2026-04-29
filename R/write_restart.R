@@ -65,9 +65,24 @@ write_restart <- function(da_forecast_output,
   t <- as.numeric(as.POSIXct(lubridate::with_tz(full_time),origin = '1970-01-01 00:00.00 UTC'))
   #obs_states <- seq(1,dim(obs)[3],1)
 
-  #Set variable that states whether value is forecasted
-  #forecasted <- rep(1, length(t))
-  #forecasted[1:(hist_days + 1)] <- 0
+  # Determine which timesteps to retain in the restart file
+  restart_save_timesteps <- config$output_settings$restart_save_timesteps
+  if (is.null(restart_save_timesteps)) restart_save_timesteps <- 0L
+
+  if (identical(restart_save_timesteps, "all") ||
+      (length(restart_save_timesteps) == 1 && as.character(restart_save_timesteps) == "all")) {
+    keep_idx <- seq_along(full_time)
+  } else {
+    target_dates <- as.Date(forecast_start_datetime) + as.integer(restart_save_timesteps)
+    full_dates <- as.Date(full_time)
+    keep_idx <- which(full_dates %in% target_dates)
+    if (length(keep_idx) == 0) {
+      warning("restart_save_timesteps produced no matching dates; defaulting to forecast_start_datetime.")
+      keep_idx <- which(full_dates == as.Date(forecast_start_datetime))
+    }
+  }
+
+  t <- t[keep_idx]
 
   if(!use_short_filename){
     ncfname <- file.path(forecast_output_directory, paste0(da_forecast_output$save_file_name,".nc"))
@@ -161,48 +176,35 @@ write_restart <- function(da_forecast_output,
   #ncdf4::ncvar_put(ncout,def_list[[1]] ,as.array(data_assimilation_flag))
   #ncdf4::ncvar_put(ncout,def_list[[2]] ,as.array(forecast_flag))
   #ncdf4::ncvar_put(ncout,def_list[[3]] ,as.array(da_qc_flag))
-  ncdf4::ncvar_put(ncout,def_list[[1]] ,snow_ice_thickness)
-  ncdf4::ncvar_put(ncout,def_list[[2]] ,lake_depth)
-  ncdf4::ncvar_put(ncout,def_list[[3]] ,avg_surf_temp)
-  ncdf4::ncvar_put(ncout,def_list[[4]] ,mixing_vars)
-  ncdf4::ncvar_put(ncout,def_list[[5]] ,model_internal_heights)
-  ncdf4::ncvar_put(ncout,def_list[[6]] ,mixer_count)
-  ncdf4::ncvar_put(ncout,def_list[[7]] ,log_particle_weights)
-  ncdf4::ncvar_put(ncout,def_list[[8]] ,inflation)
+  # dim layout: snow_ice_thickness [snow_ice_dim, time, ens]
+  ncdf4::ncvar_put(ncout, def_list[[1]], snow_ice_thickness[, keep_idx, , drop = FALSE])
+  # dim layout: lake_depth, avg_surf_temp, mixer_count, log_particle_weights [time, ens]
+  ncdf4::ncvar_put(ncout, def_list[[2]], lake_depth[keep_idx, , drop = FALSE])
+  ncdf4::ncvar_put(ncout, def_list[[3]], avg_surf_temp[keep_idx, , drop = FALSE])
+  # dim layout: mixing_vars [mixing_vars_dim, time, ens]
+  ncdf4::ncvar_put(ncout, def_list[[4]], mixing_vars[, keep_idx, , drop = FALSE])
+  # dim layout: model_internal_heights [time, internal_model_depths_dim, ens]
+  ncdf4::ncvar_put(ncout, def_list[[5]], model_internal_heights[keep_idx, , , drop = FALSE])
+  ncdf4::ncvar_put(ncout, def_list[[6]], mixer_count[keep_idx, , drop = FALSE])
+  ncdf4::ncvar_put(ncout, def_list[[7]], log_particle_weights[keep_idx, , drop = FALSE])
+  ncdf4::ncvar_put(ncout, def_list[[8]], inflation[keep_idx])
 
   index <- 8
 
   if(npars > 0){
     for(par in 1:npars){
-      ncdf4::ncvar_put(ncout,def_list[[index + par]] ,pars[,par, ])
+      pars_par <- pars[, par, ]
+      ncdf4::ncvar_put(ncout, def_list[[index + par]], pars_par[keep_idx, , drop = FALSE])
     }
   }
 
-   tmp_index <- index + npars
-  # for(s in 1:length(obs_config$state_names_obs)){
-  #   if(!(obs_config$state_names_obs[s] %in% states_config$state_names) &
-  #      obs_config$multi_depth[s] == 1){
-  #     tmp_index <- tmp_index + 1
-  #     first_index <- 1
-  #     for(ii in 1:length(states_config$state_names)){
-  #       if(s %in% states_config$states_to_obs[[ii]]){
-  #         temp_index <- which(states_config$states_to_obs[[ii]] == s)
-  #         if(first_index == 1){
-  #           temp_var <- states_depth_efi[, , , ii] * states_config$states_to_obs_mapping[[ii]][temp_index]
-  #           first_index <- 2
-  #         }else{
-  #           temp_var <- temp_var + states_depth_efi[, , , ii] * states_config$states_to_obs_mapping[[ii]][temp_index]
-  #         }
-  #       }
-  #     }
-  #     ncdf4::ncvar_put(ncout,def_list[[tmp_index]] , temp_var)
-  #
-  #   }
-  # }
+  tmp_index <- index + npars
 
   for(s in 1:length(states_config$state_names)){
     tmp_index <- tmp_index + 1
-    ncdf4::ncvar_put(ncout,def_list[[tmp_index]],states_height[, s, ,])
+    # dim layout: states_height [time, internal_model_depths_dim, ens] per state
+    state_data <- states_height[, s, ,]
+    ncdf4::ncvar_put(ncout, def_list[[tmp_index]], state_data[keep_idx, , , drop = FALSE])
   }
 
   time_of_forecast <- lubridate::with_tz(da_forecast_output$time_of_forecast, tzone = "UTC")
@@ -215,6 +217,12 @@ write_restart <- function(da_forecast_output,
 
   # Build restart zip containing the FLARE NetCDF and per-date GLM restart files
   glm_restart_staged <- da_forecast_output$glm_restart_staged
+
+  # Filter GLM restart dates to match the timesteps kept in the NetCDF
+  keep_dates <- format(as.Date(full_time[keep_idx]), "%Y-%m-%d")
+  glm_restart_staged <- glm_restart_staged[
+    intersect(names(glm_restart_staged), keep_dates)
+  ]
 
   if(!is.null(glm_restart_staged) && length(glm_restart_staged) > 0) {
     tmp_dir <- tempfile()

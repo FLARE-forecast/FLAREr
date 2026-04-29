@@ -41,7 +41,14 @@ generate_initial_conditions <- function(states_config,
       datetime_peek == lubridate::as_datetime(config$run_config$start_datetime)
     )
     if(length(restart_index) != 1){
-      warning("start_datetime for this simulation is missing from restart zip file")
+      available_dates <- format(datetime_peek, "%Y-%m-%d %H:%M:%S UTC")
+      stop(paste0(
+        "start_datetime '", config$run_config$start_datetime,
+        "' not found in the restart zip file. ",
+        "Available timestep(s): ", paste(available_dates, collapse = ", "), ". ",
+        "Check that restart_save_timesteps in configure_flare.yml includes the ",
+        "offset that corresponds to the start_datetime of this run."
+      ))
     }
 
     out <- generate_restart_initial_conditions_from_zip(

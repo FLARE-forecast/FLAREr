@@ -50,7 +50,8 @@ run_enkf <- function(x_matrix,
                      depth_obs,
                      depth_sd,
                      par_fit_method,
-                     inflation_start){
+                     inflation_start,
+                     lake_max_depth){
 
   #Extract the data uncertainty for the data
   #types present during the time-step
@@ -76,27 +77,36 @@ run_enkf <- function(x_matrix,
 
   d_mat <- t(mvtnorm::rmvnorm(n = nmembers, mean = zt, sigma=as.matrix(psi_t)))
 
-  #Set any negative observations of water quality variables to zero
-  d_mat[which(z_index > ndepths_modeled & d_mat < 0.0)] <- 0.0
+  if(isTRUE(config$da_setup$log_transform_wq_obs)){
+    wq_rows <- which(z_index > ndepths_modeled)
+    if(length(wq_rows) > 0){
+      pos_rows  <- wq_rows[zt[wq_rows] > 0]
+      zero_rows <- wq_rows[zt[wq_rows] <= 0]
+      for(row_idx in pos_rows){
+        yt_i      <- zt[row_idx]
+        sig_i     <- sqrt(curr_psi[row_idx])
+        sigma_log <- sqrt(log(1 + (sig_i / yt_i)^2))
+        mu_log    <- log(yt_i) - sigma_log^2 / 2
+        d_mat[row_idx, ] <- exp(stats::rnorm(nmembers, mean = mu_log, sd = sigma_log))
+      }
+      if(length(zero_rows) > 0){
+        if(isTRUE(config$da_setup$log_transform_wq_zero_collapse)){
+          d_mat[zero_rows, ] <- 0.0
+        } else {
+          d_mat[zero_rows, ][d_mat[zero_rows, ] < 0] <- 0.0
+        }
+      }
+    }
+  } else {
+    d_mat[which(z_index > ndepths_modeled & d_mat < 0.0)] <- 0.0
+  }
 
   #Ensemble mean
   ens_mean <- apply(x_matrix, 1, mean)
 
-  dit <- matrix(NA, nrow = nmembers, ncol = dim(x_matrix)[1])
-
-  #Loop through ensemble members
-  for(m in 1:nmembers){
-    #  #Ensemble specific deviation
-    dit[m, ] <- x_matrix[, m] - ens_mean
-    if(m == 1){
-      p_it <- dit[m, ] %*% t(dit[m, ])
-    }else{
-      p_it <- dit[m, ] %*% t(dit[m, ]) +  p_it
-    }
-  }
-
-  #estimate covariance
-  p_t <- (p_it / (nmembers - 1))
+  #Ensemble perturbation matrix and sample covariance via BLAS dgemm
+  a_mat <- x_matrix - ens_mean
+  p_t   <- a_mat %*% t(a_mat) / (nmembers - 1)
 
   if(!is.null(config$da_setup$localization_distance)){
     if(!is.na(config$da_setup$localization_distance)){
@@ -108,37 +118,14 @@ run_enkf <- function(x_matrix,
     }
   }
 
-  #Kalman gain
-  k_t <- p_t %*% t(h) %*% solve(h %*% p_t %*% t(h) + psi_t, tol = 1e-17)
+  #Kalman gain: solve the linear system directly to avoid forming the explicit
+  #inverse; uses standard tolerance so near-singularity is detected rather than
+  #silently producing extreme values.
+  s_mat <- h %*% p_t %*% t(h) + psi_t
+  k_t   <- t(solve(s_mat, h %*% p_t, tol = .Machine$double.eps))
 
-  # Adaptive inflation factor
+  # Inflation is applied to the prior ensemble in run_da_forecast before this
   inflation_update <- inflation_start
-  #Y <- h %*% x_matrix
-  #y_mean <- rowMeans(Y)
-  #Y_prime <- Y - y_mean
-  #d <- zt - y_mean
-  #Py <- (1 / (nmembers - 1)) * Y_prime %*% t(Y_prime)
-  #innovation_norm <- sum(d^2)
-  #expected_innovation <- sum(diag(Py + psi_t))
-  #inflation_update <- config$da_setup$inflation_alpha * inflation_start + (1-config$da_setup$inflation_alpha) * (innovation_norm / expected_innovation)
-  #inflation_update <- min(max(1.0, inflation_update), 1.3)
-  #print("innovation_norm")
-  #print(innovation_norm)
-  #print("y_mean")
-  #print(y_mean)
-  #print("zt")
-  #print(zt)
-  #print("d")
-  #print(d)
-  #print("d^2")
-  #print(d^2)
-  #print("diag(Py + psi_t)")
-  #print(diag(Py + psi_t))
-  #print("median(d^2 / diag(Py + psi_t))")
-  #print(median(d^2 / diag(Py + psi_t)))
-  #print(expected_innovation)
-  #print((innovation_norm / expected_innovation))
-  #print(inflation_update)
 
   #Update states array (transposes are necessary to convert
   #between the dims here and the dims in the EnKF formulations)
@@ -151,10 +138,8 @@ run_enkf <- function(x_matrix,
 
   if(depth_index > 0){
     lake_depth_updated<- update[(ndepths_modeled*nstates + depth_index), ]
-    nml <- read_nml(file.path(config$file_path$configuration_directory, config$model_settings$base_GLM_nml))
-    max_depth <- nml$morphometry$H[length(nml$morphometry$H)] - nml$morphometry$H[1]
-    index <- which(lake_depth_updated > max_depth)
-    lake_depth_updated[index] <- max_depth
+    index <- which(lake_depth_updated > lake_max_depth)
+    lake_depth_updated[index] <- lake_max_depth
     for(m in 1:nmembers){
       non_na_heights <- which(!is.na(model_internal_heights_start[ , m]))
       diff_height <- lake_depth_updated[m] - model_internal_heights_start[1, m]
@@ -171,19 +156,22 @@ run_enkf <- function(x_matrix,
 
   for(s in 1:nstates){
     for(m in 1:nmembers){
-      depth_index <- which(config$model_settings$modeled_depths <= lake_depth_updated[m])
+      valid_depth_idx <- which(config$model_settings$modeled_depths <= lake_depth_updated[m])
       #Map updates to GLM native depths
       non_na_heights <- which(!is.na(model_internal_heights_start[ , m]))
 
       if(s > 1){
         index <- which(states_depth_updated[s, , m] < 0.0 & !is.na(states_depth_updated[s, , m]))
-        states_depth_updated[s, index, m] <- 0.0
+        states_depth_updated[s, index, m] <- -states_depth_updated[s, index, m]
+        still_neg <- which(states_depth_updated[s, , m] < 0.0 & !is.na(states_depth_updated[s, , m]))
+        states_depth_updated[s, still_neg, m] <- 0.0
       }
 
-      states_height_updated[s,non_na_heights,m] <- approx(lake_depth_updated[m] - config$model_settings$modeled_depths[depth_index],
-                                                          states_depth_updated[s, depth_index, m ],
-                                                          model_internal_heights_start[non_na_heights , m],
-                                                          rule = 2)$y
+      states_height_updated[s, non_na_heights, m] <- approx(
+        lake_depth_updated[m] - config$model_settings$modeled_depths[valid_depth_idx],
+        states_depth_updated[s, valid_depth_idx, m],
+        model_internal_heights_start[non_na_heights, m],
+        rule = 2)$y
     }
   }
 
@@ -209,8 +197,8 @@ run_enkf <- function(x_matrix,
     }
     for(d in 1:dim(diagnostics_updated)[1]){
       for(m in 1:nmembers){
-        depth_index <- which(config$model_settings$modeled_depths > lake_depth_updated[m])
-        diagnostics_updated[d,depth_index, m] <- NA
+        above_lake_idx <- which(config$model_settings$modeled_depths > lake_depth_updated[m])
+        diagnostics_updated[d, above_lake_idx, m] <- NA
       }
     }
   }else{
@@ -234,13 +222,17 @@ run_enkf <- function(x_matrix,
 
   num_out_depths <- length(which(!is.na(states_height_start[1, ,1])))
 
-  #Correct any parameter values outside bounds
+  #Correct any parameter values outside bounds using reflective bounds to preserve ensemble spread
   if(npars > 0){
     for(par in 1:npars){
-      low_index <- which(pars_updated[par ,] < pars_config$par_lowerbound[par])
-      high_index <- which(pars_updated[par ,] > pars_config$par_upperbound[par])
-      pars_updated[par, low_index] <- pars_config$par_lowerbound[par]
-      pars_updated[par, high_index]  <- pars_config$par_upperbound[par]
+      lb <- pars_config$par_lowerbound[par]
+      ub <- pars_config$par_upperbound[par]
+      low_index  <- which(pars_updated[par, ] < lb)
+      high_index <- which(pars_updated[par, ] > ub)
+      pars_updated[par, low_index]  <- 2 * lb - pars_updated[par, low_index]
+      pars_updated[par, high_index] <- 2 * ub - pars_updated[par, high_index]
+      # Safety clamp for members that overshoot by more than the interval width
+      pars_updated[par, ] <- pmax(lb, pmin(ub, pars_updated[par, ]))
     }
   }
 

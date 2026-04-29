@@ -293,6 +293,14 @@ run_da_forecast <- function(states_init,
     config$da_setup$use_inflation_factor <- FALSE
   }
 
+  if(is.null(config$da_setup$log_transform_wq_obs)){
+    config$da_setup$log_transform_wq_obs <- FALSE
+  }
+
+  if(is.null(config$da_setup$log_transform_wq_zero_collapse)){
+    config$da_setup$log_transform_wq_zero_collapse <- FALSE
+  }
+
 
 
 
@@ -304,6 +312,9 @@ run_da_forecast <- function(states_init,
   #config$metadata$model_description$version <- substr(glm_v, 9, 16)
 
   ###START EnKF
+
+  nml_glm <- FLAREr:::read_nml(file.path(config$file_path$configuration_directory, config$model_settings$base_GLM_nml))
+  lake_max_depth <- nml_glm$morphometry$H[length(nml_glm$morphometry$H)] - nml_glm$morphometry$H[1]
 
   glm_restart_staged <- list()
 
@@ -531,7 +542,10 @@ run_da_forecast <- function(states_init,
                                                                   state_cov),
                                                  ncol = nstates))
           for(s in 2:nstates){
-            states_depth_w_noise[s,which(states_depth_w_noise[s, , m] < 0),m] <- 0.0
+            neg <- which(states_depth_w_noise[s, , m] < 0)
+            states_depth_w_noise[s, neg, m] <- -states_depth_w_noise[s, neg, m]
+            still_neg <- which(states_depth_w_noise[s, , m] < 0)
+            states_depth_w_noise[s, still_neg, m] <- 0.0
           }
 
           lake_depth[i, m] <- rnorm(1, lake_depth[i, ], states_non_vertical$depth_sd)
@@ -594,7 +608,9 @@ run_da_forecast <- function(states_init,
             states_depth_w_noise[s, , m] <- sqrt(curr_inflation) * (states_depth_wo_noise[s, , m] - ens_mean) + ens_mean
             if(s > 1){
               index <- which(states_depth_w_noise[s, , m] < 0.0)
-              states_depth_w_noise[s,index , m] <- 0.0
+              states_depth_w_noise[s, index, m] <- -states_depth_w_noise[s, index, m]
+              still_neg <- which(states_depth_w_noise[s, , m] < 0.0)
+              states_depth_w_noise[s, still_neg, m] <- 0.0
             }
             non_na_heights_index <- which(!is.na(model_internal_heights[i, ,m]))
             states_height[i,s,non_na_heights_index,m] <- approx(lake_depth[i ,m ] - config$model_settings$modeled_depths,
@@ -768,8 +784,8 @@ run_da_forecast <- function(states_init,
       }
 
       #Assign which states have obs in the time step
-      h <- matrix(0, nrow = vertical_obs * ndepths_modeled + secchi_index + depth_index + npars, ncol = nstates * ndepths_modeled + secchi_index + depth_index + npars)
-      #h <- matrix(0, nrow = vertical_obs * ndepths_modeled + secchi_index + depth_index, ncol = nstates * ndepths_modeled + secchi_index + depth_index)
+      h <- matrix(0, nrow = vertical_obs * ndepths_modeled + secchi_index + depth_index,
+                     ncol = nstates * ndepths_modeled + secchi_index + depth_index + npars)
 
       index <- 0
       for(k in 1:nstates){
@@ -795,7 +811,7 @@ run_da_forecast <- function(states_init,
 
       if(!is.null(obs_non_vertical$obs_secchi)){
         if(!is.na(obs_non_vertical$obs_secchi$obs[i])){
-          h[dim(h)[1] - depth_index - depth_index - npars, dim(h)[2] - depth_index - depth_index - npars] <- 1
+          h[dim(h)[1] - depth_index - npars, dim(h)[2] - depth_index - npars] <- 1
         }
       }
 
@@ -817,11 +833,7 @@ run_da_forecast <- function(states_init,
       for(k in 1:vertical_obs){
         for(j in 1:ndepths_modeled){
           index <- index + 1
-          if(k == 1){
-            psi[index] <- obs_sd[k]
-          }else{
-            psi[index] <- obs_sd[k]
-          }
+          psi[index] <- obs_sd[k]
         }
       }
 
@@ -872,7 +884,8 @@ run_da_forecast <- function(states_init,
                                      depth_obs,
                                      depth_sd,
                                      par_fit_method,
-                                     inflation_start = inflation[i-1])
+                                     inflation_start = inflation[i-1],
+                                     lake_max_depth = lake_max_depth)
 
       }else if(da_method == "pf"){
 
