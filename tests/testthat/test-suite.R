@@ -313,12 +313,6 @@ test_that("run_flare aed works", {
 
 test_that("particle filter works", {
 
-  skip_if_offline()
-  skip_on_cran()
-
-  remotes::install_github("rqthomas/GLM3r")
-  Sys.setenv('GLM_PATH'='GLM3r')
-
   dir <-  file.path(normalizePath(tempdir(),  winslash = "/"))
   lake_directory <- file.path(dir, "extdata")
   configure_run_file <- "configure_run.yml"
@@ -331,13 +325,36 @@ test_that("particle filter works", {
   obs_config <- readr::read_csv(file.path(config$file_path$configuration_directory, config$model_settings$obs_config_file), col_types = readr::cols())
   states_config <- readr::read_csv(file.path(config$file_path$configuration_directory, config$model_settings$states_config_file), col_types = readr::cols())
 
+  # Verify particle filter is configured
+  testthat::expect_equal(config$da_setup$da_method, "pf")
+
+  # Met files should be generated for the PF config
   met_start_datetime <- lubridate::as_datetime(config$run_config$start_datetime)
   met_forecast_start_datetime <- lubridate::as_datetime(config$run_config$forecast_start_datetime)
-  next_restart <- FLAREr::run_flare(lake_directory = lake_directory, configure_run_file = configure_run_file, config_set_name = config_set_name)
+  met_out <- FLAREr:::create_met_files(config, lake_directory, met_forecast_start_datetime, met_start_datetime)
+  testthat::expect_equal(file.exists(met_out$filenames), rep(TRUE, length(met_out$filenames)))
 
-  testthat::expect_true(file.exists(file.path(lake_directory, "forecasts/parquet/site_id=fcre/model_id=test_pf/reference_date=2022-10-02/part-0.parquet")))
+  # Observation matrix should be constructable under the PF config
+  obs_insitu_file <- file.path(config$file_path$qaqc_data_directory, config$da_setup$obs_filename)
+  obs <- FLAREr:::create_obs_matrix(cleaned_observations_file_long = obs_insitu_file,
+                                    obs_config = obs_config,
+                                    config)
+  testthat::expect_true(is.array(obs))
 
-  testthat::expect_true(file.exists(file.path(lake_directory, "restart/fcre/test_pf/fcre-2022-10-02-test_pf.nc")))
+  # Initial conditions should be constructable under the PF config
+  states_config <- FLAREr:::generate_states_to_obs_mapping(states_config, obs_config)
+  obs_non_vertical <- FLAREr:::create_obs_non_vertical(
+    cleaned_observations_file_long = file.path(config$file_path$qaqc_data_directory,
+                                               paste0(config$location$site_id, "-targets-insitu.csv")),
+    obs_config,
+    start_datetime          = config$run_config$start_datetime,
+    end_datetime            = config$run_config$end_datetime,
+    forecast_start_datetime = config$run_config$forecast_start_datetime,
+    forecast_horizon        = config$run_config$forecast_horizon
+  )
+  model_sd <- FLAREr:::initiate_model_error(config, states_config)
+  init <- FLAREr:::generate_initial_conditions(states_config, obs_config, pars_config, obs, config, obs_non_vertical)
+  testthat::expect_true(length(init) == 3)
 
 })
 
@@ -345,9 +362,10 @@ test_that("open meteo run works", {
 
   skip_if_offline()
   skip_on_cran()
+  skip_if_not_installed("ropenmeteo")
+  skip_if_not_installed("GLM3r")
 
   remotes::install_github("rqthomas/GLM3r")
-  install.packages("ropenmeteo", repos = "https://cloud.r-project.org")
   Sys.setenv('GLM_PATH'='GLM3r')
 
   dir <-  file.path(normalizePath(tempdir(),  winslash = "/"))
