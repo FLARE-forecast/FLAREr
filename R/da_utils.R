@@ -15,15 +15,13 @@ build_R_matrix <- function(psi, z_index) {
 #' @param model_internal_heights_start heights predicted by GLM model
 #' @param lake_depth_start lake depth
 #' @param snow_ice_thickness_start vector of snow and ice thickness
-#' @param avg_surf_temp_start average surface temperature
-#' @param mixer_count_start mix count
-#' @param mixing_vars_start mixing variables
 #' @param diagnostics_start diagnostics
 #' @param diagnostics_daily_start daily diagnostics
 #' @param pars_corr matrix of parameters
 #' @param pars_config parameter configuration list
 #' @param config FLARE configuration list
 #' @param depth_index index in x matrix with depth values
+#' @param secchi_index 1 if secchi is in x matrix, 0 otherwise
 #' @param par_fit_method method for fixing parameters
 #' @param inflation_start inflation array from prior
 #' @param lake_max_depth maximum lake depth
@@ -40,15 +38,13 @@ apply_da_updates <- function(update,
                              model_internal_heights_start,
                              lake_depth_start,
                              snow_ice_thickness_start,
-                             avg_surf_temp_start,
-                             mixer_count_start,
-                             mixing_vars_start,
                              diagnostics_start,
                              diagnostics_daily_start,
                              pars_corr,
                              pars_config,
                              config,
                              depth_index,
+                             secchi_index = 0,
                              par_fit_method,
                              inflation_start,
                              lake_max_depth,
@@ -70,7 +66,7 @@ apply_da_updates <- function(update,
     lake_depth_updated[index] <- lake_max_depth
     for(m in 1:nmembers){
       non_na_heights <- which(!is.na(model_internal_heights_start[ , m]))
-      diff_height <- lake_depth_updated[m] - model_internal_heights_start[1, m]
+      diff_height <- lake_depth_updated[m] - lake_depth_start[m]
       model_internal_heights_updated[non_na_heights, m] <- model_internal_heights_start[non_na_heights, m ] +  diff_height
       index <- which(model_internal_heights_updated[, m] < 0)
       model_internal_heights_updated[index, m] <- NA
@@ -96,7 +92,7 @@ apply_da_updates <- function(update,
       states_height_updated[s, non_na_heights, m] <- approx(
         lake_depth_updated[m] - config$model_settings$modeled_depths[valid_depth_idx],
         states_depth_updated[s, valid_depth_idx, m],
-        model_internal_heights_start[non_na_heights, m],
+        model_internal_heights_updated[non_na_heights, m],
         rule = 2)$y
     }
   }
@@ -125,6 +121,12 @@ apply_da_updates <- function(update,
         above_lake_idx <- which(config$model_settings$modeled_depths > lake_depth_updated[m])
         diagnostics_updated[d, above_lake_idx, m] <- NA
       }
+    }
+    if (secchi_index > 0) {
+      secchi_row <- ndepths_modeled * nstates + depth_index + secchi_index
+      updated_secchi <- pmax(update[secchi_row, ], 1e-6)
+      depth_idx_1m <- which.min(abs(config$model_settings$modeled_depths - 1.0))
+      diagnostics_updated[1, depth_idx_1m, ] <- 1.7 / updated_secchi
     }
   }else{
     diagnostics_updated <- diagnostics_start
@@ -162,9 +164,6 @@ apply_da_updates <- function(update,
   }
 
   snow_ice_thickness_updated <- snow_ice_thickness_start
-  avg_surf_temp_updated <- avg_surf_temp_start
-  mixer_count_updated <- mixer_count_start
-  mixing_vars_updated <- mixing_vars_start
 
   list(pars_updated = pars_updated,
        states_depth_updated = states_depth_updated,
@@ -175,8 +174,50 @@ apply_da_updates <- function(update,
        diagnostics_updated = diagnostics_updated,
        diagnostics_daily_updated = diagnostics_daily_updated,
        snow_ice_thickness_updated = snow_ice_thickness_updated,
-       avg_surf_temp_updated = avg_surf_temp_updated,
-       mixer_count_updated = mixer_count_updated,
-       mixing_vars_updated = mixing_vars_updated,
        inflation_update = inflation_update)
+}
+
+#' @title Parameter-only EnKF update for one-step lag dual EnKF
+#'
+#' @param pars [npars, nmembers] prior parameter ensemble (after inflation/perturbation)
+#' @param predicted_obs [nobs_active, nmembers] H*x_forecast from the state filter
+#' @param zt vector of active observations (length nobs_active)
+#' @param psi vector of all observation SDs (indexed by z_index)
+#' @param z_index integer indices of active observations into psi
+#' @param pars_config parameter configuration list
+#' @noRd
+#' @return [npars, nmembers] updated parameter ensemble
+update_parameters_enkf <- function(pars, predicted_obs, zt, psi, z_index, pars_config) {
+  npars    <- nrow(pars)
+  nmembers <- ncol(pars)
+  nobs     <- length(z_index)
+
+  R <- build_R_matrix(psi, z_index)
+
+  # Perturbed observations [nobs, nmembers] — stochastic EnKF
+  d_mat <- matrix(zt, nrow = nobs, ncol = nmembers) +
+    matrix(rnorm(nobs * nmembers), nrow = nobs, ncol = nmembers) * sqrt(diag(R))
+
+  # Parameter and predicted-observation perturbation matrices
+  A_pars <- pars - rowMeans(pars)
+  Y      <- predicted_obs - rowMeans(predicted_obs)
+
+  # Kalman gain for parameters: K = A Y^T (Y Y^T + (N-1)R)^{-1}
+  C_yy    <- Y %*% t(Y) + (nmembers - 1) * R
+  K_theta <- (A_pars %*% t(Y)) %*% solve(C_yy)
+
+  pars_updated <- pars + K_theta %*% (d_mat - predicted_obs)
+
+  # Reflective bounds
+  for (par in seq_len(npars)) {
+    lb <- pars_config$par_lowerbound[par]
+    ub <- pars_config$par_upperbound[par]
+    lo <- which(pars_updated[par, ] < lb)
+    hi <- which(pars_updated[par, ] > ub)
+    pars_updated[par, lo] <- 2 * lb - pars_updated[par, lo]
+    pars_updated[par, hi] <- 2 * ub - pars_updated[par, hi]
+    pars_updated[par, ]   <- pmax(lb, pmin(ub, pars_updated[par, ]))
+  }
+
+  pars_updated
 }

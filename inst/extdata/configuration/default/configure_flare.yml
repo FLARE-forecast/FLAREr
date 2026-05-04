@@ -78,7 +78,7 @@ uncertainty:
    inflow: TRUE
 output_settings:
    generate_plot: FALSE
-   restart_save_timesteps: [0]  # days relative to forecast_start_datetime; use "all" to save every timestep
+   restart_save_timesteps: [-2, 0]  # days relative to forecast_start_datetime; use "all" to save every timestep
    diagnostics_names:  [extc]
    diagnostics_daily:
     names: ['Tot Inflow Vol', 'Tot Outflow Vol', 'Overflow Vol', 'temp', 'salt','temp']

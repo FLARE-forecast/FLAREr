@@ -17,8 +17,6 @@ get_glm_nc_var <- function(ncFile, working_dir, z_out, vars_depth, vars_no_depth
                       ncol = final_time_step)[final_time_step]
   ice_blue <- matrix(ncdf4::ncvar_get(glm_nc, "blue_ice_thickness"),
                      ncol = final_time_step)[final_time_step]
-  avg_surf_temp <- matrix(ncdf4::ncvar_get(glm_nc, "avg_surf_temp"),
-                          ncol = final_time_step)[final_time_step]
   output <- array(NA, dim = c(tallest_layer, length(vars_depth)))
   for (v in 1:length(vars_depth)) {
     var_modeled <- matrix(ncdf4::ncvar_get(glm_nc, vars_depth[v]),
@@ -39,11 +37,8 @@ get_glm_nc_var <- function(ncFile, working_dir, z_out, vars_depth, vars_no_depth
     diagnostics_output <- NA
   }
 
-  mixing_vars <- ncdf4::ncvar_get(glm_nc, "restart_variables")
   salt <- matrix(ncdf4::ncvar_get(glm_nc, "salt"), ncol = final_time_step)[1:tallest_layer,
                                                                            final_time_step]
-
-  mixer_count <- matrix(ncdf4::ncvar_get(glm_nc, "Mixer_Count"), ncol = final_time_step)[final_time_step]
 
   if(length(heights) == 1){
     output <- rbind(output, output)
@@ -105,12 +100,9 @@ get_glm_nc_var <- function(ncFile, working_dir, z_out, vars_depth, vars_no_depth
               lake_depth = heights_surf,
               heights = heights,
               snow_wice_bice = c(snow, ice_white, ice_blue),
-              avg_surf_temp = avg_surf_temp,
-              mixing_vars = mixing_vars,
               salt = salt,
               diagnostics_output = diagnostics_output,
-              diagnostics_daily_output = diagnostics_daily_output,
-              mixer_count = mixer_count))
+              diagnostics_daily_output = diagnostics_daily_output))
 }
 
 

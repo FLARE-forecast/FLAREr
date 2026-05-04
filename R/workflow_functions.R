@@ -254,50 +254,9 @@ get_driver_forecast_path <- function(config, forecast_model){
 #'
 get_restart_file <- function(config, lake_directory){
 
-  if(!is.na(config$run_config$restart_file)){
+  if(!is.null(config$run_config$restart_file) &&
+     !is.na(config$run_config$restart_file)){
     restart_file <- basename(config$run_config$restart_file)
-    if(config$run_config$use_s3){
-
-      server_name <- "restart"
-      remote_folder <- file.path(stringr::str_split_fixed(config$s3$restart$bucket, "/", n = 2)[2], config$location$site_id, config$run_config$sim_name)
-      remote_file <- restart_file
-      local_folder <- file.path(lake_directory, "restart", config$location$site_id, config$run_config$sim_name)
-      local_file <- restart_file
-
-      tryCatch({
-        FaaSr::faasr_get_file(server_name = server_name,
-                              remote_folder = remote_folder,
-                              remote_file = remote_file,
-                              local_folder = local_folder,
-                              local_file = local_file,
-                              faasr_config = config$faasr)
-        downloaded_file <- normalizePath(file.path(local_folder, local_file), mustWork = FALSE)
-
-        if (!file.exists(downloaded_file)) {
-          stop(paste("Error: File", remote_file, "does not exist in S3 or failed to download."))
-        }
-
-      }, error = function(e) {
-        stop(paste("Error in fetching restart file:", e$message))
-      })
-    }
-
-    message("got after restart file")
-
-      # aws.s3::save_object(object = file.path(stringr::str_split_fixed(config$s3$restart$bucket, "/", n = 2)[2], config$location$site_id, config$run_config$sim_name, restart_file),
-      #                     bucket = stringr::str_split_fixed(config$s3$restart$bucket, "/", n = 2)[1] ,
-      #                     file = file.path(lake_directory, "restart", config$location$site_id, config$run_config$sim_name, restart_file),
-      #                     region = stringr::str_split_fixed(config$s3$restart$endpoint, pattern = "\\.", n = 2)[1],
-      #                     base_url = stringr::str_split_fixed(config$s3$restart$endpoint, pattern = "\\.", n = 2)[2],
-      #                     use_https = TRUE)
-
-    config$run_config$restart_file <- file.path(lake_directory, "restart", config$location$site_id, config$run_config$sim_name, restart_file)
-  }
-
-  # Handle restart zip file (GLM restart + FLARE NetCDF packaged together)
-  if(!is.null(config$run_config$restart_zip_file) &&
-     !is.na(config$run_config$restart_zip_file)){
-    restart_zip <- basename(config$run_config$restart_zip_file)
     if(config$run_config$use_s3){
       server_name <- "restart"
       remote_folder <- file.path(
@@ -309,24 +268,24 @@ get_restart_file <- function(config, lake_directory){
       tryCatch({
         FaaSr::faasr_get_file(server_name = server_name,
                               remote_folder = remote_folder,
-                              remote_file = restart_zip,
+                              remote_file = restart_file,
                               local_folder = local_folder,
-                              local_file = restart_zip,
+                              local_file = restart_file,
                               faasr_config = config$faasr)
         downloaded_file <- normalizePath(
-          file.path(local_folder, restart_zip), mustWork = FALSE)
+          file.path(local_folder, restart_file), mustWork = FALSE)
         if(!file.exists(downloaded_file)) {
-          stop(paste("Error: Zip", restart_zip,
+          stop(paste("Error: File", restart_file,
                      "does not exist in S3 or failed to download."))
         }
       }, error = function(e) {
-        stop(paste("Error in fetching restart zip file:", e$message))
+        stop(paste("Error in fetching restart file:", e$message))
       })
     }
-    config$run_config$restart_zip_file <- file.path(
+    config$run_config$restart_file <- file.path(
       lake_directory, "restart", config$location$site_id,
-      config$run_config$sim_name, restart_zip)
-    message("Got restart zip file")
+      config$run_config$sim_name, restart_file)
+    message("Got restart file")
   }
 
   return(config)
@@ -399,22 +358,11 @@ update_run_config <- function(lake_directory,
                                bucket,
                                endpoint,
                               config,
-                               use_https = TRUE,
-                               restart_zip_file = NA){
+                               use_https = TRUE){
 
   run_config <- NULL
 
-  # If a zip path is passed as restart_file, redirect it to restart_zip_file
-  if (!is.na(restart_file) && !is.null(restart_file) &&
-      tools::file_ext(restart_file) == "zip") {
-    if (is.na(restart_zip_file) || is.null(restart_zip_file)) {
-      restart_zip_file <- restart_file
-    }
-    restart_file <- NA
-  }
-
   run_config$restart_file <- restart_file
-  run_config$restart_zip_file <- restart_zip_file
   run_config$start_datetime <- as.character(lubridate::as_datetime(start_datetime))
   if(lubridate::hour(run_config$start_datetime) == 0){
     run_config$start_datetime <- paste(run_config$start_datetime, "00:00:00")

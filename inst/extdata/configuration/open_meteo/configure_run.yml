@@ -1,5 +1,4 @@
 restart_file: .na
-restart_zip_file: .na
 start_datetime: 2024-09-20 00:00:00 #  2022-09-28 00:00:00
 end_datetime: .na
 forecast_start_datetime: 2024-09-27 00:00:00 #2022-10-02 00:00:00

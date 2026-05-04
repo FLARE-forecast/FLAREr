@@ -17,9 +17,6 @@
 #' @param lake_depth_start lake depth
 #' @param log_particle_weights_start log of particle weights
 #' @param snow_ice_thickness_start vector of snow and ice thickness
-#' @param avg_surf_temp_start average surface temperature
-#' @param mixer_count_start mix count
-#' @param mixing_vars_start mixing variables
 #' @param diagnostics_start diagnostics
 #' @param diagnostics_daily_start daily diagnostics
 #' @param pars_config parameter configuration list
@@ -46,9 +43,6 @@ run_letkf <- function(x_matrix,
                       lake_depth_start,
                       log_particle_weights_start,
                       snow_ice_thickness_start,
-                      avg_surf_temp_start,
-                      mixer_count_start,
-                      mixing_vars_start,
                       diagnostics_start,
                       diagnostics_daily_start,
                       pars_config,
@@ -159,15 +153,13 @@ run_letkf <- function(x_matrix,
     model_internal_heights_start = model_internal_heights_start,
     lake_depth_start             = lake_depth_start,
     snow_ice_thickness_start     = snow_ice_thickness_start,
-    avg_surf_temp_start          = avg_surf_temp_start,
-    mixer_count_start            = mixer_count_start,
-    mixing_vars_start            = mixing_vars_start,
     diagnostics_start            = diagnostics_start,
     diagnostics_daily_start      = diagnostics_daily_start,
     pars_corr                    = pars_corr,
     pars_config                  = pars_config,
     config                       = config,
     depth_index                  = depth_index,
+    secchi_index                 = secchi_index,
     par_fit_method               = par_fit_method,
     inflation_start              = inflation_start,
     lake_max_depth               = lake_max_depth,

@@ -43,7 +43,7 @@
 #'     \item{forecast_iteration_id}{timestamp string identifying this forecast run}
 #'     \item{forecast_project_id}{sim_name from run config}
 #'     \item{time_of_forecast}{POSIXct timestamp when forecast was generated}
-#'     \item{mixing_vars, mixer_count, snow_ice_thickness, avg_surf_temp}{GLM restart variables}
+#'     \item{snow_ice_thickness}{GLM restart variable}
 #'     \item{lake_depth}{array \[time, ensemble\] of lake depths}
 #'     \item{model_internal_heights}{array of GLM internal layer heights}
 #'     \item{diagnostics}{array of per-timestep diagnostic variables}
@@ -116,23 +116,17 @@ initialize_forecast_arrays <- function(nsteps, nstates, ndepths_modeled,
     NA
   }
 
-  mixing_vars            <- array(NA, dim = c(17, nsteps, nmembers))
-  mixer_count            <- array(NA, dim = c(nsteps, nmembers))
   model_internal_heights <- array(
     NA, dim = c(nsteps, config$model_settings$max_model_layers, nmembers)
   )
   lake_depth             <- array(NA, dim = c(nsteps, nmembers))
   snow_ice_thickness     <- array(NA, dim = c(3, nsteps, nmembers))
-  avg_surf_temp          <- array(NA, dim = c(nsteps, nmembers))
   log_particle_weights   <- array(NA, dim = c(nsteps, nmembers))
   inflation              <- rep(NA, nsteps)
 
-  mixing_vars[, 1, ]          <- aux_states_init$mixing_vars
-  mixer_count[1, ]            <- aux_states_init$mixer_count
   model_internal_heights[1, , ] <- aux_states_init$model_internal_heights
   lake_depth[1, ]             <- aux_states_init$lake_depth
   snow_ice_thickness[, 1, ]   <- aux_states_init$snow_ice_thickness
-  avg_surf_temp[1, ]          <- aux_states_init$avg_surf_temp
   log_particle_weights[1, ]   <- aux_states_init$log_particle_weights
   inflation[1]                <- aux_states_init$inflation
 
@@ -143,12 +137,9 @@ initialize_forecast_arrays <- function(nsteps, nstates, ndepths_modeled,
     num_wq_vars            = num_wq_vars,
     diagnostics            = diagnostics,
     diagnostics_daily      = diagnostics_daily,
-    mixing_vars            = mixing_vars,
-    mixer_count            = mixer_count,
     model_internal_heights = model_internal_heights,
     lake_depth             = lake_depth,
     snow_ice_thickness     = snow_ice_thickness,
-    avg_surf_temp          = avg_surf_temp,
     log_particle_weights   = log_particle_weights,
     inflation              = inflation
   )
@@ -231,12 +222,9 @@ run_da_forecast <- function(states_init,
   num_wq_vars            <- arrs$num_wq_vars
   diagnostics            <- arrs$diagnostics
   diagnostics_daily      <- arrs$diagnostics_daily
-  mixing_vars            <- arrs$mixing_vars
-  mixer_count            <- arrs$mixer_count
   model_internal_heights <- arrs$model_internal_heights
   lake_depth             <- arrs$lake_depth
   snow_ice_thickness     <- arrs$snow_ice_thickness
-  avg_surf_temp          <- arrs$avg_surf_temp
   log_particle_weights   <- arrs$log_particle_weights
   inflation              <- arrs$inflation
 
@@ -263,8 +251,8 @@ run_da_forecast <- function(states_init,
     c(config$model_settings$ncore, future::availableCores())
   )
   # Preserve glm_restart.nc files placed by a zip restart; discard stale ones
-  has_zip_restart <- !is.null(config$run_config$restart_zip_file) &&
-    !is.na(config$run_config$restart_zip_file)
+  has_zip_restart <- !is.null(config$run_config$restart_file) &&
+    !is.na(config$run_config$restart_file)
   purrr::walk(1:nmembers, function(m) {
     dir_path <- file.path(working_directory, m)
     rst_path <- file.path(dir_path, paste0("glm_restart_", m, ".nc"))
@@ -398,8 +386,6 @@ run_da_forecast <- function(states_init,
 
         out <-  FLAREr:::run_model(i,
                                    m,
-                                   mixing_vars_start = mixing_vars[,i-1 , m],
-                                   mixer_count_start = mixer_count[i-1,m],
                                    curr_start,
                                    curr_stop,
                                    par_names,
@@ -422,7 +408,6 @@ run_da_forecast <- function(states_init,
                                    npars,
                                    num_wq_vars,
                                    snow_ice_thickness_start = snow_ice_thickness[, i-1, m ],
-                                   avg_surf_temp_start = avg_surf_temp[i-1, m],
                                    nstates,
                                    state_names = states_config$state_names,
                                    include_wq = config$include_wq,
@@ -454,11 +439,6 @@ run_da_forecast <- function(states_init,
         states_height[i, , , m] <- out[[m]]$x_star_end
         lake_depth[i ,m ] <- out[[m]]$lake_depth_end
         snow_ice_thickness[,i ,m] <- out[[m]]$snow_ice_thickness_end
-        avg_surf_temp[i , m] <- out[[m]]$avg_surf_temp_end
-        mixing_vars[, i, m] <- out[[m]]$mixing_vars_end
-
-                mixer_count[i, m] <- out[[m]]$mixer_count_end
-
         curr_pars[, m] <- out[[m]]$curr_pars_ens
 
         num_out_heights <- length(out[[m]]$model_internal_heights)
@@ -601,10 +581,7 @@ run_da_forecast <- function(states_init,
         }
 
         ens_mean <- mean(lake_depth[i, ], na.rm = TRUE)
-        print(lake_depth[i, ])
         lake_depth[i, ] <- sqrt(curr_inflation) * (lake_depth[i, ]  - ens_mean) + ens_mean
-        print(lake_depth[i, ])
-
 
         for(s in 1:nstates){
           ens_mean <- apply(states_depth_wo_noise[s, , ], 1, mean, na.rm = TRUE)
@@ -727,6 +704,12 @@ run_da_forecast <- function(states_init,
 
       message("performing data assimilation")
 
+      # One-step lag: state and parameter filters run separately within each cycle.
+      # Parameters are stripped from x_matrix so the state filter has no
+      # parameter-state cross-covariance; a dedicated parameter EnKF runs
+      # afterward using the forecast predicted observations.
+      use_one_step_lag <- isTRUE(config$da_setup$use_one_step_lag) && npars > 0
+
       x_matrix <- apply(aperm(states_depth_w_noise[,1:ndepths_modeled,], perm = c(2,1,3)), 3, rbind)
 
       # Add depth to the x_matrix if in observations
@@ -742,7 +725,13 @@ run_da_forecast <- function(states_init,
         }
       }
 
-      if(npars > 0){
+      # Capture state-only forecast before appending parameters; the parameter
+      # filter needs these to compute its predicted observations.
+      if(use_one_step_lag){
+        x_forecast_states <- x_matrix
+      }
+
+      if(npars > 0 && !use_one_step_lag){
         x_matrix <- rbind(x_matrix, curr_pars)
       }
 
@@ -788,8 +777,12 @@ run_da_forecast <- function(states_init,
       }
 
       #Assign which states have obs in the time step
-      h <- matrix(0, nrow = vertical_obs * ndepths_modeled + secchi_index + depth_index,
-                     ncol = nstates * ndepths_modeled + secchi_index + depth_index + npars)
+      # For one_step_lag the parameter columns are absent from h; use npars_in_h
+      # as a drop-in replacement so the depth/secchi offset expressions below
+      # remain correct in both modes.
+      npars_in_h <- if(use_one_step_lag) 0L else npars
+      h <- matrix(0, nrow = vertical_obs * ndepths_modeled + depth_index + secchi_index,
+                     ncol = nstates * ndepths_modeled + depth_index + secchi_index + npars_in_h)
 
       index <- 0
       for(k in 1:nstates){
@@ -809,13 +802,13 @@ run_da_forecast <- function(states_init,
 
       if(!is.null(obs_non_vertical$obs_depth) & depth_index > 0){
         if(!is.na(obs_non_vertical$obs_depth$obs[i])){
-          h[dim(h)[1] - npars,dim(h)[2] - npars] <- 1
+          h[dim(h)[1] - npars_in_h, dim(h)[2] - npars_in_h] <- 1
         }
       }
 
       if(!is.null(obs_non_vertical$obs_secchi)){
         if(!is.na(obs_non_vertical$obs_secchi$obs[i])){
-          h[dim(h)[1] - depth_index - npars, dim(h)[2] - depth_index - npars] <- 1
+          h[dim(h)[1] - depth_index - npars_in_h, dim(h)[2] - depth_index - npars_in_h] <- 1
         }
       }
 
@@ -876,9 +869,6 @@ run_da_forecast <- function(states_init,
                                      lake_depth_start = lake_depth[i, ],
                                      log_particle_weights_start = log_particle_weights[i-1, ],
                                      snow_ice_thickness_start =  snow_ice_thickness[ ,i, ],
-                                     avg_surf_temp_start = avg_surf_temp[i, ],
-                                     mixer_count_start = mixer_count[i, ],
-                                     mixing_vars_start = mixing_vars[, i, ],
                                      diagnostics_start,
                                      diagnostics_daily_start,
                                      pars_config,
@@ -905,9 +895,6 @@ run_da_forecast <- function(states_init,
                                                 lake_depth_start = lake_depth[i, ],
                                                 log_particle_weights_start = log_particle_weights[i-1, ],
                                                 snow_ice_thickness_start =  snow_ice_thickness[ ,i, ],
-                                                avg_surf_temp_start = avg_surf_temp[i, ],
-                                                mixer_count_start = mixer_count[i, ],
-                                                mixing_vars_start = mixing_vars[, i, ],
                                                 diagnostics_start = diagnostics_start,
                                                 diagnostics_daily_start = diagnostics_daily_start,
                                                 pars_config,
@@ -936,9 +923,6 @@ run_da_forecast <- function(states_init,
                                      lake_depth_start = lake_depth[i, ],
                                      log_particle_weights_start = log_particle_weights[i-1, ],
                                      snow_ice_thickness_start =  snow_ice_thickness[ ,i, ],
-                                     avg_surf_temp_start = avg_surf_temp[i, ],
-                                     mixer_count_start = mixer_count[i, ],
-                                     mixing_vars_start = mixing_vars[, i, ],
                                      diagnostics_start,
                                      diagnostics_daily_start,
                                      pars_config,
@@ -965,9 +949,6 @@ run_da_forecast <- function(states_init,
                                       lake_depth_start = lake_depth[i, ],
                                       log_particle_weights_start = log_particle_weights[i-1, ],
                                       snow_ice_thickness_start =  snow_ice_thickness[ ,i, ],
-                                      avg_surf_temp_start = avg_surf_temp[i, ],
-                                      mixer_count_start = mixer_count[i, ],
-                                      mixing_vars_start = mixing_vars[, i, ],
                                       diagnostics_start,
                                       diagnostics_daily_start,
                                       pars_config,
@@ -994,9 +975,6 @@ run_da_forecast <- function(states_init,
                                       lake_depth_start = lake_depth[i, ],
                                       log_particle_weights_start = log_particle_weights[i-1, ],
                                       snow_ice_thickness_start =  snow_ice_thickness[ ,i, ],
-                                      avg_surf_temp_start = avg_surf_temp[i, ],
-                                      mixer_count_start = mixer_count[i, ],
-                                      mixing_vars_start = mixing_vars[, i, ],
                                       diagnostics_start,
                                       diagnostics_daily_start,
                                       pars_config,
@@ -1015,7 +993,23 @@ run_da_forecast <- function(states_init,
 
       #Update states and parameters
       if(npars > 0){
-        pars[i, , ] <- updates$pars_updated
+        if(use_one_step_lag && length(z_index) > 0 && da_method != "pf"){
+          # Parameter filter: Kalman update using forecast predicted observations.
+          # The state filter ran without parameters, so x_forecast_states holds
+          # the pre-DA state ensemble; h (already row-subsetted by z_index) maps
+          # those states to the active observations.
+          predicted_obs_forecast <- h %*% x_forecast_states
+          pars[i, , ] <- FLAREr:::update_parameters_enkf(
+            pars          = pars_corr,
+            predicted_obs = predicted_obs_forecast,
+            zt            = zt,
+            psi           = psi,
+            z_index       = z_index,
+            pars_config   = pars_config
+          )
+        } else {
+          pars[i, , ] <- updates$pars_updated
+        }
       }
       model_internal_heights[i, ,] <- updates$model_internal_heights_updated
       states_height[i,,,] <- updates$states_height_updated
@@ -1036,9 +1030,6 @@ run_da_forecast <- function(states_init,
       lake_depth[i, ] <-  updates$lake_depth_updated
       log_particle_weights[i, ] <-  updates$log_particle_weights_updated
       snow_ice_thickness[,i ,] <-  updates$snow_ice_thickness_updated
-      avg_surf_temp[i , ] <-  updates$avg_surf_temp_updated
-      mixing_vars[, i, ] <-  updates$mixing_vars_updated
-      mixer_count[i, ] <-  updates$mixer_count_updated
 
       inflation[i] <- updates$inflation_update
 
@@ -1077,12 +1068,6 @@ run_da_forecast <- function(states_init,
         }
       }
     }
-
-    print("end")
-    print(i)
-    print(states_depth[i, 1, ,  1])
-    print(model_internal_heights[i, ,1])
-    print(states_height[i,1,,1])
   }
 
   file_names <- create_filenames(full_time, hist_days, forecast_days, config)
@@ -1101,10 +1086,7 @@ run_da_forecast <- function(states_init,
               forecast_iteration_id = file_names$forecast_iteration_id,
               forecast_project_id = config$run_config$sim_name,
               time_of_forecast = file_names$time_of_forecast,
-              mixing_vars =  mixing_vars,
-              mixer_count = mixer_count,
               snow_ice_thickness = snow_ice_thickness,
-              avg_surf_temp = avg_surf_temp,
               lake_depth = lake_depth,
               model_internal_heights = model_internal_heights,
               diagnostics = diagnostics,

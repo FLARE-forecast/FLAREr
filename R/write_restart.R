@@ -26,15 +26,12 @@ write_restart <- function(da_forecast_output,
   #da_qc_flag <- da_forecast_output$da_qc_flag
   full_time <- da_forecast_output$full_time
   forecast_start_datetime <- da_forecast_output$forecast_start_datetime
-  avg_surf_temp <- da_forecast_output$avg_surf_temp
-  mixing_vars <- da_forecast_output$mixing_vars
   model_internal_heights <- da_forecast_output$model_internal_heights
   config <- da_forecast_output$config
   states_config <- da_forecast_output$states_config
   obs_config <- da_forecast_output$obs_config
   pars_config <- da_forecast_output$pars_config
   obs <- da_forecast_output$obs
-  mixer_count <- da_forecast_output$mixer_count
   log_particle_weights <- da_forecast_output$log_particle_weights
   inflation <- da_forecast_output$inflation
 
@@ -95,7 +92,6 @@ write_restart <- function(da_forecast_output,
   #depthdim <- ncdf4::ncdim_def("depth",units = "meters",vals = as.double(depths), longname = 'Depth from surface')
   timedim <- ncdf4::ncdim_def("time",units = "seconds since 1970-01-01 00:00.00 UTC", longname = "",vals = t)
   snow_ice_dim <- ncdf4::ncdim_def("snow_ice_dim",units = "",vals = c(1, 2, 3), longname = 'snow ice dims')
-  mixing_vars_dim <- ncdf4::ncdim_def("mixing_vars_dim",units = '', vals = seq(1, dim(mixing_vars)[1], 1), longname = 'number of mixing restart variables')
   internal_model_depths_dim <- ncdf4::ncdim_def("internal_model_depths_dim",units = '', vals = seq(1, dim(model_internal_heights)[2]), longname = 'number of possible depths that are simulated in GLM')
 
 
@@ -106,13 +102,10 @@ write_restart <- function(da_forecast_output,
   #def_list[[1]] <- ncdf4::ncvar_def("temp","degC",list(timedim,depthdim, ensdim),fillvalue,'state:temperature',prec="single")
   def_list[[1]] <- ncdf4::ncvar_def("snow_ice_thickness","meter", list(snow_ice_dim, timedim, ensdim),missval = -99,longname = 'Ice Thickness',prec="single")
   def_list[[2]] <- ncdf4::ncvar_def("lake_depth","meter",list(timedim,ensdim),missval = -99,longname = 'Depth of lake',prec="single")
-  def_list[[3]] <- ncdf4::ncvar_def("avg_surf_temp","degC",list(timedim, ensdim),missval = -99,longname ='Running Average of Surface Temperature',prec="single")
-  def_list[[4]] <- ncdf4::ncvar_def("mixing_vars","dimensionless",list(mixing_vars_dim, timedim, ensdim),fillvalue,longname = "variables required to restart mixing",prec="single")
-  def_list[[5]] <- ncdf4::ncvar_def("model_internal_heights","meter",list(timedim, internal_model_depths_dim, ensdim),fillvalue,longname = "depths simulated by glm that are required to restart ",prec="single")
-  def_list[[6]] <- ncdf4::ncvar_def("mixer_count","dimensionless",list(timedim,  ensdim),missval = -99,longname = "restart for mixer count",prec="integer")
-  def_list[[7]] <- ncdf4::ncvar_def("log_particle_weights","dimensionless",list(timedim, ensdim),missval = fillvalue,longname = "log weights for each ensemble member",prec="single")
-  def_list[[8]] <- ncdf4::ncvar_def("inflation","dimensionless",list(timedim),missval = fillvalue,longname = "adaptive inflation parameter",prec="single")
-  index <- 8
+  def_list[[3]] <- ncdf4::ncvar_def("model_internal_heights","meter",list(timedim, internal_model_depths_dim, ensdim),fillvalue,longname = "depths simulated by glm that are required to restart ",prec="single")
+  def_list[[4]] <- ncdf4::ncvar_def("log_particle_weights","dimensionless",list(timedim, ensdim),missval = fillvalue,longname = "log weights for each ensemble member",prec="single")
+  def_list[[5]] <- ncdf4::ncvar_def("inflation","dimensionless",list(timedim),missval = fillvalue,longname = "adaptive inflation parameter",prec="single")
+  index <- 5
 
   if(npars > 0){
     for(par in 1:npars){
@@ -178,18 +171,14 @@ write_restart <- function(da_forecast_output,
   #ncdf4::ncvar_put(ncout,def_list[[3]] ,as.array(da_qc_flag))
   # dim layout: snow_ice_thickness [snow_ice_dim, time, ens]
   ncdf4::ncvar_put(ncout, def_list[[1]], snow_ice_thickness[, keep_idx, , drop = FALSE])
-  # dim layout: lake_depth, avg_surf_temp, mixer_count, log_particle_weights [time, ens]
+  # dim layout: lake_depth, log_particle_weights [time, ens]
   ncdf4::ncvar_put(ncout, def_list[[2]], lake_depth[keep_idx, , drop = FALSE])
-  ncdf4::ncvar_put(ncout, def_list[[3]], avg_surf_temp[keep_idx, , drop = FALSE])
-  # dim layout: mixing_vars [mixing_vars_dim, time, ens]
-  ncdf4::ncvar_put(ncout, def_list[[4]], mixing_vars[, keep_idx, , drop = FALSE])
   # dim layout: model_internal_heights [time, internal_model_depths_dim, ens]
-  ncdf4::ncvar_put(ncout, def_list[[5]], model_internal_heights[keep_idx, , , drop = FALSE])
-  ncdf4::ncvar_put(ncout, def_list[[6]], mixer_count[keep_idx, , drop = FALSE])
-  ncdf4::ncvar_put(ncout, def_list[[7]], log_particle_weights[keep_idx, , drop = FALSE])
-  ncdf4::ncvar_put(ncout, def_list[[8]], inflation[keep_idx])
+  ncdf4::ncvar_put(ncout, def_list[[3]], model_internal_heights[keep_idx, , , drop = FALSE])
+  ncdf4::ncvar_put(ncout, def_list[[4]], log_particle_weights[keep_idx, , drop = FALSE])
+  ncdf4::ncvar_put(ncout, def_list[[5]], inflation[keep_idx])
 
-  index <- 8
+  index <- 5
 
   if(npars > 0){
     for(par in 1:npars){

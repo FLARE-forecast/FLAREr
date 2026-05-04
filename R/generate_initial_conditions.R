@@ -16,10 +16,18 @@ generate_initial_conditions <- function(states_config,
                                         obs,
                                         config,
                                         obs_non_vertical){
-  has_zip_restart <- !is.null(config$run_config$restart_zip_file) &&
-    !is.na(config$run_config$restart_zip_file)
+  has_restart <- !is.null(config$run_config$restart_file) &&
+    !is.na(config$run_config$restart_file)
 
-  if(has_zip_restart){
+  if(has_restart){
+
+    if(tools::file_ext(config$run_config$restart_file) != "zip") {
+      stop(paste0(
+        "restart_file must be a zip file (got: '", config$run_config$restart_file, "'). ",
+        "The restart zip bundles the FLARE NetCDF and per-ensemble GLM restart files. ",
+        "Plain NetCDF restart files are no longer supported."
+      ))
+    }
 
     nmembers <- config$da_setup$ensemble_size
 
@@ -27,7 +35,7 @@ generate_initial_conditions <- function(states_config,
     # NetCDF time dimension inside the zip
     tmp_peek <- tempfile()
     dir.create(tmp_peek, recursive = TRUE)
-    zip::unzip(config$run_config$restart_zip_file, exdir = tmp_peek)
+    zip::unzip(config$run_config$restart_file, exdir = tmp_peek)
     flare_nc_peek <- list.files(tmp_peek, pattern = "\\.nc$",
                                 full.names = TRUE, recursive = FALSE)[1]
     nc_peek <- ncdf4::nc_open(flare_nc_peek)
@@ -52,7 +60,7 @@ generate_initial_conditions <- function(states_config,
     }
 
     out <- generate_restart_initial_conditions_from_zip(
-      restart_zip_file  = config$run_config$restart_zip_file,
+      restart_file      = config$run_config$restart_file,
       state_names       = states_config$state_names,
       par_names         = pars_config$par_names_save,
       restart_index     = restart_index,
@@ -64,10 +72,7 @@ generate_initial_conditions <- function(states_config,
 
     aux_states_init <- list()
     aux_states_init$snow_ice_thickness    <- out$snow_ice_thickness
-    aux_states_init$avg_surf_temp         <- rep(0.0, nmembers)
     aux_states_init$the_sals_init         <- config$the_sals_init
-    aux_states_init$mixing_vars           <- array(0.0, dim = c(17, nmembers))
-    aux_states_init$mixer_count           <- rep(0L, nmembers)
     aux_states_init$model_internal_heights <- out$model_internal_heights
     aux_states_init$lake_depth            <- out$lake_depth
     aux_states_init$log_particle_weights  <- out$log_particle_weights
@@ -77,7 +82,7 @@ generate_initial_conditions <- function(states_config,
                  pars           = out$pars,
                  aux_states_init = aux_states_init)
 
-  } else if(is.na(config$run_config$restart_file)){
+  } else {
 
     init <- list()
     if(!is.null(pars_config)){
@@ -97,11 +102,8 @@ generate_initial_conditions <- function(states_config,
     init$pars <- array(NA, dim=c(npars, nmembers))
     init$lake_depth <- array(NA, dim=c(nmembers))
     init$snow_ice_thickness <- array(NA, dim=c(3, nmembers))
-    init$avg_surf_temp <- array(NA, dim=c(nmembers))
-    init$mixing_vars <- array(NA, dim=c(17, nmembers))
     init$model_internal_heights <- array(NA, dim = c(config$model_settings$max_model_layers, nmembers))
     init$salt <- array(NA, dim = c(ndepths_modeled, nmembers))
-    init$mixer_count <- array(NA, dim=c(nmembers))
     init$log_particle_weights <- array(NA, dim=c(nmembers))
     init$inflation <- NA
 
@@ -181,9 +183,6 @@ generate_initial_conditions <- function(states_config,
     init$snow_ice_thickness[1, ] <- config$default_init$snow_thickness
     init$snow_ice_thickness[2, ] <- config$default_init$white_ice_thickness
     init$snow_ice_thickness[3, ] <- config$default_init$blue_ice_thickness
-    init$avg_surf_temp[] <- init$states[1 , 1, ]
-    init$mixing_vars[, ] <- 0.0
-    init$mixer_count[] <- 0
     init$salt[, ] <- config$default_init$salinity
     init$log_particle_weights[] <- log(1.0)
     init$inflation[] <- config$da_setup$inflation_factor
@@ -193,10 +192,7 @@ generate_initial_conditions <- function(states_config,
 
     aux_states_init <- list()
     aux_states_init$snow_ice_thickness <- init$snow_ice_thickness
-    aux_states_init$avg_surf_temp <- init$avg_surf_temp
     aux_states_init$the_sals_init <- config$the_sals_init
-    aux_states_init$mixing_vars <- init$mixing_vars
-    aux_states_init$mixer_count <- init$mixer_count
     aux_states_init$model_internal_heights <- init$model_internal_heights
     aux_states_init$lake_depth <- init$lake_depth
     aux_states_init$salt <- init$salt
@@ -205,44 +201,6 @@ generate_initial_conditions <- function(states_config,
 
     init <- list(states = init$states,
                  pars = init$pars,
-                 aux_states_init = aux_states_init)
-
-  }else if(!is.na(config$run_config$restart_file)){
-    nc <- ncdf4::nc_open(config$run_config$restart_file)
-    #forecast <- ncdf4::ncvar_get(nc, "forecast")
-    t <- ncdf4::ncvar_get(nc,'time')
-    local_tzone <- ncdf4::ncatt_get(nc, 0)$local_time_zone_of_simulation
-    datetime <- as.POSIXct(t,
-                           origin = '1970-01-01 00:00.00 UTC',
-                           tz = "UTC")
-    ncdf4::nc_close(nc)
-
-
-    restart_index <- which(datetime == lubridate::as_datetime(config$run_config$start_datetime))
-
-    if(length(restart_index) != 1){
-      warning("start_datetime for this simulation is missing from restart file")
-    }
-
-    out <- generate_restart_initial_conditions(
-      restart_file = config$run_config$restart_file,
-      state_names = states_config$state_names,
-      par_names = pars_config$par_names_save,
-      restart_index = restart_index)
-
-    aux_states_init <- list()
-    aux_states_init$snow_ice_thickness <- out$snow_ice_thickness
-    aux_states_init$avg_surf_temp <- out$avg_surf_temp
-    aux_states_init$the_sals_init <- config$the_sals_init
-    aux_states_init$mixing_vars <- out$mixing_vars
-    aux_states_init$mixer_count <- out$mixer_count
-    aux_states_init$model_internal_heights <- out$model_internal_heights
-    aux_states_init$lake_depth <- out$lake_depth
-    aux_states_init$log_particle_weights <- out$log_particle_weights
-    aux_states_init$inflation <- out$inflation
-
-    init <- list(states = out$states,
-                 pars = out$pars,
                  aux_states_init = aux_states_init)
 
   }

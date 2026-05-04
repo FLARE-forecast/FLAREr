@@ -3,7 +3,7 @@
 #'
 #' Overwrites lake layer arrays, ice/snow state, and WQ variables in an
 #' existing GLM restart NetCDF with the current FLARE ensemble state.
-#' Mixer state, avg_surf_temp, and mixer_count are left untouched — they
+#' Mixer state variables are left untouched — they
 #' are already correct from the previous GLM run.
 #' Does nothing if no glm_restart.nc exists in the directory.
 #' @noRd
@@ -75,7 +75,6 @@ update_glm_restart_file <- function(ens_working_directory,
 #' Run GLM
 #' @param i time step index
 #' @param m ensemble index
-#' @param mixing_vars_start vector; mixing variables vector
 #' @param curr_start datetime of current time step
 #' @param curr_stop datetime of end of run
 #' @param par_names names of parameters that are being calibrated
@@ -98,7 +97,6 @@ update_glm_restart_file <- function(ens_working_directory,
 #' @param npars number of parameters calibrated
 #' @param num_wq_vars number of water quality variables
 #' @param snow_ice_thickness_start vector of snow and ice states
-#' @param avg_surf_temp_start average surface temperature
 #' @param nstates number of nstates simulated
 #' @param state_names state names
 #' @param include_wq boolean; TRUE = use water quality model
@@ -110,8 +108,6 @@ update_glm_restart_file <- function(ens_working_directory,
 
 run_model <- function(i,
                       m,
-                      mixing_vars_start,
-                      mixer_count_start,
                       curr_start,
                       curr_stop,
                       par_names,
@@ -134,7 +130,6 @@ run_model <- function(i,
                       npars,
                       num_wq_vars,
                       snow_ice_thickness_start,
-                      avg_surf_temp_start,
                       nstates,
                       state_names,
                       include_wq,
@@ -154,14 +149,6 @@ run_model <- function(i,
   list_index <- 1
   list_index_aed <- 1
   list_index_phyto <- 1
-
-  update_glm_nml_list[[list_index]] <- mixer_count_start
-  update_glm_nml_names[list_index] <- "restart_mixer_count"
-  list_index <- list_index + 1
-
-  update_glm_nml_list[[list_index]] <- mixing_vars_start
-  update_glm_nml_names[list_index] <- "restart_variables"
-  list_index <- list_index + 1
 
   update_glm_nml_list[[list_index]] <- curr_start
   update_glm_nml_names[list_index] <- "start"
@@ -251,10 +238,6 @@ run_model <- function(i,
   update_glm_nml_names[list_index] <- "blue_ice_thickness"
   list_index <- list_index + 1
 
-  update_glm_nml_list[[list_index]] <- round(avg_surf_temp_start, rounding_level)
-  update_glm_nml_names[list_index] <- "avg_surf_temp"
-  list_index <- list_index + 1
-
   #ALLOWS THE LOOPING THROUGH NOAA ENSEMBLES
 
   update_glm_nml_list[[list_index]] <- curr_met_file
@@ -298,15 +281,15 @@ run_model <- function(i,
   list_index <- list_index + 1
 
   FLAREr:::update_nml(var_list = update_glm_nml_list,
-             var_name_list = update_glm_nml_names,
-             working_directory = ens_working_directory,
-             nml = "glm3.nml")
+                      var_name_list = update_glm_nml_names,
+                      working_directory = ens_working_directory,
+                      nml = "glm3.nml")
 
   if(list_index_aed > 1){
     FLAREr:::update_nml(update_aed_nml_list,
-               update_aed_nml_names,
-               working_directory = ens_working_directory,
-               "aed2.nml")
+                        update_aed_nml_names,
+                        working_directory = ens_working_directory,
+                        "aed2.nml")
   }
 
   if(list_index_phyto > 1){
@@ -321,25 +304,18 @@ run_model <- function(i,
 
   # Update GLM restart file with FLARE DA-corrected state (no-op if absent)
   if(use_glm_restart){
-  update_glm_restart_file(
-    ens_working_directory    = ens_working_directory,
-    m                        = m,
-    states_heights_start     = states_heights_start,
-    glm_heights_start        = glm_heights_start,
-    snow_ice_thickness_start = snow_ice_thickness_start,
-    num_wq_vars              = num_wq_vars,
-    include_wq               = include_wq,
-    state_names              = state_names
-  )
+    update_glm_restart_file(
+      ens_working_directory    = ens_working_directory,
+      m                        = m,
+      states_heights_start     = states_heights_start,
+      glm_heights_start        = glm_heights_start,
+      snow_ice_thickness_start = snow_ice_thickness_start,
+      num_wq_vars              = num_wq_vars,
+      include_wq               = include_wq,
+      state_names              = state_names
+    )
   }
 
-
-  if(m == 1){
-    print("initialzed")
-    print(i)
-  print(glm_heights_start)
-  print(states_heights_start[1,native_heights_index])
-  }
 
   #Use GLM NML files to run GLM for a day
   # Only allow simulations without NaN values in the output to proceed.
@@ -451,9 +427,6 @@ run_model <- function(i,
   return(list(x_star_end  = x_star_end,
               lake_depth_end  = GLM_temp_wq_out$lake_depth,
               snow_ice_thickness_end  = GLM_temp_wq_out$snow_wice_bice,
-              avg_surf_temp_end  = GLM_temp_wq_out$avg_surf_temp,
-              mixing_vars_end = GLM_temp_wq_out$mixing_vars,
-              mixer_count_end = GLM_temp_wq_out$mixer_count,
               diagnostics_end  = diagnostics,
               diagnostics_daily_end = GLM_temp_wq_out$diagnostics_daily_output,
               model_internal_heights  = glm_heights_end,
