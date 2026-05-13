@@ -568,8 +568,16 @@ run_da_forecast <- function(states_init,
 
       if(config$da_setup$use_inflation_factor){
 
+        # Save the depth-space snapshot that matches the current states_height so
+        # the inflation delta can be propagated correctly for all noise modes:
+        #   == 0: states_height = model output; ref = states_depth_wo_noise (== states_depth_w_noise)
+        #   == 1: states_height = model output (noise only in depth space); ref = states_depth_wo_noise (pre-noise)
+        #   == 2: states_height = noise-added (from add_process_noise); ref = states_depth_w_noise (post-noise)
         if(config$da_setup$add_random_noise == 1){
+          states_depth_height_ref <- states_depth_wo_noise
           states_depth_wo_noise <- states_depth_w_noise
+        } else {
+          states_depth_height_ref <- states_depth_w_noise
         }
 
         if(config$da_setup$inflation_only_at_da & (obs_count == 0 | config$da_setup$da_method == "none" | !config$da_setup$use_obs_constraint)){
@@ -594,10 +602,16 @@ run_da_forecast <- function(states_init,
               states_depth_w_noise[s, still_neg, m] <- 0.0
             }
             non_na_heights_index <- which(!is.na(model_internal_heights[i, ,m]))
-            states_height[i,s,non_na_heights_index,m] <- approx(lake_depth[i ,m ] - config$model_settings$modeled_depths,
-                                                                states_depth_w_noise[s, , m ],
-                                                                model_internal_heights[i, non_na_heights_index , m],
-                                                                rule = 2)$y
+            delta_depth <- states_depth_w_noise[s, , m] - states_depth_height_ref[s, , m]
+            delta_height <- approx(lake_depth[i, m] - config$model_settings$modeled_depths,
+                                   delta_depth,
+                                   model_internal_heights[i, non_na_heights_index, m],
+                                   rule = 2)$y
+            states_height[i, s, non_na_heights_index, m] <- states_height[i, s, non_na_heights_index, m] + delta_height
+            if(s > 1){
+              neg_idx <- which(states_height[i, s, non_na_heights_index, m] < 0.0)
+              states_height[i, s, non_na_heights_index[neg_idx], m] <- 0.0
+            }
           }
         }
 
@@ -863,7 +877,7 @@ run_da_forecast <- function(states_init,
                                      zt,
                                      psi,
                                      z_index,
-                                     states_depth_start = states_depth[i, , , ],
+                                     states_depth_start = states_depth_w_noise,
                                      states_height_start = states_height[i, , ,],
                                      model_internal_heights_start = model_internal_heights[i, , ],
                                      lake_depth_start = lake_depth[i, ],
@@ -917,7 +931,7 @@ run_da_forecast <- function(states_init,
                                      zt,
                                      psi,
                                      z_index,
-                                     states_depth_start = states_depth[i, , , ],
+                                     states_depth_start = states_depth_w_noise,
                                      states_height_start = states_height[i, , ,],
                                      model_internal_heights_start = model_internal_heights[i, , ],
                                      lake_depth_start = lake_depth[i, ],
@@ -943,7 +957,7 @@ run_da_forecast <- function(states_init,
                                       zt,
                                       psi,
                                       z_index,
-                                      states_depth_start = states_depth[i, , , ],
+                                      states_depth_start = states_depth_w_noise,
                                       states_height_start = states_height[i, , ,],
                                       model_internal_heights_start = model_internal_heights[i, , ],
                                       lake_depth_start = lake_depth[i, ],
@@ -969,7 +983,7 @@ run_da_forecast <- function(states_init,
                                       zt,
                                       psi,
                                       z_index,
-                                      states_depth_start = states_depth[i, , , ],
+                                      states_depth_start = states_depth_w_noise,
                                       states_height_start = states_height[i, , ,],
                                       model_internal_heights_start = model_internal_heights[i, , ],
                                       lake_depth_start = lake_depth[i, ],

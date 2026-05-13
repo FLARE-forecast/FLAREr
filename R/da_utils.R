@@ -75,7 +75,10 @@ apply_da_updates <- function(update,
     lake_depth_updated <- lake_depth_start
   }
 
-  states_height_updated <- array(NA, dim = c(nstates, dim(model_internal_heights_start)[1], nmembers))
+  # Start from the model's native height representation and apply only the DA
+  # correction as a delta, so the model's exact layer grid is preserved and
+  # interpolation error is confined to the small correction term.
+  states_height_updated <- states_height_start
 
   for(s in 1:nstates){
     for(m in 1:nmembers){
@@ -89,11 +92,17 @@ apply_da_updates <- function(update,
         states_depth_updated[s, still_neg, m] <- 0.0
       }
 
-      states_height_updated[s, non_na_heights, m] <- approx(
+      delta_depth <- states_depth_updated[s, valid_depth_idx, m] - states_depth_start[s, valid_depth_idx, m]
+      delta_height <- approx(
         lake_depth_updated[m] - config$model_settings$modeled_depths[valid_depth_idx],
-        states_depth_updated[s, valid_depth_idx, m],
+        delta_depth,
         model_internal_heights_updated[non_na_heights, m],
         rule = 2)$y
+      states_height_updated[s, non_na_heights, m] <- states_height_start[s, non_na_heights, m] + delta_height
+      if(s > 1){
+        neg_idx <- which(states_height_updated[s, non_na_heights, m] < 0.0)
+        states_height_updated[s, non_na_heights[neg_idx], m] <- 0.0
+      }
     }
   }
 

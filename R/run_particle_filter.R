@@ -105,10 +105,25 @@ run_particle_filter <- function(x_matrix,
   # LL values are sufficiently negative (a realistic scenario in high-dimensional
   # or tightly constrained problems).  Subtracting max(LL) before exponentiating
   # keeps values in (0, 1] and is algebraically equivalent.
+  #
+  # Tempered likelihood: raising the likelihood to power phi in (0, 1] softens
+  # observation influence and prevents weight collapse when observations are very
+  # informative relative to ensemble spread.  In log-space this is multiplication
+  # by phi.  phi = 1 (default) recovers the standard bootstrap PF.
 
-  LL_max     <- max(LL)
-  shifted    <- exp(LL - LL_max)               # all values in (0, 1]
-  log_wt_step <- (LL - LL_max) - log(sum(shifted))  # normalised log weights for this step
+  phi <- if (is.null(config$da_setup$pf_tempering_factor)) {
+    1.0
+  } else {
+    config$da_setup$pf_tempering_factor
+  }
+  if (!is.numeric(phi) || length(phi) != 1L || phi <= 0 || phi > 1) {
+    stop("config$da_setup$pf_tempering_factor must be a single number in (0, 1]")
+  }
+
+  LL_tempered <- phi * LL
+  LL_max      <- max(LL_tempered)
+  shifted     <- exp(LL_tempered - LL_max)               # all values in (0, 1]
+  log_wt_step <- (LL_tempered - LL_max) - log(sum(shifted))  # normalised log weights for this step
 
   # Guard: NaN in log_wt_step indicates a model / config problem (e.g. psi = 0),
   # not numerical underflow (which the log-sum-exp trick already handles).

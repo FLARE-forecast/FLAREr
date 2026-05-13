@@ -45,6 +45,7 @@ add_process_noise <- function(states_height_ens, model_sd, model_internal_height
         w_new[kk] <- (1 - alpha) * w_new[kk-1] + sqrt(1 - (1 - alpha)^2) * w[kk]
       }
       q_v[kk] <- w_new[kk] * model_sd_height[kk]
+
       states_height_ens[jj, kk] <- states_height_ens[jj, kk] + q_v[kk]
 
       if(jj > 1 && states_height_ens[jj, kk] < 0){
