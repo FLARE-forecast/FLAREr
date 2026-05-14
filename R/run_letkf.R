@@ -21,10 +21,9 @@
 #' @param diagnostics_daily_start daily diagnostics
 #' @param pars_config parameter configuration list
 #' @param config FLARE configuration list
-#' @param depth_index index in x matrix with depth values
-#' @param secchi_index index in x matrix with secchi values
-#' @param depth_obs observed depth
-#' @param depth_sd observed depth standard deviation
+#' @param obs_non_vertical named list of non-vertical observation metadata
+#' @param active_in_xmatrix character vector of non-vertical variable names in state-vector order
+#' @param n_non_vertical integer number of non-vertical variables in the augmented state
 #' @param par_fit_method method for fixing parameters
 #' @param inflation_start inflation array from prior
 #' @param lake_max_depth maximum lake depth
@@ -47,10 +46,9 @@ run_letkf <- function(x_matrix,
                       diagnostics_daily_start,
                       pars_config,
                       config,
-                      depth_index,
-                      secchi_index,
-                      depth_obs,
-                      depth_sd,
+                      obs_non_vertical,
+                      active_in_xmatrix,
+                      n_non_vertical,
                       par_fit_method,
                       inflation_start,
                       lake_max_depth) {
@@ -68,10 +66,10 @@ run_letkf <- function(x_matrix,
   nobs            <- length(z_index)
 
   # Depth of each active observation, derived from its position in the full
-  # psi vector.  The first (length(psi) - depth_index - secchi_index) entries
-  # are vertical observations ordered as state-type × depth; non-vertical
-  # entries (lake-depth obs, secchi obs) get NA and will receive weight = 1.
-  n_vert     <- length(psi) - depth_index - secchi_index
+  # psi vector.  The first (length(psi) - n_non_vertical) entries are vertical
+  # observations ordered as state-type × depth; non-vertical entries get NA
+  # and will receive localization weight = 1 (global update).
+  n_vert     <- length(psi) - n_non_vertical
   vert_mask  <- z_index <= n_vert
   obs_depths <- rep(NA_real_, nobs)
   obs_depths[vert_mask] <-
@@ -158,8 +156,9 @@ run_letkf <- function(x_matrix,
     pars_corr                    = pars_corr,
     pars_config                  = pars_config,
     config                       = config,
-    depth_index                  = depth_index,
-    secchi_index                 = secchi_index,
+    obs_non_vertical             = obs_non_vertical,
+    active_in_xmatrix            = active_in_xmatrix,
+    n_non_vertical               = n_non_vertical,
     par_fit_method               = par_fit_method,
     inflation_start              = inflation_start,
     lake_max_depth               = lake_max_depth,

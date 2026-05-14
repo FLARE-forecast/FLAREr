@@ -34,9 +34,16 @@ plotting_general <- function(forecast_df,
 
   pdf(pdf_file_name,width = 11, height = plot_height)
 
+  # Variables with at least one non-NA depth are depth-specific; those with
+  # only NA depths (secchi, lake depth, ice thickness, etc.) are non-depth.
+  vars_with_depth <- combined_df |>
+    filter(variable_type == 'state', !is.na(depth)) |>
+    distinct(variable) |>
+    pull(variable)
+
   state_depth_variables <- combined_df |>
     filter(variable_type == 'state',
-           !(variable %in% c('secchi', 'depth', "ice_thickness"))) |>
+           variable %in% vars_with_depth) |>
     distinct(variable) |>
     pull(variable)
 
@@ -97,7 +104,7 @@ plotting_general <- function(forecast_df,
   ## BUILD NON-DEPTH-SPECIFIC STATE VARIABLE PLOTS
   state_non_depth_variables <- combined_df |>
     filter(variable_type == 'state',
-           variable %in% c('secchi', 'depth', 'ice_thickness')) |>
+           !(variable %in% vars_with_depth)) |>
     distinct(variable) |>
     pull(variable)
 

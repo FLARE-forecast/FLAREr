@@ -772,19 +772,28 @@ run_da_forecast <- function(states_init,
 
       x_matrix <- apply(aperm(states_depth_w_noise[,1:ndepths_modeled,], perm = c(2,1,3)), 3, rbind)
 
-      # Add depth to the x_matrix if in observations
-      if(!is.null(obs_non_vertical$obs_depth)){
-        x_matrix <- rbind(x_matrix, lake_depth[i, ])
-      }
-
-      # Convert modeled light-extinction coefficient (Kd) to Secchi depth via
-      # the Poole-Atkins approximation: Zsd ≈ 1.7 / Kd.
-      if(length(config$output_settings$diagnostics_names) > 0 & i > 1){
-        modeled_secchi <- 1.7 / diagnostics[1, i, which.min(abs(config$model_settings$modeled_depths-1.0)), ]
-        if(!is.null(obs_non_vertical$obs_secchi)){
-          x_matrix <- rbind(x_matrix, modeled_secchi)
+      # Append each non-vertical observation variable to the augmented state vector.
+      # active_in_xmatrix tracks which variables were successfully extracted (diagnostic
+      # variables return NULL at i==1 before the diagnostics array is populated).
+      active_in_xmatrix <- character(0)
+      for (nv_var in names(obs_non_vertical)) {
+        modeled_val <- extract_modeled_non_vertical(
+          var_name      = nv_var,
+          meta          = obs_non_vertical[[nv_var]],
+          states_depth  = states_depth_w_noise,
+          diagnostics   = diagnostics,
+          lake_depth    = lake_depth[i, ],
+          states_config = states_config,
+          config        = config,
+          time_index    = i
+        )
+        if (!is.null(modeled_val)) {
+          ops      <- get_non_vertical_operator(nv_var)
+          x_matrix <- rbind(x_matrix, ops$forward_fn(modeled_val))
+          active_in_xmatrix <- c(active_in_xmatrix, nv_var)
         }
       }
+      n_non_vertical <- length(active_in_xmatrix)
 
       # Capture state-only forecast before appending parameters; the parameter
       # filter needs these to compute its predicted observations.
@@ -812,39 +821,19 @@ run_da_forecast <- function(states_init,
 
       zt <- zt[which(!is.na(zt))]
 
-      depth_index <- 0
-      if(!is.null(obs_non_vertical$obs_depth)){
-        depth_index <- 1
-        if(!is.na(obs_non_vertical$obs_depth$obs[i])){
-          zt <- c(zt, obs_non_vertical$obs_depth$obs[i])
-          depth_obs <- obs_non_vertical$obs_depth$obs[i]
-          depth_sd <- obs_non_vertical$obs_depth$sd
-        }
-      }else{
-        depth_obs <- NA
-        depth_sd <- NA
-      }
-
-      secchi_index <- 0
-      if(i > 1){
-        if(!is.null(obs_non_vertical$obs_secchi)){
-          secchi_index <- 1
-          if(!is.na(obs_non_vertical$obs_secchi$obs[i])){
-            if(!is.na(obs_non_vertical$obs_secchi$obs[i])){
-              zt <- c(zt, obs_non_vertical$obs_secchi$obs[i])
-            }
-          }
-        }
+      for (nv_var in active_in_xmatrix) {
+        obs_val <- obs_non_vertical[[nv_var]]$obs[i]
+        if (!is.na(obs_val)) zt <- c(zt, obs_val)
       }
 
       # Build the linear observation operator H that maps the augmented state
-      # vector [states (depth×state), lake_depth?, secchi?, pars?] to the
-      # observation vector.  Rows = observations, columns = state elements.
+      # vector [states (depth×state), non_vertical_1?, ..., non_vertical_n?, pars?]
+      # to the observation vector.  Rows = observations, columns = state elements.
       # For one_step_lag the parameter columns are absent from H; npars_in_h
-      # keeps the depth/secchi column offsets correct in both modes.
+      # keeps the non-vertical column offsets correct in both modes.
       npars_in_h <- if(use_one_step_lag) 0L else npars
-      h <- matrix(0, nrow = vertical_obs * ndepths_modeled + depth_index + secchi_index,
-                     ncol = nstates * ndepths_modeled + depth_index + secchi_index + npars_in_h)
+      h <- matrix(0, nrow = vertical_obs * ndepths_modeled + n_non_vertical,
+                     ncol = nstates * ndepths_modeled + n_non_vertical + npars_in_h)
 
       index <- 0
       for(k in 1:nstates){
@@ -862,15 +851,14 @@ run_da_forecast <- function(states_init,
         }
       }
 
-      if(!is.null(obs_non_vertical$obs_depth) & depth_index > 0){
-        if(!is.na(obs_non_vertical$obs_depth$obs[i])){
-          h[dim(h)[1] - npars_in_h, dim(h)[2] - npars_in_h] <- 1
-        }
-      }
-
-      if(!is.null(obs_non_vertical$obs_secchi)){
-        if(!is.na(obs_non_vertical$obs_secchi$obs[i])){
-          h[dim(h)[1] - depth_index - npars_in_h, dim(h)[2] - depth_index - npars_in_h] <- 1
+      # Each non-vertical variable maps 1-to-1 to its own row/column in H.
+      for (k in seq_along(active_in_xmatrix)) {
+        nv_var  <- active_in_xmatrix[k]
+        obs_val <- obs_non_vertical[[nv_var]]$obs[i]
+        if (!is.na(obs_val)) {
+          h_row <- vertical_obs * ndepths_modeled + k
+          h_col <- nstates    * ndepths_modeled + k
+          h[h_row, h_col] <- 1
         }
       }
 
@@ -883,7 +871,7 @@ run_da_forecast <- function(states_init,
         h <- t(as.matrix(h))
       }
 
-      psi <- rep(NA, vertical_obs * ndepths_modeled + depth_index + secchi_index)
+      psi <- rep(NA, vertical_obs * ndepths_modeled + n_non_vertical)
       index <- 0
       for(k in 1:vertical_obs){
         for(j in 1:ndepths_modeled){
@@ -892,13 +880,8 @@ run_da_forecast <- function(states_init,
         }
       }
 
-      if(depth_index > 0){
-        psi[vertical_obs * ndepths_modeled + depth_index] <- obs_non_vertical$obs_depth$depth_sd
-      }
-
-
-      if(secchi_index > 0){
-        psi[vertical_obs * ndepths_modeled + depth_index + secchi_index] <- obs_non_vertical$obs_secchi$secchi_sd
+      for (k in seq_along(active_in_xmatrix)) {
+        psi[vertical_obs * ndepths_modeled + k] <- obs_non_vertical[[active_in_xmatrix[k]]]$sd
       }
 
       if(length(config$output_settings$diagnostics_names) > 0){
@@ -931,10 +914,9 @@ run_da_forecast <- function(states_init,
                                      diagnostics_daily_start,
                                      pars_config,
                                      config,
-                                     depth_index,
-                                     secchi_index,
-                                     depth_obs,
-                                     depth_sd,
+                                     obs_non_vertical,
+                                     active_in_xmatrix,
+                                     n_non_vertical,
                                      par_fit_method,
                                      inflation_start = inflation[i-1],
                                      lake_max_depth = lake_max_depth)
@@ -957,10 +939,9 @@ run_da_forecast <- function(states_init,
                                                 diagnostics_daily_start = diagnostics_daily_start,
                                                 pars_config,
                                                 config,
-                                                depth_index,
-                                                secchi_index,
-                                                depth_obs,
-                                                depth_sd,
+                                                obs_non_vertical,
+                                                active_in_xmatrix,
+                                                n_non_vertical,
                                                 par_fit_method,
                                                 vertical_obs,
                                                 working_directory,
@@ -985,10 +966,9 @@ run_da_forecast <- function(states_init,
                                      diagnostics_daily_start,
                                      pars_config,
                                      config,
-                                     depth_index,
-                                     secchi_index,
-                                     depth_obs,
-                                     depth_sd,
+                                     obs_non_vertical,
+                                     active_in_xmatrix,
+                                     n_non_vertical,
                                      par_fit_method,
                                      inflation_start = inflation[i-1],
                                      lake_max_depth = lake_max_depth)
@@ -1011,10 +991,9 @@ run_da_forecast <- function(states_init,
                                       diagnostics_daily_start,
                                       pars_config,
                                       config,
-                                      depth_index,
-                                      secchi_index,
-                                      depth_obs,
-                                      depth_sd,
+                                      obs_non_vertical,
+                                      active_in_xmatrix,
+                                      n_non_vertical,
                                       par_fit_method,
                                       inflation_start = inflation[i-1],
                                       lake_max_depth = lake_max_depth)
@@ -1037,10 +1016,9 @@ run_da_forecast <- function(states_init,
                                       diagnostics_daily_start,
                                       pars_config,
                                       config,
-                                      depth_index,
-                                      secchi_index,
-                                      depth_obs,
-                                      depth_sd,
+                                      obs_non_vertical,
+                                      active_in_xmatrix,
+                                      n_non_vertical,
                                       par_fit_method,
                                       inflation_start = inflation[i-1],
                                       lake_max_depth = lake_max_depth)

@@ -217,24 +217,33 @@ write_forecast <- function(da_forecast_output,
     log_weight    = c(t(log_particle_weights[seq_len(n_time_ld), ]))
   )
 
-  if(length(config$output_settings$diagnostics_names) > 0){
+  secchi_in_config <- "secchi" %in% trimws(obs_config$state_names_obs[obs_config$multi_depth == 0])
+  if(secchi_in_config && length(config$output_settings$diagnostics_names) > 0){
+    secchi_cfg     <- obs_config[trimws(obs_config$state_names_obs) == "secchi" &
+                                   obs_config$multi_depth == 0, ]
+    diag_var       <- secchi_cfg$model_variable[1]
+    depth_m        <- secchi_cfg$model_depth_m[1]
+    diag_idx       <- which(config$output_settings$diagnostics_names == diag_var)
+    depth_idx_s    <- if (is.na(depth_m)) 1L else
+                        which.min(abs(config$model_settings$modeled_depths - as.numeric(depth_m)))
 
-    # --- secchi: derived from diagnostics[1, time, depth_idx, ens] ---
-    depth_idx_secchi <- which.min(abs(config$model_settings$modeled_depths - 1.0))
-    n_time_s <- dim(diagnostics)[2]
-    n_ens_s  <- dim(diagnostics)[4]
-    secchi_mat <- 1.7 / diagnostics[1, , depth_idx_secchi, ]  # [time, ens]
+    if (length(diag_idx) > 0) {
+      # --- secchi: derived from diagnostics[extc_coeff, time, depth_idx, ens] ---
+      n_time_s   <- dim(diagnostics)[2]
+      n_ens_s    <- dim(diagnostics)[4]
+      secchi_mat <- 1.7 / diagnostics[diag_idx, , depth_idx_s, ]  # [time, ens]
 
-    pieces$secchi <- tibble::tibble(
-      predicted     = c(t(secchi_mat)),
-      time          = rep(full_time[seq_len(n_time_s)],      each = n_ens_s),
-      variable      = "secchi",
-      depth         = NA,
-      forecast      = rep(forecast_flag[seq_len(n_time_s)],  each = n_ens_s),
-      ensemble      = rep(seq_len(n_ens_s), n_time_s),
-      variable_type = "state",
-      log_weight    = c(t(log_particle_weights[seq_len(n_time_s), ]))
-    )
+      pieces$secchi <- tibble::tibble(
+        predicted     = c(t(secchi_mat)),
+        time          = rep(full_time[seq_len(n_time_s)],     each = n_ens_s),
+        variable      = "secchi",
+        depth         = NA,
+        forecast      = rep(forecast_flag[seq_len(n_time_s)], each = n_ens_s),
+        ensemble      = rep(seq_len(n_ens_s), n_time_s),
+        variable_type = "state",
+        log_weight    = c(t(log_particle_weights[seq_len(n_time_s), ]))
+      )
+    }
   }
 
   # --- ice thickness: snow_ice_thickness[layers, time, ens] ---

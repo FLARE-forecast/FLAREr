@@ -9,7 +9,7 @@ build_R_matrix <- function(psi, z_index) {
 
 #' @title Apply DA posterior updates shared across all linear DA methods
 #'
-#' @param update [nstates*ndepths + depth_bool + secchi_bool + npars, nmembers] updated state matrix
+#' @param update [nstates*ndepths + n_non_vertical + npars, nmembers] updated state matrix
 #' @param states_depth_start states orientated by depth
 #' @param states_height_start states orientated by height
 #' @param model_internal_heights_start heights predicted by GLM model
@@ -20,8 +20,9 @@ build_R_matrix <- function(psi, z_index) {
 #' @param pars_corr matrix of parameters
 #' @param pars_config parameter configuration list
 #' @param config FLARE configuration list
-#' @param depth_index index in x matrix with depth values
-#' @param secchi_index 1 if secchi is in x matrix, 0 otherwise
+#' @param obs_non_vertical named list of non-vertical observation metadata (from create_obs_non_vertical)
+#' @param active_in_xmatrix character vector of variable names in the same order they were appended to x_matrix
+#' @param n_non_vertical integer number of non-vertical variables in the augmented state vector
 #' @param par_fit_method method for fixing parameters
 #' @param inflation_start inflation array from prior
 #' @param lake_max_depth maximum lake depth
@@ -43,8 +44,9 @@ apply_da_updates <- function(update,
                              pars_corr,
                              pars_config,
                              config,
-                             depth_index,
-                             secchi_index = 0,
+                             obs_non_vertical,
+                             active_in_xmatrix,
+                             n_non_vertical = 0L,
                              par_fit_method,
                              inflation_start,
                              lake_max_depth,
@@ -59,20 +61,44 @@ apply_da_updates <- function(update,
   states_depth_updated <- aperm(array(c(states_depth_updated), dim = c(ndepths_modeled, nstates, nmembers)), perm = c(2,1,3))
 
   model_internal_heights_updated <- model_internal_heights_start
+  lake_depth_updated <- lake_depth_start
 
-  if(depth_index > 0){
-    lake_depth_updated <- update[(ndepths_modeled*nstates + depth_index), ]
-    index <- which(lake_depth_updated > lake_max_depth)
-    lake_depth_updated[index] <- lake_max_depth
-    for(m in 1:nmembers){
-      non_na_heights <- which(!is.na(model_internal_heights_start[ , m]))
-      diff_height <- lake_depth_updated[m] - lake_depth_start[m]
-      model_internal_heights_updated[non_na_heights, m] <- model_internal_heights_start[non_na_heights, m ] +  diff_height
-      index <- which(model_internal_heights_updated[, m] < 0)
-      model_internal_heights_updated[index, m] <- NA
+  # Write-back for each non-vertical variable in the order they appear in the
+  # augmented state vector.  State variables (model_source == "state") update
+  # model internals directly; diagnostic variables with a non-NULL inverse_fn
+  # write back through their physics formula; pure diagnostics (NULL inverse_fn)
+  # propagate only through ensemble covariance and need no write-back.
+  for (k in seq_len(n_non_vertical)) {
+    nv_var      <- active_in_xmatrix[k]
+    meta        <- obs_non_vertical[[nv_var]]
+    ops         <- get_non_vertical_operator(nv_var)
+    row_idx     <- ndepths_modeled * nstates + k
+    updated_val <- update[row_idx, ]
+
+    if (nv_var == "depth") {
+      lake_depth_updated <- updated_val
+      index <- which(lake_depth_updated > lake_max_depth)
+      lake_depth_updated[index] <- lake_max_depth
+      for (m in 1:nmembers) {
+        non_na_heights <- which(!is.na(model_internal_heights_start[ , m]))
+        diff_height    <- lake_depth_updated[m] - lake_depth_start[m]
+        model_internal_heights_updated[non_na_heights, m] <-
+          model_internal_heights_start[non_na_heights, m] + diff_height
+        neg_idx <- which(model_internal_heights_updated[, m] < 0)
+        model_internal_heights_updated[neg_idx, m] <- NA
+      }
+
+    } else if (meta$model_source == "diagnostic" && !is.null(ops$inverse_fn)) {
+      diag_names <- config$output_settings$diagnostics_names
+      diag_idx   <- which(diag_names == meta$model_variable)
+      if (length(diag_idx) > 0) {
+        depth_idx <- resolve_depth_index(meta$model_depth_m, config)
+        if (length(dim(diagnostics_start)) == 3) {
+          diagnostics_start[diag_idx, depth_idx, ] <- ops$inverse_fn(updated_val)
+        }
+      }
     }
-  }else{
-    lake_depth_updated <- lake_depth_start
+    # NULL inverse_fn: no write-back needed
   }
 
   # Start from the model's native height representation and apply only the DA
@@ -130,12 +156,6 @@ apply_da_updates <- function(update,
         above_lake_idx <- which(config$model_settings$modeled_depths > lake_depth_updated[m])
         diagnostics_updated[d, above_lake_idx, m] <- NA
       }
-    }
-    if (secchi_index > 0) {
-      secchi_row <- ndepths_modeled * nstates + depth_index + secchi_index
-      updated_secchi <- pmax(update[secchi_row, ], 1e-6)
-      depth_idx_1m <- which.min(abs(config$model_settings$modeled_depths - 1.0))
-      diagnostics_updated[1, depth_idx_1m, ] <- 1.7 / updated_secchi
     }
   }else{
     diagnostics_updated <- diagnostics_start

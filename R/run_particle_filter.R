@@ -17,10 +17,9 @@
 #' @param diagnostics_daily_start daily diagnostics (a restart variable)
 #' @param pars_config parameter configuration list
 #' @param config FLARE configuration list
-#' @param depth_index index in x matrix with depth values
-#' @param secchi_index in x matrix with secchi values
-#' @param depth_obs observed depth
-#' @param depth_sd observed depth standard deviation
+#' @param obs_non_vertical named list of non-vertical observation metadata
+#' @param active_in_xmatrix character vector of non-vertical variable names in state-vector order
+#' @param n_non_vertical integer number of non-vertical variables in the augmented state
 #' @param par_fit_method method for fixing parameters
 #' @param vertical_obs number of vertical observations (i.e. states not
 #'   associated with a depth)
@@ -48,10 +47,9 @@ run_particle_filter <- function(x_matrix,
                                 diagnostics_daily_start,
                                 pars_config,
                                 config,
-                                depth_index,
-                                secchi_index,
-                                depth_obs,
-                                depth_sd,
+                                obs_non_vertical,
+                                active_in_xmatrix,
+                                n_non_vertical,
                                 par_fit_method,
                                 vertical_obs,
                                 working_directory,
@@ -130,8 +128,7 @@ run_particle_filter <- function(x_matrix,
   if (anyNA(log_wt_step)) {
     index     <- ceiling(z_index[z_index <= vertical_obs * ndepths_modeled] / ndepths_modeled)
     obs_names <- obs_config$state_names_obs[index]
-    if (depth_index  > 0) obs_names <- c(obs_names, "depth")
-    if (secchi_index > 0) obs_names <- c(obs_names, "secchi")
+    obs_names <- c(obs_names, active_in_xmatrix)
     readr::write_csv(
       x = tibble::tibble(obs_names = obs_names,
                          obs  = zt,
