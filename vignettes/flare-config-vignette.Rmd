@@ -189,6 +189,14 @@ settings, inputs, and outputs.
 -   **pf_always_resample:** force the particle filter to resample at
     every timestep (only used when `da_method: pf`) (`TRUE` or `FALSE`)
 
+-   **pf_tempering_factor:** tempers the likelihood used to compute
+    particle weights by raising it to this power before normalising
+    (only used when `da_method: pf`; default `1.0`). Must be a single
+    number in `(0, 1]`. Values less than `1` soften the influence of
+    observations on the weights, preventing weight collapse when
+    observations are very informative relative to the prior ensemble
+    spread. `1.0` recovers the standard bootstrap particle filter.
+
 -   **add_random_noise:** integer controlling how observation
     perturbations are generated for the stochastic EnKF. `2` = sample
     perturbed observations from a normal distribution centred on the
