@@ -132,6 +132,20 @@ apply_da_updates <- function(update,
     }
   }
 
+  if(isTRUE(config$da_setup$use_inflation_factor) && !is.null(config$da_setup$inflation_factor)){
+    inf <- config$da_setup$inflation_factor
+    nlayers <- dim(states_height_updated)[2]
+    for(s in 1:nstates){
+      for(h_idx in 1:nlayers){
+        valid_m <- which(!is.na(states_height_updated[s, h_idx, ]))
+        if(length(valid_m) > 1){
+          state_mean <- mean(states_height_updated[s, h_idx, valid_m])
+          states_height_updated[s, h_idx, valid_m] <- state_mean + inf * (states_height_updated[s, h_idx, valid_m] - state_mean)
+        }
+      }
+    }
+  }
+
   if(npars > 0){
     if(par_fit_method != "perturb_init"){
       pars_updated <- update[(dim(update)[1]-npars+1):dim(update)[1], ]
@@ -181,6 +195,10 @@ apply_da_updates <- function(update,
   #Correct any parameter values outside bounds using reflective bounds to preserve ensemble spread
   if(npars > 0){
     for(par in 1:npars){
+      if(par_fit_method == "inflate" && pars_config$fix_par[par] == 0){
+        par_mean <- mean(pars_updated[par, ])
+        pars_updated[par, ] <- par_mean + pars_config$perturb_par[par] * (pars_updated[par, ] - par_mean)
+      }
       lb <- pars_config$par_lowerbound[par]
       ub <- pars_config$par_upperbound[par]
       low_index  <- which(pars_updated[par, ] < lb)

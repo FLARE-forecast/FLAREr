@@ -1,19 +1,81 @@
 url: http://flare-forecast.org/FLAREr/
 template:
   bootstrap: 5
+  bootswatch: flatly
+
 navbar:
   structure:
     left:  [intro, reference, articles]
-    right: [search, github]
+    right: [news, search, github]
+
+articles:
+- title: Background
+  contents:
+  - flare-concepts-vignette
+- title: Getting Started
+  contents:
+  - flare-example-vignette
+  - flare-driver-vignette
+- title: Configuration
+  contents:
+  - flare-config-vignette
+- title: Upgrading
+  contents:
+  - flare-upgrade-vignette
+
 reference:
-- title:
+- title: Core Workflow
 - subtitle: Out-of-box workflow
-  desc: Function for default application of FLARE
-- contents:
+  desc: Function for default end-to-end application of FLARE
+  contents:
   - run_flare
-- subtitle: Helpers
-  desc: Functions for automation
+
+- subtitle: Configuration
+  desc: Functions for reading and managing run configuration
+  contents:
+  - get_run_config
+  - update_run_config
+
+- subtitle: Setup
+  desc: Functions for initializing simulations and environments
+  contents:
+  - set_up_simulation
+  - initialize_faasr
+
+- subtitle: Utilities
+  desc: Helper functions for automation and checks
   contents:
   - check_noaa_present
-  - update_run_config
-  - set_up_simulation
+
+- title: Advanced / Internal
+  desc: Lower-level functions for building custom workflows
+- subtitle: Data assimilation
+  contents:
+  - run_da_forecast
+  - generate_initial_conditions
+  - generate_states_to_obs_mapping
+  - initiate_model_error
+
+- subtitle: Input preparation
+  contents:
+  - create_met_files
+  - create_met_files_openmet
+  - create_inflow_outflow_files
+  - create_obs_matrix
+  - create_obs_non_vertical
+
+- subtitle: Output
+  contents:
+  - write_forecast
+  - write_restart
+  - plotting_general
+
+- subtitle: Storage and targets
+  contents:
+  - get_targets
+  - put_targets
+  - get_restart_file
+  - put_restart_file
+  - delete_restart
+  - delete_sim
+  - get_driver_forecast_path
