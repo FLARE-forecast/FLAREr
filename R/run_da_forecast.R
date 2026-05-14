@@ -28,8 +28,7 @@
 #' @param obs_config list; list of observation configurations
 #' @param da_method string; data assimilation method (enkf or pf; Default = enkf)
 #' @param par_fit_method string; method for adding noise to parameters during calibration
-#' @param obs_secchi list of secchi observations
-#' @param obs_depth list of depth observations
+#' @param obs_non_vertical named list of non-vertical observations (from create_obs_non_vertical)
 #' @return a named list with the following elements:
 #'   \describe{
 #'     \item{full_time}{vector of all modeled datetimes}
@@ -130,6 +129,13 @@ initialize_forecast_arrays <- function(nsteps, nstates, ndepths_modeled,
   log_particle_weights[1, ]   <- aux_states_init$log_particle_weights
   inflation[1]                <- aux_states_init$inflation
 
+  if (!is.null(aux_states_init$diagnostics) && is.array(diagnostics)) {
+    diagnostics[, 1, , ] <- aux_states_init$diagnostics
+  }
+  if (!is.null(aux_states_init$diagnostics_daily) && is.array(diagnostics_daily)) {
+    diagnostics_daily[, 1, ] <- aux_states_init$diagnostics_daily
+  }
+
   list(
     states_depth           = states_depth,
     states_height          = states_height,
@@ -163,7 +169,7 @@ run_da_forecast <- function(states_init,
                             da_method = "enkf",
                             par_fit_method = "perturb",
                             obs_non_vertical = NULL,
-                            states_non_vertical = NULL){
+                            non_vertical_noise_config = NULL){
 
   # States beyond temp and salinity (index > 2) are water-quality variables.
   if(length(states_config$state_names) > 2){
@@ -371,8 +377,118 @@ run_da_forecast <- function(states_init,
     states_depth_w_noise <- array(NA, dim = c(nstates, ndepths_modeled, nmembers))
     curr_pars <- array(NA, dim = c(npars, nmembers))
 
-    # At i==1 the initial conditions already populate the arrays; skip the
-    # model run and go straight to (optional) data assimilation.
+    # Run GLM one step from the initial conditions to populate the diagnostics
+    # array at i==1.  Only diagnostics_end is kept; x_star_end is discarded so
+    # the initial conditions are preserved intact for the DA step below.  Any
+    # restart files written here are overwritten with DA-updated states at i==2
+    # by update_glm_restart_file(), so they do not corrupt the main forecast.
+    # Note: diagnostics are extracted from the end of the full_time[1] ->
+    # full_time[2] run, so they reflect the model state at approximately
+    # full_time[2] rather than exactly full_time[1].  For slowly-varying
+    # diagnostics such as light extinction this approximation is negligible.
+    needs_diag_spinup <-
+      (length(config$output_settings$diagnostics_names) > 0 &&
+         is.null(aux_states_init$diagnostics)) ||
+      (length(config$output_settings$diagnostics_daily$names) > 0 &&
+         is.null(aux_states_init$diagnostics_daily))
+
+    if(i == 1 && nsteps > 1 && needs_diag_spinup){
+
+      spinup_start <- strftime(full_time[1], format = "%Y-%m-%d %H:%M", tz = "UTC")
+      spinup_stop  <- strftime(full_time[2], format = "%Y-%m-%d %H:%M", tz = "UTC")
+
+      orgin <- getwd()
+      diag_init <- furrr::future_map(1:nmembers, function(m) {
+
+        curr_met_file <- if(!config$uncertainty$weather)
+          met_file_names[met_index[1]]
+        else
+          met_file_names[met_index[m]]
+
+        if(!is.null(ncol(inflow_file_names))){
+          inflow_file_name  <- inflow_file_names[inflow_outflow_index[m], ]
+          outflow_file_name <- outflow_file_names[inflow_outflow_index[m], ]
+        } else {
+          inflow_file_name  <- NULL
+          outflow_file_name <- NULL
+        }
+
+        curr_pars_ens <- FLAREr:::propose_parameters(
+          i                   = 1L,
+          m                   = m,
+          pars                = pars,
+          pars_config         = pars_config,
+          npars               = npars,
+          par_fit_method      = par_fit_method,
+          da_method           = da_method,
+          hist_days           = hist_days,
+          include_uncertainty = config$uncertainty$parameter
+        )
+
+        FLAREr:::run_model(
+          i                        = 1L,
+          m                        = m,
+          curr_start               = spinup_start,
+          curr_stop                = spinup_stop,
+          par_names                = par_names,
+          curr_pars_ens            = curr_pars_ens,
+          ens_working_directory    = file.path(working_directory, m),
+          par_nml                  = par_file,
+          num_phytos               = num_phytos,
+          glm_heights_start        = model_internal_heights[1, , m],
+          lake_depth_start         = lake_depth[1, m],
+          full_time                = full_time,
+          hist_days                = hist_days,
+          modeled_depths           = config$model_settings$modeled_depths,
+          ndepths_modeled          = ndepths_modeled,
+          curr_met_file            = curr_met_file,
+          inflow_file_name         = inflow_file_name,
+          outflow_file_name        = outflow_file_name,
+          glm_output_vars          = output_vars,
+          diagnostics_names        = config$output_settings$diagnostics_names,
+          diagnostics_daily_config = config$output_settings$diagnostics_daily,
+          npars                    = npars,
+          num_wq_vars              = num_wq_vars,
+          snow_ice_thickness_start = snow_ice_thickness[, 1, m],
+          nstates                  = nstates,
+          state_names              = states_config$state_names,
+          include_wq               = config$include_wq,
+          max_layers               = config$model_settings$max_model_layers,
+          states_heights_start     = states_height[1, , , m],
+          glm_path                 = config$model_settings$glm_path,
+          use_glm_restart          = has_zip_restart
+        )
+
+      }, .options = furrr::furrr_options(seed = TRUE))
+      setwd(orgin)
+
+      for(m in 1:nmembers){
+        num_out_heights <- length(diag_init[[m]]$model_internal_heights)
+        non_na_idx      <- seq_len(num_out_heights)
+        glm_depths_spin <- diag_init[[m]]$lake_depth_end -
+                           diag_init[[m]]$model_internal_heights[non_na_idx]
+
+        if(length(config$output_settings$diagnostics_names) > 0 &&
+           is.null(aux_states_init$diagnostics)){
+          for(d in seq_len(dim(diagnostics)[1])){
+            diagnostics[d, 1, , m] <- approx(
+              glm_depths_spin,
+              diag_init[[m]]$diagnostics_end[d, non_na_idx],
+              config$model_settings$modeled_depths,
+              rule = 2
+            )$y
+          }
+        }
+
+        if(length(config$output_settings$diagnostics_daily$names) > 0 &&
+           is.null(aux_states_init$diagnostics_daily)){
+          diagnostics_daily[, 1, m] <- diag_init[[m]]$diagnostics_daily_end
+        }
+      }
+    }
+
+    # At i==1 the initial conditions already populate the state arrays; skip the
+    # main model run and go straight to (optional) data assimilation.
     if(i > 1){
 
       orgin <- getwd()
@@ -503,7 +619,23 @@ run_da_forecast <- function(states_init,
 
         if(config$da_setup$add_random_noise == 2) {
 
-          lake_depth[i,m] <- rnorm(1, lake_depth[i,m], states_non_vertical$depth_sd)
+          nv_noise <- FLAREr:::apply_non_vertical_process_noise(
+            non_vertical_noise_config   = non_vertical_noise_config,
+            lake_depth_m                = lake_depth[i, m],
+            diagnostics_slice           = if (length(config$output_settings$diagnostics_names) > 0)
+                                            diagnostics[, i, , m] else NULL,
+            diagnostics_daily_slice     = if (length(config$output_settings$diagnostics_daily$names) > 0)
+                                            diagnostics_daily[, i, m] else NULL,
+            config                      = config
+          )
+          lake_depth[i, m] <- nv_noise$lake_depth_m
+          if (length(config$output_settings$diagnostics_names) > 0) {
+            diagnostics[, i, , m] <- nv_noise$diagnostics_slice
+          }
+          if (length(config$output_settings$diagnostics_daily$names) > 0) {
+            diagnostics_daily[, i, m] <- nv_noise$diagnostics_daily_slice
+          }
+
           with_noise <- FLAREr:::add_process_noise(states_height_ens = states_height[i, , , m],
                                                    model_sd = model_sd,
                                                    model_internal_heights_ens = model_internal_heights[i, ,m],
@@ -571,7 +703,22 @@ run_da_forecast <- function(states_init,
             states_depth_w_noise[s, still_neg, m] <- 0.0
           }
 
-          lake_depth[i, m] <- rnorm(1, lake_depth[i, ], states_non_vertical$depth_sd)
+          nv_noise <- FLAREr:::apply_non_vertical_process_noise(
+            non_vertical_noise_config   = non_vertical_noise_config,
+            lake_depth_m                = lake_depth[i, m],
+            diagnostics_slice           = if (length(config$output_settings$diagnostics_names) > 0)
+                                            diagnostics[, i, , m] else NULL,
+            diagnostics_daily_slice     = if (length(config$output_settings$diagnostics_daily$names) > 0)
+                                            diagnostics_daily[, i, m] else NULL,
+            config                      = config
+          )
+          lake_depth[i, m] <- nv_noise$lake_depth_m
+          if (length(config$output_settings$diagnostics_names) > 0) {
+            diagnostics[, i, , m] <- nv_noise$diagnostics_slice
+          }
+          if (length(config$output_settings$diagnostics_daily$names) > 0) {
+            diagnostics_daily[, i, m] <- nv_noise$diagnostics_daily_slice
+          }
         }
 
 
@@ -588,18 +735,8 @@ run_da_forecast <- function(states_init,
         obs_count <- length(which(!is.na(c(obs[1,i , ]))))
       }
 
-      if(i > 1){
-        # Light-extinction diagnostic is absent from the GLM restart file,
-        # so the Secchi-depth prediction is unavailable at i==1.
-        if(!is.null(obs_non_vertical$obs_secchi$obs)){
-          if(!is.na(obs_non_vertical$obs_secchi$obs[i])){
-            obs_count <- obs_count + 1
-          }
-        }
-      }
-
-      if(!is.null(obs_non_vertical$obs_depth)){
-        if(!is.na(obs_non_vertical$obs_depth$obs[i])){
+      for (nv_var in names(obs_non_vertical)) {
+        if (!is.na(obs_non_vertical[[nv_var]]$obs[i])) {
           obs_count <- obs_count + 1
         }
       }

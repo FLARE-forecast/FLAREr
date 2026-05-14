@@ -142,7 +142,16 @@ run_flare <- function(lake_directory,
 
   model_sd <- initiate_model_error(config, states_config)
 
-  states_non_vertical <- list(depth_sd = config$model_settings$depth_sd)
+  nv_noise_file <- config$model_settings$non_vertical_noise_config_file
+  if (!is.null(nv_noise_file) && !is.na(nv_noise_file)) {
+    non_vertical_noise_config <- readr::read_csv(
+      file.path(config$file_path$configuration_directory, nv_noise_file),
+      col_types = readr::cols()
+    )
+  } else {
+    non_vertical_noise_config <- NULL
+  }
+  validate_non_vertical_noise_config(non_vertical_noise_config, config)
 
   init <- generate_initial_conditions(states_config,
                                               obs_config,
@@ -168,7 +177,7 @@ run_flare <- function(lake_directory,
                                                 da_method = config$da_setup$da_method,
                                                 par_fit_method = config$da_setup$par_fit_method,
                                                 obs_non_vertical = obs_non_vertical,
-                                                states_non_vertical = states_non_vertical)
+                                                non_vertical_noise_config = non_vertical_noise_config)
 
   rm(init)
   rm(obs)

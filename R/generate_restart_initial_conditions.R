@@ -19,6 +19,8 @@
 generate_restart_initial_conditions_from_zip <- function(restart_file,
                                                          state_names,
                                                          par_names = NULL,
+                                                         diagnostics_names = NULL,
+                                                         diagnostics_daily_names = NULL,
                                                          restart_index,
                                                          restart_date,
                                                          working_directory,
@@ -66,6 +68,31 @@ generate_restart_initial_conditions_from_zip <- function(restart_file,
     pars_restart <- NULL
   }
 
+  diagnostics_init <- NULL
+  if (!is.null(diagnostics_names) && length(diagnostics_names) > 0 &&
+      paste0("diag_", diagnostics_names[1]) %in% names(nc$var)) {
+    ndepths_diag     <- nc$dim[["depth"]]$len
+    diagnostics_init <- array(NA, dim = c(length(diagnostics_names),
+                                          ndepths_diag, restart_nmembers))
+    for (d in seq_along(diagnostics_names)) {
+      diagnostics_init[d, , ] <- ncdf4::ncvar_get(
+        nc, paste0("diag_", diagnostics_names[d]), collapse_degen = FALSE
+      )[restart_index, , ]
+    }
+  }
+
+  diagnostics_daily_init <- NULL
+  if (!is.null(diagnostics_daily_names) && length(diagnostics_daily_names) > 0 &&
+      paste0("diag_daily_", diagnostics_daily_names[1]) %in% names(nc$var)) {
+    diagnostics_daily_init <- array(NA, dim = c(length(diagnostics_daily_names),
+                                                restart_nmembers))
+    for (d in seq_along(diagnostics_daily_names)) {
+      diagnostics_daily_init[d, ] <- ncdf4::ncvar_get(
+        nc, paste0("diag_daily_", diagnostics_daily_names[d]), collapse_degen = FALSE
+      )[restart_index, ]
+    }
+  }
+
   ncdf4::nc_close(nc)
 
   # Locate the per-date GLM restart directory inside the zip
@@ -97,12 +124,14 @@ generate_restart_initial_conditions_from_zip <- function(restart_file,
   }
 
   return(list(
-    states                = states_restart,
-    pars                  = pars_restart,
-    lake_depth            = lake_depth_restart,
-    snow_ice_thickness    = snow_ice_thickness_restart,
+    states                 = states_restart,
+    pars                   = pars_restart,
+    lake_depth             = lake_depth_restart,
+    snow_ice_thickness     = snow_ice_thickness_restart,
     model_internal_heights = model_internal_heights,
-    log_particle_weights  = log_particle_weights,
-    inflation             = inflation
+    log_particle_weights   = log_particle_weights,
+    inflation              = inflation,
+    diagnostics_init       = diagnostics_init,
+    diagnostics_daily_init = diagnostics_daily_init
   ))
 }

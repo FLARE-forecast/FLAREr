@@ -40,7 +40,7 @@ model_settings:
    obs_config_file: observations_config.csv
    states_config_file: states_config.csv
    depth_model_sd_config_file: depth_model_sd.csv
-   depth_sd: 0.01
+   non_vertical_noise_config_file: non_vertical_noise_config.csv
 default_init:
    lake_depth: 9.1
    temp: [25.667, 24.9101, 23.067, 21.8815, 19.6658, 16.5739, 12.9292, 12.8456, 12.8127, 12.8079, 12.778]

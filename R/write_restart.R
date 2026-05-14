@@ -42,7 +42,10 @@ write_restart <- function(da_forecast_output,
   obs_config <- obs_config |>
     dplyr::filter(multi_depth == 1)
 
-  #diagnostics <- da_forecast_output$diagnostics
+  diagnostics             <- da_forecast_output$diagnostics
+  diagnostics_names       <- config$output_settings$diagnostics_names
+  diagnostics_daily       <- da_forecast_output$diagnostics_daily
+  diagnostics_daily_names <- config$output_settings$diagnostics_daily$names
 
   #hist_days <- as.numeric(forecast_start_datetime - full_time[1])
   #start_forecast_step <- 1 + hist_days
@@ -93,7 +96,9 @@ write_restart <- function(da_forecast_output,
   timedim <- ncdf4::ncdim_def("time",units = "seconds since 1970-01-01 00:00.00 UTC", longname = "",vals = t)
   snow_ice_dim <- ncdf4::ncdim_def("snow_ice_dim",units = "",vals = c(1, 2, 3), longname = 'snow ice dims')
   internal_model_depths_dim <- ncdf4::ncdim_def("internal_model_depths_dim",units = '', vals = seq(1, dim(model_internal_heights)[2]), longname = 'number of possible depths that are simulated in GLM')
-
+  depthdim <- ncdf4::ncdim_def("depth", units = "meters",
+                                vals = as.double(config$model_settings$modeled_depths),
+                                longname = "Depth from surface")
 
   #Define variables
   fillvalue <- 1e32
@@ -163,6 +168,28 @@ write_restart <- function(da_forecast_output,
     def_list[[tmp_index]]<- ncdf4::ncvar_def(paste0(states_config$state_names[s],"_heights"),state_unit,list(timedim,internal_model_depths_dim,ensdim),fillvalue,long_name,prec="single")
   }
 
+  if(is.array(diagnostics) && length(diagnostics_names) > 0){
+    for(d in seq_along(diagnostics_names)){
+      tmp_index <- tmp_index + 1
+      def_list[[tmp_index]] <- ncdf4::ncvar_def(
+        paste0("diag_", diagnostics_names[d]), "-",
+        list(timedim, depthdim, ensdim),
+        fillvalue, paste0("diagnostic:", diagnostics_names[d]), prec = "single"
+      )
+    }
+  }
+
+  if(is.array(diagnostics_daily) && length(diagnostics_daily_names) > 0){
+    for(d in seq_along(diagnostics_daily_names)){
+      tmp_index <- tmp_index + 1
+      def_list[[tmp_index]] <- ncdf4::ncvar_def(
+        paste0("diag_daily_", diagnostics_daily_names[d]), "-",
+        list(timedim, ensdim),
+        fillvalue, paste0("diagnostic_daily:", diagnostics_daily_names[d]), prec = "single"
+      )
+    }
+  }
+
   ncout <- ncdf4::nc_create(ncfname,def_list,force_v4=T)
 
   # create netCDF file and put arrays
@@ -194,6 +221,24 @@ write_restart <- function(da_forecast_output,
     # dim layout: states_height [time, internal_model_depths_dim, ens] per state
     state_data <- states_height[, s, ,]
     ncdf4::ncvar_put(ncout, def_list[[tmp_index]], state_data[keep_idx, , , drop = FALSE])
+  }
+
+  if(is.array(diagnostics) && length(diagnostics_names) > 0){
+    for(d in seq_along(diagnostics_names)){
+      tmp_index <- tmp_index + 1
+      # diagnostics dim: [ndiag, nsteps, ndepths, nmembers]
+      diag_data <- diagnostics[d, , , ]
+      ncdf4::ncvar_put(ncout, def_list[[tmp_index]], diag_data[keep_idx, , , drop = FALSE])
+    }
+  }
+
+  if(is.array(diagnostics_daily) && length(diagnostics_daily_names) > 0){
+    for(d in seq_along(diagnostics_daily_names)){
+      tmp_index <- tmp_index + 1
+      # diagnostics_daily dim: [ndiag_daily, nsteps, nmembers]
+      daily_data <- diagnostics_daily[d, , ]
+      ncdf4::ncvar_put(ncout, def_list[[tmp_index]], daily_data[keep_idx, , drop = FALSE])
+    }
   }
 
   time_of_forecast <- lubridate::with_tz(da_forecast_output$time_of_forecast, tzone = "UTC")

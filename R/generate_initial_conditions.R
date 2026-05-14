@@ -60,14 +60,16 @@ generate_initial_conditions <- function(states_config,
     }
 
     out <- generate_restart_initial_conditions_from_zip(
-      restart_file      = config$run_config$restart_file,
-      state_names       = states_config$state_names,
-      par_names         = pars_config$par_names_save,
-      restart_index     = restart_index,
-      restart_date      = format(as.Date(config$run_config$start_datetime),
-                                 "%Y-%m-%d"),
-      working_directory = config$file_path$execute_directory,
-      nmembers          = nmembers
+      restart_file            = config$run_config$restart_file,
+      state_names             = states_config$state_names,
+      par_names               = pars_config$par_names_save,
+      diagnostics_names       = config$output_settings$diagnostics_names,
+      diagnostics_daily_names = config$output_settings$diagnostics_daily$names,
+      restart_index           = restart_index,
+      restart_date            = format(as.Date(config$run_config$start_datetime),
+                                       "%Y-%m-%d"),
+      working_directory       = config$file_path$execute_directory,
+      nmembers                = nmembers
     )
 
     aux_states_init <- list()
@@ -77,6 +79,8 @@ generate_initial_conditions <- function(states_config,
     aux_states_init$lake_depth            <- out$lake_depth
     aux_states_init$log_particle_weights  <- out$log_particle_weights
     aux_states_init$inflation             <- out$inflation
+    aux_states_init$diagnostics           <- out$diagnostics_init
+    aux_states_init$diagnostics_daily     <- out$diagnostics_daily_init
 
     init <- list(states         = out$states,
                  pars           = out$pars,
