@@ -75,11 +75,11 @@ initialize_forecast_arrays <- function(nsteps, nstates, ndepths_modeled,
   states_depth <- array(NA, dim = c(nsteps, nstates, ndepths_modeled, nmembers))
 
   for (m in 1:nmembers) {
+    non_na_heights <- which(!is.na(aux_states_init$model_internal_heights[, m]))
+    glm_depths <- aux_states_init$lake_depth[m] -
+      aux_states_init$model_internal_heights[non_na_heights, m]
     for (s in 1:nstates) {
       states_height[1, s, , m] <- states_init[s, , m]
-      non_na_heights <- which(!is.na(aux_states_init$model_internal_heights[, m]))
-      glm_depths <- aux_states_init$lake_depth[m] -
-        aux_states_init$model_internal_heights[non_na_heights, m]
       states_depth[1, s, , m] <- approx(
         glm_depths, states_height[1, s, non_na_heights, m],
         config$model_settings$modeled_depths, rule = 2
@@ -165,12 +165,14 @@ run_da_forecast <- function(states_init,
                             obs_non_vertical = NULL,
                             states_non_vertical = NULL){
 
+  # States beyond temp and salinity (index > 2) are water-quality variables.
   if(length(states_config$state_names) > 2){
     config$include_wq <- TRUE
   }else{
     config$include_wq <- FALSE
   }
 
+  # Guard for older obs_config tables that predate the multi_depth column.
   if(!("multi_depth" %in% names(obs_config))){
     obs_config <- obs_config |> dplyr::mutate(multi_depth = 1)
   }
@@ -194,6 +196,7 @@ run_da_forecast <- function(states_init,
 
   start_datetime <- lubridate::as_datetime(config$run_config$start_datetime)
   if(is.na(config$run_config$forecast_start_datetime)){
+    # No forecast horizon: treat the full run as hindcast only.
     end_datetime <- lubridate::as_datetime(config$run_config$end_datetime)
     forecast_start_datetime <- end_datetime
   }else{
@@ -202,6 +205,7 @@ run_da_forecast <- function(states_init,
   }
 
   hist_days <- as.numeric(forecast_start_datetime - start_datetime)
+  # Index of the first forecast time step (1-based); steps 1..hist_days are DA.
   start_forecast_step <- 1 + hist_days
   full_time <- seq(start_datetime, end_datetime, by = "1 day")
   forecast_days <- as.numeric(end_datetime - forecast_start_datetime)
@@ -230,6 +234,8 @@ run_da_forecast <- function(states_init,
 
   output_vars <- states_config$state_names
 
+  # Count phytoplankton functional groups; exclude internal-pool suffixes
+  # (_IP = intracellular phosphorus, _IN = intracellular nitrogen).
   num_phytos <- length(which(
     stringr::str_detect(states_config$state_names, "PHY_") &
       !stringr::str_detect(states_config$state_names, "_IP") &
@@ -246,14 +252,20 @@ run_da_forecast <- function(states_init,
     outflow_file_names <- NULL
   }
 
-  # --- Per-member working directory setup ---
+  # Cap configured cores to what the OS actually exposes to avoid over-subscription.
   config$model_settings$ncore <- min(
     c(config$model_settings$ncore, future::availableCores())
   )
-  # Preserve glm_restart.nc files placed by a zip restart; discard stale ones
+  if(config$model_settings$ncore == 1){
+    future::plan("future::sequential")
+  }else{
+    future::plan("future::multisession", workers = config$model_settings$ncore)
+  }
+  # Stash any restart files that were unpacked from the input zip before wiping
+  # each member directory; they must survive the directory recreation below.
   has_zip_restart <- !is.null(config$run_config$restart_file) &&
     !is.na(config$run_config$restart_file)
-  purrr::walk(1:nmembers, function(m) {
+  furrr::future_walk(1:nmembers, function(m) {
     dir_path <- file.path(working_directory, m)
     rst_path <- file.path(dir_path, paste0("glm_restart_", m, ".nc"))
     rst_tmp <- if (has_zip_restart && file.exists(rst_path)) {
@@ -271,12 +283,15 @@ run_da_forecast <- function(states_init,
                           outflow_file_names = outflow_file_names)
   })
 
+  # When assimilate_first_step is TRUE, observations at t=1 update the
+  # initial conditions before the first model run.
   if(config$da_setup$assimilate_first_step){
     start_step <- 1
   }else{
     start_step <- 2
   }
 
+  # Defensive defaults for fields absent in older config files.
   if(is.null(config$da_setup$use_inflation_factor)){
     config$da_setup$use_inflation_factor <- FALSE
   }
@@ -310,6 +325,18 @@ run_da_forecast <- function(states_init,
 
   glm_restart_staged <- list()
 
+  restart_save_timesteps <- config$output_settings$restart_save_timesteps
+  if (is.null(restart_save_timesteps)) restart_save_timesteps <- 0L
+  if (identical(restart_save_timesteps, "all") ||
+      (length(restart_save_timesteps) == 1 && as.character(restart_save_timesteps) == "all")) {
+    keep_restart_dates <- NULL
+  } else {
+    keep_restart_dates <- format(
+      as.Date(forecast_start_datetime) + as.integer(restart_save_timesteps),
+      "%Y-%m-%d"
+    )
+  }
+
   for(i in start_step:nsteps){
 
     if(i > 1){
@@ -329,6 +356,8 @@ run_da_forecast <- function(states_init,
 
     #setwd(working_directory)
 
+    # Cycle file indices round-robin across ensemble members; when there are
+    # fewer scenario files than members, members share files evenly.
     met_index <- rep(1:length(met_file_names), times = nmembers)
     if(!is.null(ncol(inflow_file_names))) {
       inflow_outflow_index <- rep(1:nrow(inflow_file_names), times = nmembers)
@@ -336,26 +365,22 @@ run_da_forecast <- function(states_init,
       inflow_outflow_index <- NULL
     }
 
-    #Create array to hold GLM predictions for each ensemble
+    # Scratch arrays reset each step: _wo_noise = raw GLM output,
+    # _w_noise = after process noise is added.
     states_depth_wo_noise <- array(NA, dim = c(nstates, ndepths_modeled, nmembers))
     states_depth_w_noise <- array(NA, dim = c(nstates, ndepths_modeled, nmembers))
     curr_pars <- array(NA, dim = c(npars, nmembers))
 
-    #If i == 1 then assimilate the first time step without running the process
-    #model (i.e., use yesterday's forecast of today as initial conditions and
-    #assimilate new observations)
+    # At i==1 the initial conditions already populate the arrays; skip the
+    # model run and go straight to (optional) data assimilation.
     if(i > 1){
-
-      if(config$model_settings$ncore == 1){
-        future::plan("future::sequential")
-      }else{
-        future::plan("future::multisession", workers = config$model_settings$ncore)
-      }
 
       orgin <- getwd()
 
       out <- furrr::future_map(1:nmembers, function(m) {
 
+        # In forecast mode with weather uncertainty disabled, all members
+        # share the deterministic (first) met file.
         if(!config$uncertainty$weather & i >= (hist_days + 1)){
           curr_met_file <- met_file_names[met_index[1]]
         }else{
@@ -371,6 +396,7 @@ run_da_forecast <- function(states_init,
                                                      hist_days,
                                                      include_uncertainty = config$uncertainty$parameter)
 
+        # Mirror the met uncertainty logic for inflow/outflow scenarios.
         if(!is.null(ncol(inflow_file_names))){
           if(!config$uncertainty$inflow & i > (hist_days + 1)){
             inflow_file_name <- inflow_file_names[inflow_outflow_index[1], ]
@@ -414,23 +440,30 @@ run_da_forecast <- function(states_init,
                                    max_layers = config$model_settings$max_model_layers,
                                    states_heights_start = states_height[i-1, , ,m],
                                    glm_path = config$model_settings$glm_path,
-                                   use_glm_restart = i > start_step
+                                   # GLM restart file exists only after the
+                                   # first completed model run, unless a zip
+                                   # restart was provided (file already placed
+                                   # in working directory before loop start).
+                                   use_glm_restart = i > start_step || has_zip_restart
         )
 
       }, .options = furrr::furrr_options(seed = TRUE))
 
       setwd(orgin)
 
-      # Capture GLM restart files for this timestep (keyed by date string)
+      # Read restart NetCDF bytes into memory now; they are written to the
+      # output zip at the end of the run, after the loop closes the files.
       date_label <- format(as.Date(full_time[i]), "%Y-%m-%d")
-      glm_restart_staged[[date_label]] <- list()
-      for(m in seq_len(nmembers)) {
-        rst_name <- paste0("glm_restart_", m, ".nc")
-        rst_src <- file.path(working_directory, m, rst_name)
-        if(file.exists(rst_src)) {
-          glm_restart_staged[[date_label]][[rst_name]] <- readBin(
-            rst_src, "raw", file.info(rst_src)$size
-          )
+      if (is.null(keep_restart_dates) || date_label %in% keep_restart_dates) {
+        glm_restart_staged[[date_label]] <- list()
+        for(m in seq_len(nmembers)) {
+          rst_name <- paste0("glm_restart_", m, ".nc")
+          rst_src <- file.path(working_directory, m, rst_name)
+          if(file.exists(rst_src)) {
+            glm_restart_staged[[date_label]][[rst_name]] <- readBin(
+              rst_src, "raw", file.info(rst_src)$size
+            )
+          }
         }
       }
 
@@ -445,7 +478,8 @@ run_da_forecast <- function(states_init,
         model_internal_heights[i,1:num_out_heights ,m] <- out[[m]]$model_internal_heights
         non_na_heights_index <- 1:num_out_heights
 
-
+        # GLM reports state on height-from-bottom layers; convert to
+        # depth-from-surface on the fixed modeled_depths grid via interpolation.
         glm_depths <- lake_depth[i ,m ] - model_internal_heights[i,non_na_heights_index ,m]
         for(s in 1:nstates){
           states_depth_wo_noise[s, , m] <- approx(glm_depths,states_height[i,s , non_na_heights_index, m], config$model_settings$modeled_depths, rule = 2)$y
@@ -458,9 +492,7 @@ run_da_forecast <- function(states_init,
         }
 
         if(length(config$output_settings$diagnostics_daily$names) > 0){
-          for(d in 1:dim(diagnostics_daily)[1]){
-            diagnostics_daily[d, i, m] <- out[[m]]$diagnostics_daily_end[d]
-          }
+          diagnostics_daily[, i, m] <- out[[m]]$diagnostics_daily_end
         }
 
         if(config$uncertainty$process == FALSE & i > (hist_days + 1)){
@@ -486,9 +518,14 @@ run_da_forecast <- function(states_init,
       } # END ENSEMBLE LOOP
 
       if(config$da_setup$add_random_noise == 1) {
+        # Mode 1: draw noise from the full cross-state-depth covariance matrix.
+        # Correlation structure is estimated from the ensemble; configured
+        # model_sd values set the marginal standard deviations.
         state_matrix <- matrix(NA, nrow = nmembers, ncol = length(c(states_depth_wo_noise[, ,1])))
         for(m in 1:nmembers) {
           curr_states <- states_depth_wo_noise[, ,m ]
+          # Clamp near-zero WQ values before computing SD to avoid a
+          # degenerate covariance column at cells that have collapsed to zero.
           for(s in 2:nstates){
             curr_states[s,which(curr_states[s, ] <= 0)] <- runif(length(which(curr_states[s, ] <= 0)), 0, 0.0001)
           }
@@ -496,9 +533,11 @@ run_da_forecast <- function(states_init,
           state_matrix[m , ] = c(t(curr_states[, ]))
         }
 
-        means <- apply(state_matrix, 2, mean)
-        sds <- apply(state_matrix, 2, sd)
+        means <- colMeans(state_matrix)
+        sds <- matrixStats::colSds(state_matrix)
 
+        # When all ensemble members agree exactly, inject tiny variability so
+        # cor() does not return NaN and the covariance matrix stays invertible.
         zero_sds <- which(sds == 0)
         for(bval in zero_sds){
           if(means[bval] > 0){
@@ -508,11 +547,11 @@ run_da_forecast <- function(states_init,
           }
         }
 
-
-
         state_cor <- cor(state_matrix)
         state_sd <- c(t(model_sd))
 
+        # Combine configured marginal SDs with estimated correlations:
+        # Sigma = D * R * D  where D = diag(model_sd).
         state_cov <- diag(state_sd) %*% state_cor %*% t(diag(state_sd))
 
 
@@ -537,6 +576,7 @@ run_da_forecast <- function(states_init,
 
 
       }else if(config$da_setup$add_random_noise == 0){
+        # Mode 0: no process noise; propagate raw GLM output unchanged.
         states_depth_w_noise <- states_depth_wo_noise
       }
 
@@ -549,8 +589,8 @@ run_da_forecast <- function(states_init,
       }
 
       if(i > 1){
-        #DON"T USE SECCHI ON DAY 1 BECAUSE THE DIAGONOSTIC OF LIGHT EXTINCTION
-        #IS NOT IN THE RESTART FILE
+        # Light-extinction diagnostic is absent from the GLM restart file,
+        # so the Secchi-depth prediction is unavailable at i==1.
         if(!is.null(obs_non_vertical$obs_secchi$obs)){
           if(!is.na(obs_non_vertical$obs_secchi$obs[i])){
             obs_count <- obs_count + 1
@@ -588,6 +628,8 @@ run_da_forecast <- function(states_init,
           curr_par_inflation <- pars_config$inflation
         }
 
+        # Multiplicative inflation: rescale deviations from the ensemble mean
+        # by sqrt(lambda) so the ensemble variance grows by factor lambda.
         ens_mean <- mean(lake_depth[i, ], na.rm = TRUE)
         lake_depth[i, ] <- sqrt(curr_inflation) * (lake_depth[i, ]  - ens_mean) + ens_mean
 
@@ -602,6 +644,8 @@ run_da_forecast <- function(states_init,
               states_depth_w_noise[s, still_neg, m] <- 0.0
             }
             non_na_heights_index <- which(!is.na(model_internal_heights[i, ,m]))
+            # Propagate the inflation delta back to height space so both
+            # coordinate representations stay consistent with each other.
             delta_depth <- states_depth_w_noise[s, , m] - states_depth_height_ref[s, , m]
             delta_height <- approx(lake_depth[i, m] - config$model_settings$modeled_depths,
                                    delta_depth,
@@ -689,6 +733,8 @@ run_da_forecast <- function(states_init,
 
       if(npars > 0) pars[i, , ] <- pars_corr
 
+      # At the history/forecast boundary, collapse ensemble spread to the
+      # ensemble mean when initial-condition uncertainty is disabled.
       if(i == (hist_days + 1) & config$uncertainty$initial_condition == FALSE){
         if(npars > 0) pars[i, , ] <- pars_corr
         for(s in 1:nstates){
@@ -731,7 +777,8 @@ run_da_forecast <- function(states_init,
         x_matrix <- rbind(x_matrix, lake_depth[i, ])
       }
 
-      # Add secchi depth to the x_matrix if in observations
+      # Convert modeled light-extinction coefficient (Kd) to Secchi depth via
+      # the Poole-Atkins approximation: Zsd ≈ 1.7 / Kd.
       if(length(config$output_settings$diagnostics_names) > 0 & i > 1){
         modeled_secchi <- 1.7 / diagnostics[1, i, which.min(abs(config$model_settings$modeled_depths-1.0)), ]
         if(!is.null(obs_non_vertical$obs_secchi)){
@@ -790,10 +837,11 @@ run_da_forecast <- function(states_init,
         }
       }
 
-      #Assign which states have obs in the time step
-      # For one_step_lag the parameter columns are absent from h; use npars_in_h
-      # as a drop-in replacement so the depth/secchi offset expressions below
-      # remain correct in both modes.
+      # Build the linear observation operator H that maps the augmented state
+      # vector [states (depth×state), lake_depth?, secchi?, pars?] to the
+      # observation vector.  Rows = observations, columns = state elements.
+      # For one_step_lag the parameter columns are absent from H; npars_in_h
+      # keeps the depth/secchi column offsets correct in both modes.
       npars_in_h <- if(use_one_step_lag) 0L else npars
       h <- matrix(0, nrow = vertical_obs * ndepths_modeled + depth_index + secchi_index,
                      ncol = nstates * ndepths_modeled + depth_index + secchi_index + npars_in_h)
@@ -826,12 +874,8 @@ run_da_forecast <- function(states_init,
         }
       }
 
-      z_index <- c()
-      for(j in 1:nrow(h)){
-        if(sum(h[j, ]) > 0){
-          z_index <- c(z_index, j)
-        }
-      }
+      # Drop H rows that have no nonzero entries (no observation at this depth).
+      z_index <- which(rowSums(h) > 0)
 
       h <- h[z_index, ]
 
@@ -1005,13 +1049,11 @@ run_da_forecast <- function(states_init,
         stop("da_method not supported; select enkf, etkf, esmda, letkf, or pf or none")
       }
 
-      #Update states and parameters
       if(npars > 0){
         if(use_one_step_lag && length(z_index) > 0 && da_method != "pf"){
-          # Parameter filter: Kalman update using forecast predicted observations.
-          # The state filter ran without parameters, so x_forecast_states holds
-          # the pre-DA state ensemble; h (already row-subsetted by z_index) maps
-          # those states to the active observations.
+          # One-step-lag: run a dedicated parameter EnKF using the pre-DA
+          # state ensemble to compute predicted observations.  This avoids
+          # state-parameter cross-covariance artifacts in the state filter.
           predicted_obs_forecast <- h %*% x_forecast_states
           pars[i, , ] <- FLAREr:::update_parameters_enkf(
             pars          = pars_corr,
@@ -1047,16 +1089,17 @@ run_da_forecast <- function(states_init,
 
       inflation[i] <- updates$inflation_update
 
-      for(s in 1:nstates){
-        for(m in 1:nmembers){
-              depth_index <- which(config$model_settings$modeled_depths > lake_depth[i, m])
-              states_depth[i, s, depth_index, m ] <- NA
-              non_na_heights <- which(!is.na(model_internal_heights[i, ,m]))
-              glm_depths <- lake_depth[i, m] - model_internal_heights[i, non_na_heights ,m]
-              states_depth[i,s, , m] <- approx(glm_depths, states_height[i, s, non_na_heights, m], config$model_settings$modeled_depths, rule = 2)$y
-            }
-          }
-
+      # Re-derive depth-indexed states from the DA-updated height-indexed
+      # states, then mask depths that exceed the current lake surface.
+      for(m in 1:nmembers){
+        depth_index <- which(config$model_settings$modeled_depths > lake_depth[i, m])
+        non_na_heights <- which(!is.na(model_internal_heights[i, ,m]))
+        glm_depths <- lake_depth[i, m] - model_internal_heights[i, non_na_heights ,m]
+        for(s in 1:nstates){
+          states_depth[i, s, depth_index, m] <- NA
+          states_depth[i, s, , m] <- approx(glm_depths, states_height[i, s, non_na_heights, m], config$model_settings$modeled_depths, rule = 2)$y
+        }
+      }
 
       if(length(config$output_settings$diagnostics_names) > 0){
         for(d in 1:dim(diagnostics)[1]){
