@@ -64,9 +64,8 @@
 # @return named list of pre-allocated arrays ready for the DA loop
 # @noRd
 initialize_forecast_arrays <- function(nsteps, nstates, ndepths_modeled,
-                                        nmembers, npars, pars_init,
-                                        config, aux_states_init, states_init) {
-
+                                       nmembers, npars, pars_init,
+                                       config, aux_states_init, states_init) {
   states_height <- array(
     NA,
     dim = c(nsteps, nstates, config$model_settings$max_model_layers, nmembers)
@@ -81,7 +80,8 @@ initialize_forecast_arrays <- function(nsteps, nstates, ndepths_modeled,
       states_height[1, s, , m] <- states_init[s, , m]
       states_depth[1, s, , m] <- approx(
         glm_depths, states_height[1, s, non_na_heights, m],
-        config$model_settings$modeled_depths, rule = 2
+        config$model_settings$modeled_depths,
+        rule = 2
       )$y
     }
   }
@@ -99,8 +99,10 @@ initialize_forecast_arrays <- function(nsteps, nstates, ndepths_modeled,
   diagnostics <- if (length(config$output_settings$diagnostics_names) > 0) {
     array(
       NA,
-      dim = c(length(config$output_settings$diagnostics_names),
-              nsteps, ndepths_modeled, nmembers)
+      dim = c(
+        length(config$output_settings$diagnostics_names),
+        nsteps, ndepths_modeled, nmembers
+      )
     )
   } else {
     NA
@@ -116,18 +118,19 @@ initialize_forecast_arrays <- function(nsteps, nstates, ndepths_modeled,
   }
 
   model_internal_heights <- array(
-    NA, dim = c(nsteps, config$model_settings$max_model_layers, nmembers)
+    NA,
+    dim = c(nsteps, config$model_settings$max_model_layers, nmembers)
   )
-  lake_depth             <- array(NA, dim = c(nsteps, nmembers))
-  snow_ice_thickness     <- array(NA, dim = c(3, nsteps, nmembers))
-  log_particle_weights   <- array(NA, dim = c(nsteps, nmembers))
-  inflation              <- rep(NA, nsteps)
+  lake_depth <- array(NA, dim = c(nsteps, nmembers))
+  snow_ice_thickness <- array(NA, dim = c(3, nsteps, nmembers))
+  log_particle_weights <- array(NA, dim = c(nsteps, nmembers))
+  inflation <- rep(NA, nsteps)
 
   model_internal_heights[1, , ] <- aux_states_init$model_internal_heights
-  lake_depth[1, ]             <- aux_states_init$lake_depth
-  snow_ice_thickness[, 1, ]   <- aux_states_init$snow_ice_thickness
-  log_particle_weights[1, ]   <- aux_states_init$log_particle_weights
-  inflation[1]                <- aux_states_init$inflation
+  lake_depth[1, ] <- aux_states_init$lake_depth
+  snow_ice_thickness[, 1, ] <- aux_states_init$snow_ice_thickness
+  log_particle_weights[1, ] <- aux_states_init$log_particle_weights
+  inflation[1] <- aux_states_init$inflation
 
   if (!is.null(aux_states_init$diagnostics) && is.array(diagnostics)) {
     diagnostics[, 1, , ] <- aux_states_init$diagnostics
@@ -169,17 +172,16 @@ run_da_forecast <- function(states_init,
                             da_method = "enkf",
                             par_fit_method = "perturb",
                             obs_non_vertical = NULL,
-                            non_vertical_noise_config = NULL){
-
+                            non_vertical_noise_config = NULL) {
   # States beyond temp and salinity (index > 2) are water-quality variables.
-  if(length(states_config$state_names) > 2){
+  if (length(states_config$state_names) > 2) {
     config$include_wq <- TRUE
-  }else{
+  } else {
     config$include_wq <- FALSE
   }
 
   # Guard for older obs_config tables that predate the multi_depth column.
-  if(!("multi_depth" %in% names(obs_config))){
+  if (!("multi_depth" %in% names(obs_config))) {
     obs_config <- obs_config |> dplyr::mutate(multi_depth = 1)
   }
 
@@ -187,32 +189,30 @@ run_da_forecast <- function(states_init,
   ndepths_modeled <- length(config$model_settings$modeled_depths)
   nmembers <- dim(states_init)[3]
   model <- config$model_settings$model
-  if(!is.null(pars_config)){
-    if("model" %in% names(pars_config)){
+  if (!is.null(pars_config)) {
+    if ("model" %in% names(pars_config)) {
       pars_config <- pars_config[pars_config$model == model, ]
     }
     npars <- nrow(pars_config)
     par_names <- pars_config$par_names
     par_file <- pars_config$par_file
-  }else{
+  } else {
     npars <- 0
     par_names <- NA
     par_file <- NA
   }
 
   start_datetime <- lubridate::as_datetime(config$run_config$start_datetime)
-  if(is.na(config$run_config$forecast_start_datetime)){
+  if (is.na(config$run_config$forecast_start_datetime)) {
     # No forecast horizon: treat the full run as hindcast only.
     end_datetime <- lubridate::as_datetime(config$run_config$end_datetime)
     forecast_start_datetime <- end_datetime
-  }else{
+  } else {
     forecast_start_datetime <- lubridate::as_datetime(config$run_config$forecast_start_datetime)
     end_datetime <- forecast_start_datetime + lubridate::days(config$run_config$forecast_horizon)
   }
 
   hist_days <- as.numeric(forecast_start_datetime - start_datetime)
-  # Index of the first forecast time step (1-based); steps 1..hist_days are DA.
-  start_forecast_step <- 1 + hist_days
   full_time <- seq(start_datetime, end_datetime, by = "1 day")
   forecast_days <- as.numeric(end_datetime - forecast_start_datetime)
   nsteps <- length(full_time)
@@ -226,17 +226,17 @@ run_da_forecast <- function(states_init,
     nsteps, nstates, ndepths_modeled, nmembers, npars, pars_init,
     config, aux_states_init, states_init
   )
-  states_depth           <- arrs$states_depth
-  states_height          <- arrs$states_height
-  pars                   <- arrs$pars
-  num_wq_vars            <- arrs$num_wq_vars
-  diagnostics            <- arrs$diagnostics
-  diagnostics_daily      <- arrs$diagnostics_daily
+  states_depth <- arrs$states_depth
+  states_height <- arrs$states_height
+  pars <- arrs$pars
+  num_wq_vars <- arrs$num_wq_vars
+  diagnostics <- arrs$diagnostics
+  diagnostics_daily <- arrs$diagnostics_daily
   model_internal_heights <- arrs$model_internal_heights
-  lake_depth             <- arrs$lake_depth
-  snow_ice_thickness     <- arrs$snow_ice_thickness
-  log_particle_weights   <- arrs$log_particle_weights
-  inflation              <- arrs$inflation
+  lake_depth <- arrs$lake_depth
+  snow_ice_thickness <- arrs$snow_ice_thickness
+  log_particle_weights <- arrs$log_particle_weights
+  inflation <- arrs$inflation
 
   output_vars <- states_config$state_names
 
@@ -248,65 +248,89 @@ run_da_forecast <- function(states_init,
       !stringr::str_detect(states_config$state_names, "_IN")
   ))
 
-  full_time_char <- strftime(full_time, format = "%Y-%m-%d %H:%M", tz = "UTC")
-
   if (!is.null(inflow_file_names)) {
-    inflow_file_names  <- as.matrix(inflow_file_names)
+    inflow_file_names <- as.matrix(inflow_file_names)
     outflow_file_names <- as.matrix(outflow_file_names)
   } else {
-    inflow_file_names  <- NULL
+    inflow_file_names <- NULL
     outflow_file_names <- NULL
   }
 
-  # Cap configured cores to what the OS actually exposes to avoid over-subscription.
-  config$model_settings$ncore <- min(
-    c(config$model_settings$ncore, future::availableCores())
-  )
-  if(config$model_settings$ncore == 1){
-    future::plan("future::sequential")
-  }else{
-    future::plan("future::multisession", workers = config$model_settings$ncore)
+  # Build a persistent worker cluster so stable globals are exported once and
+  # only tiny per-member per-step slices are transferred on each iteration.
+  ncore <- min(config$model_settings$ncore, parallel::detectCores(logical = FALSE))
+  if (ncore > 1) {
+    cl <- parallel::makeCluster(ncore)
+    on.exit(parallel::stopCluster(cl), add = TRUE)
+    parallel::clusterSetRNGStream(cl)
+  } else {
+    cl <- NULL
+  }
+  .par_apply <- if (!is.null(cl)) {
+    function(x, fn) parallel::parLapply(cl, x, fn)
+  } else {
+    lapply
   }
   # Stash any restart files that were unpacked from the input zip before wiping
   # each member directory; they must survive the directory recreation below.
   has_zip_restart <- !is.null(config$run_config$restart_file) &&
     !is.na(config$run_config$restart_file)
-  furrr::future_walk(1:nmembers, function(m) {
+
+  # Export all stable (non-step-varying) objects to workers once so they are
+  # not re-serialized on every parLapply call inside the DA loop.
+  # Only variables actually referenced inside worker function bodies are listed;
+  # per-step data (met files, state slices, pars) are passed via the input list.
+  if (!is.null(cl)) {
+    parallel::clusterCall(cl, function() requireNamespace("FLAREr", quietly = TRUE))
+    parallel::clusterExport(cl, varlist = c(
+      "config", "working_directory", "has_zip_restart",
+      "par_names", "par_file", "num_phytos",
+      "full_time", "hist_days", "ndepths_modeled",
+      "output_vars", "num_wq_vars", "nstates", "npars",
+      "states_config"
+    ), envir = environment())
+  }
+
+  # Directory setup is sequential — filesystem ops are order-sensitive and fast.
+  lapply(seq_len(nmembers), function(m) {
     dir_path <- file.path(working_directory, m)
     rst_path <- file.path(dir_path, paste0("glm_restart_", m, ".nc"))
     rst_tmp <- if (has_zip_restart && file.exists(rst_path)) {
       tmp <- tempfile(fileext = ".nc")
       file.copy(rst_path, tmp)
       tmp
-    } else NULL
+    } else {
+      NULL
+    }
     if (dir.exists(dir_path)) unlink(dir_path, recursive = TRUE)
     dir.create(dir_path, showWarnings = FALSE)
     if (!is.null(rst_tmp)) file.copy(rst_tmp, rst_path)
     FLAREr:::set_up_model(config,
-                          ens_working_directory = dir_path,
-                          state_names = states_config$state_names,
-                          inflow_file_names = inflow_file_names,
-                          outflow_file_names = outflow_file_names)
+      ens_working_directory = dir_path,
+      state_names = states_config$state_names,
+      inflow_file_names = inflow_file_names,
+      outflow_file_names = outflow_file_names
+    )
   })
 
   # When assimilate_first_step is TRUE, observations at t=1 update the
   # initial conditions before the first model run.
-  if(config$da_setup$assimilate_first_step){
+  if (config$da_setup$assimilate_first_step) {
     start_step <- 1
-  }else{
+  } else {
     start_step <- 2
   }
 
   # Defensive defaults for fields absent in older config files.
-  if(is.null(config$da_setup$use_inflation_factor)){
+  if (is.null(config$da_setup$use_inflation_factor)) {
     config$da_setup$use_inflation_factor <- FALSE
   }
 
-  if(is.null(config$da_setup$log_transform_wq_obs)){
+  if (is.null(config$da_setup$log_transform_wq_obs)) {
     config$da_setup$log_transform_wq_obs <- FALSE
   }
 
-  if(is.null(config$da_setup$log_transform_wq_zero_collapse)){
+  if (is.null(config$da_setup$log_transform_wq_zero_collapse)) {
     config$da_setup$log_transform_wq_zero_collapse <- FALSE
   }
 
@@ -315,16 +339,7 @@ run_da_forecast <- function(states_init,
   }
 
 
-
-
-
-  # Print GLM version
-  #glm_v <- suppressWarnings(GLM3r::glm_version())
-  #glm_v <- substr(glm_v[3], 35, 58)
-  #message("Using GLM ", glm_v)
-  #config$metadata$model_description$version <- substr(glm_v, 9, 16)
-
-  ###START EnKF
+  ### START EnKF
 
   nml_glm <- FLAREr:::read_nml(file.path(config$file_path$configuration_directory, config$model_settings$base_GLM_nml))
   lake_max_depth <- nml_glm$morphometry$H[length(nml_glm$morphometry$H)] - nml_glm$morphometry$H[1]
@@ -334,7 +349,7 @@ run_da_forecast <- function(states_init,
   restart_save_timesteps <- config$output_settings$restart_save_timesteps
   if (is.null(restart_save_timesteps)) restart_save_timesteps <- 0L
   if (identical(restart_save_timesteps, "all") ||
-      (length(restart_save_timesteps) == 1 && as.character(restart_save_timesteps) == "all")) {
+        (length(restart_save_timesteps) == 1 && as.character(restart_save_timesteps) == "all")) {
     keep_restart_dates <- NULL
   } else {
     keep_restart_dates <- format(
@@ -343,30 +358,36 @@ run_da_forecast <- function(states_init,
     )
   }
 
-  for(i in start_step:nsteps){
+  # Per-member parsed NML cache. Populated after each run_model call so the
+  # next step skips the disk read and only writes the modified NML.
+  member_glm_nml <- vector("list", nmembers)
+  member_aed_nml <- vector("list", nmembers)
 
-    if(i > 1){
+  for (i in start_step:nsteps) {
+    if (i > 1) {
       curr_start <- strftime(full_time[i - 1],
-                             format="%Y-%m-%d %H:%M",
-                             tz = "UTC")
-    }else{
+        format = "%Y-%m-%d %H:%M",
+        tz = "UTC"
+      )
+    } else {
       curr_start <- "Restart"
     }
     curr_stop <- strftime(full_time[i],
-                          format="%Y-%m-%d %H:%M",
-                          tz = "UTC")
+      format = "%Y-%m-%d %H:%M",
+      tz = "UTC"
+    )
 
-    message(paste0("Running time step ", i-1, "/", (nsteps - 1), " : ",
-                   curr_start, " - ",
-                   curr_stop, " [", Sys.time(), "]"))
-
-    #setwd(working_directory)
+    message(paste0(
+      "Running time step ", i - 1, "/", (nsteps - 1), " : ",
+      curr_start, " - ",
+      curr_stop, " [", Sys.time(), "]"
+    ))
 
     # Cycle file indices round-robin across ensemble members; when there are
     # fewer scenario files than members, members share files evenly.
-    met_index <- rep(1:length(met_file_names), times = nmembers)
-    if(!is.null(ncol(inflow_file_names))) {
-      inflow_outflow_index <- rep(1:nrow(inflow_file_names), times = nmembers)
+    met_index <- rep(seq_along(met_file_names), times = nmembers)
+    if (!is.null(ncol(inflow_file_names))) {
+      inflow_outflow_index <- rep(seq_len(nrow(inflow_file_names)), times = nmembers)
     } else {
       inflow_outflow_index <- NULL
     }
@@ -376,6 +397,7 @@ run_da_forecast <- function(states_init,
     states_depth_wo_noise <- array(NA, dim = c(nstates, ndepths_modeled, nmembers))
     states_depth_w_noise <- array(NA, dim = c(nstates, ndepths_modeled, nmembers))
     curr_pars <- array(NA, dim = c(npars, nmembers))
+    pars_corr <- NULL
 
     # Run GLM one step from the initial conditions to populate the diagnostics
     # array at i==1.  Only diagnostics_end is kept; x_star_end is discarded so
@@ -388,31 +410,31 @@ run_da_forecast <- function(states_init,
     # diagnostics such as light extinction this approximation is negligible.
     needs_diag_spinup <-
       (length(config$output_settings$diagnostics_names) > 0 &&
-         is.null(aux_states_init$diagnostics)) ||
+       is.null(aux_states_init$diagnostics)) ||
       (length(config$output_settings$diagnostics_daily$names) > 0 &&
-         is.null(aux_states_init$diagnostics_daily))
+       is.null(aux_states_init$diagnostics_daily))
 
-    if(i == 1 && nsteps > 1 && needs_diag_spinup){
-
+    if (i == 1 && nsteps > 1 && needs_diag_spinup) {
       spinup_start <- strftime(full_time[1], format = "%Y-%m-%d %H:%M", tz = "UTC")
-      spinup_stop  <- strftime(full_time[2], format = "%Y-%m-%d %H:%M", tz = "UTC")
+      spinup_stop <- strftime(full_time[2], format = "%Y-%m-%d %H:%M", tz = "UTC")
 
-      orgin <- getwd()
-      diag_init <- furrr::future_map(1:nmembers, function(m) {
-
-        curr_met_file <- if(!config$uncertainty$weather)
+      # Build per-member input lists in the main process (propose_parameters,
+      # met-file selection, and state-slice extraction are all fast/sequential).
+      # Workers receive only these compact structs plus the stable globals
+      # already loaded via clusterExport.
+      spinup_inputs <- lapply(seq_len(nmembers), function(m) {
+        curr_met_file <- if (!config$uncertainty$weather) {
           met_file_names[met_index[1]]
-        else
+        } else {
           met_file_names[met_index[m]]
-
-        if(!is.null(ncol(inflow_file_names))){
+        }
+        if (!is.null(ncol(inflow_file_names))) {
           inflow_file_name  <- inflow_file_names[inflow_outflow_index[m], ]
           outflow_file_name <- outflow_file_names[inflow_outflow_index[m], ]
         } else {
           inflow_file_name  <- NULL
           outflow_file_name <- NULL
         }
-
         curr_pars_ens <- FLAREr:::propose_parameters(
           i                   = 1L,
           m                   = m,
@@ -424,53 +446,69 @@ run_da_forecast <- function(states_init,
           hist_days           = hist_days,
           include_uncertainty = config$uncertainty$parameter
         )
-
-        FLAREr:::run_model(
-          i                        = 1L,
+        list(
           m                        = m,
-          curr_start               = spinup_start,
-          curr_stop                = spinup_stop,
-          par_names                = par_names,
+          spinup_start             = spinup_start,
+          spinup_stop              = spinup_stop,
           curr_pars_ens            = curr_pars_ens,
-          ens_working_directory    = file.path(working_directory, m),
-          par_nml                  = par_file,
-          num_phytos               = num_phytos,
+          curr_met_file            = curr_met_file,
+          inflow_file_name         = inflow_file_name,
+          outflow_file_name        = outflow_file_name,
           glm_heights_start        = model_internal_heights[1, , m],
           lake_depth_start         = lake_depth[1, m],
+          snow_ice_thickness_start = snow_ice_thickness[, 1, m],
+          states_heights_start     = states_height[1, , , m],
+          glm_nml                  = member_glm_nml[[m]],
+          aed_nml                  = member_aed_nml[[m]]
+        )
+      })
+      diag_init <- .par_apply(spinup_inputs, function(sl) {
+        FLAREr:::run_model(
+          i                        = 1L,
+          m                        = sl$m,
+          curr_start               = sl$spinup_start,
+          curr_stop                = sl$spinup_stop,
+          par_names                = par_names,
+          curr_pars_ens            = sl$curr_pars_ens,
+          ens_working_directory    = file.path(working_directory, sl$m),
+          par_nml                  = par_file,
+          num_phytos               = num_phytos,
+          glm_heights_start        = sl$glm_heights_start,
+          lake_depth_start         = sl$lake_depth_start,
           full_time                = full_time,
           hist_days                = hist_days,
           modeled_depths           = config$model_settings$modeled_depths,
           ndepths_modeled          = ndepths_modeled,
-          curr_met_file            = curr_met_file,
-          inflow_file_name         = inflow_file_name,
-          outflow_file_name        = outflow_file_name,
+          curr_met_file            = sl$curr_met_file,
+          inflow_file_name         = sl$inflow_file_name,
+          outflow_file_name        = sl$outflow_file_name,
           glm_output_vars          = output_vars,
           diagnostics_names        = config$output_settings$diagnostics_names,
           diagnostics_daily_config = config$output_settings$diagnostics_daily,
           npars                    = npars,
           num_wq_vars              = num_wq_vars,
-          snow_ice_thickness_start = snow_ice_thickness[, 1, m],
+          snow_ice_thickness_start = sl$snow_ice_thickness_start,
           nstates                  = nstates,
           state_names              = states_config$state_names,
           include_wq               = config$include_wq,
           max_layers               = config$model_settings$max_model_layers,
-          states_heights_start     = states_height[1, , , m],
+          states_heights_start     = sl$states_heights_start,
           glm_path                 = config$model_settings$glm_path,
-          use_glm_restart          = has_zip_restart
+          use_glm_restart          = has_zip_restart,
+          glm_nml                  = sl$glm_nml,
+          aed_nml                  = sl$aed_nml
         )
+      })
 
-      }, .options = furrr::furrr_options(seed = TRUE))
-      setwd(orgin)
-
-      for(m in 1:nmembers){
+      for (m in 1:nmembers) {
         num_out_heights <- length(diag_init[[m]]$model_internal_heights)
-        non_na_idx      <- seq_len(num_out_heights)
+        non_na_idx <- seq_len(num_out_heights)
         glm_depths_spin <- diag_init[[m]]$lake_depth_end -
-                           diag_init[[m]]$model_internal_heights[non_na_idx]
+          diag_init[[m]]$model_internal_heights[non_na_idx]
 
-        if(length(config$output_settings$diagnostics_names) > 0 &&
-           is.null(aux_states_init$diagnostics)){
-          for(d in seq_len(dim(diagnostics)[1])){
+        if (length(config$output_settings$diagnostics_names) > 0 &&
+              is.null(aux_states_init$diagnostics)) {
+          for (d in seq_len(dim(diagnostics)[1])) {
             diagnostics[d, 1, , m] <- approx(
               glm_depths_spin,
               diag_init[[m]]$diagnostics_end[d, non_na_idx],
@@ -480,102 +518,119 @@ run_da_forecast <- function(states_init,
           }
         }
 
-        if(length(config$output_settings$diagnostics_daily$names) > 0 &&
-           is.null(aux_states_init$diagnostics_daily)){
+        if (length(config$output_settings$diagnostics_daily$names) > 0 &&
+              is.null(aux_states_init$diagnostics_daily)) {
           diagnostics_daily[, 1, m] <- diag_init[[m]]$diagnostics_daily_end
         }
+      }
+      # Seed per-member NML cache from spinup so the first main-loop iteration
+      # skips the disk read.
+      for (m in seq_len(nmembers)) {
+        member_glm_nml[m] <- list(diag_init[[m]]$glm_nml)
+        member_aed_nml[m] <- list(diag_init[[m]]$aed_nml)
       }
     }
 
     # At i==1 the initial conditions already populate the state arrays; skip the
     # main model run and go straight to (optional) data assimilation.
-    if(i > 1){
-
-      orgin <- getwd()
-
-      out <- furrr::future_map(1:nmembers, function(m) {
-
+    if (i > 1) {
+      # Build per-member input lists on the main process — propose_parameters,
+      # met-file selection, and state-slice extraction are all fast/sequential.
+      # Workers receive only these compact structs; stable globals come from the
+      # clusterExport done at startup.
+      .prev <- i - 1L
+      step_inputs <- lapply(seq_len(nmembers), function(m) {
         # In forecast mode with weather uncertainty disabled, all members
         # share the deterministic (first) met file.
-        if(!config$uncertainty$weather & i >= (hist_days + 1)){
-          curr_met_file <- met_file_names[met_index[1]]
-        }else{
-          curr_met_file <- met_file_names[met_index[m]]
+        curr_met_file <- if (!config$uncertainty$weather & i >= (hist_days + 1)) {
+          met_file_names[met_index[1]]
+        } else {
+          met_file_names[met_index[m]]
         }
-
-        curr_pars_ens <- FLAREr:::propose_parameters(i, m,
-                                                     pars,
-                                                     pars_config,
-                                                     npars,
-                                                     par_fit_method,
-                                                     da_method,
-                                                     hist_days,
-                                                     include_uncertainty = config$uncertainty$parameter)
-
         # Mirror the met uncertainty logic for inflow/outflow scenarios.
-        if(!is.null(ncol(inflow_file_names))){
-          if(!config$uncertainty$inflow & i > (hist_days + 1)){
-            inflow_file_name <- inflow_file_names[inflow_outflow_index[1], ]
+        if (!is.null(ncol(inflow_file_names))) {
+          if (!config$uncertainty$inflow & i > (hist_days + 1)) {
+            inflow_file_name  <- inflow_file_names[inflow_outflow_index[1], ]
             outflow_file_name <- outflow_file_names[inflow_outflow_index[1], ]
-          }else{
-            inflow_file_name <- inflow_file_names[inflow_outflow_index[m], ]
+          } else {
+            inflow_file_name  <- inflow_file_names[inflow_outflow_index[m], ]
             outflow_file_name <- outflow_file_names[inflow_outflow_index[m], ]
           }
-        }else{
-          inflow_file_name <- NULL
+        } else {
+          inflow_file_name  <- NULL
           outflow_file_name <- NULL
         }
-
-        out <-  FLAREr:::run_model(i,
-                                   m,
-                                   curr_start,
-                                   curr_stop,
-                                   par_names,
-                                   curr_pars_ens = curr_pars_ens,
-                                   ens_working_directory = file.path(working_directory, m),
-                                   par_nml = par_file,
-                                   num_phytos,
-                                   glm_heights_start = model_internal_heights[i-1, ,m ],
-                                   lake_depth_start = lake_depth[i-1, m],
-                                   full_time,
-                                   hist_days,
-                                   modeled_depths = config$model_settings$modeled_depths,
-                                   ndepths_modeled,
-                                   curr_met_file,
-                                   inflow_file_name = inflow_file_name,
-                                   outflow_file_name = outflow_file_name,
-                                   glm_output_vars = output_vars,
-                                   diagnostics_names = config$output_settings$diagnostics_names,
-                                   diagnostics_daily_config = config$output_settings$diagnostics_daily,
-                                   npars,
-                                   num_wq_vars,
-                                   snow_ice_thickness_start = snow_ice_thickness[, i-1, m ],
-                                   nstates,
-                                   state_names = states_config$state_names,
-                                   include_wq = config$include_wq,
-                                   max_layers = config$model_settings$max_model_layers,
-                                   states_heights_start = states_height[i-1, , ,m],
-                                   glm_path = config$model_settings$glm_path,
-                                   # GLM restart file exists only after the
-                                   # first completed model run, unless a zip
-                                   # restart was provided (file already placed
-                                   # in working directory before loop start).
-                                   use_glm_restart = i > start_step || has_zip_restart
+        curr_pars_ens <- FLAREr:::propose_parameters(
+          i, m, pars, pars_config, npars,
+          par_fit_method, da_method, hist_days,
+          include_uncertainty = config$uncertainty$parameter
         )
+        list(
+          m                        = m,
+          i                        = i,
+          curr_start               = curr_start,
+          curr_stop                = curr_stop,
+          curr_pars_ens            = curr_pars_ens,
+          curr_met_file            = curr_met_file,
+          inflow_file_name         = inflow_file_name,
+          outflow_file_name        = outflow_file_name,
+          glm_heights_start        = model_internal_heights[.prev, , m],
+          lake_depth_start         = lake_depth[.prev, m],
+          snow_ice_thickness_start = snow_ice_thickness[, .prev, m],
+          states_heights_start     = states_height[.prev, , , m],
+          use_glm_restart          = i > start_step || has_zip_restart,
+          glm_nml                  = member_glm_nml[[m]],
+          aed_nml                  = member_aed_nml[[m]]
+        )
+      })
 
-      }, .options = furrr::furrr_options(seed = TRUE))
-
-      setwd(orgin)
+      out <- .par_apply(step_inputs, function(sl) {
+        FLAREr:::run_model(
+          i                        = sl$i,
+          m                        = sl$m,
+          curr_start               = sl$curr_start,
+          curr_stop                = sl$curr_stop,
+          par_names                = par_names,
+          curr_pars_ens            = sl$curr_pars_ens,
+          ens_working_directory    = file.path(working_directory, sl$m),
+          par_nml                  = par_file,
+          num_phytos               = num_phytos,
+          glm_heights_start        = sl$glm_heights_start,
+          lake_depth_start         = sl$lake_depth_start,
+          full_time                = full_time,
+          hist_days                = hist_days,
+          modeled_depths           = config$model_settings$modeled_depths,
+          ndepths_modeled          = ndepths_modeled,
+          curr_met_file            = sl$curr_met_file,
+          inflow_file_name         = sl$inflow_file_name,
+          outflow_file_name        = sl$outflow_file_name,
+          glm_output_vars          = output_vars,
+          diagnostics_names        = config$output_settings$diagnostics_names,
+          diagnostics_daily_config = config$output_settings$diagnostics_daily,
+          npars                    = npars,
+          num_wq_vars              = num_wq_vars,
+          snow_ice_thickness_start = sl$snow_ice_thickness_start,
+          nstates                  = nstates,
+          state_names              = states_config$state_names,
+          include_wq               = config$include_wq,
+          max_layers               = config$model_settings$max_model_layers,
+          states_heights_start     = sl$states_heights_start,
+          glm_path                 = config$model_settings$glm_path,
+          use_glm_restart          = sl$use_glm_restart,
+          glm_nml                  = sl$glm_nml,
+          aed_nml                  = sl$aed_nml
+        )
+      })
 
       # Read restart NetCDF bytes into memory now; they are written to the
       # output zip at the end of the run, after the loop closes the files.
       date_label <- format(as.Date(full_time[i]), "%Y-%m-%d")
       if (is.null(keep_restart_dates) || date_label %in% keep_restart_dates) {
         glm_restart_staged[[date_label]] <- list()
-        for(m in seq_len(nmembers)) {
+        for (m in seq_len(nmembers)) {
           rst_name <- paste0("glm_restart_", m, ".nc")
           rst_src <- file.path(working_directory, m, rst_name)
-          if(file.exists(rst_src)) {
+          if (file.exists(rst_src)) {
             glm_restart_staged[[date_label]][[rst_name]] <- readBin(
               rst_src, "raw", file.info(rst_src)$size
             )
@@ -584,49 +639,54 @@ run_da_forecast <- function(states_init,
       }
 
       # Loop through output and assign to matrix
-      for(m in 1:nmembers) {
+      for (m in 1:nmembers) {
         states_height[i, , , m] <- out[[m]]$x_star_end
-        lake_depth[i ,m ] <- out[[m]]$lake_depth_end
-        snow_ice_thickness[,i ,m] <- out[[m]]$snow_ice_thickness_end
+        lake_depth[i, m] <- out[[m]]$lake_depth_end
+        snow_ice_thickness[, i, m] <- out[[m]]$snow_ice_thickness_end
         curr_pars[, m] <- out[[m]]$curr_pars_ens
 
         num_out_heights <- length(out[[m]]$model_internal_heights)
-        model_internal_heights[i,1:num_out_heights ,m] <- out[[m]]$model_internal_heights
+        model_internal_heights[i, 1:num_out_heights, m] <- out[[m]]$model_internal_heights
         non_na_heights_index <- 1:num_out_heights
 
         # GLM reports state on height-from-bottom layers; convert to
         # depth-from-surface on the fixed modeled_depths grid via interpolation.
-        glm_depths <- lake_depth[i ,m ] - model_internal_heights[i,non_na_heights_index ,m]
-        for(s in 1:nstates){
-          states_depth_wo_noise[s, , m] <- approx(glm_depths,states_height[i,s , non_na_heights_index, m], config$model_settings$modeled_depths, rule = 2)$y
+        glm_depths <- lake_depth[i, m] - model_internal_heights[i, non_na_heights_index, m]
+        for (s in 1:nstates) {
+          states_depth_wo_noise[s, , m] <- approx(glm_depths, states_height[i, s, non_na_heights_index, m], config$model_settings$modeled_depths, rule = 2)$y
         }
 
-        if(length(config$output_settings$diagnostics_names) > 0){
-          for(d in 1:dim(diagnostics)[1]){
-            diagnostics[d, i, , m] <- approx(glm_depths,out[[m]]$diagnostics_end[d,non_na_heights_index], config$model_settings$modeled_depths, rule = 2)$y
+        if (length(config$output_settings$diagnostics_names) > 0) {
+          for (d in seq_len(dim(diagnostics)[1])) {
+            diagnostics[d, i, , m] <- approx(glm_depths, out[[m]]$diagnostics_end[d, non_na_heights_index], config$model_settings$modeled_depths, rule = 2)$y
           }
         }
 
-        if(length(config$output_settings$diagnostics_daily$names) > 0){
+        if (length(config$output_settings$diagnostics_daily$names) > 0) {
           diagnostics_daily[, i, m] <- out[[m]]$diagnostics_daily_end
         }
 
-        if(config$uncertainty$process == FALSE & i > (hist_days + 1)){
+        if (config$uncertainty$process == FALSE && i > (hist_days + 1)) {
           include_process_uncertainty <- FALSE
-        }else{
+        } else {
           include_process_uncertainty <- TRUE
         }
 
-        if(config$da_setup$add_random_noise == 2) {
-
+        if (config$da_setup$add_random_noise != 0) {
           nv_noise <- FLAREr:::apply_non_vertical_process_noise(
-            non_vertical_noise_config   = non_vertical_noise_config,
-            lake_depth_m                = lake_depth[i, m],
-            diagnostics_slice           = if (length(config$output_settings$diagnostics_names) > 0)
-                                            diagnostics[, i, , m] else NULL,
-            diagnostics_daily_slice     = if (length(config$output_settings$diagnostics_daily$names) > 0)
-                                            diagnostics_daily[, i, m] else NULL,
-            config                      = config
+            non_vertical_noise_config = non_vertical_noise_config,
+            lake_depth_m = lake_depth[i, m],
+            diagnostics_slice = if (length(config$output_settings$diagnostics_names) > 0) {
+              diagnostics[, i, , m]
+            } else {
+              NULL
+            },
+            diagnostics_daily_slice = if (length(config$output_settings$diagnostics_daily$names) > 0) {
+              diagnostics_daily[, i, m]
+            } else {
+              NULL
+            },
+            config = config
           )
           lake_depth[i, m] <- nv_noise$lake_depth_m
           if (length(config$output_settings$diagnostics_names) > 0) {
@@ -636,226 +696,53 @@ run_da_forecast <- function(states_init,
             diagnostics_daily[, i, m] <- nv_noise$diagnostics_daily_slice
           }
 
-          with_noise <- FLAREr:::add_process_noise(states_height_ens = states_height[i, , , m],
-                                                   model_sd = model_sd,
-                                                   model_internal_heights_ens = model_internal_heights[i, ,m],
-                                                   lake_depth_ens = lake_depth[i,m],
-                                                   modeled_depths = config$model_settings$modeled_depths,
-                                                   vert_decorr_length = states_config$vert_decorr_length,
-                                                   include_uncertainty = include_process_uncertainty)
-          states_depth_w_noise[, ,m] <- with_noise$states_depth_ens
+          with_noise <- FLAREr:::add_process_noise(
+            states_height_ens = states_height[i, , , m],
+            model_sd = model_sd,
+            model_internal_heights_ens = model_internal_heights[i, , m],
+            lake_depth_ens = lake_depth[i, m],
+            modeled_depths = config$model_settings$modeled_depths,
+            vert_decorr_length = states_config$vert_decorr_length,
+            include_uncertainty = include_process_uncertainty
+          )
+          states_depth_w_noise[, , m] <- with_noise$states_depth_ens
           states_height[i, , , m] <- with_noise$states_height_ens
+        } else {
+          states_depth_w_noise[, , m] <- states_depth_wo_noise[, , m]
         }
-
       } # END ENSEMBLE LOOP
 
-      if(config$da_setup$add_random_noise == 1) {
-        # Mode 1: draw noise from the full cross-state-depth covariance matrix.
-        # Correlation structure is estimated from the ensemble; configured
-        # model_sd values set the marginal standard deviations.
-        state_matrix <- matrix(NA, nrow = nmembers, ncol = length(c(states_depth_wo_noise[, ,1])))
-        for(m in 1:nmembers) {
-          curr_states <- states_depth_wo_noise[, ,m ]
-          # Clamp near-zero WQ values before computing SD to avoid a
-          # degenerate covariance column at cells that have collapsed to zero.
-          for(s in 2:nstates){
-            curr_states[s,which(curr_states[s, ] <= 0)] <- runif(length(which(curr_states[s, ] <= 0)), 0, 0.0001)
-          }
-
-          state_matrix[m , ] = c(t(curr_states[, ]))
-        }
-
-        means <- colMeans(state_matrix)
-        sds <- matrixStats::colSds(state_matrix)
-
-        # When all ensemble members agree exactly, inject tiny variability so
-        # cor() does not return NaN and the covariance matrix stays invertible.
-        zero_sds <- which(sds == 0)
-        for(bval in zero_sds){
-          if(means[bval] > 0){
-            state_matrix[ ,bval] <- rnorm(length(state_matrix[, bval]), means[bval], sd = 0.0001)
-          }else{
-            state_matrix[ ,bval] <- runif(length(state_matrix[, bval]), 0, 0.0001)
-          }
-        }
-
-        state_cor <- cor(state_matrix)
-        state_sd <- c(t(model_sd))
-
-        # Combine configured marginal SDs with estimated correlations:
-        # Sigma = D * R * D  where D = diag(model_sd).
-        state_cov <- diag(state_sd) %*% state_cor %*% t(diag(state_sd))
-
-
-        #state_cov <- FLAREr:::localization(state_cov, nstates,
-        #                                   config$model_settings$modeled_depths,
-        #                                   config$da_setup$localization_distance, num_single_states = 0)
-
-        for(m in 1:nmembers) {
-          states_depth_w_noise[, ,m] <- t(matrix(mvtnorm::rmvnorm(1,
-                                                                  mean = c(t(states_depth_wo_noise[, ,m ])),
-                                                                  state_cov),
-                                                 ncol = nstates))
-          for(s in 2:nstates){
-            neg <- which(states_depth_w_noise[s, , m] < 0)
-            states_depth_w_noise[s, neg, m] <- -states_depth_w_noise[s, neg, m]
-            still_neg <- which(states_depth_w_noise[s, , m] < 0)
-            states_depth_w_noise[s, still_neg, m] <- 0.0
-          }
-
-          nv_noise <- FLAREr:::apply_non_vertical_process_noise(
-            non_vertical_noise_config   = non_vertical_noise_config,
-            lake_depth_m                = lake_depth[i, m],
-            diagnostics_slice           = if (length(config$output_settings$diagnostics_names) > 0)
-                                            diagnostics[, i, , m] else NULL,
-            diagnostics_daily_slice     = if (length(config$output_settings$diagnostics_daily$names) > 0)
-                                            diagnostics_daily[, i, m] else NULL,
-            config                      = config
-          )
-          lake_depth[i, m] <- nv_noise$lake_depth_m
-          if (length(config$output_settings$diagnostics_names) > 0) {
-            diagnostics[, i, , m] <- nv_noise$diagnostics_slice
-          }
-          if (length(config$output_settings$diagnostics_daily$names) > 0) {
-            diagnostics_daily[, i, m] <- nv_noise$diagnostics_daily_slice
-          }
-        }
-
-
-      }else if(config$da_setup$add_random_noise == 0){
-        # Mode 0: no process noise; propagate raw GLM output unchanged.
-        states_depth_w_noise <- states_depth_wo_noise
+      # Update per-member NML cache so the next step can skip the disk read.
+      for (m in seq_len(nmembers)) {
+        member_glm_nml[m] <- list(out[[m]]$glm_nml)
+        member_aed_nml[m] <- list(out[[m]]$aed_nml)
       }
+    } # END MODEL RUN
 
-      ### SETTING OBSERVATIONS FOR POTENTAIL DATA ASSIMILATION
+    ### SETTING OBSERVATIONS FOR POTENTAIL DATA ASSIMILATION
 
-      if(dim(obs)[1] > 1){
-        obs_count <- length(which(!is.na(c(aperm(obs[,i , ], perm = c(2,1))))))
-      }else{
-        obs_count <- length(which(!is.na(c(obs[1,i , ]))))
-      }
+    if (dim(obs)[1] > 1) {
+      obs_count <- length(which(!is.na(c(aperm(obs[, i, ], perm = c(2, 1))))))
+    } else {
+      obs_count <- length(which(!is.na(c(obs[1, i, ]))))
+    }
 
-      for (nv_var in names(obs_non_vertical)) {
-        if (!is.na(obs_non_vertical[[nv_var]]$obs[i])) {
-          obs_count <- obs_count + 1
-        }
-      }
-
-      #if no observations at a time step then just propagate model uncertainty
-
-      if(config$da_setup$use_inflation_factor){
-
-        # Save the depth-space snapshot that matches the current states_height so
-        # the inflation delta can be propagated correctly for all noise modes:
-        #   == 0: states_height = model output; ref = states_depth_wo_noise (== states_depth_w_noise)
-        #   == 1: states_height = model output (noise only in depth space); ref = states_depth_wo_noise (pre-noise)
-        #   == 2: states_height = noise-added (from add_process_noise); ref = states_depth_w_noise (post-noise)
-        if(config$da_setup$add_random_noise == 1){
-          states_depth_height_ref <- states_depth_wo_noise
-          states_depth_wo_noise <- states_depth_w_noise
-        } else {
-          states_depth_height_ref <- states_depth_w_noise
-        }
-
-        if(config$da_setup$inflation_only_at_da & (obs_count == 0 | config$da_setup$da_method == "none" | !config$da_setup$use_obs_constraint)){
-          curr_inflation <- 1.0
-          curr_par_inflation <- 1.0
-        }else{
-          curr_inflation <- inflation[i-1]
-          curr_par_inflation <- pars_config$inflation
-        }
-
-        # Multiplicative inflation: rescale deviations from the ensemble mean
-        # by sqrt(lambda) so the ensemble variance grows by factor lambda.
-        ens_mean <- mean(lake_depth[i, ], na.rm = TRUE)
-        lake_depth[i, ] <- sqrt(curr_inflation) * (lake_depth[i, ]  - ens_mean) + ens_mean
-
-        for(s in 1:nstates){
-          ens_mean <- apply(states_depth_wo_noise[s, , ], 1, mean, na.rm = TRUE)
-          for(m in 1:nmembers){
-            states_depth_w_noise[s, , m] <- sqrt(curr_inflation) * (states_depth_wo_noise[s, , m] - ens_mean) + ens_mean
-            if(s > 1){
-              index <- which(states_depth_w_noise[s, , m] < 0.0)
-              states_depth_w_noise[s, index, m] <- -states_depth_w_noise[s, index, m]
-              still_neg <- which(states_depth_w_noise[s, , m] < 0.0)
-              states_depth_w_noise[s, still_neg, m] <- 0.0
-            }
-            non_na_heights_index <- which(!is.na(model_internal_heights[i, ,m]))
-            # Propagate the inflation delta back to height space so both
-            # coordinate representations stay consistent with each other.
-            delta_depth <- states_depth_w_noise[s, , m] - states_depth_height_ref[s, , m]
-            delta_height <- approx(lake_depth[i, m] - config$model_settings$modeled_depths,
-                                   delta_depth,
-                                   model_internal_heights[i, non_na_heights_index, m],
-                                   rule = 2)$y
-            states_height[i, s, non_na_heights_index, m] <- states_height[i, s, non_na_heights_index, m] + delta_height
-            if(s > 1){
-              neg_idx <- which(states_height[i, s, non_na_heights_index, m] < 0.0)
-              states_height[i, s, non_na_heights_index[neg_idx], m] <- 0.0
-            }
-          }
-        }
-
-        if(length(config$output_settings$diagnostics_names) > 0){
-          ens_mean <- apply(diagnostics[d,i , ,], 1, mean)
-          for(d in 1:dim(diagnostics)[1]){
-            diagnostics[d, i, , ] <- sqrt(curr_inflation) * (diagnostics[d,i , ,] - ens_mean) + ens_mean
-          }
-        }
-
-        if(length(config$output_settings$diagnostics_daily$names) > 0){
-          ens_mean <- mean(diagnostics_daily[d,i, ])
-          for(d in 1:dim(diagnostics_daily)[1]){
-            diagnostics_daily[d, i, ] <-sqrt(curr_inflation) * (diagnostics_daily[d,i, ] - ens_mean) + ens_mean
-          }
-        }
-        if(npars > 0){
-          pars_mean <- apply(curr_pars, 1, mean)
-          pars_corr <- sqrt(curr_par_inflation) * (curr_pars - pars_mean) + pars_mean
-        }
-      }else{
-
-        if(npars > 0){
-          pars_corr <- curr_pars
-          if(npars == 1){
-            pars_corr <- matrix(pars_corr,nrow = length(pars_corr),ncol = 1)
-          }
-        }
-
-      }
-
-    }else{ #time step is 0.
-
-      for(m in 1:nmembers){
-        non_na_heights_index <- which(!is.na(model_internal_heights[i, ,m]))
-        glm_depths <-lake_depth[i ,m ] - model_internal_heights[i,non_na_heights_index ,m]
-
-        for(s in 1:nstates){
-          states_depth_wo_noise[s, , m] <- approx(glm_depths, states_height[i,s , non_na_heights_index, m], config$model_settings$modeled_depths, rule = 2)$y
-          states_depth_w_noise[s, , m] <- states_depth_wo_noise[s, , m]
-        }
-      }
-
-      if(npars > 0){
-        pars_corr <- pars[i, ,]
-        if(npars == 1){
-          pars_corr <- matrix(pars_corr,nrow = length(pars_corr),ncol = 1)
-        }
+    for (nv_var in names(obs_non_vertical)) {
+      if (!is.na(obs_non_vertical[[nv_var]]$obs[i])) {
+        obs_count <- obs_count + 1
       }
     }
 
-
-    if(obs_count == 0 | config$da_setup$da_method == "none" | !config$da_setup$use_obs_constraint){
-
-      if(i > (hist_days + 1)){
+    if (obs_count == 0 || config$da_setup$da_method == "none" || !config$da_setup$use_obs_constraint) {
+      if (i > (hist_days + 1)) {
         data_assimilation_flag[i] <- 0
         forecast_flag[i] <- 1
         da_qc_flag[i] <- 0
-      }else if(i <= (hist_days + 1) & config$da_setup$use_obs_constraint){
+      } else if (i <= (hist_days + 1) && config$da_setup$use_obs_constraint) {
         data_assimilation_flag[i] <- 1
         forecast_flag[i] <- 0
         da_qc_flag[i] <- 1
-      }else{
+      } else {
         data_assimilation_flag[i] <- 0
         forecast_flag[i] <- 0
         da_qc_flag[i] <- 0
@@ -863,42 +750,40 @@ run_da_forecast <- function(states_init,
 
       states_depth[i, , , ] <- states_depth_w_noise
 
-      log_particle_weights[i, ] <-   log_particle_weights[i-1, ]
+      log_particle_weights[i, ] <- log_particle_weights[i - 1, ]
 
-      inflation[i] <- inflation[i-1]
+      inflation[i] <- inflation[i - 1]
 
 
-      if(npars > 0) pars[i, , ] <- pars_corr
+      if (npars > 0) pars[i, , ] <- pars_corr
 
       # At the history/forecast boundary, collapse ensemble spread to the
       # ensemble mean when initial-condition uncertainty is disabled.
-      if(i == (hist_days + 1) & config$uncertainty$initial_condition == FALSE){
-        if(npars > 0) pars[i, , ] <- pars_corr
-        for(s in 1:nstates){
-          for(k in 1:ndepths_modeled){
-            states_depth[i, s, k , ] <- mean(states_depth_wo_noise[s, k, ])
+      if (i == (hist_days + 1) && config$uncertainty$initial_condition == FALSE) {
+        if (npars > 0) pars[i, , ] <- pars_corr
+        for (s in 1:nstates) {
+          for (k in 1:ndepths_modeled) {
+            states_depth[i, s, k, ] <- mean(states_depth_wo_noise[s, k, ])
           }
         }
       }
 
-      for(s in 1:nstates){
-        for(m in 1:nmembers){
+      for (s in 1:nstates) {
+        for (m in 1:nmembers) {
           depth_index <- which(config$model_settings$modeled_depths > lake_depth[i, m])
-          states_depth[i, s, depth_index, m ] <- NA
+          states_depth[i, s, depth_index, m] <- NA
         }
       }
 
-      if(length(config$output_settings$diagnostics_names) > 0){
-        for(d in 1:dim(diagnostics)[1]){
-          for(m in 1:nmembers){
+      if (length(config$output_settings$diagnostics_names) > 0) {
+        for (d in seq_len(dim(diagnostics)[1])) {
+          for (m in 1:nmembers) {
             depth_index <- which(config$model_settings$modeled_depths > lake_depth[i, m])
-            diagnostics[d,i, depth_index, m] <- NA
+            diagnostics[d, i, depth_index, m] <- NA
           }
         }
       }
-
-    }else{
-
+    } else {
       message("performing data assimilation")
 
       # One-step lag: state and parameter filters run separately within each cycle.
@@ -907,14 +792,14 @@ run_da_forecast <- function(states_init,
       # afterward using the forecast predicted observations.
       use_one_step_lag <- isTRUE(config$da_setup$use_one_step_lag) && npars > 0
 
-      x_matrix <- apply(aperm(states_depth_w_noise[,1:ndepths_modeled,], perm = c(2,1,3)), 3, rbind)
+      x_matrix <- apply(aperm(states_depth_w_noise[, 1:ndepths_modeled, ], perm = c(2, 1, 3)), 3, rbind)
 
       # Append each non-vertical observation variable to the augmented state vector.
       # active_in_xmatrix tracks which variables were successfully extracted (diagnostic
       # variables return NULL at i==1 before the diagnostics array is populated).
       active_in_xmatrix <- character(0)
       for (nv_var in names(obs_non_vertical)) {
-        modeled_val <- extract_modeled_non_vertical(
+        modeled_val <- extract_modeled_non_vertical( # nolint: object_usage_linter.
           var_name      = nv_var,
           meta          = obs_non_vertical[[nv_var]],
           states_depth  = states_depth_w_noise,
@@ -925,7 +810,7 @@ run_da_forecast <- function(states_init,
           time_index    = i
         )
         if (!is.null(modeled_val)) {
-          ops      <- get_non_vertical_operator(nv_var)
+          ops <- get_non_vertical_operator(nv_var) # nolint: object_usage_linter.
           x_matrix <- rbind(x_matrix, ops$forward_fn(modeled_val))
           active_in_xmatrix <- c(active_in_xmatrix, nv_var)
         }
@@ -934,11 +819,11 @@ run_da_forecast <- function(states_init,
 
       # Capture state-only forecast before appending parameters; the parameter
       # filter needs these to compute its predicted observations.
-      if(use_one_step_lag){
+      if (use_one_step_lag) {
         x_forecast_states <- x_matrix
       }
 
-      if(npars > 0 && !use_one_step_lag){
+      if (npars > 0 && !use_one_step_lag) {
         x_matrix <- rbind(x_matrix, curr_pars)
       }
 
@@ -946,13 +831,13 @@ run_da_forecast <- function(states_init,
       forecast_flag[i] <- 0
       da_qc_flag[i] <- 0
 
-      curr_obs <- obs[,i,]
+      curr_obs <- obs[, i, ]
 
       vertical_obs <- length(which(obs_config$multi_depth == 1))
 
-      if(dim(obs)[1] > 1){
-        zt <- c(aperm(curr_obs, perm = c(2,1)))
-      }else{
+      if (dim(obs)[1] > 1) {
+        zt <- c(aperm(curr_obs, perm = c(2, 1)))
+      } else {
         zt <- curr_obs
       }
 
@@ -968,20 +853,22 @@ run_da_forecast <- function(states_init,
       # to the observation vector.  Rows = observations, columns = state elements.
       # For one_step_lag the parameter columns are absent from H; npars_in_h
       # keeps the non-vertical column offsets correct in both modes.
-      npars_in_h <- if(use_one_step_lag) 0L else npars
-      h <- matrix(0, nrow = vertical_obs * ndepths_modeled + n_non_vertical,
-                     ncol = nstates * ndepths_modeled + n_non_vertical + npars_in_h)
+      npars_in_h <- if (use_one_step_lag) 0L else npars
+      h <- matrix(0,
+        nrow = vertical_obs * ndepths_modeled + n_non_vertical,
+        ncol = nstates * ndepths_modeled + n_non_vertical + npars_in_h
+      )
 
       index <- 0
-      for(k in 1:nstates){
-        for(j in 1:ndepths_modeled){
+      for (k in 1:nstates) {
+        for (j in 1:ndepths_modeled) {
           index <- index + 1
-          if(!is.na(dplyr::first(states_config$states_to_obs[[k]]))){
-            for(jj in 1:length(states_config$states_to_obs[[k]])){
-              if(!is.na((obs[states_config$states_to_obs[[k]][jj], i, j]))){
+          if (!is.na(dplyr::first(states_config$states_to_obs[[k]]))) {
+            for (jj in seq_along(states_config$states_to_obs[[k]])) {
+              if (!is.na((obs[states_config$states_to_obs[[k]][jj], i, j]))) {
                 states_to_obs_index <- states_config$states_to_obs[[k]][jj]
                 index2 <- (states_to_obs_index - 1) * ndepths_modeled + j
-                h[index2,index] <- states_config$states_to_obs_mapping[[k]][jj]
+                h[index2, index] <- states_config$states_to_obs_mapping[[k]][jj]
               }
             }
           }
@@ -990,11 +877,11 @@ run_da_forecast <- function(states_init,
 
       # Each non-vertical variable maps 1-to-1 to its own row/column in H.
       for (k in seq_along(active_in_xmatrix)) {
-        nv_var  <- active_in_xmatrix[k]
+        nv_var <- active_in_xmatrix[k]
         obs_val <- obs_non_vertical[[nv_var]]$obs[i]
         if (!is.na(obs_val)) {
           h_row <- vertical_obs * ndepths_modeled + k
-          h_col <- nstates    * ndepths_modeled + k
+          h_col <- nstates * ndepths_modeled + k
           h[h_row, h_col] <- 1
         }
       }
@@ -1004,14 +891,14 @@ run_da_forecast <- function(states_init,
 
       h <- h[z_index, ]
 
-      if(!is.matrix(h)){
+      if (!is.matrix(h)) {
         h <- t(as.matrix(h))
       }
 
       psi <- rep(NA, vertical_obs * ndepths_modeled + n_non_vertical)
       index <- 0
-      for(k in 1:vertical_obs){
-        for(j in 1:ndepths_modeled){
+      for (k in 1:vertical_obs) {
+        for (j in 1:ndepths_modeled) {
           index <- index + 1
           psi[index] <- obs_sd[k]
         }
@@ -1021,151 +908,146 @@ run_da_forecast <- function(states_init,
         psi[vertical_obs * ndepths_modeled + k] <- obs_non_vertical[[active_in_xmatrix[k]]]$sd
       }
 
-      if(length(config$output_settings$diagnostics_names) > 0){
-        diagnostics_start <- diagnostics[ ,i, , ]
-      }else{
+      if (length(config$output_settings$diagnostics_names) > 0) {
+        diagnostics_start <- diagnostics[, i, , ]
+      } else {
         diagnostics <- NA
       }
 
-      if(length(config$output_settings$diagnostics_daily$names) > 0){
-        diagnostics_daily_start <- diagnostics_daily[ ,i, ]
-      }else{
+      if (length(config$output_settings$diagnostics_daily$names) > 0) {
+        diagnostics_daily_start <- diagnostics_daily[, i, ]
+      } else {
         diagnostics_daily_start <- NA
       }
 
-      if(da_method == "enkf"){
-
+      if (da_method == "enkf") {
         updates <- FLAREr:::run_enkf(x_matrix,
-                                     h,
-                                     pars_corr,
-                                     zt,
-                                     psi,
-                                     z_index,
-                                     states_depth_start = states_depth_w_noise,
-                                     states_height_start = states_height[i, , ,],
-                                     model_internal_heights_start = model_internal_heights[i, , ],
-                                     lake_depth_start = lake_depth[i, ],
-                                     log_particle_weights_start = log_particle_weights[i-1, ],
-                                     snow_ice_thickness_start =  snow_ice_thickness[ ,i, ],
-                                     diagnostics_start,
-                                     diagnostics_daily_start,
-                                     pars_config,
-                                     config,
-                                     obs_non_vertical,
-                                     active_in_xmatrix,
-                                     n_non_vertical,
-                                     par_fit_method,
-                                     inflation_start = inflation[i-1],
-                                     lake_max_depth = lake_max_depth)
-
-      }else if(da_method == "pf"){
-
+          h,
+          pars_corr,
+          zt,
+          psi,
+          z_index,
+          states_depth_start = states_depth_w_noise,
+          states_height_start = states_height[i, , , ],
+          model_internal_heights_start = model_internal_heights[i, , ],
+          lake_depth_start = lake_depth[i, ],
+          log_particle_weights_start = log_particle_weights[i - 1, ],
+          snow_ice_thickness_start = snow_ice_thickness[, i, ],
+          diagnostics_start,
+          diagnostics_daily_start,
+          pars_config,
+          config,
+          obs_non_vertical,
+          active_in_xmatrix,
+          n_non_vertical,
+          par_fit_method,
+          inflation_start = inflation[i - 1],
+          lake_max_depth = lake_max_depth
+        )
+      } else if (da_method == "pf") {
         updates <- FLAREr:::run_particle_filter(x_matrix,
-                                                h,
-                                                pars_corr,
-                                                zt,
-                                                psi,
-                                                z_index,
-                                                states_depth_start = states_depth_w_noise,
-                                                states_height_start = states_height[i, , ,],
-                                                model_internal_heights_start = model_internal_heights[i, , ],
-                                                lake_depth_start = lake_depth[i, ],
-                                                log_particle_weights_start = log_particle_weights[i-1, ],
-                                                snow_ice_thickness_start =  snow_ice_thickness[ ,i, ],
-                                                diagnostics_start = diagnostics_start,
-                                                diagnostics_daily_start = diagnostics_daily_start,
-                                                pars_config,
-                                                config,
-                                                obs_non_vertical,
-                                                active_in_xmatrix,
-                                                n_non_vertical,
-                                                par_fit_method,
-                                                vertical_obs,
-                                                working_directory,
-                                                obs_config,
-                                                inflation_start = inflation[i-1])
-
-      }else if(da_method == "etkf"){
-
+          h,
+          pars_corr,
+          zt,
+          psi,
+          z_index,
+          states_depth_start = states_depth_w_noise,
+          states_height_start = states_height[i, , , ],
+          model_internal_heights_start = model_internal_heights[i, , ],
+          lake_depth_start = lake_depth[i, ],
+          log_particle_weights_start = log_particle_weights[i - 1, ],
+          snow_ice_thickness_start = snow_ice_thickness[, i, ],
+          diagnostics_start = diagnostics_start,
+          diagnostics_daily_start = diagnostics_daily_start,
+          pars_config,
+          config,
+          obs_non_vertical,
+          active_in_xmatrix,
+          n_non_vertical,
+          par_fit_method,
+          vertical_obs,
+          working_directory,
+          obs_config,
+          inflation_start = inflation[i - 1]
+        )
+      } else if (da_method == "etkf") {
         updates <- FLAREr:::run_etkf(x_matrix,
-                                     h,
-                                     pars_corr,
-                                     zt,
-                                     psi,
-                                     z_index,
-                                     states_depth_start = states_depth_w_noise,
-                                     states_height_start = states_height[i, , ,],
-                                     model_internal_heights_start = model_internal_heights[i, , ],
-                                     lake_depth_start = lake_depth[i, ],
-                                     log_particle_weights_start = log_particle_weights[i-1, ],
-                                     snow_ice_thickness_start =  snow_ice_thickness[ ,i, ],
-                                     diagnostics_start,
-                                     diagnostics_daily_start,
-                                     pars_config,
-                                     config,
-                                     obs_non_vertical,
-                                     active_in_xmatrix,
-                                     n_non_vertical,
-                                     par_fit_method,
-                                     inflation_start = inflation[i-1],
-                                     lake_max_depth = lake_max_depth)
-
-      }else if(da_method == "esmda"){
-
+          h,
+          pars_corr,
+          zt,
+          psi,
+          z_index,
+          states_depth_start = states_depth_w_noise,
+          states_height_start = states_height[i, , , ],
+          model_internal_heights_start = model_internal_heights[i, , ],
+          lake_depth_start = lake_depth[i, ],
+          log_particle_weights_start = log_particle_weights[i - 1, ],
+          snow_ice_thickness_start = snow_ice_thickness[, i, ],
+          diagnostics_start,
+          diagnostics_daily_start,
+          pars_config,
+          config,
+          obs_non_vertical,
+          active_in_xmatrix,
+          n_non_vertical,
+          par_fit_method,
+          inflation_start = inflation[i - 1],
+          lake_max_depth = lake_max_depth
+        )
+      } else if (da_method == "esmda") {
         updates <- FLAREr:::run_esmda(x_matrix,
-                                      h,
-                                      pars_corr,
-                                      zt,
-                                      psi,
-                                      z_index,
-                                      states_depth_start = states_depth_w_noise,
-                                      states_height_start = states_height[i, , ,],
-                                      model_internal_heights_start = model_internal_heights[i, , ],
-                                      lake_depth_start = lake_depth[i, ],
-                                      log_particle_weights_start = log_particle_weights[i-1, ],
-                                      snow_ice_thickness_start =  snow_ice_thickness[ ,i, ],
-                                      diagnostics_start,
-                                      diagnostics_daily_start,
-                                      pars_config,
-                                      config,
-                                      obs_non_vertical,
-                                      active_in_xmatrix,
-                                      n_non_vertical,
-                                      par_fit_method,
-                                      inflation_start = inflation[i-1],
-                                      lake_max_depth = lake_max_depth)
-
-      }else if(da_method == "letkf"){
-
+          h,
+          pars_corr,
+          zt,
+          psi,
+          z_index,
+          states_depth_start = states_depth_w_noise,
+          states_height_start = states_height[i, , , ],
+          model_internal_heights_start = model_internal_heights[i, , ],
+          lake_depth_start = lake_depth[i, ],
+          log_particle_weights_start = log_particle_weights[i - 1, ],
+          snow_ice_thickness_start = snow_ice_thickness[, i, ],
+          diagnostics_start,
+          diagnostics_daily_start,
+          pars_config,
+          config,
+          obs_non_vertical,
+          active_in_xmatrix,
+          n_non_vertical,
+          par_fit_method,
+          inflation_start = inflation[i - 1],
+          lake_max_depth = lake_max_depth
+        )
+      } else if (da_method == "letkf") {
         updates <- FLAREr:::run_letkf(x_matrix,
-                                      h,
-                                      pars_corr,
-                                      zt,
-                                      psi,
-                                      z_index,
-                                      states_depth_start = states_depth_w_noise,
-                                      states_height_start = states_height[i, , ,],
-                                      model_internal_heights_start = model_internal_heights[i, , ],
-                                      lake_depth_start = lake_depth[i, ],
-                                      log_particle_weights_start = log_particle_weights[i-1, ],
-                                      snow_ice_thickness_start =  snow_ice_thickness[ ,i, ],
-                                      diagnostics_start,
-                                      diagnostics_daily_start,
-                                      pars_config,
-                                      config,
-                                      obs_non_vertical,
-                                      active_in_xmatrix,
-                                      n_non_vertical,
-                                      par_fit_method,
-                                      inflation_start = inflation[i-1],
-                                      lake_max_depth = lake_max_depth)
-
-      }else{
+          h,
+          pars_corr,
+          zt,
+          psi,
+          z_index,
+          states_depth_start = states_depth_w_noise,
+          states_height_start = states_height[i, , , ],
+          model_internal_heights_start = model_internal_heights[i, , ],
+          lake_depth_start = lake_depth[i, ],
+          log_particle_weights_start = log_particle_weights[i - 1, ],
+          snow_ice_thickness_start = snow_ice_thickness[, i, ],
+          diagnostics_start,
+          diagnostics_daily_start,
+          pars_config,
+          config,
+          obs_non_vertical,
+          active_in_xmatrix,
+          n_non_vertical,
+          par_fit_method,
+          inflation_start = inflation[i - 1],
+          lake_max_depth = lake_max_depth
+        )
+      } else {
         stop("da_method not supported; select enkf, etkf, esmda, letkf, or pf or none")
       }
 
-      if(npars > 0){
-        if(use_one_step_lag && length(z_index) > 0 && da_method != "pf"){
+      if (npars > 0) {
+        if (use_one_step_lag && length(z_index) > 0 && da_method != "pf") {
           # One-step-lag: run a dedicated parameter EnKF using the pre-DA
           # state ensemble to compute predicted observations.  This avoids
           # state-parameter cross-covariance artifacts in the state filter.
@@ -1182,96 +1064,96 @@ run_da_forecast <- function(states_init,
           pars[i, , ] <- updates$pars_updated
         }
       }
-      model_internal_heights[i, ,] <- updates$model_internal_heights_updated
-      states_height[i,,,] <- updates$states_height_updated
-      states_depth[i, , ,  ] <- updates$states_depth_updated
+      model_internal_heights[i, , ] <- updates$model_internal_heights_updated
+      states_height[i, , , ] <- updates$states_height_updated
+      states_depth[i, , , ] <- updates$states_depth_updated
 
-      if(length(config$output_settings$diagnostics_names) > 0){
-        diagnostics[,i, , ] <-  updates$diagnostics_updated
-      }else{
-        diagnostics <-  updates$diagnostics_updated
+      if (length(config$output_settings$diagnostics_names) > 0) {
+        diagnostics[, i, , ] <- updates$diagnostics_updated
+      } else {
+        diagnostics <- updates$diagnostics_updated
       }
 
-      if(length(config$output_settings$diagnostics_daily$names) > 0){
-        diagnostics_daily[ ,i, ] <- updates$diagnostics_daily_updated
-      }else{
+      if (length(config$output_settings$diagnostics_daily$names) > 0) {
+        diagnostics_daily[, i, ] <- updates$diagnostics_daily_updated
+      } else {
         diagnostics_daily <- updates$diagnostics_daily_updated
-
       }
-      lake_depth[i, ] <-  updates$lake_depth_updated
-      log_particle_weights[i, ] <-  updates$log_particle_weights_updated
-      snow_ice_thickness[,i ,] <-  updates$snow_ice_thickness_updated
+      lake_depth[i, ] <- updates$lake_depth_updated
+      log_particle_weights[i, ] <- updates$log_particle_weights_updated
+      snow_ice_thickness[, i, ] <- updates$snow_ice_thickness_updated
 
       inflation[i] <- updates$inflation_update
 
       # Re-derive depth-indexed states from the DA-updated height-indexed
       # states, then mask depths that exceed the current lake surface.
-      for(m in 1:nmembers){
+      for (m in 1:nmembers) {
         depth_index <- which(config$model_settings$modeled_depths > lake_depth[i, m])
-        non_na_heights <- which(!is.na(model_internal_heights[i, ,m]))
-        glm_depths <- lake_depth[i, m] - model_internal_heights[i, non_na_heights ,m]
-        for(s in 1:nstates){
+        non_na_heights <- which(!is.na(model_internal_heights[i, , m]))
+        glm_depths <- lake_depth[i, m] - model_internal_heights[i, non_na_heights, m]
+        for (s in 1:nstates) {
           states_depth[i, s, depth_index, m] <- NA
           states_depth[i, s, , m] <- approx(glm_depths, states_height[i, s, non_na_heights, m], config$model_settings$modeled_depths, rule = 2)$y
         }
       }
 
-      if(length(config$output_settings$diagnostics_names) > 0){
-        for(d in 1:dim(diagnostics)[1]){
-          for(m in 1:nmembers){
+      if (length(config$output_settings$diagnostics_names) > 0) {
+        for (d in seq_len(dim(diagnostics)[1])) {
+          for (m in 1:nmembers) {
             depth_index <- which(config$model_settings$modeled_depths > lake_depth[i, m])
-            diagnostics[d,i, depth_index, m] <- NA
+            diagnostics[d, i, depth_index, m] <- NA
           }
         }
       }
-
     }
 
 
     ###############
 
-    #Print parameters to screen
-    if(npars > 0){
-      for(par in 1:npars){
-        if(pars_config$fix_par[par] == 0){
-          message(paste0(pars_config$par_names_save[par],": mean ",
-                         round(mean(pars[i,par ,]),4)," sd ",
-                         round(sd(pars[i,par ,]),4)))
+    # Print parameters to screen
+    if (npars > 0) {
+      for (par in 1:npars) {
+        if (pars_config$fix_par[par] == 0) {
+          message(paste0(
+            pars_config$par_names_save[par], ": mean ",
+            round(mean(pars[i, par, ]), 4), " sd ",
+            round(sd(pars[i, par, ]), 4)
+          ))
         }
       }
     }
-  }
+  } # END TIME STEP LOOP
 
   file_names <- create_filenames(full_time, hist_days, forecast_days, config)
 
 
-
-
-  return(list(full_time = full_time,
-              forecast_start_datetime = forecast_start_datetime,
-              states_depth = states_depth,
-              states_height = states_height,
-              pars = pars,
-              obs = obs,
-              save_file_name = file_names$save_file_name,
-              save_file_name_short = file_names$save_file_name_short,
-              forecast_iteration_id = file_names$forecast_iteration_id,
-              forecast_project_id = config$run_config$sim_name,
-              time_of_forecast = file_names$time_of_forecast,
-              snow_ice_thickness = snow_ice_thickness,
-              lake_depth = lake_depth,
-              model_internal_heights = model_internal_heights,
-              diagnostics = diagnostics,
-              diagnostics_daily = diagnostics_daily,
-              data_assimilation_flag = data_assimilation_flag,
-              forecast_flag = forecast_flag,
-              da_qc_flag = da_qc_flag,
-              config = config,
-              states_config = states_config,
-              pars_config = pars_config,
-              obs_config = obs_config,
-              met_file_names = met_file_names,
-              log_particle_weights = log_particle_weights,
-              inflation = inflation,
-              glm_restart_staged = glm_restart_staged))
+  list(
+    full_time = full_time,
+    forecast_start_datetime = forecast_start_datetime,
+    states_depth = states_depth,
+    states_height = states_height,
+    pars = pars,
+    obs = obs,
+    save_file_name = file_names$save_file_name,
+    save_file_name_short = file_names$save_file_name_short,
+    forecast_iteration_id = file_names$forecast_iteration_id,
+    forecast_project_id = config$run_config$sim_name,
+    time_of_forecast = file_names$time_of_forecast,
+    snow_ice_thickness = snow_ice_thickness,
+    lake_depth = lake_depth,
+    model_internal_heights = model_internal_heights,
+    diagnostics = diagnostics,
+    diagnostics_daily = diagnostics_daily,
+    data_assimilation_flag = data_assimilation_flag,
+    forecast_flag = forecast_flag,
+    da_qc_flag = da_qc_flag,
+    config = config,
+    states_config = states_config,
+    pars_config = pars_config,
+    obs_config = obs_config,
+    met_file_names = met_file_names,
+    log_particle_weights = log_particle_weights,
+    inflation = inflation,
+    glm_restart_staged = glm_restart_staged
+  )
 }

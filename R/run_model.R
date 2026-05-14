@@ -136,7 +136,9 @@ run_model <- function(i,
                       states_heights_start,
                       max_layers,
                       glm_path,
-                      use_glm_restart = FALSE){
+                      use_glm_restart = FALSE,
+                      glm_nml = NULL,
+                      aed_nml = NULL){
 
   rounding_level <- 5
 
@@ -280,16 +282,20 @@ run_model <- function(i,
   update_glm_nml_names[list_index] <- "init_restart_fname"
   list_index <- list_index + 1
 
-  FLAREr:::update_nml(var_list = update_glm_nml_list,
-                      var_name_list = update_glm_nml_names,
-                      working_directory = ens_working_directory,
-                      nml = "glm3.nml")
+  glm_nml_path <- file.path(ens_working_directory, "glm3.nml")
+  if (is.null(glm_nml)) {
+    glm_nml <- FLAREr:::read_nml(glm_nml_path)
+  }
+  glm_nml <- FLAREr:::modify_nml(glm_nml, update_glm_nml_list, update_glm_nml_names)
+  FLAREr:::write_nml(glm_nml, glm_nml_path)
 
   if(list_index_aed > 1){
-    FLAREr:::update_nml(update_aed_nml_list,
-                        update_aed_nml_names,
-                        working_directory = ens_working_directory,
-                        "aed2.nml")
+    aed_nml_path <- file.path(ens_working_directory, "aed2.nml")
+    if (is.null(aed_nml)) {
+      aed_nml <- FLAREr:::read_nml(aed_nml_path)
+    }
+    aed_nml <- FLAREr:::modify_nml(aed_nml, update_aed_nml_list, update_aed_nml_names)
+    FLAREr:::write_nml(aed_nml, aed_nml_path)
   }
 
   if(list_index_phyto > 1){
@@ -330,6 +336,9 @@ run_model <- function(i,
               overwrite = TRUE) #GLM SPECIFIC
   }
 
+  output_vars_multi_depth <- state_names
+  output_vars_no_depth <- NA
+
   verbose <- FALSE
   while(!pass){
     unlink(paste0(ens_working_directory, "/output.nc"))
@@ -348,12 +357,12 @@ run_model <- function(i,
                      finally = NULL)
 
       if(!is.null(nc)){
-        tallest_layer <- ncdf4::ncvar_get(nc, "NS")[1]
-        z <- ncdf4::ncvar_get(nc, "z")[1]
-        temp <- ncdf4::ncvar_get(nc, "temp")[1]
-        ncdf4::nc_close(nc)
-        if(!is.na(tallest_layer) | is.nan(temp)){
-          if(!is.nan(z)) {
+        # Quick scalar reads to catch corrupt/NaN output.
+        tallest_layer_check <- ncdf4::ncvar_get(nc, "NS")[1]
+        z_check             <- ncdf4::ncvar_get(nc, "z")[1]
+        temp_check          <- ncdf4::ncvar_get(nc, "temp")[1]
+        if(!is.na(tallest_layer_check) | is.nan(temp_check)){
+          if(!is.nan(z_check)) {
             success <- TRUE
           } else {
             # Catch for if the output has more than one layer
@@ -364,6 +373,49 @@ run_model <- function(i,
           message(paste0("'output.nc' file generated but has NA for the layer in the file. Re-running simulation: ensemble ", m))
           success <- FALSE
         }
+
+        if(success){
+          GLM_temp_wq_out <- get_glm_nc_var(nc                      = nc,
+                                            working_dir              = ens_working_directory,
+                                            z_out                    = modeled_depths,
+                                            vars_depth               = output_vars_multi_depth,
+                                            vars_no_depth            = output_vars_no_depth,
+                                            diagnostic_vars          = diagnostics_names,
+                                            diagnostics_daily_config = diagnostics_daily_config)
+        }
+
+        ncdf4::nc_close(nc)
+
+        if(success){
+          unlink(paste0(ens_working_directory, "/output.nc"))
+
+          num_glm_heights <- length(GLM_temp_wq_out$heights)
+          glm_heights_end[1:num_glm_heights] <- rev(GLM_temp_wq_out$heights)
+          x_star_end[1,1:num_glm_heights] <- rev(GLM_temp_wq_out$output[ ,1])
+          x_star_end[2,1:num_glm_heights] <- rev(GLM_temp_wq_out$output[ ,2])
+
+          if(include_wq){
+            start_index <- 2
+            for(wq in 1:num_wq_vars){
+              glm_wq <- rev(GLM_temp_wq_out$output[ ,start_index+wq])
+              x_star_end[start_index + wq,1:num_glm_heights] <- glm_wq
+            }
+          }
+
+          if(length(diagnostics_names) > 0){
+            for(wq in 1:length(diagnostics_names)){
+              diagnostic <-  rev(GLM_temp_wq_out$diagnostics_output[ , wq])
+              diagnostics[wq ,1:num_glm_heights] <- diagnostic
+            }
+          }
+
+          if(length(which(is.na(x_star_end[, 1:num_glm_heights]))) == 0){
+            pass = TRUE
+          }else{
+            message("NA or NaN in output file'. Re-running simulation...")
+            num_reruns <- num_reruns + 1
+          }
+        }
       }else{
         message(paste0("'output.nc' file generated but has NA for the layer in the file. Re-running simulation: ensemble ", m))
         success <- FALSE
@@ -373,48 +425,6 @@ run_model <- function(i,
       success <- FALSE
     }
 
-    if(success){
-
-      output_vars_multi_depth <- state_names
-      output_vars_no_depth <- NA
-
-      GLM_temp_wq_out <-  get_glm_nc_var(ncFile = "/output.nc",
-                                         working_dir = ens_working_directory,
-                                         z_out = modeled_depths,
-                                         vars_depth = output_vars_multi_depth,
-                                         vars_no_depth = output_vars_no_depth,
-                                         diagnostic_vars = diagnostics_names,
-                                         diagnostics_daily_config = diagnostics_daily_config)
-
-      unlink(paste0(ens_working_directory, "/output.nc"))
-
-      num_glm_heights <- length(GLM_temp_wq_out$heights)
-      glm_heights_end[1:num_glm_heights] <- rev(GLM_temp_wq_out$heights)
-      x_star_end[1,1:num_glm_heights] <- rev(GLM_temp_wq_out$output[ ,1])
-      x_star_end[2,1:num_glm_heights] <- rev(GLM_temp_wq_out$output[ ,2])
-
-      if(include_wq){
-        start_index <- 2
-        for(wq in 1:num_wq_vars){
-          glm_wq <- rev(GLM_temp_wq_out$output[ ,start_index+wq])
-          x_star_end[start_index + wq,1:num_glm_heights] <- glm_wq
-        }
-      }
-
-      if(length(diagnostics_names) > 0){
-        for(wq in 1:length(diagnostics_names)){
-          diagnostic <-  rev(GLM_temp_wq_out$diagnostics_output[ , wq])
-          diagnostics[wq ,1:num_glm_heights] <- diagnostic
-        }
-      }
-
-      if(length(which(is.na(x_star_end[, 1:num_glm_heights]))) == 0){
-        pass = TRUE
-      }else{
-        message("NA or NaN in output file'. Re-running simulation...")
-        num_reruns <- num_reruns + 1
-      }
-    }
     num_reruns <- num_reruns + 1
     if(num_reruns > 10){
       stop(paste0("Too many re-runs (> 10) due to issues generating output",
@@ -424,12 +434,14 @@ run_model <- function(i,
 
   }
 
-  return(list(x_star_end  = x_star_end,
-              lake_depth_end  = GLM_temp_wq_out$lake_depth,
-              snow_ice_thickness_end  = GLM_temp_wq_out$snow_wice_bice,
-              diagnostics_end  = diagnostics,
-              diagnostics_daily_end = GLM_temp_wq_out$diagnostics_daily_output,
-              model_internal_heights  = glm_heights_end,
-              curr_pars_ens = curr_pars_ens
+  return(list(x_star_end             = x_star_end,
+              lake_depth_end         = GLM_temp_wq_out$lake_depth,
+              snow_ice_thickness_end = GLM_temp_wq_out$snow_wice_bice,
+              diagnostics_end        = diagnostics,
+              diagnostics_daily_end  = GLM_temp_wq_out$diagnostics_daily_output,
+              model_internal_heights = glm_heights_end,
+              curr_pars_ens          = curr_pars_ens,
+              glm_nml                = glm_nml,
+              aed_nml                = aed_nml
   ))
 }
