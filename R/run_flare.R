@@ -139,7 +139,15 @@ run_flare <- function(lake_directory,
 
   states_config <- generate_states_to_obs_mapping(states_config, obs_config)
 
+  message('Using xcc from aed.nml in states_config...')
+  states_config <- update_phy_states_obs_mapping(
+    states_config,
+    nml_path = file.path(config$file_path$configuration_directory, 
+      config$model_settings$base_AED_phyto_pars_nml_file))
+
   model_sd <- initiate_model_error(config, states_config)
+
+  diagnose_error_balance(states_config, obs_config, model_sd)
 
   nv_noise_file <- config$model_settings$non_vertical_noise_config_file
   if (!is.null(nv_noise_file) && !is.na(nv_noise_file)) {

@@ -112,7 +112,7 @@ run_letkf <- function(x_matrix,
     eig_l   <- eigen(C_local, symmetric = TRUE)
     T_local <- sqrt(nmembers - 1) *
                eig_l$vectors %*%
-               diag(1 / sqrt(pmax(eig_l$values, 0))) %*%
+               diag(1 / sqrt(pmax(eig_l$values, .Machine$double.eps))) %*%
                t(eig_l$vectors)
     w_mean  <- solve(C_local, crossprod(Y_local, solve(R_local, d_local)))
 
@@ -134,7 +134,7 @@ run_letkf <- function(x_matrix,
     eig_g    <- eigen(C_global, symmetric = TRUE)
     T_global <- sqrt(nmembers - 1) *
                 eig_g$vectors %*%
-                diag(1 / sqrt(pmax(eig_g$values, 0))) %*%
+                diag(1 / sqrt(pmax(eig_g$values, .Machine$double.eps))) %*%
                 t(eig_g$vectors)
     w_global    <- solve(C_global, crossprod(Y, solve(R, d)))
     A_global    <- A[global_rows, , drop = FALSE]

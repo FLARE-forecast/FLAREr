@@ -14,7 +14,7 @@ da_setup:
     use_obs_constraint: TRUE
     inflation_factor: 1.0
     obs_filename: fcre-targets-insitu.csv
-    add_random_noise: 2
+    add_random_noise: 1
     log_transform_wq_obs: FALSE #sample WQ perturbed observations in log space to avoid zero-clamping bias
     log_transform_wq_zero_collapse: FALSE #when yt=0, collapse d_mat to 0 (unbiased) instead of clamping
 model_settings:

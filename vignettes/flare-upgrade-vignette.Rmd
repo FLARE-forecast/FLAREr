@@ -37,15 +37,13 @@ error if they are absent.
 ```yaml
 da_setup:
   ...
-  add_random_noise: 2
+  add_random_noise: 1
   log_transform_wq_obs: FALSE
   log_transform_wq_zero_collapse: FALSE
 ```
 
--   **add_random_noise:** controls how observation perturbations are
-    drawn for the stochastic EnKF. Set to `2` (normal distribution
-    centred on the observation). If you were previously using the
-    default stochastic EnKF this value reproduces the old behaviour.
+-   **add_random_noise:** enable process noise (`1` = on, `0` = off).
+    Set to `1` to reproduce the previous default behaviour.
 
 -   **log_transform_wq_obs:** set to `FALSE` to keep the existing
     behaviour; set to `TRUE` to sample water-quality observation

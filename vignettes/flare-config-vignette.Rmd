@@ -197,11 +197,12 @@ settings, inputs, and outputs.
     observations are very informative relative to the prior ensemble
     spread. `1.0` recovers the standard bootstrap particle filter.
 
--   **add_random_noise:** integer controlling how observation
-    perturbations are generated for the stochastic EnKF. `2` = sample
-    perturbed observations from a normal distribution centred on the
-    observation. Not used by deterministic methods (`etkf`, `letkf`,
-    `esmda`).
+-   **add_random_noise:** enable process noise during the forecast (`1`
+    = on, `0` = off). When enabled, small random perturbations are added
+    to the model state and non-vertical diagnostic variables at each
+    timestep to represent irreducible model error. Set to `0` to run a
+    deterministic ensemble with no process noise. Not used by the
+    particle filter (`pf`).
 
 -   **log_transform_wq_obs:** sample perturbed water-quality
     observations in log space to avoid zero-clamping bias (`TRUE` or
