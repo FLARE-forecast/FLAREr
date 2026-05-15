@@ -56,7 +56,7 @@ run_particle_filter <- function(x_matrix,
                                 obs_config,
                                 inflation_start) {
 
-  npars           <- if (is.null(pars_corr)) 0L else dim(pars_corr)[1]
+  npars           <- if (is.null(pars_corr)) 0L else nrow(pars_corr)
   nmembers        <- dim(states_depth_start)[3]   # FIX: was length(nmembers) = 1
   nstates         <- dim(states_depth_start)[1]
   ndepths_modeled <- length(config$model_settings$modeled_depths)
@@ -174,12 +174,9 @@ run_particle_filter <- function(x_matrix,
     cumwt[nmembers] <- 1.0           # prevent floating-point rounding past 1
     u0            <- runif(1, 0, 1 / nmembers)
     positions     <- u0 + (seq_len(nmembers) - 1L) / nmembers
-    # left.open=TRUE: uses vec[i] < x <= vec[i+1], so a position exactly on a
-    # CDF boundary maps to the correct particle, not the next one.
-    # pmin/pmax clamp any remaining floating-point edge cases.
-    samples <- pmin(pmax(findInterval(positions, cumwt,
-                                      left.open = TRUE) + 1L, 1L),
-                    nmembers)
+    # findInterval(x, vec) returns i s.t. vec[i] <= x < vec[i+1]; +1L maps to
+    # 1-based particle indices.  pmin/pmax clamp boundary floating-point edge cases.
+    samples <- pmin(pmax(findInterval(positions, cumwt) + 1L, 1L), nmembers)
 
     # Reset accumulated weights to uniform after resampling.
     log_particle_weights_updated[] <- log(1.0)
@@ -232,7 +229,10 @@ run_particle_filter <- function(x_matrix,
   lake_depth_updated             <- lake_depth_start[idx]
   model_internal_heights_updated <- model_internal_heights_start[, idx]
 
-  pars_updated <- if (npars > 0) pars_corr[, idx] else NULL
+  pars_updated <- NULL
+  if (npars > 0) {
+    pars_updated <- pars_corr[, idx]
+  }
 
   # Diagnostics arrays vary in dimensionality depending on how many diagnostic
   # variables are configured.  The original resample branch had an unreachable

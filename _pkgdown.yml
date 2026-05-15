@@ -19,6 +19,7 @@ articles:
 - title: Configuration
   contents:
   - flare-config-vignette
+  - flare-da-hyperparameters-vignette
 - title: Upgrading
   contents:
   - flare-upgrade-vignette
