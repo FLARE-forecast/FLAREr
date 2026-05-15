@@ -14,4 +14,4 @@ utils::globalVariables(c(".n", "AirTemp", "FLOW", "LongWave", "Rain", "RelHum", 
                          "lake_directory","multi_depth", "set_names", "force_tz", "as_vector", "pub_datetime", "log_weight", "reference_date",
                          "na.omit", "max_datetime", "reference_date", "reference_date", "obs_config", "multi_depth",
                          "active_in_xmatrix", "n_non_vertical", "obs_non_vertical",
-                         "working_directory", ".faasr"))
+                         "working_directory"))

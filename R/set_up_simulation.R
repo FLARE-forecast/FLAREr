@@ -32,6 +32,7 @@ set_up_simulation <- function(configure_run_file = "configure_run.yml", lake_dir
 
   config <- yaml::read_yaml(file.path(lake_directory,"configuration", config_set_name, run_config$configure_flare))
   config$run_config <- run_config
+  config$file_path$lake_directory <- lake_directory
   config$file_path$qaqc_data_directory <- file.path(lake_directory, "targets", config$location$site_id)
   config$file_path$data_directory <- file.path(lake_directory, "data_raw")
   config$file_path$noaa_directory <- file.path(lake_directory, "drivers")
@@ -50,7 +51,7 @@ set_up_simulation <- function(configure_run_file = "configure_run.yml", lake_dir
     config$output_settings$diagnostics_daily$depth <- as.numeric(config$output_settings$diagnostics_daily$depth)
   }
 
-  config$faasr <- initialize_faasr(config)
+  initialize_faasr(config)
   run_config <- get_run_config(configure_run_file, lake_directory, config, clean_start, config_set_name = config_set_name, sim_name = sim_name)
 
   config$run_config <- run_config
