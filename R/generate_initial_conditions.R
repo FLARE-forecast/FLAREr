@@ -64,7 +64,9 @@ generate_initial_conditions <- function(states_config,
       state_names             = states_config$state_names,
       par_names               = pars_config$par_names_save,
       diagnostics_names       = config$output_settings$diagnostics_names,
-      diagnostics_daily_names = config$output_settings$diagnostics_daily$names,
+      diagnostics_daily_names = if (!is.null(config$output_settings$diagnostics_daily$save_names))
+        config$output_settings$diagnostics_daily$save_names else
+        config$output_settings$diagnostics_daily$names,
       restart_index           = restart_index,
       restart_date            = format(as.Date(config$run_config$start_datetime),
                                        "%Y-%m-%d"),
@@ -172,7 +174,7 @@ generate_initial_conditions <- function(states_config,
 
     }
 
-    if(npars > 0){
+    if(isTRUE(npars > 0)){
       for(par in 1:npars){
         if(pars_config$fix_par[par] == 0){
           init$pars[par, ] <- runif(n=nmembers,pars_config$par_init_lowerbound[par], pars_config$par_init_upperbound[par])

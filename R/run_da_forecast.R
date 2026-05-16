@@ -363,6 +363,8 @@ run_da_forecast <- function(states_init,
   member_glm_nml <- vector("list", nmembers)
   member_aed_nml <- vector("list", nmembers)
 
+  da_diag_steps <- list()
+
   for (i in start_step:nsteps) {
     if (i > 1) {
       curr_start <- strftime(full_time[i - 1],
@@ -397,7 +399,7 @@ run_da_forecast <- function(states_init,
     states_depth_wo_noise <- array(NA, dim = c(nstates, ndepths_modeled, nmembers))
     states_depth_w_noise <- array(NA, dim = c(nstates, ndepths_modeled, nmembers))
     curr_pars <- array(NA, dim = c(npars, nmembers))
-    pars_corr <- NULL
+    pars_corr <- if (isTRUE(npars > 0)) pars[i, , ] else NULL
 
     # Run GLM one step from the initial conditions to populate the diagnostics
     # array at i==1.  Only diagnostics_end is kept; x_star_end is discarded so
@@ -712,6 +714,8 @@ run_da_forecast <- function(states_init,
         }
       } # END ENSEMBLE LOOP
 
+      if (isTRUE(npars > 0)) pars_corr <- curr_pars
+
       # Update per-member NML cache so the next step can skip the disk read.
       for (m in seq_len(nmembers)) {
         member_glm_nml[m] <- list(out[[m]]$glm_nml)
@@ -920,6 +924,20 @@ run_da_forecast <- function(states_init,
         diagnostics_daily_start <- NA
       }
 
+      # Pre-build obs labels for diagnostic output (no cost unless option is set)
+      obs_diag_meta <- if (isTRUE(config$da_setup$save_da_diagnostics) &&
+                            length(z_index) > 0L) {
+        obs_config_vert <- obs_config[obs_config$multi_depth == 1, ]
+        all_vars   <- c(rep(obs_config_vert$state_names_obs, each = ndepths_modeled),
+                        active_in_xmatrix)
+        all_depths <- c(rep(config$model_settings$modeled_depths,
+                            times = nrow(obs_config_vert)),
+                        rep(NA_real_, length(active_in_xmatrix)))
+        list(variable = all_vars[z_index], depth = all_depths[z_index])
+      } else {
+        NULL
+      }
+
       if (da_method == "enkf") {
         updates <- FLAREr:::run_enkf(x_matrix,
           h,
@@ -942,7 +960,9 @@ run_da_forecast <- function(states_init,
           n_non_vertical,
           par_fit_method,
           inflation_start = inflation[i - 1],
-          lake_max_depth = lake_max_depth
+          lake_max_depth = lake_max_depth,
+          states_config = states_config,
+          obs_diag_meta = obs_diag_meta
         )
       } else if (da_method == "pf") {
         updates <- FLAREr:::run_particle_filter(x_matrix,
@@ -1044,6 +1064,16 @@ run_da_forecast <- function(states_init,
         )
       } else {
         stop("da_method not supported; select enkf, etkf, esmda, letkf, or pf or none")
+      }
+
+      if (!is.null(updates$da_diag)) {
+        da_diag_steps[[length(da_diag_steps) + 1L]] <- FLAREr:::collect_da_diagnostics(
+          da_diag        = updates$da_diag,
+          time           = full_time[i],
+          states_config  = states_config,
+          pars_config    = pars_config,
+          modeled_depths = config$model_settings$modeled_depths
+        )
       }
 
       if (npars > 0) {
@@ -1154,6 +1184,7 @@ run_da_forecast <- function(states_init,
     met_file_names = met_file_names,
     log_particle_weights = log_particle_weights,
     inflation = inflation,
-    glm_restart_staged = glm_restart_staged
+    glm_restart_staged = glm_restart_staged,
+    da_diagnostics = da_diag_steps
   )
 }

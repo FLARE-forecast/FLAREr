@@ -16,7 +16,7 @@ propose_parameters <- function(i, m, pars, pars_config, npars, par_fit_method, d
 
   curr_pars_ens <- NULL
 
-  if(npars > 0){
+  if(isTRUE(npars > 0)){
 
     if(!("fix_par" %in% names(pars_config))){
       pars_config <- pars_config |> dplyr::mutate(fix_par = 0)

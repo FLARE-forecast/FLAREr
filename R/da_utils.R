@@ -146,7 +146,7 @@ apply_da_updates <- function(update,
     }
   }
 
-  if(npars > 0){
+  if(isTRUE(npars > 0)){
     if(par_fit_method != "perturb_init"){
       pars_updated <- update[(dim(update)[1]-npars+1):dim(update)[1], ]
     }else{
@@ -193,7 +193,7 @@ apply_da_updates <- function(update,
   num_out_depths <- length(which(!is.na(states_height_start[1, ,1])))
 
   #Correct any parameter values outside bounds using reflective bounds to preserve ensemble spread
-  if(npars > 0){
+  if(isTRUE(npars > 0)){
     for(par in 1:npars){
       if(par_fit_method == "inflate" && pars_config$fix_par[par] == 0){
         par_mean <- mean(pars_updated[par, ])

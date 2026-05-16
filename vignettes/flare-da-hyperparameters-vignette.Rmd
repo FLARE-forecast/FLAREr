@@ -43,6 +43,7 @@ well this correction works depends on a small number of hyperparameters:
 | Observation uncertainty | `obs_sd` | `observations_config.csv` |
 | Parameter fitting | `par_fit_method`, `perturb_par` | `configure_flare.yml` + `parameter_calibration_config.csv` |
 | Initial ensemble spread | `initial_model_sd`, `par_init_lowerbound/_upperbound` | `states_config.csv`, `parameter_calibration_config.csv` |
+| DA diagnostics | `save_da_diagnostics`, `render_da_diagnostics_report` | `configure_flare.yml` → `da_setup` |
 
 These hyperparameters interact. The sections below explain each group,
 describe the failure modes that result from extreme settings, and give
@@ -597,6 +598,120 @@ its sources. For example:
 
 ---
 
+## 13. DA diagnostics (`save_da_diagnostics`, `render_da_diagnostics_report`)
+
+**Where:** `configure_flare.yml` → `da_setup`
+
+```yaml
+da_setup:
+  save_da_diagnostics: FALSE           # write parquet files after each run
+  render_da_diagnostics_report: FALSE  # auto-render HTML report after each run
+```
+
+FLAREr can write a set of per-step diagnostic tables and render them into a
+self-contained HTML report. These tools are the primary way to answer the
+diagnostic questions raised throughout this vignette — "is my NIS healthy?",
+"which states are collapsing?", "are my parameter bounds too tight?" — without
+writing custom post-processing code.
+
+### Enabling diagnostics
+
+Set `save_da_diagnostics: TRUE` to have `run_flare()` write diagnostic parquet
+files to `<lake_directory>/da_diagnostics/` after every run. Set
+`render_da_diagnostics_report: TRUE` to additionally render the HTML report
+automatically at the end of each run. Both flags are `FALSE` by default because
+the parquet writes and Quarto rendering add a small amount of overhead.
+
+### What gets saved
+
+Seven parquet files are written to `da_diagnostics/`:
+
+| File | Content |
+|---|---|
+| `da_filter_health.parquet` | One row per DA step: NIS, DFS, number of observations assimilated, inflation applied |
+| `da_innovations.parquet` | One row per active observation per step: innovation, per-obs NIS, observation influence |
+| `da_ensemble_spread.parquet` | One row per state × depth per step: prior/posterior mean and SD, update magnitude, spread ratio |
+| `da_ranks.parquet` | One row per observation per step: rank of the observation within the prior ensemble |
+| `da_parameters.parquet` | One row per parameter per step: prior/posterior mean and SD, fraction of members at bounds (only when parameters are estimated) |
+| `da_cross_state.parquet` | Covariance of each state with the PHY_TCHLA predicted observation and the resulting update (only when PHY_TCHLA observations are active) |
+| `da_cross_depth.parquet` | Per-(obs depth × state depth) update contribution for each PHY state (only when PHY_TCHLA observations are active) |
+
+Every table includes `site_id`, `model_id`, and `reference_date` columns so
+that diagnostics from multiple runs can be accumulated and compared.
+
+### Generating the report
+
+#### Automatically (recommended for routine monitoring)
+
+```yaml
+da_setup:
+  save_da_diagnostics: TRUE
+  render_da_diagnostics_report: TRUE
+```
+
+`run_flare()` calls `render_da_diagnostics(lake_directory)` after writing the
+parquet files. The report is saved as
+`<lake_directory>/da_diagnostics_report.html`.
+
+#### Manually (for ad-hoc investigation or filtering)
+
+```r
+FLAREr::render_da_diagnostics(
+  lake_directory  = "/path/to/lake_repo",
+  diagnostics_dir = "da_diagnostics",       # relative to lake_directory
+  site_id         = "fcre",                 # NULL = all sites
+  model_id        = "test_run",             # NULL = all model IDs
+  output_file     = "da_diagnostics_report.html",
+  quiet           = TRUE
+)
+```
+
+`render_da_diagnostics()` copies the built-in Quarto template into
+`lake_directory`, renders it against the parquet files, and removes the
+temporary `.qmd` file. The `site_id` and `model_id` arguments are useful when
+parquet files from multiple runs have been accumulated in the same directory and
+you want to focus on one configuration.
+
+### What the report shows
+
+The HTML report has eight sections, each linked to the hyperparameters in this
+vignette:
+
+| Report section | Key quantities | Hyperparameter connection |
+|---|---|---|
+| **1 Filter Health** | NIS time series (colour-coded healthy/warning/critical), DFS bar chart, n_obs bar chart | `model_sd`, `inflation_factor`, `obs_sd` |
+| **2 Innovation Analysis** | Per-variable mean innovation, NIS, observation influence; innovation time series; per-obs NIS violins | `obs_sd`, `model_sd`, `localization_distance` |
+| **3 Ensemble Spread** | Spread-ratio heatmap (state × depth); prior SD collapse plot; update magnitude time series | `model_sd`, `inflation_factor`, `ensemble_size` |
+| **4 Rank Histograms** | Rank histogram per observation type with chi-squared uniformity test | Ensemble calibration overall |
+| **5 Parameter Estimation** | Parameter prior/posterior trajectory ribbons; fraction-at-bounds plot; update decomposition (PHY_TCHLA vs other obs) | `par_fit_method`, `perturb_par`, bound settings |
+| **6 Cross-State & Cross-Depth Coupling** | Covariance of each state with PHY_TCHLA predicted obs; cross-depth update heatmap | `localization_distance`, `da_method` |
+| **7 Summary & Recommendations** | Automated callout cards (critical/warning) with specific config changes | All hyperparameters |
+| **8 Hyperparameter Reference** | Quick-reference table of typical ranges and failure-mode symptoms | — |
+
+The **Summary & Recommendations** section (§7) automatically checks NIS,
+ensemble collapse, rank histogram shape, observation influence, and parameter
+bounds, and emits colour-coded callout cards with the exact configuration
+changes needed to fix each problem. If no issues are detected it renders a
+single "Filter appears healthy" tip.
+
+### Typical diagnostic workflow
+
+1. Enable `save_da_diagnostics: TRUE` and run a hindcast over at least
+   2–4 weeks of data.
+2. Open `da_diagnostics_report.html` and check the **Filter Health** panel
+   first. If mean NIS is not near 1, go to §7 for targeted recommendations.
+3. Check **Rank Histograms** (§4) for each observation type. Peaked histograms
+   indicate under-dispersion; U-shaped histograms indicate over-dispersion.
+4. Inspect **Ensemble Spread** (§3) for any states with a mean spread ratio
+   below 0.05 — these are collapsing.
+5. If parameters are estimated, check **Parameter Estimation** (§5) for members
+   piling at bounds or for parameters driven by biologically unrelated
+   observations.
+6. Adjust one hyperparameter group at a time (process noise, inflation, or obs
+   uncertainty) and re-run to isolate the effect.
+
+---
+
 ## Summary: a recommended tuning workflow
 
 1. **Start simple.** Use `da_method: enkf`, `ensemble_size: 100`,
@@ -607,25 +722,30 @@ its sources. For example:
    (0.3–1.0 °C for temperature; 0.2–0.5 mg/L for dissolved oxygen) on
    top of sensor noise.
 
-3. **Run a hindcast.** Compare ensemble spread to observed variability.
-   If the ensemble collapses, enable `use_inflation_factor: TRUE` with
-   `inflation_factor ≈ 1.02`. If spread is unrealistically large,
-   reduce `model_sd`.
+3. **Enable diagnostics.** Set `save_da_diagnostics: TRUE` and
+   `render_da_diagnostics_report: TRUE` (Section 13) so every run
+   produces an HTML report.
 
-4. **Add localisation** if using many depths. Start with
+4. **Run a hindcast.** Open the DA diagnostics report and check the Filter
+   Health panel. If mean NIS is not near 1, follow the recommendations in
+   §7 of the report. If ensemble spread collapses, enable
+   `use_inflation_factor: TRUE` with `inflation_factor ≈ 1.02`. If spread
+   is unrealistically large, reduce `model_sd`.
+
+5. **Add localisation** if using many depths. Start with
    `localization_distance ≈ 2–5 m` and adjust based on whether the
    posterior looks physically smooth.
 
-5. **Enable parameter fitting.** Add parameters one at a time, starting
+6. **Enable parameter fitting.** Add parameters one at a time, starting
    with those most strongly correlated with assimilated observations.
    Use `par_fit_method: inflate` with `perturb_par ≈ 1.05`.
 
-6. **Evaluate with skill scores.** Use CRPS or log-score from
+7. **Evaluate with skill scores.** Use CRPS or log-score from
    `score4cast` to compare configurations. A well-tuned system should
    have higher skill than the open-loop run (`da_method: none`) and
    should not be systematically over- or underconfident.
 
-7. **Scale up.** Once the filter is stable, increase `ensemble_size` to
+8. **Scale up.** Once the filter is stable, increase `ensemble_size` to
    200–500. If you are running many state variables at many depths and
    find that `localization_distance` alone is not preventing spurious
    cross-depth updates, consider switching to `letkf`. The relevant

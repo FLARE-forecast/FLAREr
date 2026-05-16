@@ -165,7 +165,7 @@ run_model <- function(i,
   x_star_end <- array(NA, dim =c(nstates, max_layers))
   native_heights_index <- which(!is.na(glm_heights_start))
 
-  if(npars > 0){
+  if(isTRUE(npars > 0)){
 
     unique_pars <- unique(par_names)
 
@@ -336,12 +336,26 @@ run_model <- function(i,
               overwrite = TRUE) #GLM SPECIFIC
   }
 
+  # Back up the GLM restart file so retries always start from the same valid state
+  rst_backup_path <- NULL
+  if(use_glm_restart){
+    rst_path <- file.path(ens_working_directory, paste0("glm_restart_", m, ".nc"))
+    if(file.exists(rst_path)){
+      rst_backup_path <- paste0(rst_path, ".bak")
+      file.copy(rst_path, rst_backup_path, overwrite = TRUE)
+    }
+  }
+
   output_vars_multi_depth <- state_names
   output_vars_no_depth <- NA
 
   verbose <- FALSE
   while(!pass){
     unlink(paste0(ens_working_directory, "/output.nc"))
+    # Restore the restart file so each retry starts from a clean state
+    if(!is.null(rst_backup_path) && file.exists(rst_backup_path)){
+      file.copy(rst_backup_path, gsub("\\.bak$", "", rst_backup_path), overwrite = TRUE)
+    }
 
     run_glm(dir = ens_working_directory, verbose = verbose)
     verbose <- TRUE
@@ -413,7 +427,6 @@ run_model <- function(i,
             pass = TRUE
           }else{
             message("NA or NaN in output file'. Re-running simulation...")
-            num_reruns <- num_reruns + 1
           }
         }
       }else{
@@ -425,11 +438,13 @@ run_model <- function(i,
       success <- FALSE
     }
 
-    num_reruns <- num_reruns + 1
-    if(num_reruns > 10){
-      stop(paste0("Too many re-runs (> 10) due to issues generating output",
-                  '\n Suggest testing specific GLM execution with the following code:',
-                  '\n FLAREr:::run_glm(','"' ,ens_working_directory,'")'))
+    if(!pass){
+      num_reruns <- num_reruns + 1
+      if(num_reruns > 25){
+        stop(paste0("Too many re-runs (> 25) due to issues generating output",
+                    '\n Suggest testing specific GLM execution with the following code:',
+                    '\n FLAREr:::run_glm(','"' ,ens_working_directory,'")'))
+      }
     }
 
   }

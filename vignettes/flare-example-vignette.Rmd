@@ -59,7 +59,15 @@ remotes::install_github("flare-forecast/FLAREr")
 
 Second, download the General Lake Model (GLM) code.  You can get in using multiple pathways
 
-The easiest way is to install the `GLM3r` package from Github using
+The easiest way is to install the `GLMAEDr` package from Github, which downloads and manages the GLM binary for you:
+
+```{r}
+remotes::install_github("flare-forecast/GLMAEDr")
+GLMAEDr::glm_install()
+Sys.setenv('GLM_PATH'=GLMAEDr::glm_path())
+```
+
+Alternatively, you can install the `GLM3r` package from Github using
 
 ```{r}
 remotes::install_github("rqthomas/GLM3r")

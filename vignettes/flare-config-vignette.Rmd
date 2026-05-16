@@ -212,6 +212,32 @@ settings, inputs, and outputs.
     collapse the observation error matrix to zero (unbiased) rather than
     clamping (`TRUE` or `FALSE`)
 
+-   **save_da_diagnostics:** write per-step DA diagnostic tables to
+    `<lake_directory>/da_diagnostics/` as parquet files after each run
+    (`TRUE` or `FALSE`; default `FALSE`). Seven files are produced:
+    `da_filter_health.parquet` (NIS, DFS, n_obs per step),
+    `da_innovations.parquet` (per-observation innovation and influence),
+    `da_ensemble_spread.parquet` (prior/posterior mean and SD per state
+    × depth), `da_ranks.parquet` (observation rank within the prior
+    ensemble), `da_parameters.parquet` (parameter evolution and bound
+    fractions; only when parameters are estimated),
+    `da_cross_state.parquet` and `da_cross_depth.parquet` (cross-variable
+    and cross-depth update structure; only when PHY_TCHLA observations are
+    active). Each file includes `site_id`, `model_id`, and
+    `reference_date` columns so that diagnostics from successive runs can
+    be accumulated. See the [DA hyperparameters
+    vignette](flare-da-hyperparameters-vignette.html) for guidance on
+    interpreting these files.
+
+-   **render_da_diagnostics_report:** after writing the diagnostic parquet
+    files, render the built-in Quarto template into a self-contained HTML
+    report at `<lake_directory>/da_diagnostics_report.html` (`TRUE` or
+    `FALSE`; default `FALSE`). Requires `save_da_diagnostics: TRUE` and
+    the `quarto` R package. The report can also be generated manually at
+    any time by calling `FLAREr::render_da_diagnostics(lake_directory)`,
+    which additionally accepts `site_id`, `model_id`, `diagnostics_dir`,
+    and `output_file` arguments to filter or redirect the output.
+
 ### model_settings:
 
 -   **ncore:** number of process cores to use for parallel ensemble runs

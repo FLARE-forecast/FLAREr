@@ -145,8 +145,8 @@ test_that("observation non-vertical list is created", {
                                                        forecast_start_datetime = config$run_config$forecast_start_datetime,
                                                        forecast_horizon =  config$run_config$forecast_horizon)
 
-  testthat::expect_true(!is.null(obs_non_vertical$obs_secchi$obs))
-  testthat::expect_true(is.null(obs_non_vertical$obs_depth))
+  testthat::expect_true(!is.null(obs_non_vertical$secchi$obs))
+  testthat::expect_true(is.null(obs_non_vertical$depth))
 })
 
 
@@ -227,8 +227,9 @@ test_that("run_flare enkf and restart works", {
   skip_if_offline()
   skip_on_cran()
 
-  remotes::install_github("rqthomas/GLM3r")
-  Sys.setenv('GLM_PATH'='GLM3r')
+  remotes::install_github("flare-forecast/GLMAEDr")
+  GLMAEDr::glm_install()
+  Sys.setenv('GLM_PATH'=GLMAEDr::glm_path())
 
   dir <-  file.path(normalizePath(tempdir(),  winslash = "/"))
   lake_directory <- file.path(dir, "extdata")
@@ -258,7 +259,7 @@ test_that("run_flare enkf and restart works", {
   FLAREr:::update_run_config(lake_directory,
                              configure_run_file,
                              restart_file = next_restart$restart_file,
-                             start_datetime = "2022-09-29 00:00:00",
+                             start_datetime = "2022-09-30 00:00:00",
                              end_datetime = NA,
                              forecast_start_datetime = "2022-10-02 00:00:00",
                              forecast_horizon = 5,
@@ -277,7 +278,7 @@ test_that("run_flare enkf and restart works", {
   df <- arrow::open_dataset(file.path(lake_directory, "forecasts/parquet/site_id=fcre/model_id=test/reference_date=2022-10-02/part-0.parquet")) |>
     dplyr::collect()
 
-  testthat::expect_true(min(lubridate::as_date(df$datetime)) == lubridate::as_date("2022-09-29"))
+  testthat::expect_true(min(lubridate::as_date(df$datetime)) == lubridate::as_date("2022-09-30"))
 
 })
 
@@ -286,8 +287,7 @@ test_that("run_flare aed works", {
   skip_if_offline()
   skip_on_cran()
 
-  remotes::install_github("rqthomas/GLM3r")
-  Sys.setenv('GLM_PATH'='GLM3r')
+  Sys.setenv('GLM_PATH'=GLMAEDr::glm_path())
 
   dir <-  file.path(normalizePath(tempdir(),  winslash = "/"))
   lake_directory <- file.path(dir, "extdata")
@@ -295,7 +295,7 @@ test_that("run_flare aed works", {
   config_set_name <- "aed"
 
   file.copy(system.file("extdata", package = "FLAREr"), dir, recursive = TRUE)
-  config <- FLAREr:::set_up_simulation(configure_run_file, lake_directory, config_set_name = config_set_name)
+  config <- FLAREr:::set_up_simulation(configure_run_file, lake_directory, config_set_name = config_set_name, clean_start = TRUE)
   config <- FLAREr:::get_restart_file(config, lake_directory)
   pars_config <- readr::read_csv(file.path(config$file_path$configuration_directory, config$model_settings$par_config_file), col_types = readr::cols())
   obs_config <- readr::read_csv(file.path(config$file_path$configuration_directory, config$model_settings$obs_config_file), col_types = readr::cols())
@@ -362,11 +362,11 @@ test_that("open meteo run works", {
 
   skip_if_offline()
   skip_on_cran()
-  skip_if_not_installed("ropenmeteo")
   skip_if_not_installed("GLM3r")
 
-  remotes::install_github("rqthomas/GLM3r")
-  Sys.setenv('GLM_PATH'='GLM3r')
+  remotes::install_github("flare-forecast/ropenmeteo")
+
+  Sys.setenv('GLM_PATH'=GLMAEDr::glm_path())
 
   dir <-  file.path(normalizePath(tempdir(),  winslash = "/"))
   lake_directory <- file.path(dir, "extdata")
@@ -389,9 +389,10 @@ test_that("open meteo run works", {
 
   next_restart <- FLAREr::run_flare(lake_directory = lake_directory, configure_run_file = configure_run_file, config_set_name = config_set_name)
 
-  testthat::expect_true(file.exists(file.path(lake_directory, "forecasts/parquet/site_id=fcre/model_id=test_pf/reference_date=2022-10-02/part-0.parquet")))
+  forecast_date <- format(Sys.Date(), "%Y-%m-%d")
+  testthat::expect_true(file.exists(file.path(lake_directory, paste0("forecasts/parquet/site_id=fcre/model_id=test/reference_date=", forecast_date, "/part-0.parquet"))))
 
-  testthat::expect_true(file.exists(file.path(lake_directory, "restart/fcre/test_pf/fcre-2022-10-02-test_pf.nc")))
+  testthat::expect_true(file.exists(file.path(lake_directory, paste0("restart/fcre/test/fcre-", forecast_date, "-test.nc"))))
 
 })
 

@@ -141,9 +141,9 @@ test_that("create_obs_non_vertical returns obs_secchi$obs as all-NA when no secc
   )
 
   # Secchi is in obs_config (multi_depth = 0), but no secchi data in file
-  # → obs_secchi should exist (secchi IS in obs_config) but obs should be all NA
-  expect_false(is.null(result$obs_secchi))
-  expect_true(all(is.na(result$obs_secchi$obs)))
+  # → result$secchi should exist (secchi IS in obs_config) but obs should be all NA
+  expect_false(is.null(result$secchi))
+  expect_true(all(is.na(result$secchi$obs)))
 })
 
 test_that("create_obs_non_vertical returns obs_depth as NULL when depth not in obs_config", {

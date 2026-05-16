@@ -137,13 +137,15 @@ run_flare <- function(lake_directory,
 
   message('Setting states and initial conditions...')
 
-  states_config <- generate_states_to_obs_mapping(states_config, obs_config)
+  nml_file_phy <- config$model_settings$base_AED_nml
+  if (!is.null(nml_file_phy) && !is.na(nml_file_phy)) {
+    message('Using xcc from aed.nml in states_config...')
+    states_config <- update_phy_states_obs_mapping(
+      states_config,
+      nml_path = file.path(config$file_path$configuration_directory, nml_file_phy))
+  }
 
-  message('Using xcc from aed.nml in states_config...')
-  states_config <- update_phy_states_obs_mapping(
-    states_config,
-    nml_path = file.path(config$file_path$configuration_directory, 
-      config$model_settings$base_AED_phyto_pars_nml_file))
+  states_config <- generate_states_to_obs_mapping(states_config, obs_config)
 
   model_sd <- initiate_model_error(config, states_config)
 
@@ -204,8 +206,21 @@ run_flare <- function(lake_directory,
                                               endpoint = config$s3$forecasts_parquet$endpoint,
                                               local_directory = file.path(lake_directory, "forecasts/parquet"),config)
 
+  if (isTRUE(config$da_setup$save_da_diagnostics)) {
+    message("writing DA diagnostics")
+    FLAREr:::write_da_diagnostics(
+      da_forecast_output = da_forecast_output,
+      local_directory    = file.path(lake_directory, "da_diagnostics")
+    )
+  }
+
   rm(da_forecast_output)
   gc()
+
+  if (isTRUE(config$da_setup$save_da_diagnostics) &&
+      isTRUE(config$da_setup$render_da_diagnostics_report)) {
+    render_da_diagnostics(lake_directory = lake_directory)
+  }
 
   if(config$output_settings$generate_plot){
     message("Generating plot")

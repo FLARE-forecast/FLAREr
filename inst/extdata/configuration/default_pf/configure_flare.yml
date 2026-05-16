@@ -17,6 +17,8 @@ da_setup:
     add_random_noise: 1
     log_transform_wq_obs: FALSE #sample WQ perturbed observations in log space to avoid zero-clamping bias
     log_transform_wq_zero_collapse: FALSE #when yt=0, collapse d_mat to 0 (unbiased) instead of clamping
+    save_da_diagnostics: FALSE #write per-step DA diagnostic parquet files to da_diagnostics/
+    render_da_diagnostics_report: FALSE #render da_diagnostics_report.html after each run
 model_settings:
    ncore: 4
    max_model_layers: 75

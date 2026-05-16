@@ -46,6 +46,9 @@ write_restart <- function(da_forecast_output,
   diagnostics_names       <- config$output_settings$diagnostics_names
   diagnostics_daily       <- da_forecast_output$diagnostics_daily
   diagnostics_daily_names <- config$output_settings$diagnostics_daily$names
+  # save_names are unique identifiers for NC variables; fall back to names if absent
+  diagnostics_daily_nc_names <- config$output_settings$diagnostics_daily$save_names
+  if (is.null(diagnostics_daily_nc_names)) diagnostics_daily_nc_names <- diagnostics_daily_names
 
   #hist_days <- as.numeric(forecast_start_datetime - full_time[1])
   #start_forecast_step <- 1 + hist_days
@@ -112,7 +115,7 @@ write_restart <- function(da_forecast_output,
   def_list[[5]] <- ncdf4::ncvar_def("inflation","dimensionless",list(timedim),missval = fillvalue,longname = "adaptive inflation parameter",prec="single")
   index <- 5
 
-  if(npars > 0){
+  if(isTRUE(npars > 0)){
     for(par in 1:npars){
       def_list[[index+par]] <-ncdf4::ncvar_def(pars_config$par_names_save[par],pars_config$par_units[par],list(timedim,ensdim),fillvalue,paste0("parameter:",pars_config$par_names_save[par]),prec="single")
     }
@@ -183,9 +186,9 @@ write_restart <- function(da_forecast_output,
     for(d in seq_along(diagnostics_daily_names)){
       tmp_index <- tmp_index + 1
       def_list[[tmp_index]] <- ncdf4::ncvar_def(
-        paste0("diag_daily_", diagnostics_daily_names[d]), "-",
+        paste0("diag_daily_", diagnostics_daily_nc_names[d]), "-",
         list(timedim, ensdim),
-        fillvalue, paste0("diagnostic_daily:", diagnostics_daily_names[d]), prec = "single"
+        fillvalue, paste0("diagnostic_daily:", diagnostics_daily_nc_names[d]), prec = "single"
       )
     }
   }
@@ -207,7 +210,7 @@ write_restart <- function(da_forecast_output,
 
   index <- 5
 
-  if(npars > 0){
+  if(isTRUE(npars > 0)){
     for(par in 1:npars){
       pars_par <- pars[, par, ]
       ncdf4::ncvar_put(ncout, def_list[[index + par]], pars_par[keep_idx, , drop = FALSE])

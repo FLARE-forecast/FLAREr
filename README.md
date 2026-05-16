@@ -34,7 +34,15 @@ remotes::install_github("FLARE-forecast/FLAREr")
 
 Next, you need the GLM model.  You can get in using multiple pathways
 
-The easiest way is to install the `GLM3r` package from Github using
+The easiest way is to install the `GLMAEDr` package from Github, which downloads and manages the GLM binary for you:
+
+```
+remotes::install_github("flare-forecast/GLMAEDr")
+GLMAEDr::glm_install()
+Sys.setenv('GLM_PATH'=GLMAEDr::glm_path())
+```
+
+Alternatively, you can install the `GLM3r` package from Github using
 
 ```
 remotes::install_github("rqthomas/GLM3r")
@@ -94,8 +102,9 @@ library(arrow)
 library(tidyverse)
 library(FLAREr)
 
-remotes::install_github("rqthomas/GLM3r")
-Sys.setenv('GLM_PATH'='GLM3r')
+remotes::install_github("flare-forecast/GLMAEDr")
+GLMAEDr::glm_install()
+Sys.setenv('GLM_PATH'=GLMAEDr::glm_path())
 
 
 dir.create(tempdir(),showWarnings = FALSE)

@@ -413,13 +413,21 @@ generate_forecast_score_arrow <- function(targets_file,
 
 ## Other changes
 
-The package does not depend on the `GLM3r` package anymore.  There are multiple options for getting a GLM binary.  The easiest is to install GLM3r from github (the README has more information about getting the GLM binary)
+The package does not depend on the `GLM3r` package anymore.  There are multiple options for getting a GLM binary.  The easiest is to install the `GLMAEDr` package from github, which downloads and manages the GLM binary for you (the README has more information about getting the GLM binary):
+
+```
+remotes::install_github("flare-forecast/GLMAEDr")
+GLMAEDr::glm_install()
+Sys.setenv('GLM_PATH'=GLMAEDr::glm_path())
+```
+
+Alternatively, you can install `GLM3r` from github:
 
 ```
 remotes::install_github("rqthomas/GLM3r")
 ```
 
-you are require to set an environment variable in your workflow script that calls `run_flare`.
+you are required to set an environment variable in your workflow script that calls `run_flare`.
 
 ```
 Sys.setenv('GLM_PATH'='GLM3r')
