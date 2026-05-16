@@ -35,7 +35,7 @@
    coef_mix_hyp = 0.5
 /
 &morphometry
-   ake_name = 'FallingCreek'
+   lake_name = 'FallingCreek'
    latitude = 37.30768
    longitude = -79.83707
    bsn_len = 711.699
@@ -56,9 +56,9 @@
 &output
    out_dir = "./"
    out_fn = "output"
-   nsave = 1
+   nsave = 24
    restart_fname = 'glm_restart.nc'
-   restart_nsave = 1
+   restart_nsave = 24
 /
 &init_profiles
    num_heights = 28
