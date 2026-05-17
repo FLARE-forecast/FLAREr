@@ -63,8 +63,14 @@ run_flare <- function(lake_directory,
   if(!is.null(config$model_settings$par_config_file)){
     if(!is.na(config$model_settings$par_config_file)){
       pars_config <- readr::read_csv(file.path(config$file_path$configuration_directory, config$model_settings$par_config_file), col_types = readr::cols())
-      required_par_cols <- c("par_names","par_names_save","par_file","par_init","par_init_lowerbound","par_init_upperbound","par_lowerbound","par_upperbound","perturb_par","par_units","fix_par")
-      optional_par_cols <- c("par_min_sd")
+
+      if("par_init" %in% names(pars_config) && !"par_init_mean" %in% names(pars_config)){
+        warning("'par_init' in parameter calibration config is deprecated. Please rename this column to 'par_init_mean'.")
+        pars_config <- dplyr::rename(pars_config, par_init_mean = par_init)
+      }
+
+      required_par_cols <- c("par_names","par_names_save","par_file","par_init_mean","par_init_lowerbound","par_init_upperbound","par_lowerbound","par_upperbound","perturb_par","par_units","fix_par")
+      optional_par_cols <- c("par_min_sd", "par_init_sd")
       if(!all(required_par_cols %in% names(pars_config)) ||
          !all(names(pars_config) %in% c(required_par_cols, optional_par_cols))){
         stop(" par configuration file does not have the correct columns")

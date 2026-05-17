@@ -127,10 +127,10 @@ test_that("propose_parameters returns NULL when npars is 0", {
   expect_null(result)
 })
 
-test_that("propose_parameters returns par_init for fixed parameters", {
+test_that("propose_parameters returns par_init_mean for fixed parameters", {
   pars_config <- data.frame(
     fix_par         = 1L,
-    par_init        = 0.42,
+    par_init_mean   = 0.42,
     par_lowerbound  = 0.0,
     par_upperbound  = 1.0,
     perturb_par     = 0.05
@@ -148,7 +148,7 @@ test_that("propose_parameters reflects values below lower bound", {
   set.seed(7)
   pars_config <- data.frame(
     fix_par         = 0L,
-    par_init        = 0.5,
+    par_init_mean   = 0.5,
     par_lowerbound  = 0.0,
     par_upperbound  = 1.0,
     perturb_par     = 10.0   # large perturbation to push below bound
@@ -170,7 +170,7 @@ test_that("propose_parameters reflects values above upper bound", {
   set.seed(8)
   pars_config <- data.frame(
     fix_par         = 0L,
-    par_init        = 0.5,
+    par_init_mean   = 0.5,
     par_lowerbound  = 0.0,
     par_upperbound  = 1.0,
     perturb_par     = 10.0   # large perturbation to push above bound
@@ -191,7 +191,7 @@ test_that("propose_parameters output is always within bounds after many draws", 
   set.seed(42)
   pars_config <- data.frame(
     fix_par         = 0L,
-    par_init        = 0.5,
+    par_init_mean   = 0.5,
     par_lowerbound  = 0.2,
     par_upperbound  = 0.8,
     perturb_par     = 0.3

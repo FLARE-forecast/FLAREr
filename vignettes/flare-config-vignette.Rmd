@@ -450,10 +450,10 @@ settings, inputs, and outputs.
 Example:
 
 ```
-par_names,par_names_save,par_file,par_init,par_init_lowerbound,par_init_upperbound,par_lowerbound,par_upperbound,perturb_par,par_units,fix_par,par_min_sd
-sed_temp_mean,zone1temp,glm3.nml,12,10,12,-100,100,1,deg_C,0,0.1
-sed_temp_mean,zone2temp,glm3.nml,15,12,16,-100,100,1,deg_C,0,0.1
-lw_factor,lw_factor,glm3.nml,1,0.9,1.1,-10,10,0.02,unitless,0,0.001
+par_names,par_names_save,par_file,par_init_mean,par_init_sd,par_init_lowerbound,par_init_upperbound,par_lowerbound,par_upperbound,perturb_par,par_units,fix_par,par_min_sd
+sed_temp_mean,zone1temp,glm3.nml,12,NA,10,12,-100,100,1,deg_C,0,0.1
+sed_temp_mean,zone2temp,glm3.nml,15,NA,12,16,-100,100,1,deg_C,0,0.1
+lw_factor,lw_factor,glm3.nml,1,NA,0.9,1.1,-10,10,0.02,unitless,0,0.001
 ```
 
 -   **par_names:** GLM namelist name of the parameter to estimate. The
@@ -466,19 +466,34 @@ lw_factor,lw_factor,glm3.nml,1,0.9,1.1,-10,10,0.02,unitless,0,0.001
 
 -   **par_file:** nml or CSV file that contains the parameter
 
--   **par_init:** initial mean value for the parameter
+-   **par_init_mean:** mean of the distribution used to initialise the
+    parameter ensemble. For fixed parameters (`fix_par = 1`) this is the
+    exact value used for all ensemble members.
 
--   **par_init_lowerbound:** lower bound of the initial uniform
-    distribution used to spread the ensemble
+-   **par_init_sd** *(optional)*: controls the shape of the initial
+    ensemble distribution for free parameters (`fix_par = 0`):
+    -   **`NA`** — draw each ensemble member independently from a
+        uniform distribution on [`par_init_lowerbound`,
+        `par_init_upperbound`] (original behaviour; use this when you
+        want to specify the initial range directly).
+    -   **a positive number** — draw each ensemble member from
+        N(`par_init_mean`, `par_init_sd`), then reflect any values that
+        fall outside [`par_lowerbound`, `par_upperbound`] back into the
+        feasible region and clamp any remaining outliers.
 
--   **par_init_upperbound:** upper bound of the initial uniform
-    distribution used to spread the ensemble
+-   **par_init_lowerbound:** lower bound of the uniform distribution
+    used when `par_init_sd` is `NA`. Ignored otherwise.
+
+-   **par_init_upperbound:** upper bound of the uniform distribution
+    used when `par_init_sd` is `NA`. Ignored otherwise.
 
 -   **par_lowerbound:** hard lower bound — parameter values are clamped
-    to this during assimilation
+    to this during assimilation and during normal-distribution
+    initialisation
 
 -   **par_upperbound:** hard upper bound — parameter values are clamped
-    to this during assimilation
+    to this during assimilation and during normal-distribution
+    initialisation
 
 -   **perturb_par:** noise/spread parameter used by all fitting methods.
     Interpretation depends on `par_fit_method`:
@@ -492,7 +507,7 @@ lw_factor,lw_factor,glm3.nml,1,0.9,1.1,-10,10,0.02,unitless,0,0.001
 
 -   **par_units:** units string used in plots
 
--   **fix_par:** `0` = fit the parameter; `1` = hold at `par_init`
+-   **fix_par:** `0` = fit the parameter; `1` = hold at `par_init_mean`
 
 -   **par_min_sd** *(optional)*: minimum posterior ensemble standard
     deviation for this parameter, in the parameter's units. After each

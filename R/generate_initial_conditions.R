@@ -174,12 +174,33 @@ generate_initial_conditions <- function(states_config,
 
     }
 
-    if(isTRUE(npars > 0)){
-      for(par in 1:npars){
-        if(pars_config$fix_par[par] == 0){
-          init$pars[par, ] <- runif(n=nmembers,pars_config$par_init_lowerbound[par], pars_config$par_init_upperbound[par])
-        }else{
-          init$pars[par, ] <- pars_config$par_init[par]
+    if (isTRUE(npars > 0)) {
+      for (par in 1:npars) {
+        if (pars_config$fix_par[par] == 0) {
+          has_sd <- "par_init_sd" %in% names(pars_config) &&
+            !is.na(pars_config$par_init_sd[par])
+          if (has_sd) {
+            init$pars[par, ] <- rnorm(
+              n = nmembers,
+              mean = pars_config$par_init_mean[par],
+              sd = pars_config$par_init_sd[par]
+            )
+            lb <- pars_config$par_lowerbound[par]
+            ub <- pars_config$par_upperbound[par]
+            low_index <- which(init$pars[par, ] < lb)
+            high_index <- which(init$pars[par, ] > ub)
+            init$pars[par, low_index] <- 2 * lb - init$pars[par, low_index]
+            init$pars[par, high_index] <- 2 * ub - init$pars[par, high_index]
+            init$pars[par, ] <- pmax(lb, pmin(ub, init$pars[par, ]))
+          } else {
+            init$pars[par, ] <- runif(
+              n = nmembers,
+              pars_config$par_init_lowerbound[par],
+              pars_config$par_init_upperbound[par]
+            )
+          }
+        } else {
+          init$pars[par, ] <- pars_config$par_init_mean[par]
         }
       }
     }

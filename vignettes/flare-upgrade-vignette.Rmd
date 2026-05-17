@@ -329,9 +329,9 @@ to
 
 Remove the column `inflat_par` from `parameter_calibration_config.csv`
 
-Add 
+Add
 
--   **fix_par**: 0 = fit parameter, 1 = hold parameter at **par_init**
+-   **fix_par**: 0 = fit parameter, 1 = hold parameter at **par_init_mean**
 
 ## states_config.csv
 
@@ -447,5 +447,56 @@ Plots saved in the plots subdirectory
 
 Netcdf restart files are saved in the restart directory
 
+---
 
-  
+## Upgrading parameter_calibration_config.csv for flexible parameter initialisation
+
+### What changed
+
+The way free parameters (`fix_par = 0`) are initialised at the start of
+a simulation has been extended. Previously the only option was to draw
+each ensemble member from a uniform distribution bounded by
+`par_init_lowerbound` and `par_init_upperbound`. You can now optionally
+draw from a normal distribution instead by supplying a standard deviation
+in the new `par_init_sd` column.
+
+The column `par_init` has been renamed to `par_init_mean`.
+
+### Required changes to `parameter_calibration_config.csv`
+
+1.  **Rename** the column `par_init` → `par_init_mean`. If you leave
+    the old name in place, FLAREr will automatically rename it at
+    runtime and print a deprecation warning, but updating the file is
+    strongly recommended.
+
+2.  **Add** the column `par_init_sd`. Set the value to `NA` for every
+    row to preserve the existing uniform-draw behaviour — no other
+    changes are needed.
+
+Before:
+
+```
+par_names,...,par_init,par_init_lowerbound,par_init_upperbound,...
+sed_temp_mean,...,12,10,12,...
+```
+
+After (preserving uniform behaviour):
+
+```
+par_names,...,par_init_mean,par_init_sd,par_init_lowerbound,par_init_upperbound,...
+sed_temp_mean,...,12,NA,10,12,...
+```
+
+### Switching to normal initialisation
+
+Set `par_init_sd` to a positive number to draw the initial ensemble from
+N(`par_init_mean`, `par_init_sd`) instead. Any drawn values that fall
+outside [`par_lowerbound`, `par_upperbound`] are reflected back into the
+feasible region. The `par_init_lowerbound` and `par_init_upperbound`
+columns are still required but are ignored when `par_init_sd` is not
+`NA`.
+
+```
+par_names,...,par_init_mean,par_init_sd,par_init_lowerbound,par_init_upperbound,...
+sed_temp_mean,...,12,1.0,10,12,...
+```
