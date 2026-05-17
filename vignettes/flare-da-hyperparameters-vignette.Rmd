@@ -365,10 +365,10 @@ barely responds to observations, try decreasing it.
 
 ---
 
-## 7. Parameter fitting (`par_fit_method`, `perturb_par`)
+## 7. Parameter fitting (`par_fit_method`, `perturb_par`, `par_min_sd`)
 
 **Where:** `configure_flare.yml` → `da_setup: par_fit_method`;
-`parameter_calibration_config.csv` → `perturb_par`
+`parameter_calibration_config.csv` → `perturb_par`, `par_min_sd`
 
 ### `par_fit_method`
 
@@ -400,10 +400,48 @@ Its interpretation depends on `par_fit_method`:
 | `perturb_const` | Target SD of the parameter distribution each step |
 | `perturb_init` | Not used (column must still be present) |
 
+### `par_min_sd` — minimum ensemble standard deviation
+
+`par_min_sd` is an optional per-parameter column in
+`parameter_calibration_config.csv`. It sets a floor on the posterior
+parameter ensemble SD after each DA update, preventing ensemble collapse
+— the state where all members converge to nearly the same value and the
+filter loses the ability to respond to future observations (the Kalman
+gain goes to zero when parameter variance goes to zero).
+
+The floor is applied after inflation and before the bounds clamp,
+using the following logic:
+
+| Condition | Action |
+|---|---|
+| posterior SD > `par_min_sd` | No action; spread is sufficient |
+| 0 < posterior SD < `par_min_sd` | Multiplicative rescaling: members are stretched symmetrically around the posterior mean until SD equals `par_min_sd`, preserving the relative structure of the ensemble |
+| posterior SD = 0 (complete collapse) | Full redraw: all members are independently resampled from N(posterior mean, `par_min_sd`) |
+
+Omitting the column or setting it to `NA` disables the floor for that
+parameter.
+
+**Choosing `par_min_sd`:** set it to the smallest spread that still
+represents meaningful parameter uncertainty — typically a small fraction
+of the parameter's physical range. Values that are too large prevent the
+filter from ever tightening the parameter distribution; values that are
+too small provide no protection against collapse.
+
+```
+# Example: floor sediment temperature SD at 0.1 °C, lw_factor at 0.001
+par_names,par_names_save,...,perturb_par,par_units,fix_par,par_min_sd
+sed_temp_mean,zone1temp,...,1,deg_C,0,0.1
+lw_factor,lw_factor,...,0.02,unitless,0,0.001
+```
+
 ### Practical guidance
 
 - Start with `par_fit_method: inflate` and `perturb_par ≈ 1.02–1.10`
   for most parameters.
+- If ensemble collapse is a recurring problem (parameter SD drops to
+  near zero within a few cycles), add `par_min_sd` as a safety floor
+  rather than aggressively increasing `perturb_par`. A floor of ~1–5 %
+  of the parameter's physical range is a reasonable starting point.
 - If a parameter converges quickly to a physically implausible value,
   tighten its bounds (`par_lowerbound`, `par_upperbound`) rather than
   increasing `perturb_par`.

@@ -18,7 +18,10 @@ build_R_matrix <- function(psi, z_index) {
 #' @param diagnostics_start diagnostics
 #' @param diagnostics_daily_start daily diagnostics
 #' @param pars_corr matrix of parameters
-#' @param pars_config parameter configuration list
+#' @param pars_config parameter configuration data frame; may include an optional
+#'   `par_min_sd` column — if present and non-NA for a parameter, the posterior
+#'   ensemble SD is floored to that value after inflation (multiplicative rescaling
+#'   when SD > 0; full redraw from N(mean, par_min_sd) when SD == 0)
 #' @param config FLARE configuration list
 #' @param obs_non_vertical named list of non-vertical observation metadata (from create_obs_non_vertical)
 #' @param active_in_xmatrix character vector of variable names in the same order they were appended to x_matrix
@@ -199,6 +202,20 @@ apply_da_updates <- function(update,
         par_mean <- mean(pars_updated[par, ])
         pars_updated[par, ] <- par_mean + pars_config$perturb_par[par] * (pars_updated[par, ] - par_mean)
       }
+
+      if("par_min_sd" %in% names(pars_config) &&
+         !is.na(pars_config$par_min_sd[par]) &&
+         pars_config$fix_par[par] == 0){
+        par_min_sd <- pars_config$par_min_sd[par]
+        par_mean   <- mean(pars_updated[par, ])
+        par_sd     <- sd(pars_updated[par, ])
+        if(par_sd == 0){
+          pars_updated[par, ] <- rnorm(nmembers, mean = par_mean, sd = par_min_sd)
+        } else if(par_sd < par_min_sd){
+          pars_updated[par, ] <- par_mean + (par_min_sd / par_sd) * (pars_updated[par, ] - par_mean)
+        }
+      }
+
       lb <- pars_config$par_lowerbound[par]
       ub <- pars_config$par_upperbound[par]
       low_index  <- which(pars_updated[par, ] < lb)

@@ -146,6 +146,11 @@ settings, inputs, and outputs.
         the ensemble mean during the forecast period when
         `uncertainty: parameter: FALSE`.
 
+    All methods support the optional `par_min_sd` column in
+    `parameter_calibration_config.csv`, which sets a per-parameter
+    floor on the posterior ensemble SD after each DA update to guard
+    against ensemble collapse.
+
 -   **ensemble_size:** number of ensemble members
 
 -   **localization_distance:** distance in meters over which covariances
@@ -445,10 +450,10 @@ settings, inputs, and outputs.
 Example:
 
 ```
-par_names,par_names_save,par_file,par_init,par_init_lowerbound,par_init_upperbound,par_lowerbound,par_upperbound,perturb_par,par_units,fix_par
-sed_temp_mean,zone1temp,glm3.nml,12,10,12,-100,100,1,deg_C,0
-sed_temp_mean,zone2temp,glm3.nml,15,12,16,-100,100,1,deg_C,0
-lw_factor,lw_factor,glm3.nml,1,0.9,1.1,-10,10,0.02,unitless,0
+par_names,par_names_save,par_file,par_init,par_init_lowerbound,par_init_upperbound,par_lowerbound,par_upperbound,perturb_par,par_units,fix_par,par_min_sd
+sed_temp_mean,zone1temp,glm3.nml,12,10,12,-100,100,1,deg_C,0,0.1
+sed_temp_mean,zone2temp,glm3.nml,15,12,16,-100,100,1,deg_C,0,0.1
+lw_factor,lw_factor,glm3.nml,1,0.9,1.1,-10,10,0.02,unitless,0,0.001
 ```
 
 -   **par_names:** GLM namelist name of the parameter to estimate. The
@@ -488,6 +493,16 @@ lw_factor,lw_factor,glm3.nml,1,0.9,1.1,-10,10,0.02,unitless,0
 -   **par_units:** units string used in plots
 
 -   **fix_par:** `0` = fit the parameter; `1` = hold at `par_init`
+
+-   **par_min_sd** *(optional)*: minimum posterior ensemble standard
+    deviation for this parameter, in the parameter's units. After each
+    DA update (and after inflation), if the ensemble SD falls below this
+    value the spread is restored: members are rescaled symmetrically
+    around the posterior mean when SD > 0, or resampled from
+    N(posterior mean, `par_min_sd`) in the rare case of complete
+    collapse (SD = 0). Omit the column or set the value to `NA` to
+    disable the floor for a given parameter. A starting value of 1–5 %
+    of the parameter's physical range is recommended.
 
 ## states_config.csv
 

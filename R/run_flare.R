@@ -18,8 +18,9 @@
 #' library(ggplot2)
 #' library(readr)
 #' library(lubridate)
-#' remotes::install_github("rqthomas/GLM3r")
-#' Sys.setenv('GLM_PATH'='GLM3r')
+#' remotes::install_github("flare-forecast/GLMAEDr")
+#' GLMAEDr::glm_install()
+#' Sys.setenv('GLM_PATH'='GLMAEDr')
 #'
 #' dir <- normalizePath(tempdir(),  winslash = "/")
 #' lake_directory <- file.path(dir, "extdata")
@@ -62,7 +63,10 @@ run_flare <- function(lake_directory,
   if(!is.null(config$model_settings$par_config_file)){
     if(!is.na(config$model_settings$par_config_file)){
       pars_config <- readr::read_csv(file.path(config$file_path$configuration_directory, config$model_settings$par_config_file), col_types = readr::cols())
-      if(!setequal(names(pars_config),c("par_names","par_names_save","par_file","par_init","par_init_lowerbound","par_init_upperbound","par_lowerbound","par_upperbound","perturb_par","par_units", "fix_par"))){
+      required_par_cols <- c("par_names","par_names_save","par_file","par_init","par_init_lowerbound","par_init_upperbound","par_lowerbound","par_upperbound","perturb_par","par_units","fix_par")
+      optional_par_cols <- c("par_min_sd")
+      if(!all(required_par_cols %in% names(pars_config)) ||
+         !all(names(pars_config) %in% c(required_par_cols, optional_par_cols))){
         stop(" par configuration file does not have the correct columns")
       }
     }

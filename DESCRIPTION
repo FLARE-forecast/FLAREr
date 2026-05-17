@@ -47,7 +47,8 @@ Imports:
     arrow,
     glue,
     FaaSr,
-    zip
+    zip,
+    processx
 Suggests: 
     knitr,
     rmarkdown,
