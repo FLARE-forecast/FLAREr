@@ -101,9 +101,8 @@ get_git_repo <- function(lake_directory, directory, git_repo){
 #'
 put_targets <- function(site_id, cleaned_insitu_file = NA, cleaned_met_file = NA, cleaned_inflow_file = NA, use_s3 = FALSE, config=NULL){
 
-  # `use_s3` is unused: dispatch is driven by flare_io_mode() inside
-  # flare_put_file (mode=s3/faasr uploads, mode=local is a no-op).
-  # Argument retained for signature stability with downstream callers.
+  # use_s3 is retained for signature compatibility; dispatch is handled by
+  # flare_put_file via flare_io_mode().
 
     if(!is.na(cleaned_insitu_file)){
 
@@ -184,9 +183,8 @@ put_targets <- function(site_id, cleaned_insitu_file = NA, cleaned_met_file = NA
 #' @keywords internal
 #'
 get_targets <- function(lake_directory, config=NULL){
-  # No use_s3 gate: download_s3_objects' inner flare_get_folder_list
-  # returns character(0) in mode=local, so the download loop iterates
-  # zero times. Behavior is identical to the prior `if (use_s3)` gating.
+  # flare_get_folder_list returns character(0) in mode=local, so no
+  # explicit use_s3 gate is needed here.
   download_s3_objects(lake_directory,
                       bucket = stringr::str_split_fixed(config$s3$targets$bucket, "/", n = 2)[1],
                       prefix = file.path(stringr::str_split_fixed(config$s3$targets$bucket, "/", n = 2)[2], config$location$site_id),
@@ -368,17 +366,13 @@ update_run_config <- function(lake_directory,
   run_config$configure_flare <- configure_flare
   run_config$configure_obs <- configure_obs
   run_config$use_s3 <- use_s3
-  # use_faasr is not a parameter of this function but governs flare_io_mode()
-  # dispatch downstream, so it must round-trip through the rewritten YAML or
-  # the next set_up_simulation will silently fall back to mode="s3".
+  # Preserve use_faasr through the rewritten YAML so flare_io_mode() resolves
+  # correctly on the next set_up_simulation.
   run_config$use_faasr <- config$run_config$use_faasr
 
   file_name <- file.path(lake_directory,"restart",site_id, sim_name, configure_run_file)
   yaml::write_yaml(run_config, file_name)
 
-  # No use_s3 gate: flare_put_file mode=local is a no-op, so this call
-  # has no side effect when running locally. Behavior identical to prior
-  # `if (use_s3)` gating.
   local_folder <- dirname(file_name)
   local_file <- basename(file_name)
   remote_folder <- file.path(stringr::str_split_fixed(bucket, "/", n = 2)[2], site_id, sim_name)
