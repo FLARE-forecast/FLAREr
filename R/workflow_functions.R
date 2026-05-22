@@ -336,7 +336,7 @@ update_run_config <- function(lake_directory,
                                use_s3,
                                bucket,
                                endpoint,
-                              config,
+                               config = NULL,
                                use_https = TRUE){
 
   run_config <- NULL
@@ -367,8 +367,9 @@ update_run_config <- function(lake_directory,
   run_config$configure_obs <- configure_obs
   run_config$use_s3 <- use_s3
   # Preserve use_faasr through the rewritten YAML so flare_io_mode() resolves
-  # correctly on the next set_up_simulation.
-  run_config$use_faasr <- config$run_config$use_faasr
+  # correctly on the next set_up_simulation. NULL config (e.g. example usage)
+  # falls back to FALSE.
+  run_config$use_faasr <- isTRUE(config$run_config$use_faasr)
 
   file_name <- file.path(lake_directory,"restart",site_id, sim_name, configure_run_file)
   yaml::write_yaml(run_config, file_name)
