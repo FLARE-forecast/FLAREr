@@ -104,6 +104,7 @@ file.copy(system.file("extdata", "configuration", "default", "parameter_calibrat
 file.copy(system.file("extdata", "configuration", "default", "states_config.csv", package = "FLAREr"), file.path(lake_directory, "configuration", "default", "states_config.csv"))
 file.copy(system.file("extdata", "configuration", "default", "depth_model_sd.csv", package = "FLAREr"), file.path(lake_directory, "configuration", "default", "depth_model_sd.csv"))
 file.copy(system.file("extdata", "configuration", "default", "observations_config.csv", package = "FLAREr"), file.path(lake_directory, "configuration", "default", "observations_config.csv"))
+file.copy(system.file("extdata", "configuration", "default", "non_vertical_noise_config.csv", package = "FLAREr"), file.path(lake_directory, "configuration", "default", "non_vertical_noise_config.csv"))
 ```
 
 Third, FLAREr requires GLM specific configurations files.  For applications that require on water temperature, only the GLM namelist file is needed.  Applications that require other water quality variables will require additional namelist files that are associated with the aed model.
