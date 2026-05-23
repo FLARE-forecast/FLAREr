@@ -16,7 +16,7 @@ propose_parameters <- function(i, m, pars, pars_config, npars, par_fit_method, d
 
   curr_pars_ens <- NULL
 
-  if(npars > 0){
+  if(isTRUE(npars > 0)){
 
     if(!("fix_par" %in% names(pars_config))){
       pars_config <- pars_config |> dplyr::mutate(fix_par = 0)
@@ -25,9 +25,9 @@ propose_parameters <- function(i, m, pars, pars_config, npars, par_fit_method, d
     curr_pars_ens <- rep(NA, npars)
     for(par in 1:npars){
       if(pars_config$fix_par[par] == 1){
-        curr_pars_ens[par] <- pars_config$par_init[par]
+        curr_pars_ens[par] <- pars_config$par_init_mean[par]
       }else{
-        if(par_fit_method == "inflate" & da_method == "enkf"){
+        if(par_fit_method == "inflate" & da_method %in% c("enkf", "etkf", "esmda", "nudging", "letkf")){
           curr_pars_ens[par] <-  pars[i-1, par , m]
           if(i > (hist_days + 1) & !include_uncertainty){
             curr_pars_ens[par] <- mean(pars[i-1, par, ])
@@ -61,11 +61,15 @@ propose_parameters <- function(i, m, pars, pars_config, npars, par_fit_method, d
           }
 
         }else{
-          message("parameter fitting method not supported.  inflate, perturb. perturb are supported")
+          #message("parameter fitting method not supported.  inflate, perturb. perturb are supported")
+          curr_pars_ens[par] <- pars[i-1, par, m]
         }
 
-        if(curr_pars_ens[par] <  pars_config$par_lowerbound[par]) curr_pars_ens[par] <-  pars_config$par_lowerbound[par]
-        if(curr_pars_ens[par] >  pars_config$par_upperbound[par]) curr_pars_ens[par] <-  pars_config$par_upperbound[par]
+        lb <- pars_config$par_lowerbound[par]
+        ub <- pars_config$par_upperbound[par]
+        if(curr_pars_ens[par] < lb) curr_pars_ens[par] <- 2 * lb - curr_pars_ens[par]
+        if(curr_pars_ens[par] > ub) curr_pars_ens[par] <- 2 * ub - curr_pars_ens[par]
+        curr_pars_ens[par] <- max(lb, min(ub, curr_pars_ens[par]))
       }
     }
   }

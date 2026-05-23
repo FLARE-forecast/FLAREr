@@ -1,5 +1,5 @@
 &aed_models
-   models = 'aed_sedflux', 'aed_tracer','aed_noncohesive','aed_oxygen','aed_carbon','aed_silica','aed_nitrogen','aed_phosphorus','aed_organic_matter', 'aed_phytoplankton','aed_totals'
+   models = 'aed_sedflux', 'aed_tracer','aed_noncohesive','aed_oxygen','aed_carbon','aed_silica','aed_nitrogen','aed_phosphorus','aed_organic_matter', 'aed_phytoplankton'
 /
 &aed_sedflux
    sedflux_model = 'Constant2D'
@@ -73,7 +73,7 @@
    amm_initial = 2.6
    nit_initial = 0.1
    n2o_initial = 0.1
-   Rnitrif = 0.01358676
+   Rnitrif = 0.014
    Knitrif = 62.02209
    theta_nitrif = 1.08
    nitrif_reactant_variable = 'OXY_oxy'
@@ -156,9 +156,9 @@
    Rcpom_bdown = 0.05350772
    X_cpom_n = 0.005
    X_cpom_p = 0.001
-   KeDOM = 0.005
-   KePOM = 0.00096
-   KeDOMR = 0.1
+   KeDOM = 0.002
+   KePOM = 0.002
+   KeDOMR = 0.002
    KeCPOM = 0.00096
    simphotolysis = .false.
    photo_c = 0.75
@@ -205,13 +205,4 @@
    diag_level = 10
    min_rho = 900
    max_rho = 1200
-/
-&aed_totals
-   outputLight = .true.
-   TN_vars = 'NIT_nit','NIT_amm','OGM_don','OGM_donr','OGM_pon','PHY_in'
-   TN_varscale = 1, 1, 1, 1, 1
-   TP_vars = 'PHS_frp','OGM_dop','OGM_dopr','OGM_pop','PHY_ip'
-   TP_varscale = 1, 1, 1, 1
-   TOC_vars = 'OGM_doc','OGM_docr','OGM_poc','OGM_cpom','PHY_tphy'
-   TOC_varscale = 1, 1, 1, 1
 /

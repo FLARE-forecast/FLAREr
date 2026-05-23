@@ -18,7 +18,260 @@ knitr::opts_chunk$set(
 )
 ```
 
-A guide to upgrading to FLAREr 3.0.0. 
+A guide to upgrading between major FLAREr versions.
+
+## Upgrading to FLAREr 4.0.0
+
+FLAREr 4.0.0 introduces several new data assimilation methods, a
+generalised non-vertical observation framework, GLM native restart
+support, and FaaSr integration. The sections below describe every
+required change to your configuration files and workflow scripts.
+
+### configure_flare.yml — required additions
+
+#### da_setup
+
+Add the three fields below to `da_setup`. They are required; runs will
+error if they are absent.
+
+```yaml
+da_setup:
+  ...
+  add_random_noise: 1
+  log_transform_wq_obs: FALSE
+  log_transform_wq_zero_collapse: FALSE
+```
+
+-   **add_random_noise:** enable process noise (`1` = on, `0` = off).
+    Set to `1` to reproduce the previous default behaviour.
+
+-   **log_transform_wq_obs:** set to `FALSE` to keep the existing
+    behaviour; set to `TRUE` to sample water-quality observation
+    perturbations in log space to avoid zero-clamping bias.
+
+-   **log_transform_wq_zero_collapse:** set to `FALSE` to keep the
+    existing behaviour; set to `TRUE` to collapse the observation error
+    matrix to zero when an observation is exactly zero (unbiased
+    alternative to clamping).
+
+#### model_settings
+
+Add the `non_vertical_noise_config_file` entry:
+
+```yaml
+model_settings:
+  ...
+  non_vertical_noise_config_file: non_vertical_noise_config.csv
+```
+
+If you do not have depth-independent variables (e.g. Secchi depth) you
+can set the value to `.na`; otherwise create the file described in the
+[new non_vertical_noise_config.csv section](#non_vertical_noise_config-csv) below.
+
+#### output_settings
+
+Add `restart_save_timesteps`:
+
+```yaml
+output_settings:
+  ...
+  restart_save_timesteps: [-2, 0]
+```
+
+This controls which timesteps (days relative to
+`forecast_start_datetime`) are saved as restart zip files. The values
+`[-2, 0]` save the day two days before and on the forecast start date,
+which is the minimum needed to support the GLM native restart. Use
+`"all"` to save every timestep.
+
+### non_vertical_noise_config.csv — new required file {#non_vertical_noise_config-csv}
+
+Create `non_vertical_noise_config.csv` in your
+`configuration/{config_set_name}` directory. This file specifies process
+noise for non-depth-resolved model variables. A minimal example that
+covers the default configuration:
+
+```
+model_variable,model_source,model_depth_m,process_noise_sd
+lake_depth,state,NA,0.01
+extc,diagnostic,1.0,NA
+```
+
+If you have no non-vertical variables tracked by your configuration, you
+can create the file with just the header row, or set
+`non_vertical_noise_config_file: .na` in `model_settings`.
+
+### observations_config.csv — new columns required
+
+Add three columns to every row of `observations_config.csv`:
+`model_source`, `model_variable`, and `model_depth_m`.
+
+These columns allow a non-depth-resolved observation (e.g. Secchi depth)
+to be derived from a GLM diagnostic rather than directly from a state
+variable.
+
+-   For standard depth-resolved state observations (e.g. temperature),
+    set all three to `NA`.
+-   For diagnostic-derived observations (e.g. Secchi from extinction
+    coefficient), set `model_source` to `diagnostic`, `model_variable`
+    to the GLM variable name, and `model_depth_m` to the depth at which
+    it is evaluated.
+
+Before (3.0):
+
+```
+state_names_obs,obs_units,obs_sd,target_variable,multi_depth
+temp,degC,0.5,temperature,1
+secchi,unitless,0.5,secchi,0
+```
+
+After (4.0):
+
+```
+state_names_obs,obs_units,obs_sd,target_variable,multi_depth,model_source,model_variable,model_depth_m
+temp,degC,0.5,temperature,1,NA,NA,NA
+secchi,unitless,0.5,secchi,0,diagnostic,extc_coeff,1.0
+```
+
+### Restart files — format change
+
+Restart files are now **zip archives** rather than plain NetCDF files.
+Each zip contains the FLARE DA state as a NetCDF at the top level plus
+per-ensemble GLM restart files in dated subdirectories.
+
+Old `.nc` restart files are not compatible with 4.0. To start fresh,
+set `restart_file: .na` in `configure_run.yml` and let FLARE initialise
+from `default_init`.
+
+### New data assimilation methods
+
+`da_method` in `da_setup` now accepts four additional values beyond
+`enkf` and `pf`:
+
+| Method | Description |
+|--------|-------------|
+| `etkf` | Ensemble Transform Kalman Filter — deterministic square-root update; lower variance than the stochastic EnKF |
+| `letkf` | Local ETKF — per-depth update using only nearby observations; recommended for multi-depth AED-WQ states |
+| `esmda` | Ensemble Smoother with Multiple Data Assimilation — iterative update that reduces filter inbreeding in nonlinear systems |
+| `none` | Open-loop — model runs without assimilating any observations |
+
+> **Note:** Of the data assimilation algorithms, only the Ensemble Kalman
+> Filter (`enkf`) has been extensively tested and is recommended for
+> production use. The methods `etkf`, `letkf`, `esmda`, and `pf` are
+> **experimental** and have not undergone extensive testing — use them with
+> caution and verify results carefully.
+
+To use these new methods, update `da_method` and optionally add the
+method-specific fields below. Existing configurations using `enkf` or
+`pf` do not require any changes to `da_method`.
+
+Optional new `da_setup` fields for the new methods:
+
+```yaml
+da_setup:
+  ...
+  use_inflation_factor: FALSE     # TRUE = inflate state ensemble by inflation_factor after each DA update
+  esmda_iterations: 4             # number of ES-MDA sub-iterations (esmda only)
+  use_one_step_lag: FALSE         # TRUE = decouple state and parameter updates
+```
+
+### Non-vertical (non-depth-resolved) observations — API change
+
+In 3.0, Secchi depth and lake depth were passed to `run_da_forecast()`
+as named arguments `obs_secchi` and `obs_depth`. In 4.0 these are
+replaced by the generic `obs_non_vertical` named list produced by
+`create_obs_non_vertical()`. If you call `run_da_forecast()` directly
+in a custom workflow:
+
+Before (3.0):
+
+```r
+run_da_forecast(..., obs_secchi = obs_secchi, obs_depth = obs_depth)
+```
+
+After (4.0):
+
+```r
+obs_non_vertical <- FLAREr:::create_obs_non_vertical(obs_config, config, targets_df)
+run_da_forecast(..., obs_non_vertical = obs_non_vertical,
+                non_vertical_noise_config = non_vertical_noise_config)
+```
+
+Users of `run_flare()` do not need to change anything — this is handled
+automatically.
+
+### GLM AED phytoplankton parameter calibration
+
+FLAREr 4.0 can now calibrate parameters stored in `aed_phyto_pars.csv`
+(the AED phytoplankton parameter database). No configuration change is
+needed to enable this — parameters in `parameter_calibration_config.csv`
+that reference `aed_phyto_pars.csv` in the `par_file` column will be
+picked up automatically.
+
+The internal helper `update_phy_states_obs_mapping()` reads the
+phytoplankton parameter database referenced by `aed2.nml` and, for each
+`PHY_` state, sets the carbon-to-chlorophyll multiplier in the
+`states_to_obs_mapping_1` column of `states_config` to `12.0 / Xcc`
+(matching the AED2 conversion `chla = (carbon_mmolC_m3 / Xcc) * 12.0`).
+Call it as
+`FLAREr:::update_phy_states_obs_mapping(states_config, nml_path)` when
+building a `states_config` for a phytoplankton configuration.
+
+### Storage backends and FaaSr integration
+
+FLAREr 4.0 routes all object I/O — drivers, targets, configuration,
+forecast output, scores, and restart files — through a single I/O layer
+(`flare_io.R`) that can target three backends. The backend is chosen per
+run from two flags in `configure_run.yml`:
+
+| `use_s3` | `use_faasr` | Mode    | Where data lives |
+|----------|-------------|---------|------------------|
+| `FALSE`  | `FALSE`     | `local` | local filesystem under `lake_directory` |
+| `TRUE`   | `FALSE`     | `s3`    | S3-compatible bucket via `aws.s3` / `arrow` |
+| `TRUE`   | `TRUE`      | `faasr` | FaaSr DataStore via the FaaSr runtime |
+
+This is backward compatible: `use_faasr` is optional and defaults to
+`FALSE`, so existing `local` and `s3` configurations behave exactly as
+before. The exported wrappers `flare_get_file()`, `flare_put_file()`,
+`flare_delete_file()`, `flare_get_folder_list()`, and
+`flare_arrow_s3_bucket()` dispatch to the resolved backend, so custom
+workflows that previously called `aws.s3` directly can use these instead
+to become backend-agnostic.
+
+[FaaSr](https://faasr.io) runs R functions as serverless actions on
+platforms such as GitHub Actions, AWS Lambda, and OpenWhisk, with
+S3-compatible *DataStores* for persistent storage. Setting
+`use_faasr: TRUE` makes the wrappers above route through the FaaSr
+runtime's helpers (`faasr_get_file()`, `faasr_put_file()`,
+`faasr_arrow_s3_bucket()`, …) rather than calling `aws.s3` directly;
+FaaSr supplies the DataStore credentials. The DataStores themselves are
+still configured in the `s3:` block of `configure_flare.yml` (the same
+block used in `s3` mode), keyed by server name.
+
+`use_faasr: TRUE` requires `use_s3: TRUE`; FLAREr errors at startup
+otherwise. FaaSr is **not** a package dependency — its helpers are
+injected into the global environment by the FaaSr executor when an action
+starts. If they are absent (for example, when the configuration is run
+outside a FaaSr container), FLAREr warns and falls back to `s3` mode.
+
+The new `initialize_faasr()` function is a fast-fail validator: call it
+once at the top of your FaaSr action function, before `run_flare()`. It
+errors on the inconsistent `use_faasr: TRUE` / `use_s3: FALSE`
+combination and warns early if AWS credentials are missing under S3
+access. It does not mutate global state — the I/O wrappers read
+`config$s3` and `config$run_config` directly. See `?initialize_faasr` for
+details.
+
+```r
+# inside a FaaSr action function
+config <- FLAREr::set_up_simulation(configure_run_file, lake_directory)
+FLAREr::initialize_faasr(config)   # validate before running
+FLAREr::run_flare(lake_directory, configure_run_file, config_set_name)
+```
+
+---
+
+## Upgrading to FLAREr 3.0.0
 
 ## configure_flare.yml
 
@@ -131,9 +384,9 @@ to
 
 Remove the column `inflat_par` from `parameter_calibration_config.csv`
 
-Add 
+Add
 
--   **fix_par**: 0 = fit parameter, 1 = hold parameter at **par_init**
+-   **fix_par**: 0 = fit parameter, 1 = hold parameter at **par_init_mean**
 
 ## states_config.csv
 
@@ -215,13 +468,21 @@ generate_forecast_score_arrow <- function(targets_file,
 
 ## Other changes
 
-The package does not depend on the `GLM3r` package anymore.  There are multiple options for getting a GLM binary.  The easiest is to install GLM3r from github (the README has more information about getting the GLM binary)
+The package does not depend on the `GLM3r` package anymore.  There are multiple options for getting a GLM binary.  The easiest is to install the `GLMAEDr` package from github, which downloads and manages the GLM binary for you (the README has more information about getting the GLM binary):
+
+```
+remotes::install_github("flare-forecast/GLMAEDr")
+GLMAEDr::glm_install()
+Sys.setenv('GLM_PATH'=GLMAEDr::glm_path())
+```
+
+Alternatively, you can install `GLM3r` from github:
 
 ```
 remotes::install_github("rqthomas/GLM3r")
 ```
 
-you are require to set an environment variable in your workflow script that calls `run_flare`.
+you are required to set an environment variable in your workflow script that calls `run_flare`.
 
 ```
 Sys.setenv('GLM_PATH'='GLM3r')
@@ -241,5 +502,56 @@ Plots saved in the plots subdirectory
 
 Netcdf restart files are saved in the restart directory
 
+---
 
-  
+## Upgrading parameter_calibration_config.csv for flexible parameter initialisation
+
+### What changed
+
+The way free parameters (`fix_par = 0`) are initialised at the start of
+a simulation has been extended. Previously the only option was to draw
+each ensemble member from a uniform distribution bounded by
+`par_init_lowerbound` and `par_init_upperbound`. You can now optionally
+draw from a normal distribution instead by supplying a standard deviation
+in the new `par_init_sd` column.
+
+The column `par_init` has been renamed to `par_init_mean`.
+
+### Required changes to `parameter_calibration_config.csv`
+
+1.  **Rename** the column `par_init` → `par_init_mean`. If you leave
+    the old name in place, FLAREr will automatically rename it at
+    runtime and print a deprecation warning, but updating the file is
+    strongly recommended.
+
+2.  **Add** the column `par_init_sd`. Set the value to `NA` for every
+    row to preserve the existing uniform-draw behaviour — no other
+    changes are needed.
+
+Before:
+
+```
+par_names,...,par_init,par_init_lowerbound,par_init_upperbound,...
+sed_temp_mean,...,12,10,12,...
+```
+
+After (preserving uniform behaviour):
+
+```
+par_names,...,par_init_mean,par_init_sd,par_init_lowerbound,par_init_upperbound,...
+sed_temp_mean,...,12,NA,10,12,...
+```
+
+### Switching to normal initialisation
+
+Set `par_init_sd` to a positive number to draw the initial ensemble from
+N(`par_init_mean`, `par_init_sd`) instead. Any drawn values that fall
+outside [`par_lowerbound`, `par_upperbound`] are reflected back into the
+feasible region. The `par_init_lowerbound` and `par_init_upperbound`
+columns are still required but are ignored when `par_init_sd` is not
+`NA`.
+
+```
+par_names,...,par_init_mean,par_init_sd,par_init_lowerbound,par_init_upperbound,...
+sed_temp_mean,...,12,1.0,10,12,...
+```

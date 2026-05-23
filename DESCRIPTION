@@ -1,6 +1,6 @@
 Package: FLAREr
 Title: Forecasting Lake and Reservoir Ecosystems in R
-Version: 3.0.4
+Version: 4.0.0
 Authors@R: 
     c(person(given = "R. Quinn",
            family = "Thomas",
@@ -40,13 +40,15 @@ Imports:
     future,
     purrr,
     zoo,
-    aws.s3,
     tidyr,
     tsibble,
     ggplot2,
     tibble,
     arrow,
-    glue
+    glue,
+    aws.s3,
+    zip,
+    processx
 Suggests: 
     knitr,
     rmarkdown,

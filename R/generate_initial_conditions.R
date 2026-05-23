@@ -16,7 +16,79 @@ generate_initial_conditions <- function(states_config,
                                         obs,
                                         config,
                                         obs_non_vertical){
-  if(is.na(config$run_config$restart_file)){
+  has_restart <- !is.null(config$run_config$restart_file) &&
+    !is.na(config$run_config$restart_file)
+
+  if(has_restart){
+
+    if(tools::file_ext(config$run_config$restart_file) != "zip") {
+      stop(paste0(
+        "restart_file must be a zip file (got: '", config$run_config$restart_file, "'). ",
+        "The restart zip bundles the FLARE NetCDF and per-ensemble GLM restart files. ",
+        "Plain NetCDF restart files are no longer supported."
+      ))
+    }
+
+    nmembers <- config$da_setup$ensemble_size
+
+    # Determine restart_index by matching start_datetime against the FLARE
+    # NetCDF time dimension inside the zip
+    tmp_peek <- tempfile()
+    dir.create(tmp_peek, recursive = TRUE)
+    zip::unzip(config$run_config$restart_file, exdir = tmp_peek)
+    flare_nc_peek <- list.files(tmp_peek, pattern = "\\.nc$",
+                                full.names = TRUE, recursive = FALSE)[1]
+    nc_peek <- ncdf4::nc_open(flare_nc_peek)
+    t_peek <- ncdf4::ncvar_get(nc_peek, "time")
+    ncdf4::nc_close(nc_peek)
+    unlink(tmp_peek, recursive = TRUE)
+    datetime_peek <- as.POSIXct(t_peek,
+                                origin = "1970-01-01 00:00.00 UTC",
+                                tz = "UTC")
+    restart_index <- which(
+      datetime_peek == lubridate::as_datetime(config$run_config$start_datetime)
+    )
+    if(length(restart_index) != 1){
+      available_dates <- format(datetime_peek, "%Y-%m-%d %H:%M:%S UTC")
+      stop(paste0(
+        "start_datetime '", config$run_config$start_datetime,
+        "' not found in the restart zip file. ",
+        "Available timestep(s): ", paste(available_dates, collapse = ", "), ". ",
+        "Check that restart_save_timesteps in configure_flare.yml includes the ",
+        "offset that corresponds to the start_datetime of this run."
+      ))
+    }
+
+    out <- generate_restart_initial_conditions_from_zip(
+      restart_file            = config$run_config$restart_file,
+      state_names             = states_config$state_names,
+      par_names               = pars_config$par_names_save,
+      diagnostics_names       = config$output_settings$diagnostics_names,
+      diagnostics_daily_names = if (!is.null(config$output_settings$diagnostics_daily$save_names))
+        config$output_settings$diagnostics_daily$save_names else
+        config$output_settings$diagnostics_daily$names,
+      restart_index           = restart_index,
+      restart_date            = format(as.Date(config$run_config$start_datetime),
+                                       "%Y-%m-%d"),
+      working_directory       = config$file_path$execute_directory,
+      nmembers                = nmembers
+    )
+
+    aux_states_init <- list()
+    aux_states_init$snow_ice_thickness    <- out$snow_ice_thickness
+    aux_states_init$the_sals_init         <- config$the_sals_init
+    aux_states_init$model_internal_heights <- out$model_internal_heights
+    aux_states_init$lake_depth            <- out$lake_depth
+    aux_states_init$log_particle_weights  <- out$log_particle_weights
+    aux_states_init$inflation             <- out$inflation
+    aux_states_init$diagnostics           <- out$diagnostics_init
+    aux_states_init$diagnostics_daily     <- out$diagnostics_daily_init
+
+    init <- list(states         = out$states,
+                 pars           = out$pars,
+                 aux_states_init = aux_states_init)
+
+  } else {
 
     init <- list()
     if(!is.null(pars_config)){
@@ -36,19 +108,17 @@ generate_initial_conditions <- function(states_config,
     init$pars <- array(NA, dim=c(npars, nmembers))
     init$lake_depth <- array(NA, dim=c(nmembers))
     init$snow_ice_thickness <- array(NA, dim=c(3, nmembers))
-    init$avg_surf_temp <- array(NA, dim=c(nmembers))
-    init$mixing_vars <- array(NA, dim=c(17, nmembers))
     init$model_internal_heights <- array(NA, dim = c(config$model_settings$max_model_layers, nmembers))
     init$salt <- array(NA, dim = c(ndepths_modeled, nmembers))
-    init$mixer_count <- array(NA, dim=c(nmembers))
     init$log_particle_weights <- array(NA, dim=c(nmembers))
+    init$inflation <- NA
 
     init$lake_depth[] <- round(config$default_init$lake_depth, 4)
-    nml <- read_nml(file.path(config$file_path$configuration_directory, config$model_settings$base_GLM_nml))
+    nml <- FLAREr:::read_nml(file.path(config$file_path$configuration_directory, config$model_settings$base_GLM_nml))
     max_depth <- nml$morphometry$H[length(nml$morphometry$H)] - nml$morphometry$H[1]
-    if(!is.null(obs_non_vertical$obs_depth)){
-      if(!is.na(obs_non_vertical$obs_depth$obs[1])){
-        init$lake_depth <- rnorm(nmembers, obs_non_vertical$obs_depth$obs[1], obs_non_vertical$obs_depth$depth_sd)
+    if(!is.null(obs_non_vertical[["depth"]])){
+      if(!is.na(obs_non_vertical[["depth"]]$obs[1])){
+        init$lake_depth <- rnorm(nmembers, obs_non_vertical[["depth"]]$obs[1], obs_non_vertical[["depth"]]$sd)
         index <- which(init$lake_depth > max_depth)
         init$lake_depth[index] <- max_depth
       }
@@ -56,8 +126,8 @@ generate_initial_conditions <- function(states_config,
 
     for(m in 1:nmembers){
       init$model_internal_heights[1:ndepths_modeled, m] <- init$lake_depth[m] - config$model_settings$modeled_depths
+      init$model_internal_heights[which(init$model_internal_heights[1:ndepths_modeled, m] < 0) , m] <- NA
     }
-
 
 
     init_depth <- array(NA, dim = c(nrow(states_config),ndepths_modeled))
@@ -89,8 +159,10 @@ generate_initial_conditions <- function(states_config,
     for(m in 1:nmembers){
 
       init$model_internal_heights[1:ndepths_modeled, m] <- init$lake_depth[m] - config$model_settings$modeled_depths
+      init$model_internal_heights[which(init$model_internal_heights[1:ndepths_modeled, m] < 0) , m] <- NA
 
-      with_noise <- add_process_noise(states_height_ens = init_depth,
+
+      with_noise <- FLAREr:::add_process_noise(states_height_ens = init_depth,
                                       model_sd = model_sd,
                                       model_internal_heights_ens =  init$model_internal_heights[ ,m],
                                       lake_depth_ens = init$lake_depth[m],
@@ -102,12 +174,33 @@ generate_initial_conditions <- function(states_config,
 
     }
 
-    if(npars > 0){
-      for(par in 1:npars){
-        if(pars_config$fix_par[par] == 0){
-          init$pars[par, ] <- runif(n=nmembers,pars_config$par_init_lowerbound[par], pars_config$par_init_upperbound[par])
-        }else{
-          init$pars[par, ] <- pars_config$par_init[par]
+    if (isTRUE(npars > 0)) {
+      for (par in 1:npars) {
+        if (pars_config$fix_par[par] == 0) {
+          has_sd <- "par_init_sd" %in% names(pars_config) &&
+            !is.na(pars_config$par_init_sd[par])
+          if (has_sd) {
+            init$pars[par, ] <- rnorm(
+              n = nmembers,
+              mean = pars_config$par_init_mean[par],
+              sd = pars_config$par_init_sd[par]
+            )
+            lb <- pars_config$par_lowerbound[par]
+            ub <- pars_config$par_upperbound[par]
+            low_index <- which(init$pars[par, ] < lb)
+            high_index <- which(init$pars[par, ] > ub)
+            init$pars[par, low_index] <- 2 * lb - init$pars[par, low_index]
+            init$pars[par, high_index] <- 2 * ub - init$pars[par, high_index]
+            init$pars[par, ] <- pmax(lb, pmin(ub, init$pars[par, ]))
+          } else {
+            init$pars[par, ] <- runif(
+              n = nmembers,
+              pars_config$par_init_lowerbound[par],
+              pars_config$par_init_upperbound[par]
+            )
+          }
+        } else {
+          init$pars[par, ] <- pars_config$par_init_mean[par]
         }
       }
     }
@@ -117,63 +210,24 @@ generate_initial_conditions <- function(states_config,
     init$snow_ice_thickness[1, ] <- config$default_init$snow_thickness
     init$snow_ice_thickness[2, ] <- config$default_init$white_ice_thickness
     init$snow_ice_thickness[3, ] <- config$default_init$blue_ice_thickness
-    init$avg_surf_temp[] <- init$states[1 , 1, ]
-    init$mixing_vars[, ] <- 0.0
-    init$mixer_count[] <- 0
     init$salt[, ] <- config$default_init$salinity
     init$log_particle_weights[] <- log(1.0)
+    init$inflation[] <- config$da_setup$inflation_factor
+
+
 
 
     aux_states_init <- list()
     aux_states_init$snow_ice_thickness <- init$snow_ice_thickness
-    aux_states_init$avg_surf_temp <- init$avg_surf_temp
     aux_states_init$the_sals_init <- config$the_sals_init
-    aux_states_init$mixing_vars <- init$mixing_vars
-    aux_states_init$mixer_count <- init$mixer_count
     aux_states_init$model_internal_heights <- init$model_internal_heights
     aux_states_init$lake_depth <- init$lake_depth
     aux_states_init$salt <- init$salt
     aux_states_init$log_particle_weights <- init$log_particle_weights
+    aux_states_init$inflation <- init$inflation
 
     init <- list(states = init$states,
                  pars = init$pars,
-                 aux_states_init = aux_states_init)
-
-  }else{
-    nc <- ncdf4::nc_open(config$run_config$restart_file)
-    #forecast <- ncdf4::ncvar_get(nc, "forecast")
-    t <- ncdf4::ncvar_get(nc,'time')
-    local_tzone <- ncdf4::ncatt_get(nc, 0)$local_time_zone_of_simulation
-    datetime <- as.POSIXct(t,
-                           origin = '1970-01-01 00:00.00 UTC',
-                           tz = "UTC")
-    ncdf4::nc_close(nc)
-
-
-    restart_index <- which(datetime == lubridate::as_datetime(config$run_config$start_datetime))
-
-    if(length(restart_index) != 1){
-      warning("start_datetime for this simulation is missing from restart file")
-    }
-
-    out <- generate_restart_initial_conditions(
-      restart_file = config$run_config$restart_file,
-      state_names = states_config$state_names,
-      par_names = pars_config$par_names_save,
-      restart_index = restart_index)
-
-    aux_states_init <- list()
-    aux_states_init$snow_ice_thickness <- out$snow_ice_thickness
-    aux_states_init$avg_surf_temp <- out$avg_surf_temp
-    aux_states_init$the_sals_init <- config$the_sals_init
-    aux_states_init$mixing_vars <- out$mixing_vars
-    aux_states_init$mixer_count <- out$mixer_count
-    aux_states_init$model_internal_heights <- out$model_internal_heights
-    aux_states_init$lake_depth <- out$lake_depth
-    aux_states_init$log_particle_weights <- out$log_particle_weights
-
-    init <- list(states = out$states,
-                 pars = out$pars,
                  aux_states_init = aux_states_init)
 
   }

@@ -5,8 +5,8 @@ vignette: >
   %\VignetteIndexEntry{FLAREr configurations}
   %\VignetteEncoding{UTF-8}
   %\VignetteEngine{knitr::rmarkdown}
-editor_options: 
-  markdown: 
+editor_options:
+  markdown:
     wrap: 72
 ---
 
@@ -18,19 +18,89 @@ knitr::opts_chunk$set(
 )
 ```
 
-A guide to the variables in `configure_flare.yml` and in the
-`observations_config.csv`, `parameter_calibration_config.csv`, and
-`states_config.csv`.
+A guide to the variables in `configure_run.yml`, `configure_flare.yml`,
+`observations_config.csv`, `parameter_calibration_config.csv`,
+`states_config.csv`, `depth_model_sd.csv`, and
+`non_vertical_noise_config.csv`.
+
+All configuration files are required to be located in your
+`{lake_directory}/configuration/{config_set_name}` directory unless
+otherwise noted.
+
+## configure_run.yml
+
+`configure_run.yml` controls the timing and top-level settings for a
+single FLARE run.
+
+```yaml
+restart_file: .na
+start_datetime: 2022-09-28 00:00:00
+end_datetime: .na
+forecast_start_datetime: 2022-10-02 00:00:00
+forecast_horizon: 16
+sim_name: test
+configure_flare: configure_flare.yml
+configure_obs: observation_processing.yml
+use_s3: FALSE
+use_faasr: FALSE
+```
+
+-   **restart_file:** path to a restart file (a zip file) from a previous run, or
+    `.na` to start from `default_init` values in `configure_flare.yml`
+
+-   **start_datetime:** start date and time of the simulation
+    (`YYYY-MM-DD HH:MM:SS`)
+
+-   **end_datetime:** end date and time of the simulation, or `.na` to
+    run to the most recent available observations
+
+-   **forecast_start_datetime:** the date and time at which the forecast
+    begins (i.e., the transition from hindcast to forecast mode)
+
+-   **forecast_horizon:** number of days to forecast beyond
+    `forecast_start_datetime`
+
+-   **sim_name:** a label for the simulation, used in output file naming
+    to support scenario-based workflows
+
+-   **configure_flare:** file name of the FLARE configuration file
+    (relative to the configuration directory)
+
+-   **configure_obs:** file name of the observation processing
+    configuration file (relative to the configuration directory)
+
+-   **use_s3:** access drivers, targets, and output on an S3 bucket
+    (`TRUE` or `FALSE`)
+
+-   **use_faasr:** route all object I/O through the
+    [FaaSr](https://faasr.io) serverless runtime instead of calling
+    `aws.s3` directly (`TRUE` or `FALSE`; optional, defaults to `FALSE`).
+    Set this only when FLAREr runs as a FaaSr action. `use_faasr: TRUE`
+    requires `use_s3: TRUE` — FaaSr mode is always cloud-backed and FLAREr
+    errors at startup if `use_faasr` is set while `use_s3` is `FALSE`. If
+    the FaaSr runtime helpers are not present (e.g. the configuration is
+    run outside a FaaSr container) FLAREr warns and falls back to plain
+    S3 access. See the *Storage backends* section of the upgrade vignette
+    for details.
+
+Together `use_s3` and `use_faasr` select the storage backend for a run:
+
+| `use_s3` | `use_faasr` | Mode    | Where data lives |
+|----------|-------------|---------|------------------|
+| `FALSE`  | `FALSE`     | `local` | local filesystem under `lake_directory` |
+| `TRUE`   | `FALSE`     | `s3`    | S3-compatible bucket via `aws.s3` / `arrow` |
+| `TRUE`   | `TRUE`      | `faasr` | FaaSr DataStore via the FaaSr runtime |
 
 ## configure_flare.yml
 
-`configure_flare.yml` is required to be located in your `{lake_directory}/configurations/{config_set_name}` directory.
+`configure_flare.yml` defines the model structure, data assimilation
+settings, inputs, and outputs.
 
 ### location:
 
--   **site_id:** Four letter code for lake
+-   **site_id:** four-letter code for the lake
 
--   **name:** name of lake
+-   **name:** name of the lake
 
 -   **latitude:** latitude in degrees north
 
@@ -38,85 +108,210 @@ A guide to the variables in `configure_flare.yml` and in the
 
 ### da_setup:
 
--   **da_method:** code for data assimilation method (`enkf` or `pf`)
+-   **da_method:** data assimilation algorithm to use. Options:
 
-    -   **enkf**: ensemble Kalman Filter
-    -   **pf**: bootstrap resampling particle filter
+    > **Note:** Only the Ensemble Kalman Filter (`enkf`) has been
+    > extensively tested and is recommended for production use. The other
+    > methods (`etkf`, `letkf`, `esmda`, and `pf`) are **experimental** and
+    > have not undergone extensive testing — use them with caution and
+    > verify results carefully.
+
+    -   **`enkf`**: Ensemble Kalman Filter. The classic stochastic EnKF
+        — perturbs observations with random noise and updates the full
+        ensemble covariance. Supports localization via
+        `localization_distance`.
+
+    -   **`etkf`**: Ensemble Transform Kalman Filter. A deterministic
+        (square-root) variant of the EnKF that avoids sampling noise by
+        computing an exact ensemble transform matrix. Produces the same
+        posterior mean as the EnKF but with lower ensemble variance.
+        Also supports `localization_distance`.
+
+    -   **`letkf`**: Local Ensemble Transform Kalman Filter. Runs a
+        separate ETKF update for each depth layer using only nearby
+        observations, with observation weights scaled by
+        `localization_distance`. Non-depth-resolved variables (lake
+        depth, Secchi, parameters) receive a global ETKF update.
+        Recommended when the state vector spans many depths and
+        observation coverage varies with depth.
+
+    -   **`esmda`**: Ensemble Smoother with Multiple Data Assimilation
+        (Emerick & Reynolds 2013). Applies the EnKF update
+        `esmda_iterations` times per assimilation window, inflating
+        the observation error by √(`esmda_iterations`) per iteration so
+        that the combined update is statistically consistent. Reduces
+        filter inbreeding for strongly nonlinear systems.
+
+    -   **`pf`**: Bootstrap resampling particle filter. Weights
+        particles by their likelihood given the observations and
+        resamples when the effective sample size drops below a
+        threshold. Does not use covariance inflation. Controlled by
+        `pf_always_resample`.
+
+    -   **`none`**: No data assimilation. The model runs in open-loop
+        forecast mode; observations are not assimilated even if
+        `use_obs_constraint: TRUE`.
 
 -   **par_fit_method:** method for parameter fitting
 
-    -   **inflate** uses the parameter `inflat_pars` in the par
-        configuration to increase the variance of the parameters when
-        data is assimilated. This is the method used in Thomas et al.
-        2023
+    -   **`inflate`** inflates the parameter ensemble after each DA
+        update using `perturb_par` as a per-parameter multiplicative
+        inflation factor (≥ 1). Counteracts ensemble collapse without
+        adding random noise. Compatible with `enkf`, `etkf`, `esmda`,
+        `nudging`, and `letkf`.
 
-    -   **perturb** adds normal random noise to each parameter based on
-        the parameter `perturb_par` in the par configuration.
+    -   **`perturb`** adds normal random noise to each parameter at
+        every step using `perturb_par` as the standard deviation.
 
-    -   **perturb_const** Data assimilation fits the mean of the
-        parameter distribution uses a specified variance for parameters
-        defined by the parameter `perturb_par` in the par configuration
+    -   **`perturb_const`** rescales the parameter ensemble around its
+        current mean so the spread equals `perturb_par` at every step.
+
+    -   **`perturb_init`** initialises each ensemble member with a
+        different parameter draw but holds each member's value fixed
+        thereafter (no DA update, no ongoing noise). Spread collapses to
+        the ensemble mean during the forecast period when
+        `uncertainty: parameter: FALSE`.
+
+    All methods support the optional `par_min_sd` column in
+    `parameter_calibration_config.csv`, which sets a per-parameter
+    floor on the posterior ensemble SD after each DA update to guard
+    against ensemble collapse.
 
 -   **ensemble_size:** number of ensemble members
 
 -   **localization_distance:** distance in meters over which covariances
-    are in the enkf covariance metric is diminished. The distance
-    governs the exponential decay of the covariance strength.
+    are diminished via exponential decay. Set to `.na` to disable
+    localization. Used by `enkf`, `etkf`, and `letkf`; ignored by
+    `esmda` and `pf`.
 
--   **no_negative_states:** Force non-temperature states to be positive
-    (`TRUE` or `FALSE`)
+-   **inflation_factor:** multiplicative inflation factor applied to the
+    state ensemble after each DA update (value ≥ 1; only used when
+    `use_inflation_factor: TRUE`). Per-parameter inflation for
+    `par_fit_method: inflate` is controlled separately by `perturb_par`
+    in the parameter configuration file.
 
--   **assimilate_first_step:** Assimilate data provided by the initial
-    conditions. Set to FALSE if the initial conditions already have data
-    assimilated. (`TRUE` or `FALSE`)
+-   **use_inflation_factor:** apply covariance inflation to the state
+    ensemble after each DA update (`TRUE` or `FALSE`; default `FALSE`).
+    See `inflation_factor`.
 
--   **use_obs_constraint:** Assimilate observations (`TRUE` or `FALSE`)
+-   **esmda_iterations:** number of assimilation iterations per
+    timestep for ES-MDA (only used when `da_method: esmda`; default
+    `4`). Higher values reduce filter inbreeding at the cost of
+    additional model evaluations per step.
 
--   **obs_filename:** file name of targets file. It is required to be
-    located in the `lake_directory/targets/{site_id}` directory.
+-   **use_one_step_lag:** update parameters with a one-step lag — the
+    state update runs first using only state–state covariances, then a
+    separate parameter EnKF update uses the just-updated state as the
+    forecast (`TRUE` or `FALSE`; default `FALSE`). Reduces spurious
+    state–parameter covariances. Not available for `pf`.
 
--   **pf_always_resample:** Force the particle filter to resample each
-    timestep (only when `da_method = pf`) (`TRUE` or `FALSE`)
+-   **no_negative_states:** force non-temperature states to be
+    non-negative (`TRUE` or `FALSE`)
+
+-   **assimilate_first_step:** assimilate observations at the first
+    timestep. Set to `FALSE` if initial conditions already reflect
+    assimilated data. (`TRUE` or `FALSE`)
+
+-   **use_obs_constraint:** assimilate observations (`TRUE` or `FALSE`)
+
+-   **obs_filename:** file name of the targets file, required to be
+    located in `lake_directory/targets/{site_id}/`
+
+-   **pf_always_resample:** force the particle filter to resample at
+    every timestep (only used when `da_method: pf`) (`TRUE` or `FALSE`)
+
+-   **pf_tempering_factor:** tempers the likelihood used to compute
+    particle weights by raising it to this power before normalising
+    (only used when `da_method: pf`; default `1.0`). Must be a single
+    number in `(0, 1]`. Values less than `1` soften the influence of
+    observations on the weights, preventing weight collapse when
+    observations are very informative relative to the prior ensemble
+    spread. `1.0` recovers the standard bootstrap particle filter.
+
+-   **add_random_noise:** enable process noise during the forecast (`1`
+    = on, `0` = off). When enabled, small random perturbations are added
+    to the model state and non-vertical diagnostic variables at each
+    timestep to represent irreducible model error. Set to `0` to run a
+    deterministic ensemble with no process noise. Not used by the
+    particle filter (`pf`).
+
+-   **log_transform_wq_obs:** sample perturbed water-quality
+    observations in log space to avoid zero-clamping bias (`TRUE` or
+    `FALSE`)
+
+-   **log_transform_wq_zero_collapse:** when an observation equals zero,
+    collapse the observation error matrix to zero (unbiased) rather than
+    clamping (`TRUE` or `FALSE`)
+
+-   **save_da_diagnostics:** write per-step DA diagnostic tables to
+    `<lake_directory>/da_diagnostics/` as parquet files after each run
+    (`TRUE` or `FALSE`; default `FALSE`). Seven files are produced:
+    `da_filter_health.parquet` (NIS, DFS, n_obs per step),
+    `da_innovations.parquet` (per-observation innovation and influence),
+    `da_ensemble_spread.parquet` (prior/posterior mean and SD per state
+    × depth), `da_ranks.parquet` (observation rank within the prior
+    ensemble), `da_parameters.parquet` (parameter evolution and bound
+    fractions; only when parameters are estimated),
+    `da_cross_state.parquet` and `da_cross_depth.parquet` (cross-variable
+    and cross-depth update structure; only when PHY_TCHLA observations are
+    active). Each file includes `site_id`, `model_id`, and
+    `reference_date` columns so that diagnostics from successive runs can
+    be accumulated. See the [DA hyperparameters
+    vignette](flare-da-hyperparameters-vignette.html) for guidance on
+    interpreting these files.
+
+-   **render_da_diagnostics_report:** after writing the diagnostic parquet
+    files, render the built-in Quarto template into a self-contained HTML
+    report at `<lake_directory>/da_diagnostics_report.html` (`TRUE` or
+    `FALSE`; default `FALSE`). Requires `save_da_diagnostics: TRUE` and
+    the `quarto` R package. The report can also be generated manually at
+    any time by calling `FLAREr::render_da_diagnostics(lake_directory)`,
+    which additionally accepts `site_id`, `model_id`, `diagnostics_dir`,
+    and `output_file` arguments to filter or redirect the output.
 
 ### model_settings:
 
--   **ncore:** number of process cores to use
+-   **ncore:** number of process cores to use for parallel ensemble runs
 
 -   **model_name:** name of process model (`glm` or `glm_aed`)
 
--   **base_GLM_nml:** name of base GLM namelist. It is required to be in
-    the `lake_directory/configuraton/{config_set}` directory.
+-   **base_GLM_nml:** name of base GLM namelist file, required to be in
+    the configuration directory
 
--   **max_model_layers:** maximum number of layers allowed in the GLM
+-   **max_model_layers:** maximum number of layers allowed in GLM
     simulations
 
--   **modeled_depths:** vector of depths (m) with observations or that
-    the user desires output for. Value is for the top of the layer.
+-   **modeled_depths:** vector of depths (m) for which output is
+    requested. Values represent the top of each layer.
 
--   **par_config_file:** name of parameter configuration csv. It is
-    required to be in the `lake_directory/configuraton/{config_set}`
-    directory. parameter_calibration_config.csv obs_config_file: name of
-    observation configuration csv. It is required to be in the
-    `lake_directory/configuraton/{config_set}` directory.
+-   **par_config_file:** name of the parameter calibration CSV
+    (`parameter_calibration_config.csv`)
 
--   **states_config_file:** name of state configuration csv. It is
-    required to be in the `lake_directory/configuraton/{config_set}`
-    directory.
+-   **obs_config_file:** name of the observation configuration CSV
+    (`observations_config.csv`)
 
--   **depth_model_sd_config_file:** Optional state configuration file
-    that specifies how process uncertainty depends on depth. If used it
-    is required be in the `lake_directory/configuraton/{config_set}`
-    directory.
+-   **states_config_file:** name of the state configuration CSV
+    (`states_config.csv`)
+
+-   **depth_model_sd_config_file:** optional CSV specifying
+    depth-varying process uncertainty. Required to be in the
+    configuration directory if used.
+
+-   **non_vertical_noise_config_file:** optional CSV specifying process
+    noise for non-vertical (non-depth-resolved) diagnostic variables
+    such as Secchi depth. Required to be in the configuration directory
+    if used.
 
 ### default_init:
 
 -   **lake_depth:** initial lake depth (meters)
 
--   **temp:** vector of initial temperature profile
+-   **temp:** vector of initial temperature profile values (°C)
 
--   **temp_depths:** vector of depths in initial temperature profile
+-   **temp_depths:** vector of depths (m) corresponding to the initial
+    temperature profile
 
--   **salinity:** initial salinity value (g/kg)
+-   **salinity:** initial salinity (g/kg)
 
 -   **snow_thickness:** initial snow thickness (m)
 
@@ -124,176 +319,363 @@ A guide to the variables in `configure_flare.yml` and in the
 
 -   **blue_ice_thickness:** initial blue ice thickness (m)
 
+### flows:
+
+-   **include_inflow:** include inflows in simulations (`TRUE` or
+    `FALSE`)
+
+-   **include_outflow:** include outflows in simulations (`TRUE` or
+    `FALSE`)
+
+-   **future_inflow_model:** path to the inflow model used for forecast
+    days, relative to `s3$inflow$bucket` or `local_inflow_directory`.
+    Supports `glue`-style substitution, e.g.
+    `f/model_id=h/reference_datetime={reference_date}/site_id={site_id}`
+
+-   **historical_inflow_model:** path to the inflow model used for
+    historical days. Supports `glue`-style substitution, e.g.
+    `h/model_id=h/site_id={site_id}`
+
+-   **local_inflow_directory:** directory for inflow files when not
+    using S3, relative to `lake_directory`
+
+-   **future_outflow_model:** path to the outflow model used for
+    forecast days (same substitution syntax as `future_inflow_model`)
+
+-   **historical_outflow_model:** path to the outflow model used for
+    historical days
+
+-   **local_outflow_directory:** directory for outflow files when not
+    using S3, relative to `lake_directory`
+
+-   **use_ler_vars:** use LER standardised variable names for flows
+    (`TRUE` or `FALSE`)
+
+-   **use_flows_s3:** access flow driver files from an S3 bucket (`TRUE`
+    or `FALSE`)
+
 ### met:
 
--   **future_met_model:** path to met model used for forecast days
-    (relative to `s3$drivers$bucket` path or **local_met_directory**).  It defines the form of the path partitioning. For example `met/gefs-v12/stage2/reference_datetime={reference_date}/site_id={site_id}` provides the path with the the part in the brackets being updated within the FLARE run
--   **historical_met_model:** path to met model used for historical days
-    (relative to `s3$drivers$bucket` path or **local_met_directory**).  It defines the form of the path partitioning. For example `met/gefs-v12/stage3/site_id={site_id}` provides the path with the the part in the brackets being updated within the FLARE run.
--   **forecast_lag_days:** number of days to look backward for a
-    forecast
--   **use_ler_vars:** use LER standardized met names (`TRUE` or `FALSE`)
--   **historical_met_use_s3:** access historical met data on s3 bucket (`TRUE` or `FALSE`)
--   **future_met_use_s3:** access met data on s3 bucket (`TRUE` or `FALSE`)
--   **use_openmeteo:** use openmeteo for meterology inputs (`TRUE` or `FALSE`)
--   **openmeteo_api:** the name of the openmeteo api to use (only used if `openmeteo = TRUE`); `seasonal`, `ensemble_forecast`,
-    `historical`, `climate`
--   **openmeteo_model:** name of the openmeteo model to use ( (only used if `openmeteo = TRUE`)); see <https://open-meteo.com/en/docs> for
-    list of models
--   **use_openmeteo_archive:** use a archived version of openmeteo on s3
-    rather than directly using the api.  (only used if `openmeteo = TRUE`)
--   **local_met_directory:** directory where meteorology forecasts are
-    saved if not using s3 access. Relative to the lake_directory.
+-   **future_met_model:** path to the met model used for forecast days,
+    relative to `s3$drivers$bucket` or `local_met_directory`. Supports
+    `glue`-style substitution, e.g.
+    `met/gefs-v12/stage2/reference_datetime={reference_date}/site_id={site_id}`
 
-### inflow:
+-   **historical_met_model:** path to the met model used for historical
+    days. Supports `glue`-style substitution, e.g.
+    `met/gefs-v12/stage3/site_id={site_id}`
 
--   **include_inflow:** Include inflows in simulations (`TRUE` or
+-   **forecast_lag_days:** number of days to look backward when
+    searching for a forecast
+
+-   **use_ler_vars:** use LER standardised met variable names (`TRUE` or
     `FALSE`)
--   **include_outflow:** Include outflows in simulations (`TRUE` or
-    `FALSE`)
--   **future_inflow_model:** path to inflow model used for forecast days
-    (relative to `s3$inflow$bucket` path or **local_inflow_directory**). It defines the form of the path partitioning. For example `inflow/model_id=historical/reference_datetime={reference_date}/site_id={site_id}` provides the path with the the part in the brackets being updated within the FLARE run
--   **historical_inflow_model:** path to inflow model used for
-    historical days (relative to `s3$inflow$bucket` path).  It defines the form of the path partitioning. For example `inflow/model_id=historical/site_id={site_id}` provides the path with the the part in the brackets being updated within the FLARE run.
--   **local_inflow_directory:** directory where inflow forecasts are
-    saved if not using s3 access. Relative to the lake_directory.
--   **future_outflow_model:** path to outflow model used for forecast
-    days (relative to `s3$outflow$bucket` path or
-    **local_outflow_directory**)
--   **historical_outflow_model:** path to outflow model used for
-    historical days (relative to `s3$outflow$bucket` path or
-    **local_outflow_directory**)
--   **local_outflow_directory:** directory where outflow forecasts are
-    saved if not using s3 access. Relative to the lake_directory.
--  **use_flows_s3:** access flow models on an s3 bucket (`TRUE` or `FALSE`)
+
+-   **historical_met_use_s3:** access historical met data from an S3
+    bucket (`TRUE` or `FALSE`)
+
+-   **future_met_use_s3:** access forecast met data from an S3 bucket
+    (`TRUE` or `FALSE`)
+
+-   **use_openmeteo:** use Open-Meteo for meteorological inputs (`TRUE`
+    or `FALSE`)
+
+-   **openmeteo_api:** Open-Meteo API endpoint to use (only when
+    `use_openmeteo: TRUE`); options are `seasonal`,
+    `ensemble_forecast`, `historical`, `climate`
+
+-   **openmeteo_model:** Open-Meteo model name (only when
+    `use_openmeteo: TRUE`); see <https://open-meteo.com/en/docs> for
+    available models
+
+-   **use_openmeteo_archive:** use an archived version of Open-Meteo
+    served from S3 instead of calling the API directly (only when
+    `use_openmeteo: TRUE`) (`TRUE` or `FALSE`)
+
+-   **local_met_directory:** directory for met files when not using S3
+    or Open-Meteo, relative to `lake_directory`
 
 ### uncertainty:
 
--   **observation:** Include uncertainty in observations (`TRUE` or
+-   **observation:** include uncertainty in observations (`TRUE` or
     `FALSE`)
 
--   **process:** Include normal random noise added to states during
-    forecast (`TRUE` or `FALSE`)
-
--   **weather:** Include multiple weather forecast ensemble members
+-   **process:** add normal random noise to states during the forecast
     (`TRUE` or `FALSE`)
 
--   **initial_condition:** Include uncertainty in states at initiation
-    of forecast (`TRUE` or `FALSE`)
+-   **weather:** use multiple weather forecast ensemble members (`TRUE`
+    or `FALSE`)
 
--   **parameter:** Include uncertainty in parameters during forecast
+-   **initial_condition:** include uncertainty in states at forecast
+    initiation (`TRUE` or `FALSE`)
+
+-   **parameter:** include parameter uncertainty during the forecast
     (`TRUE` or `FALSE`)
 
--   **inflow:** Include uncertainty in inflow during forecast
-    (`TRUE` or `FALSE`)
+-   **inflow:** include inflow uncertainty during the forecast (`TRUE`
+    or `FALSE`)
 
 ### output_settings:
 
--   **diagnostics_names:** names of non-state GLM variables to save
--   **generate_plots**: generate diagnostic plots (`TRUE` or `FALSE`)
--   **diagnostics_daily**: 
-    - **names:** the variable names in the csv file produced by GLM. Options are at <https://github.com/AquaticEcoDynamics/glm-aed/wiki/Navigating-GLM-outputs>
-    - **save_names**: the name of the variable in the FLARE forecast output.  This may differ from `csv_name` when you want to add more information to the variable name.  For example the csv may have `temp` but you want to save it as `outflow_temp` so you know it is from the outflow.  If the output file is `output.nc` then the `save` name needs to the aggregation function (`mean`, `min`, and `max` are supported).  For example, a value of `temp_mean` would calculate the daily mean from the subdaily output.nc file.  `nsave` in the glm3.nml file needs adjusted to output at sub-daily time steps (`nsave = 1` would output hourly if `dt = 3600`).
-    - **file**: the name of the GLM output csv that has the variable.  This is defined in the GLM nml. Example are `lake.csv`, `outlet_00.csv`, and `output.nc`
-    - **depth**: Depth for daily diagnostic.  Use NA for variables that are not associated with a depth (like co2 flux).
-    
-### s3
+-   **generate_plot:** generate diagnostic plots (`TRUE` or `FALSE`)
+
+-   **restart_save_timesteps:** days relative to
+    `forecast_start_datetime` at which restart files are saved. Use
+    `"all"` to save every timestep. Example: `[-2, 0]` saves two days
+    before and on the forecast start date.
+
+-   **diagnostics_names:** names of non-state GLM variables to save in
+    the forecast output (e.g. `[extc]`)
+
+-   **diagnostics_daily:** configuration for saving daily summary
+    variables from GLM output files
+
+    -   **names:** variable names as they appear in the GLM CSV or NetCDF
+        output. Options are listed at
+        <https://github.com/AquaticEcoDynamics/glm-aed/wiki/Navigating-GLM-outputs>
+
+    -   **save_names:** the name of the variable in the FLARE forecast
+        output. For `output.nc`-sourced variables the name must encode
+        the aggregation function — e.g. `temp_mean` computes the daily
+        mean, `temp_1m_max` computes the daily maximum at 1 m. Supported
+        aggregations are `mean`, `min`, and `max`. Requires `nsave = 1`
+        in `glm3.nml` for sub-daily output.
+
+    -   **file:** name of the GLM output file containing the variable.
+        Examples: `lake.csv`, `outlet_00.csv`, `output.nc`
+
+    -   **depth:** depth (m) for the daily diagnostic. Use `NA` for
+        variables that are not depth-resolved (e.g. CO₂ flux).
+
+### s3:
+
+Defines the S3-compatible DataStores used when `use_s3: TRUE` (or
+`use_faasr: TRUE`) in `configure_run.yml`. Each entry is a *server name*
+that FLAREr looks up by key when reading or writing the corresponding
+data. The block is ignored in `local` mode. Each store accepts an
+optional **anonymous:** flag (`TRUE` for public, read-only buckets);
+non-anonymous access reads `AWS_ACCESS_KEY_ID` and
+`AWS_SECRET_ACCESS_KEY` from the environment.
 
 -   **drivers:**
-    -   **endpoint:** s3 endpoint of met drivers
-    -   **bucket:** s3 bucket of met drivers
+    -   **endpoint:** S3 endpoint for met drivers
+    -   **bucket:** S3 bucket for met drivers
 -   **inflow_drivers:**
-    -   **endpoint:** s3 endpoint of inflow drivers
-    -   **bucket:** s3 bucket of inflow drivers
+    -   **endpoint:** S3 endpoint for inflow drivers
+    -   **bucket:** S3 bucket for inflow drivers
 -   **outflow_drivers:**
-    -   **endpoint:** s3 endpoint of outflow drivers
-    -   **bucket:** s3 bucket of outflow drivers
+    -   **endpoint:** S3 endpoint for outflow drivers
+    -   **bucket:** S3 bucket for outflow drivers
 -   **targets:**
-    -   **endpoint:** s3 endpoint of target files
-    -   **bucket:** s3 bucket of target files
+    -   **endpoint:** S3 endpoint for target files
+    -   **bucket:** S3 bucket for target files
 -   **forecasts_parquet:**
-    -   **endpoint:** s3 endpoint of forecast parquet files
-    -   **bucket:** s3 bucket of forecast parquet files
+    -   **endpoint:** S3 endpoint for forecast parquet files
+    -   **bucket:** S3 bucket for forecast parquet files
 -   **restart:**
-    -   **endpoint:** s3 endpoint of restart yaml file
-    -   **bucket:** s3 bucket of restart yaml file
+    -   **endpoint:** S3 endpoint for restart YAML files
+    -   **bucket:** S3 bucket for restart YAML files
 -   **scores:**
-    -   **endpoint:** s3 endpoint of scores
-    -   **bucket:** s3 bucket of scores
+    -   **endpoint:** S3 endpoint for scores
+    -   **bucket:** S3 bucket for scores
 
 ## parameter_calibration_config.csv
 
-`parameter_calibration_config.csv` is required to be located in your `{lake_directory}/configurations/{config_set_name}` directory.
+Example:
 
--   **par_names:** vector of GLM names of parameter values estimated
--   **par_names_save:** vector of names of parameter values estimated
-    that are desired in output and plots
--   **par_file:** vector of nml or csv file names that contains the
-    parameter that is being estimated
--   **par_init:** vector of initial mean value for parameters
--   **par_init_lowerbound:** vector of lower bound for the initial
-    uniform distribution of the parameters
--   **par_init_upperbound:** vector of upper bound for the initial
-    uniform distribution of the parameters
--   **par_lowerbound:** vector of lower bounds that a parameter can have
--   **par_upperbound:** vector of upper bounds that a parameter can have
--   **perturb_par:** The parameter controlling the noise or spread in the parameters.  If the parameter fitting method is `perturb` then it is the standard deviation of the normally distributed
-    random noise that is added to parameters.  If the parameter fitting method is `perturb_const`, then it is the standard deviation of the parameter distribution.  If the parameter fitting method is `inflate` it is the The variance inflation factor applied to the parameter component of the ensemble (Value greater than 1). 
--   **par_units:** Units of parameter for plotting
--   **fix_par**: 0 = fit parameter, 1 = hold parameter at **par_init**
+```
+par_names,par_names_save,par_file,par_init_mean,par_init_sd,par_init_lowerbound,par_init_upperbound,par_lowerbound,par_upperbound,perturb_par,par_units,fix_par,par_min_sd
+sed_temp_mean,zone1temp,glm3.nml,12,NA,10,12,-100,100,1,deg_C,0,0.1
+sed_temp_mean,zone2temp,glm3.nml,15,NA,12,16,-100,100,1,deg_C,0,0.1
+lw_factor,lw_factor,glm3.nml,1,NA,0.9,1.1,-10,10,0.02,unitless,0,0.001
+```
+
+-   **par_names:** GLM namelist name of the parameter to estimate. The
+    same `par_names` value can appear on multiple rows to fit individual
+    elements of a vector parameter (e.g. separate sediment temperature
+    zones from a shared `sed_temp_mean` vector).
+
+-   **par_names_save:** name used for the parameter in FLARE output and
+    plots
+
+-   **par_file:** nml or CSV file that contains the parameter
+
+-   **par_init_mean:** mean of the distribution used to initialise the
+    parameter ensemble. For fixed parameters (`fix_par = 1`) this is the
+    exact value used for all ensemble members.
+
+-   **par_init_sd** *(optional)*: controls the shape of the initial
+    ensemble distribution for free parameters (`fix_par = 0`):
+    -   **`NA`** — draw each ensemble member independently from a
+        uniform distribution on [`par_init_lowerbound`,
+        `par_init_upperbound`] (original behaviour; use this when you
+        want to specify the initial range directly).
+    -   **a positive number** — draw each ensemble member from
+        N(`par_init_mean`, `par_init_sd`), then reflect any values that
+        fall outside [`par_lowerbound`, `par_upperbound`] back into the
+        feasible region and clamp any remaining outliers.
+
+-   **par_init_lowerbound:** lower bound of the uniform distribution
+    used when `par_init_sd` is `NA`. Ignored otherwise.
+
+-   **par_init_upperbound:** upper bound of the uniform distribution
+    used when `par_init_sd` is `NA`. Ignored otherwise.
+
+-   **par_lowerbound:** hard lower bound — parameter values are clamped
+    to this during assimilation and during normal-distribution
+    initialisation
+
+-   **par_upperbound:** hard upper bound — parameter values are clamped
+    to this during assimilation and during normal-distribution
+    initialisation
+
+-   **perturb_par:** noise/spread parameter used by all fitting methods.
+    Interpretation depends on `par_fit_method`:
+    -   `perturb`: standard deviation of the random noise added each
+        step
+    -   `perturb_const`: target standard deviation of the parameter
+        distribution (spread is rescaled to this value each step)
+    -   `inflate`: per-parameter multiplicative inflation factor (≥ 1)
+        applied to the parameter ensemble after each DA update
+    -   `perturb_init`: not used (column must still be present)
+
+-   **par_units:** units string used in plots
+
+-   **fix_par:** `0` = fit the parameter; `1` = hold at `par_init_mean`
+
+-   **par_min_sd** *(optional)*: minimum posterior ensemble standard
+    deviation for this parameter, in the parameter's units. After each
+    DA update (and after inflation), if the ensemble SD falls below this
+    value the spread is restored: members are rescaled symmetrically
+    around the posterior mean when SD > 0, or resampled from
+    N(posterior mean, `par_min_sd`) in the rare case of complete
+    collapse (SD = 0). Omit the column or set the value to `NA` to
+    disable the floor for a given parameter. A starting value of 1–5 %
+    of the parameter's physical range is recommended.
 
 ## states_config.csv
 
-`states_config.csv` is required to be located in your `{lake_directory}/configurations/{config_set_name}` directory.
+Example:
 
+```
+state_names,initial_conditions,model_sd,vert_decorr_length,initial_model_sd,states_to_obs_1,states_to_obs_mapping_1,states_to_obs_2,states_to_obs_mapping_2,states_to_obs_3,states_to_obs_mapping_3,init_obs_name,init_obs_mapping
+temp,20,1.35,2,1.35,temp,1,NA,NA,NA,NA,temp,1
+salt,0.1,0.001,2,0.001,NA,NA,NA,NA,NA,NA,salt,1
+```
 
--   **state_names:** name of states.
--   **initial_conditions:** The initial conditions for the state if
-    observations are not available to initialize. Assumes the initial
-    conditions are constant over all depths, except for temperature
-    which uses the `default_temp_init` variable in `configure_flare.R`
-    to set the depth profile when observations are lacking
--   **model_sd:** the standard deviation of the process error for the
-    tate
--   **vert_decorr_length:**
--   **initial_model_sd:** the standard deviation on the initial
-    distribution of the state
--   **states_to_obs_mapping:** a multiplier on the state to convert to
-    the observation. In most cases this is 1. However, in the case of
-    phytoplankton, the model predicts mmol/m3 biomass but the
-    observations are ug/L chla. Therefore the multiplier is the biomass
-    to chla conversion
--   **states_to_obs_1:** The observation that the state contributes to
-    -   `NA` is required if no matching observations
-    -   Name in this column must match an observation name
--   **states_to_obs_2:** A second observation that the state contributes
-    to
-    -   `NA` is required if no matching observations
-    -   Name in this column must match an observation name
--   **init_obs_name:** the name of observation that is used to
-    initialize the state if there is an observation
--   **init_obs_mapping**: a multiplier on the observation when used to
-    initialize. For example, if using a combined DOC measurement to
-    initialize two DOC states, you need to provide the proportion of the
-    observation that is assigned to each state.
+-   **state_names:** name of the state variable
 
-### depth_model_sd.csv:
+-   **initial_conditions:** default initial value used when observations
+    are not available. Applies uniformly across all depths, except for
+    `temp` which uses the `default_init` temperature profile from
+    `configure_flare.yml`.
 
-`depth_model_sd.csv` is optional and should be located in your `{lake_directory}/configurations/{config_set_name}` directory.
+-   **model_sd:** standard deviation of the process error for the state
 
+-   **vert_decorr_length:** vertical decorrelation length (m) used in
+    the EnKF covariance structure
+
+-   **initial_model_sd:** standard deviation of the initial ensemble
+    spread for the state
+
+-   **states_to_obs_1 / states_to_obs_mapping_1:** the first observation
+    type this state maps to, and the multiplier applied to the state to
+    convert it to the observation scale (e.g. mmol/m³ biomass → µg/L
+    chla). Use `NA` if no observation corresponds.
+
+-   **states_to_obs_2 / states_to_obs_mapping_2:** a second observation
+    type the state contributes to (same rules as above)
+
+-   **states_to_obs_3 / states_to_obs_mapping_3:** a third observation
+    type the state contributes to (same rules as above)
+
+-   **init_obs_name:** name of the observation used to initialise this
+    state when an observation is available
+
+-   **init_obs_mapping:** multiplier on the observation when used for
+    initialisation. For example, if a combined DOC measurement
+    initialises two DOC states, set each to the fraction of the
+    observation assigned to that state.
+
+## depth_model_sd.csv
+
+`depth_model_sd.csv` is optional.
+
+Example:
+
+```
+depth,temp
+0.1,0.8
+1,0.8
+5,0.7
+9,0.3
+```
 
 -   **depth:** depth (m)
--   column names: **variable** name for states that have depth varying
-    process uncertainty. Values are the sd for each depth. sd will be
-    interpolated between and extrapolated beyond the depths provided.
+-   **additional columns:** one column per state variable that has
+    depth-varying process uncertainty. Values are the standard deviation
+    of process error at each listed depth; values are linearly
+    interpolated between and extrapolated beyond listed depths.
 
 ## observations_config.csv
 
-`observations_config.csv` is required to be located in your `{lake_directory}/configurations/{config_set_name}` directory.
+Example:
 
--   **state_names_obs**: names of states with observations
--   **obs_sd**: the standard deviation of the observation uncertainty
--   **target_variable**: the name of variable in the data file that is
-    used for the observed state.
--   **multi_depth:** 1 = observation has multiple depths, 0 =
-    observation does not have a depth associated with it.
+```
+state_names_obs,obs_units,obs_sd,target_variable,multi_depth,model_source,model_variable,model_depth_m
+temp,degC,0.5,temperature,1,NA,NA,NA
+secchi,unitless,0.5,secchi,0,diagnostic,extc_coeff,1.0
+```
+
+-   **state_names_obs:** name of the observed state (must match a name
+    in `states_config.csv`)
+
+-   **obs_units:** units of the observation (used in output metadata)
+
+-   **obs_sd:** standard deviation of observation uncertainty
+
+-   **target_variable:** column name in the targets file that contains
+    this observation
+
+-   **multi_depth:** `1` = observation is resolved by depth; `0` =
+    observation has no depth dimension (e.g. Secchi depth)
+
+-   **model_source:** source of the model variable used to compute this
+    observation when it is a derived diagnostic rather than a direct
+    state. Use `NA` for direct state observations. Options:
+    `diagnostic`, `state`.
+
+-   **model_variable:** name of the GLM diagnostic variable used to
+    derive the observation (e.g. `extc_coeff` for Secchi depth). Use
+    `NA` for direct state observations.
+
+-   **model_depth_m:** depth (m) at which the diagnostic variable is
+    evaluated when computing the derived observation. Use `NA` for
+    direct state observations or depth-resolved variables.
+
+## non_vertical_noise_config.csv
+
+`non_vertical_noise_config.csv` is optional. It specifies process noise
+for non-vertical (non-depth-resolved) model variables such as Secchi
+depth that are tracked as diagnostics rather than full depth profiles.
+
+Example:
+
+```
+model_variable,model_source,model_depth_m,process_noise_sd
+lake_depth,state,NA,0.01
+extc,diagnostic,1.0,NA
+```
+
+-   **model_variable:** name of the model variable (must match a
+    variable tracked by GLM or FLAREr)
+
+-   **model_source:** whether the variable comes from the model state
+    (`state`) or a GLM diagnostic output (`diagnostic`)
+
+-   **model_depth_m:** depth (m) at which the diagnostic is evaluated.
+    Use `NA` for variables without a depth dimension.
+
+-   **process_noise_sd:** standard deviation of the process noise added
+    to this variable each timestep. Use `NA` to suppress process noise
+    for that variable.

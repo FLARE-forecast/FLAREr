@@ -59,7 +59,15 @@ remotes::install_github("flare-forecast/FLAREr")
 
 Second, download the General Lake Model (GLM) code.  You can get in using multiple pathways
 
-The easiest way is to install the `GLM3r` package from Github using
+The easiest way is to install the `GLMAEDr` package from Github, which downloads and manages the GLM binary for you:
+
+```{r}
+remotes::install_github("flare-forecast/GLMAEDr")
+GLMAEDr::glm_install()
+Sys.setenv('GLM_PATH'=GLMAEDr::glm_path())
+```
+
+Alternatively, you can install the `GLM3r` package from Github using
 
 ```{r}
 remotes::install_github("rqthomas/GLM3r")
@@ -231,6 +239,11 @@ df |>
 ### Turning off data assimilation
 
 In configure_flare.yml you can change `da_method` to "none"
+
+> **Note:** `da_method` also accepts other algorithms (`etkf`, `letkf`,
+> `esmda`, `pf`), but only the Ensemble Kalman Filter (`enkf`, the default)
+> has been extensively tested. The other methods are **experimental** —
+> use them with caution and verify results carefully.
   
 ### Removing parameter estimation
 

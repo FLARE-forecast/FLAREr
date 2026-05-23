@@ -18,8 +18,9 @@
 #' library(ggplot2)
 #' library(readr)
 #' library(lubridate)
-#' remotes::install_github("rqthomas/GLM3r")
-#' Sys.setenv('GLM_PATH'='GLM3r')
+#' remotes::install_github("flare-forecast/GLMAEDr")
+#' GLMAEDr::glm_install()
+#' Sys.setenv('GLM_PATH'='GLMAEDr')
 #'
 #' dir <- normalizePath(tempdir(),  winslash = "/")
 #' lake_directory <- file.path(dir, "extdata")
@@ -41,14 +42,12 @@
 #'  geom_line() +
 #'  geom_vline(aes(xintercept = as_datetime(reference_datetime))) +
 #'  labs(title = "1 m water temperature forecast")
-#'
-#'
+
 run_flare <- function(lake_directory,
                       configure_run_file,
                       config_set_name,
                       clean_start = FALSE,
                       sim_name = NA){
-
 
   if(!dir.exists(file.path(lake_directory, "configuration", config_set_name))){
     stop(paste0("lake_directory is missing the configuration/",config_set_name," directory"))
@@ -59,13 +58,21 @@ run_flare <- function(lake_directory,
 
   config <- get_restart_file(config, lake_directory)
 
-  message(paste0("     Running forecast that starts on: ", config$run_config$start_datetime))
+  message(paste0("Running forecast that starts on: ", config$run_config$start_datetime))
 
   if(!is.null(config$model_settings$par_config_file)){
     if(!is.na(config$model_settings$par_config_file)){
       pars_config <- readr::read_csv(file.path(config$file_path$configuration_directory, config$model_settings$par_config_file), col_types = readr::cols())
-      if(!setequal(names(pars_config),c("par_names","par_names_save","par_file","par_init","par_init_lowerbound","par_init_upperbound","par_lowerbound","par_upperbound","perturb_par","par_units", "fix_par")) &
-         !setequal(names(pars_config),c("par_names","par_names_save","par_file","par_init","par_init_lowerbound","par_init_upperbound","par_lowerbound","par_upperbound","inflat_pars", "perturb_par","par_units", "fix_par"))){
+
+      if("par_init" %in% names(pars_config) && !"par_init_mean" %in% names(pars_config)){
+        warning("'par_init' in parameter calibration config is deprecated. Please rename this column to 'par_init_mean'.")
+        pars_config <- dplyr::rename(pars_config, par_init_mean = par_init)
+      }
+
+      required_par_cols <- c("par_names","par_names_save","par_file","par_init_mean","par_init_lowerbound","par_init_upperbound","par_lowerbound","par_upperbound","perturb_par","par_units","fix_par")
+      optional_par_cols <- c("par_min_sd", "par_init_sd")
+      if(!all(required_par_cols %in% names(pars_config)) ||
+         !all(names(pars_config) %in% c(required_par_cols, optional_par_cols))){
         stop(" par configuration file does not have the correct columns")
       }
     }
@@ -110,7 +117,8 @@ run_flare <- function(lake_directory,
                                           model = config$met$openmeteo_model,
                                           use_archive = config$met$use_openmeteo_archive,
                                           bucket = config$s3$drivers$bucket,
-                                          endpoint = config$s3$drivers$endpoint)
+                                          endpoint = config$s3$drivers$endpoint,
+                                        config= config)
   }else{
 
     met_out <- create_met_files(config, lake_directory, met_forecast_start_datetime, met_start_datetime)
@@ -139,9 +147,30 @@ run_flare <- function(lake_directory,
 
   message('Setting states and initial conditions...')
 
+  nml_file_phy <- config$model_settings$base_AED_nml
+  if (!is.null(nml_file_phy) && !is.na(nml_file_phy)) {
+    message('Using xcc from aed.nml in states_config...')
+    states_config <- update_phy_states_obs_mapping(
+      states_config,
+      nml_path = file.path(config$file_path$configuration_directory, nml_file_phy))
+  }
+
   states_config <- generate_states_to_obs_mapping(states_config, obs_config)
 
   model_sd <- initiate_model_error(config, states_config)
+
+  diagnose_error_balance(states_config, obs_config, model_sd)
+
+  nv_noise_file <- config$model_settings$non_vertical_noise_config_file
+  if (!is.null(nv_noise_file) && !is.na(nv_noise_file)) {
+    non_vertical_noise_config <- readr::read_csv(
+      file.path(config$file_path$configuration_directory, nv_noise_file),
+      col_types = readr::cols()
+    )
+  } else {
+    non_vertical_noise_config <- NULL
+  }
+  validate_non_vertical_noise_config(non_vertical_noise_config, config)
 
   init <- generate_initial_conditions(states_config,
                                               obs_config,
@@ -166,8 +195,8 @@ run_flare <- function(lake_directory,
                                                 obs_config = obs_config,
                                                 da_method = config$da_setup$da_method,
                                                 par_fit_method = config$da_setup$par_fit_method,
-                                                obs_secchi = obs_non_vertical$obs_secchi,
-                                                obs_depth = obs_non_vertical$obs_depth)
+                                                obs_non_vertical = obs_non_vertical,
+                                                non_vertical_noise_config = non_vertical_noise_config)
 
   rm(init)
   rm(obs)
@@ -178,19 +207,43 @@ run_flare <- function(lake_directory,
                                               forecast_output_directory = config$file_path$restart_directory,
                                               use_short_filename = TRUE)
 
-  message("Writing forecast")
+  message("writing forecast")
+
+
   forecast_df <- write_forecast(da_forecast_output = da_forecast_output,
                                               use_s3 = config$run_config$use_s3,
                                               bucket = config$s3$forecasts_parquet$bucket,
                                               endpoint = config$s3$forecasts_parquet$endpoint,
-                                              local_directory = file.path(lake_directory, "forecasts/parquet"))
+                                              local_directory = file.path(lake_directory, "forecasts/parquet"),config)
+
+  if (isTRUE(config$da_setup$save_da_diagnostics)) {
+    message("writing DA diagnostics")
+    FLAREr:::write_da_diagnostics(
+      da_forecast_output = da_forecast_output,
+      local_directory    = file.path(lake_directory, "da_diagnostics")
+    )
+  }
 
   rm(da_forecast_output)
   gc()
 
+  if (isTRUE(config$da_setup$save_da_diagnostics) &&
+      isTRUE(config$da_setup$render_da_diagnostics_report)) {
+    render_da_diagnostics(lake_directory = lake_directory)
+  }
+
   if(config$output_settings$generate_plot){
     message("Generating plot")
     targets_df <- read_csv(file.path(config$file_path$qaqc_data_directory,paste0(config$location$site_id, "-targets-insitu.csv")), show_col_types = FALSE)
+
+    targets_df <- obs_config |>
+      rename(variable = target_variable) |>
+      select(variable, obs_sd) |>
+      right_join(targets_df, by = "variable") |>
+      mutate(up95 = observation + 1.96 * obs_sd,
+             low95 = observation - 1.96 * obs_sd,
+             low95 = ifelse(variable != "temperature" & low95 < 0, 0, low95))
+
     plotting_general(forecast_df,
                      targets_df,
                      file_name = paste0(tools::file_path_sans_ext(basename(saved_file)),".pdf"),

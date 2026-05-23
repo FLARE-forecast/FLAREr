@@ -28,7 +28,8 @@ create_met_files_openmet <- function(out_dir,
                                      model = NULL,
                                      use_archive = FALSE,
                                      bucket = NULL,
-                                     endpoint = NULL){
+                                     endpoint = NULL,
+                                     config = NULL){
 
   if (!requireNamespace("ropenmeteo", quietly = TRUE)) {
     stop("Package ropenmeteo needed.")
@@ -46,14 +47,20 @@ create_met_files_openmet <- function(out_dir,
       if(is.null(bucket)) warning("missing s3 bucket for config$s3$drivers")
       if(is.null(endpoint)) warning("missing s3 endpoint for config$s3$drivers")
 
-      bucket <- file.path(bucket,
-                          "seasonal_forecast",
-                          "model_id=cfs",
+      prefix <- file.path(stringr::str_split_fixed(bucket, "/", n = 2)[2],"seasonal_forecast","model_id=cfs",
                           paste0("reference_date=", lubridate::as_date(forecast_start_datetime)),
                           paste0("site_id=", site_id))
 
-      s3 <- arrow::s3_bucket(bucket = bucket, endpoint_override = endpoint, anonymous = TRUE)
+      config$s3$drivers$anonymous <- TRUE
+      s3 <- flare_arrow_s3_bucket(server_name = "drivers", faasr_prefix = prefix, config = config)
 
+      # bucket <- file.path(bucket,
+      #                     "seasonal_forecast",
+      #                     "model_id=cfs",
+      #                     paste0("reference_date=", lubridate::as_date(forecast_start_datetime)),
+      #                     paste0("site_id=", site_id))
+
+      # s3 <- arrow::s3_bucket(bucket = bucket, endpoint_override = endpoint, anonymous = TRUE)
       df <- arrow::open_dataset(s3) |>
         dplyr::collect() |>
         mutate(model_id = "cfs",
@@ -95,18 +102,27 @@ create_met_files_openmet <- function(out_dir,
 
     if(use_archive){
 
-      bucket <- file.path(bucket,
-                          "ensemble_forecast",
-                          paste0("model_id=",model),
+      prefix <- file.path(stringr::str_split_fixed(bucket, "/", n = 2)[2],"ensemble_forecast",paste0("model_id=",model),
                           paste0("reference_date=", lubridate::as_date(forecast_start_datetime)),
                           paste0("site_id=", site_id))
 
-      s3 <- arrow::s3_bucket(bucket = bucket, endpoint_override = endpoint, anonymous = TRUE)
 
+      # bucket <- file.path(bucket,
+      #                     "ensemble_forecast",
+      #                     paste0("model_id=",model),
+      #                     paste0("reference_date=", lubridate::as_date(forecast_start_datetime)),
+      #                     paste0("site_id=", site_id))
+
+
+      config$s3$drivers$anonymous <- TRUE
+      #s3 <- arrow::s3_bucket(bucket = bucket, endpoint_override = endpoint, anonymous = TRUE)
+
+      s3 <- flare_arrow_s3_bucket(server_name = "drivers", faasr_prefix = prefix, config = config)
       df <- arrow::open_dataset(s3) |>
         dplyr::collect() |>
         mutate(model_id = model,
                site_id = site_id)
+      #message("opening dataset success in ensemble using archive")
 
     }else{
 
@@ -131,13 +147,24 @@ create_met_files_openmet <- function(out_dir,
 
       if(use_archive){
 
-        bucket <- file.path(bucket,
-                            "ensemble_forecast",
+        prefix <- file.path(stringr::str_split_fixed(bucket, "/", n = 2)[2],"ensemble_forecast",
                             paste0("model_id=gfs_seamless"),
                             paste0("reference_date=", lubridate::as_date(forecast_start_datetime)),
                             paste0("site_id=", site_id))
 
-        s3 <- arrow::s3_bucket(bucket = bucket, endpoint_override = endpoint, anonymous = TRUE)
+        config$s3$drivers$anonymous <- TRUE
+
+        s3 <- flare_arrow_s3_bucket(server_name = "drivers", faasr_prefix = prefix, config = config)
+
+        # bucket <- file.path(bucket,
+        #                     "ensemble_forecast",
+        #                     paste0("model_id=gfs_seamless"),
+        #                     paste0("reference_date=", lubridate::as_date(forecast_start_datetime)),
+        #                     paste0("site_id=", site_id))
+
+
+
+       # s3 <- arrow::s3_bucket(bucket = bucket, endpoint_override = endpoint, anonymous = TRUE)
         shortwave_df <- arrow::open_dataset(s3) |>
           dplyr::filter(variable == "shortwave_radiation") |>
           dplyr::collect() |>

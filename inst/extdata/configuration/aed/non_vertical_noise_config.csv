@@ -1,0 +1,4 @@
+model_variable,model_source,model_depth_m,process_noise_sd
+lake_depth,state,NA,0.01
+extc,diagnostic,1.0,NA
+CAR_ch4_atm,diagnostic_daily,NA,0.0

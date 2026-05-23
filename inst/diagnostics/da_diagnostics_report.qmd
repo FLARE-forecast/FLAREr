@@ -1,0 +1,825 @@
+---
+title: "FLARE Data Assimilation Diagnostics"
+subtitle: "Filter health, calibration, and hyperparameter guidance"
+format:
+  html:
+    toc: true
+    toc-depth: 3
+    toc-location: left
+    code-fold: true
+    code-tools: true
+    theme: cosmo
+    embed-resources: true
+    fig-width: 10
+    fig-height: 5
+execute:
+  warning: false
+  message: false
+params:
+  diagnostics_dir: "da_diagnostics"   # path to folder written by write_da_diagnostics()
+  site_id: null                        # optional: filter to one site_id
+  model_id: null                       # optional: filter to one model_id
+---
+
+```{r setup}
+library(arrow)
+library(dplyr)
+library(tidyr)
+library(ggplot2)
+library(patchwork)
+library(lubridate)
+library(knitr)
+library(gt)
+
+theme_set(theme_bw(base_size = 12))
+
+DIAG_DIR <- params$diagnostics_dir
+
+.read_parquet_safe <- function(fname) {
+  path <- file.path(DIAG_DIR, fname)
+  if (!file.exists(path)) return(NULL)
+  df <- arrow::read_parquet(path)
+  if (!is.null(params$site_id))  df <- filter(df, site_id  == params$site_id)
+  if (!is.null(params$model_id)) df <- filter(df, model_id == params$model_id)
+  df
+}
+
+fh  <- .read_parquet_safe("da_filter_health.parquet")
+inn <- .read_parquet_safe("da_innovations.parquet")
+spr <- .read_parquet_safe("da_ensemble_spread.parquet")
+rnk <- .read_parquet_safe("da_ranks.parquet")
+par <- .read_parquet_safe("da_parameters.parquet")
+cst <- .read_parquet_safe("da_cross_state.parquet")
+cdp <- .read_parquet_safe("da_cross_depth.parquet")
+
+has_pars      <- !is.null(par) && nrow(par) > 0
+has_cross     <- !is.null(cst) && nrow(cst) > 0
+n_da_steps <- if (!is.null(fh)) nrow(fh) else 0L
+```
+
+```{r meta-banner}
+#| results: asis
+if (n_da_steps == 0) {
+  cat("::: {.callout-warning}\n")
+  cat("## No diagnostic data found\n")
+  cat("No parquet files were found in `", DIAG_DIR, "`.\n")
+  cat("Set `save_da_diagnostics: TRUE` in `configure_flare.yml` and re-run.\n")
+  cat(":::\n")
+  knitr::knit_exit()
+}
+
+site_label  <- if (!is.null(fh$site_id[1]))  fh$site_id[1]  else "unknown"
+model_label <- if (!is.null(fh$model_id[1])) fh$model_id[1] else "unknown"
+cat(sprintf(
+  "**Site:** %s &nbsp; | &nbsp; **Model:** %s &nbsp; | &nbsp; **DA steps:** %d &nbsp; | &nbsp; **Date range:** %s – %s\n\n",
+  site_label, model_label, n_da_steps,
+  format(min(fh$time), "%Y-%m-%d %H:%M"),
+  format(max(fh$time), "%Y-%m-%d %H:%M")
+))
+```
+
+---
+
+## 1 Filter Health {#sec-filter-health}
+
+> **NIS** (Normalized Innovation Squared) measures whether ensemble spread matches
+> forecast error. A well-tuned filter has NIS ≈ 1. **DFS** (Degrees of Freedom for
+> Signal) measures how much information is extracted from observations each step.
+
+```{r filter-health-plot}
+nis_healthy <- c(0.5, 2.0)
+
+p_nis <- fh |>
+  mutate(status = case_when(
+    nis < 0.2 | nis > 5   ~ "critical",
+    nis < nis_healthy[1] | nis > nis_healthy[2] ~ "warning",
+    TRUE                   ~ "healthy"
+  )) |>
+  ggplot(aes(x = time, y = nis, colour = status)) +
+  geom_hline(yintercept = 1,              linetype = "dashed", colour = "grey40") +
+  geom_hline(yintercept = nis_healthy,    linetype = "dotted", colour = "#d9a520", linewidth = 0.6) +
+  geom_hline(yintercept = c(0.2, 5),      linetype = "dotted", colour = "#c0392b", linewidth = 0.6) +
+  geom_point(size = 2) +
+  geom_line(aes(group = 1), colour = "grey70", linewidth = 0.4) +
+  scale_colour_manual(
+    values = c(healthy = "#27ae60", warning = "#d9a520", critical = "#c0392b"),
+    guide = guide_legend(title = NULL)
+  ) +
+  scale_y_log10() +
+  labs(title = "Normalized Innovation Squared (NIS)", y = "NIS (log scale)", x = NULL) +
+  annotate("text", x = min(fh$time), y = 1.05, label = "ideal = 1", hjust = 0,
+           size = 3, colour = "grey40")
+
+# Bar width in seconds derived from actual median spacing between DA steps.
+# geom_col with POSIXct x always needs width in seconds; as.numeric(difftime)
+# can return days/hours depending on scale and produces invisible bars.
+bar_width_secs <- if (n_da_steps > 1) {
+  as.numeric(median(diff(fh$time)), units = "secs") * 0.85
+} else {
+  86400 * 0.85
+}
+
+p_dfs <- ggplot(fh, aes(x = time, y = dfs)) +
+  geom_col(fill = "#2980b9", alpha = 0.7, width = bar_width_secs) +
+  labs(title = "Degrees of Freedom for Signal (DFS)", y = "DFS", x = NULL)
+
+p_nobs <- ggplot(fh, aes(x = time, y = n_obs)) +
+  geom_col(fill = "#7f8c8d", alpha = 0.7, width = bar_width_secs) +
+  labs(title = "Number of Observations Assimilated", y = "n obs", x = NULL)
+
+p_nis / p_dfs / p_nobs + plot_layout(heights = c(2, 1, 1))
+```
+
+```{r filter-health-table}
+fh |>
+  summarise(
+    `Mean NIS`   = round(mean(nis,   na.rm = TRUE), 3),
+    `Median NIS` = round(median(nis, na.rm = TRUE), 3),
+    `% steps NIS > 2` = round(mean(nis > 2,  na.rm = TRUE) * 100, 1),
+    `% steps NIS < 0.5` = round(mean(nis < 0.5, na.rm = TRUE) * 100, 1),
+    `Mean DFS`   = round(mean(dfs,   na.rm = TRUE), 2),
+    `Mean n_obs` = round(mean(n_obs, na.rm = TRUE), 1)
+  ) |>
+  gt() |>
+  tab_header(title = "Filter Health Summary") |>
+  tab_style(
+    style = cell_fill(color = "#fef9c3"),
+    locations = cells_body(columns = everything())
+  )
+```
+
+---
+
+## 2 Innovation Analysis {#sec-innovations}
+
+> The **innovation** is the difference between what was observed and what the ensemble
+> predicted (obs − H·x̄). Persistent non-zero mean innovations for one variable
+> indicate systematic model bias. Large spread suggests the observation is surprising
+> the ensemble repeatedly.
+
+```{r innovation-summary}
+if (!is.null(inn)) {
+  inn_summary <- inn |>
+    group_by(variable) |>
+    summarise(
+      n_obs       = n(),
+      mean_innov  = round(mean(innovation, na.rm = TRUE), 4),
+      sd_innov    = round(sd(innovation,   na.rm = TRUE), 4),
+      mean_nis    = round(mean(nis_single, na.rm = TRUE), 3),
+      pct_nis_gt2 = round(mean(nis_single > 2, na.rm = TRUE) * 100, 1),
+      mean_influence = round(mean(obs_influence, na.rm = TRUE), 3),
+      .groups = "drop"
+    ) |>
+    arrange(desc(mean_nis))
+
+  inn_summary |>
+    gt() |>
+    tab_header(title = "Innovation Statistics by Observation Type") |>
+    cols_label(
+      variable = "Obs type", n_obs = "N",
+      mean_innov = "Mean innov", sd_innov = "SD innov",
+      mean_nis = "Mean NIS", pct_nis_gt2 = "% NIS > 2",
+      mean_influence = "Mean influence"
+    ) |>
+    data_color(
+      columns = mean_nis,
+      method  = "numeric",
+      palette = c("#27ae60", "#f39c12", "#c0392b"),
+      domain  = c(0, 4)
+    ) |>
+    data_color(
+      columns = mean_influence,
+      method  = "numeric",
+      palette = c("#27ae60", "#f39c12", "#c0392b"),
+      domain  = c(0, 1)
+    )
+}
+```
+
+```{r innovation-time-plot}
+if (!is.null(inn)) {
+  inn |>
+    mutate(depth_label = if_else(is.na(depth), variable,
+                                  paste0(variable, " (", depth, " m)"))) |>
+    ggplot(aes(x = time, y = innovation, colour = variable)) +
+    geom_hline(yintercept = 0, linetype = "dashed", colour = "grey50") +
+    geom_point(alpha = 0.5, size = 1.2) +
+    geom_smooth(method = "loess", span = 0.4, se = FALSE, linewidth = 0.8) +
+    facet_wrap(~variable, scales = "free_y") +
+    labs(title = "Innovation time series by observation type",
+         y = "Innovation (obs − predicted)", x = NULL) +
+    theme(legend.position = "none")
+}
+```
+
+```{r nis-single-plot}
+if (!is.null(inn)) {
+  inn |>
+    ggplot(aes(x = variable, y = nis_single, fill = variable)) +
+    geom_violin(alpha = 0.5, draw_quantiles = c(0.25, 0.5, 0.75)) +
+    geom_hline(yintercept = 1, linetype = "dashed", colour = "grey40") +
+    geom_hline(yintercept = 2, linetype = "dotted", colour = "#d9a520") +
+    scale_y_log10(limits = c(0.01, NA)) +
+    labs(title = "Per-observation NIS by obs type  (ideal = 1)",
+         y = "NIS (log scale)", x = NULL) +
+    theme(legend.position = "none")
+}
+```
+
+### Observation influence by depth
+
+> Influence close to 1 means the observation is nearly fully controlling its
+> own state update — there is little model contribution. Values above ~0.8 suggest
+> `obs_sd` may be too small for that variable/depth.
+
+```{r obs-influence-plot}
+if (!is.null(inn) && any(!is.na(inn$depth))) {
+  inn |>
+    filter(!is.na(depth)) |>
+    group_by(variable, depth) |>
+    summarise(mean_influence = mean(obs_influence, na.rm = TRUE), .groups = "drop") |>
+    ggplot(aes(x = depth, y = mean_influence, colour = variable)) +
+    geom_point(size = 3) +
+    geom_line() +
+    geom_hline(yintercept = 0.8, linetype = "dashed", colour = "#c0392b", linewidth = 0.6) +
+    coord_flip() +
+    scale_x_reverse() +
+    labs(title = "Mean observation influence by variable and depth",
+         subtitle = "Dashed line = 0.8 (high influence threshold)",
+         x = "Depth (m)", y = "Mean obs influence (diag of HK)") +
+    facet_wrap(~variable, nrow = 1)
+}
+```
+
+---
+
+## 3 Ensemble Spread {#sec-spread}
+
+> The **spread ratio** (posterior SD / prior SD) should be less than 1 (the filter
+> reduces uncertainty). Ratios near 0 indicate ensemble collapse — the filter is
+> becoming overconfident and will not respond well to future observations.
+
+```{r spread-ratio-heatmap}
+if (!is.null(spr)) {
+  spr_summary <- spr |>
+    group_by(variable, depth) |>
+    summarise(
+      mean_spread_ratio = mean(spread_ratio, na.rm = TRUE),
+      mean_prior_sd     = mean(prior_sd,     na.rm = TRUE),
+      .groups = "drop"
+    )
+
+  top_states <- spr_summary |>
+    group_by(variable) |>
+    summarise(mean_spread_ratio = mean(mean_spread_ratio), .groups = "drop") |>
+    arrange(mean_spread_ratio) |>
+    slice_head(n = 12) |>
+    pull(variable)
+
+  spr_summary |>
+    filter(variable %in% top_states) |>
+    ggplot(aes(x = depth, y = reorder(variable, mean_spread_ratio),
+               fill = mean_spread_ratio)) +
+    geom_tile(colour = "white", linewidth = 0.3) +
+    scale_fill_gradient2(
+      low = "#c0392b", mid = "#f39c12", high = "#27ae60",
+      midpoint = 0.5, limits = c(0, 1),
+      name = "Spread\nratio"
+    ) +
+    labs(title = "Mean spread ratio (posterior SD / prior SD) by state × depth",
+         subtitle = "Red = collapse risk  |  Green = healthy reduction",
+         x = "Depth (m)", y = NULL) +
+    theme(legend.position = "right")
+}
+```
+
+```{r prior-sd-collapse}
+if (!is.null(spr)) {
+  collapse_states <- spr |>
+    filter(spread_ratio < 0.05) |>
+    distinct(variable) |>
+    pull(variable)
+
+  if (length(collapse_states) > 0) {
+    spr |>
+      filter(variable %in% collapse_states) |>
+      group_by(time, variable) |>
+      summarise(mean_prior_sd = mean(prior_sd, na.rm = TRUE), .groups = "drop") |>
+      ggplot(aes(x = time, y = mean_prior_sd, colour = variable)) +
+      geom_line() +
+      labs(title = "Prior SD over time for states with spread_ratio < 0.05  (collapse risk)",
+           y = "Mean prior SD across depths", x = NULL)
+  }
+}
+```
+
+```{r update-magnitude-plot}
+if (!is.null(spr)) {
+  spr |>
+    group_by(time, variable) |>
+    summarise(mean_update = mean(update_magnitude, na.rm = TRUE), .groups = "drop") |>
+    filter(variable %in% head(
+      spr |> group_by(variable) |>
+        summarise(m = mean(update_magnitude, na.rm = TRUE), .groups = "drop") |>
+        arrange(desc(m)) |> pull(variable),
+      8
+    )) |>
+    ggplot(aes(x = time, y = mean_update, colour = variable)) +
+    geom_line(alpha = 0.8) +
+    facet_wrap(~variable, scales = "free_y", ncol = 2) +
+    labs(title = "Mean update magnitude over time (top 8 states)",
+         y = "| posterior_mean − prior_mean |", x = NULL) +
+    theme(legend.position = "none")
+}
+```
+
+---
+
+## 4 Rank Histograms {#sec-ranks}
+
+> A rank histogram (Talagrand diagram) tests ensemble calibration. If the filter
+> is well-calibrated, the observation rank is **uniformly distributed** over
+> 1 : (N+1). A **peaked** histogram (too many middle ranks) means the ensemble
+> is under-dispersive. A **U-shaped** histogram means it is over-dispersive.
+
+```{r rank-histograms}
+if (!is.null(rnk)) {
+  # Infer ensemble size from maximum rank observed
+  n_ens_inferred <- max(rnk$obs_rank, na.rm = TRUE) - 1L
+  n_bins <- min(n_ens_inferred + 1L, 20L)
+
+  rank_chi_sq <- rnk |>
+    group_by(variable) |>
+    summarise(
+      n = n(),
+      chi_p = tryCatch(
+        chisq.test(table(cut(obs_rank,
+                             breaks = seq(0.5, n_ens_inferred + 1.5, length.out = n_bins + 1),
+                             labels = FALSE)))$p.value,
+        error = function(e) NA_real_
+      ),
+      .groups = "drop"
+    ) |>
+    mutate(calibration = case_when(
+      is.na(chi_p)  ~ "insufficient data",
+      chi_p > 0.10  ~ "uniform (well-calibrated)",
+      chi_p > 0.01  ~ "marginal (p < 0.10)",
+      TRUE          ~ "non-uniform (p < 0.01)"
+    ))
+
+  rnk |>
+    ggplot(aes(x = obs_rank)) +
+    geom_histogram(
+      aes(y = after_stat(density)),
+      bins = n_bins, fill = "#2980b9", colour = "white", alpha = 0.8
+    ) +
+    geom_hline(
+      aes(yintercept = 1 / (n_ens_inferred + 1)),
+      linetype = "dashed", colour = "#c0392b", linewidth = 0.7
+    ) +
+    facet_wrap(~variable, scales = "free_y") +
+    labs(
+      title = sprintf("Rank histograms  (ensemble size ≈ %d)", n_ens_inferred),
+      subtitle = "Dashed line = expected uniform density  |  Peaked = under-spread  |  U-shaped = over-spread",
+      x = "Rank of observation within prior ensemble",
+      y = "Density"
+    )
+}
+```
+
+```{r rank-calibration-table}
+if (!is.null(rnk)) {
+  rank_chi_sq |>
+    gt() |>
+    tab_header(title = "Rank Histogram Calibration Test (chi-squared uniformity)") |>
+    cols_label(variable = "Obs type", n = "N", chi_p = "p-value",
+               calibration = "Status") |>
+    data_color(
+      columns = calibration,
+      method  = "factor",
+      palette = c("#c0392b", "#f39c12", "#27ae60", "#bdc3c7")
+    )
+}
+```
+
+---
+
+## 5 Parameter Estimation {#sec-parameters}
+
+```{r params-section}
+#| results: asis
+if (!has_pars) {
+  cat("::: {.callout-note}\nNo parameters were estimated in this run ",
+      "(or `da_parameters.parquet` was not found).\n:::\n")
+}
+```
+
+```{r param-evolution}
+if (has_pars) {
+  par |>
+    ggplot(aes(x = time)) +
+    geom_ribbon(aes(ymin = prior_mean - prior_sd,
+                    ymax = prior_mean + prior_sd),
+                fill = "#3498db", alpha = 0.2) +
+    geom_line(aes(y = prior_mean), colour = "#3498db", linewidth = 0.8) +
+    geom_ribbon(aes(ymin = posterior_mean - posterior_sd,
+                    ymax = posterior_mean + posterior_sd),
+                fill = "#e74c3c", alpha = 0.2) +
+    geom_line(aes(y = posterior_mean), colour = "#e74c3c", linewidth = 0.8) +
+    facet_wrap(~parameter, scales = "free_y", ncol = 2) +
+    labs(title = "Parameter evolution  (blue = prior, red = posterior, ribbons = ±1 SD)",
+         y = "Value", x = NULL)
+}
+```
+
+```{r param-bounds}
+if (has_pars && any(par$frac_at_lower_bound > 0 | par$frac_at_upper_bound > 0,
+                    na.rm = TRUE)) {
+  par |>
+    select(time, parameter, frac_at_lower_bound, frac_at_upper_bound) |>
+    pivot_longer(c(frac_at_lower_bound, frac_at_upper_bound),
+                 names_to = "bound", values_to = "frac") |>
+    mutate(bound = recode(bound,
+                          frac_at_lower_bound = "lower",
+                          frac_at_upper_bound = "upper")) |>
+    filter(frac > 0) |>
+    ggplot(aes(x = time, y = frac, colour = bound)) +
+    geom_line() +
+    geom_point(size = 1.5) +
+    geom_hline(yintercept = 0.05, linetype = "dashed", colour = "#c0392b") +
+    facet_wrap(~parameter, ncol = 2) +
+    scale_y_continuous(labels = scales::percent) +
+    labs(title = "Fraction of ensemble members at parameter bounds",
+         subtitle = "Dashed = 5% threshold; above this, widen bounds or change par_fit_method",
+         y = "Fraction at bound", x = NULL)
+}
+```
+
+```{r param-obs-contribution}
+if (has_pars && "phy_contribution" %in% names(par)) {
+  par |>
+    select(time, parameter, phy_contribution, other_contribution) |>
+    pivot_longer(c(phy_contribution, other_contribution),
+                 names_to = "source", values_to = "contribution") |>
+    mutate(source = recode(source,
+                           phy_contribution   = "PHY_TCHLA obs",
+                           other_contribution = "Other obs")) |>
+    ggplot(aes(x = time, y = contribution, fill = source)) +
+    geom_col(position = "stack") +
+    geom_hline(yintercept = 0, colour = "grey30") +
+    facet_wrap(~parameter, scales = "free_y", ncol = 2) +
+    labs(title = "Parameter update decomposition: PHY_TCHLA vs other observations",
+         subtitle = "Dominant 'Other obs' for a PHY parameter suggests spurious cross-variable updating",
+         y = "Mean update contribution", x = NULL) +
+    scale_fill_manual(values = c("PHY_TCHLA obs" = "#27ae60", "Other obs" = "#e74c3c"),
+                      name = NULL)
+}
+```
+
+---
+
+## 6 Cross-State & Cross-Depth Coupling {#sec-coupling}
+
+> These diagnostics are only available when **PHY_TCHLA** (composite chlorophyll)
+> observations are active. They reveal how phytoplankton observations propagate to
+> nutrient/oxygen states (**cross-state**) and how observations at one depth update
+> states at other depths (**cross-depth**).
+
+```{r coupling-section}
+#| results: asis
+if (!has_cross) {
+  cat("::: {.callout-note}\n")
+  cat("No cross-state or cross-depth data found. This section requires ",
+      "PHY_TCHLA (composite chlorophyll) observations to be active.\n")
+  cat(":::\n")
+}
+```
+
+```{r cross-state-plot}
+if (has_cross) {
+  # Derive state group (NIT, PHS, OXY, etc.) for colour faceting
+  cst_plot <- cst |>
+    mutate(
+      state_group = sub("_.*", "", variable),
+      sign_label  = case_when(
+        is.na(sign_consistent) ~ "near-zero",
+        sign_consistent        ~ "consistent",
+        TRUE                   ~ "inconsistent"
+      )
+    )
+
+  ggplot(cst_plot, aes(x = time, y = cov_with_phy_hx, colour = state_group)) +
+    geom_hline(yintercept = 0, colour = "grey50", linetype = "dashed") +
+    geom_line(linewidth = 0.6, alpha = 0.7) +
+    geom_point(aes(shape = sign_label), size = 1.8) +
+    facet_wrap(~variable, scales = "free_y", ncol = 3) +
+    scale_shape_manual(
+      values = c(consistent = 16, "near-zero" = 1, inconsistent = 4),
+      name   = "K sign vs Cov"
+    ) +
+    labs(
+      title    = "Cross-state covariance: Cov(state, PHY_TCHLA H×x)",
+      subtitle = paste0(
+        "Cov < 0: drawdown phase (high PHY, low nutrients)   ",
+        "Cov > 0: growth phase (high nuts fuel high PHY)\n",
+        "Shape: whether Kalman gain sign matches covariance sign"
+      ),
+      y = "Covariance", x = NULL, colour = "State group"
+    )
+}
+```
+
+```{r cross-state-update}
+if (has_cross) {
+  cst |>
+    ggplot(aes(x = time, y = mean_update, fill = sub("_.*", "", variable))) +
+    geom_col(position = "dodge") +
+    geom_hline(yintercept = 0, colour = "grey30") +
+    facet_wrap(~variable, scales = "free_y", ncol = 3) +
+    labs(
+      title    = "Mean update applied to coupled states via PHY_TCHLA observations",
+      subtitle = "Non-zero updates confirm cross-variable information propagation",
+      y = "Mean update (K × innovation)", x = NULL,
+      fill = "State group"
+    )
+}
+```
+
+```{r cross-depth-heatmap}
+if (!is.null(cdp) && nrow(cdp) > 0) {
+  # Average update contribution over all DA steps for each obs×state depth pair
+  cdp_avg <- cdp |>
+    group_by(phy_state, obs_depth, state_depth) |>
+    summarise(mean_contrib = mean(update_contribution, na.rm = TRUE),
+              .groups = "drop") |>
+    mutate(
+      obs_label   = paste0("obs ", round(obs_depth, 1), " m"),
+      state_label = paste0(round(state_depth, 1), " m")
+    )
+
+  ggplot(cdp_avg,
+         aes(x = state_label, y = obs_label, fill = mean_contrib)) +
+    geom_tile(colour = "white", linewidth = 0.3) +
+    geom_text(aes(label = sprintf("%+.3f", mean_contrib)),
+              size = 2.5, colour = "grey20") +
+    facet_wrap(~phy_state, ncol = 2) +
+    scale_fill_gradient2(
+      low = "#2166ac", mid = "white", high = "#d6604d",
+      midpoint = 0, name = "Mean\nK×innov"
+    ) +
+    labs(
+      title    = "Cross-depth update structure (averaged over all DA steps)",
+      subtitle = paste0(
+        "rows = PHY_TCHLA obs depth   cols = state depth   ",
+        "cell = K[state_d, obs_d] × innov\n",
+        "Same-depth diagonal should dominate; off-diagonal = vertical spreading"
+      ),
+      x = "State depth", y = "Obs depth"
+    ) +
+    theme(axis.text.x = element_text(angle = 45, hjust = 1),
+          panel.grid  = element_blank())
+}
+```
+
+---
+
+## 7 Summary and Recommendations {#sec-recommendations}
+
+```{r recommendation-engine}
+#| results: asis
+
+findings <- list()
+
+# ── NIS ──────────────────────────────────────────────────────────────────────
+if (!is.null(fh)) {
+  mean_nis   <- mean(fh$nis, na.rm = TRUE)
+  pct_hi_nis <- mean(fh$nis > 2,   na.rm = TRUE)
+  pct_lo_nis <- mean(fh$nis < 0.5, na.rm = TRUE)
+
+  if (mean_nis > 2 || pct_hi_nis > 0.3) {
+    findings[["nis_high"]] <- list(
+      severity = "critical",
+      symptom  = sprintf("NIS consistently too large (mean = %.2f; %.0f%% of steps > 2)",
+                         mean_nis, pct_hi_nis * 100),
+      meaning  = "The ensemble spread is **too narrow** — the filter is overconfident. Innovations are much larger than the ensemble predicts.",
+      actions  = c(
+        "**Increase `model_sd`** in `depth_model_sd.csv` or `states_config.csv` (process noise) — try multiplying current values by 1.5×.",
+        "**Increase `inflation_factor`** in `configure_flare.yml` (e.g., from 1.0 to 1.05–1.10).",
+        "**Increase `ensemble_size`** — small ensembles underestimate covariance.",
+        "**Increase `vert_decorr_length`** if NIS is elevated only at deeper layers, suggesting noise isn't propagating vertically."
+      )
+    )
+  } else if (mean_nis < 0.5 || pct_lo_nis > 0.3) {
+    findings[["nis_low"]] <- list(
+      severity = "warning",
+      symptom  = sprintf("NIS consistently too small (mean = %.2f; %.0f%% of steps < 0.5)",
+                         mean_nis, pct_lo_nis * 100),
+      meaning  = "The ensemble spread is **too large** — the filter is over-inflated. Observations are well within the ensemble range and barely move the analysis.",
+      actions  = c(
+        "**Reduce `inflation_factor`** (e.g., from 1.10 to 1.02–1.05) or disable inflation entirely.",
+        "**Reduce `model_sd`** — the process noise may be adding too much spread each step.",
+        "**Check `obs_sd`** in `observations_config.csv` — inflated obs error allows innovations to stay small without any model adjustment needed."
+      )
+    )
+  }
+}
+
+# ── Ensemble spread / collapse ────────────────────────────────────────────────
+if (!is.null(spr)) {
+  collapsed <- spr |>
+    group_by(variable) |>
+    summarise(min_ratio = min(spread_ratio, na.rm = TRUE),
+              mean_ratio = mean(spread_ratio, na.rm = TRUE),
+              .groups = "drop") |>
+    filter(mean_ratio < 0.05)
+
+  if (nrow(collapsed) > 0) {
+    findings[["collapse"]] <- list(
+      severity = "critical",
+      symptom  = paste0("Ensemble collapse detected for: ",
+                        paste(collapsed$variable, collapse = ", ")),
+      meaning  = "Spread ratio near zero means the ensemble has become degenerate — all members agree and the filter **cannot assimilate new observations** for these states.",
+      actions  = c(
+        "**Increase `model_sd`** for the collapsed states in `states_config.csv`.",
+        "**Increase `ensemble_size`** — collapse is more likely with small ensembles.",
+        "**Check `par_fit_method`**: if set to `perturb_const`, switching to `perturb` may help.",
+        "**Widen parameter bounds** if parameter collapse is driving state collapse."
+      )
+    )
+  }
+}
+
+# ── Rank histogram calibration ────────────────────────────────────────────────
+if (!is.null(rnk)) {
+  n_ens_inf <- max(rnk$obs_rank, na.rm = TRUE) - 1L
+  n_bins_r  <- min(n_ens_inf + 1L, 20L)
+
+  rank_stats <- rnk |>
+    group_by(variable) |>
+    summarise(
+      n           = n(),
+      chi_p       = tryCatch(
+        chisq.test(table(cut(obs_rank,
+                             breaks = seq(0.5, n_ens_inf + 1.5, length.out = n_bins_r + 1),
+                             labels = FALSE)))$p.value,
+        error = function(e) NA_real_
+      ),
+      # peaked = high central mass = under-dispersive
+      central_frac = mean(obs_rank > n_ens_inf * 0.25 & obs_rank < n_ens_inf * 0.75,
+                          na.rm = TRUE),
+      # U-shaped = high tail mass = over-dispersive
+      tail_frac    = mean(obs_rank <= max(1, n_ens_inf * 0.1) |
+                          obs_rank >= n_ens_inf * 0.9,
+                          na.rm = TRUE),
+      .groups = "drop"
+    ) |>
+    filter(!is.na(chi_p), chi_p < 0.05)
+
+  peaked_vars <- rank_stats |>
+    filter(central_frac > 0.6) |>
+    pull(variable)
+
+  ushaped_vars <- rank_stats |>
+    filter(tail_frac > 0.3) |>
+    pull(variable)
+
+  if (length(peaked_vars) > 0) {
+    findings[["rank_peaked"]] <- list(
+      severity = "warning",
+      symptom  = paste0("Non-uniform (peaked) rank histogram for: ",
+                        paste(peaked_vars, collapse = ", ")),
+      meaning  = "The ensemble is **under-dispersive** for these obs types. The observation is consistently in the middle of the ensemble — it is never surprising.",
+      actions  = c(
+        "**Increase `model_sd`** for the corresponding states.",
+        "**Decrease `obs_sd`** slightly — if obs error is overestimated, the perturbed observations cluster near the truth and the ensemble fills out too broadly.",
+        "**Check `vert_decorr_length`** — too-short vertical correlation adds noise without useful structure."
+      )
+    )
+  }
+
+  if (length(ushaped_vars) > 0) {
+    findings[["rank_ushaped"]] <- list(
+      severity = "warning",
+      symptom  = paste0("Non-uniform (U-shaped) rank histogram for: ",
+                        paste(ushaped_vars, collapse = ", ")),
+      meaning  = "The ensemble is **over-dispersive** for these obs types. The observation frequently falls outside the ensemble — the ensemble is too wide.",
+      actions  = c(
+        "**Reduce `model_sd`** for the corresponding states.",
+        "**Reduce `inflation_factor`** or disable inflation.",
+        "**Increase `obs_sd`** if observation errors may be underestimated."
+      )
+    )
+  }
+}
+
+# ── Observation influence ─────────────────────────────────────────────────────
+if (!is.null(inn)) {
+  high_inf <- inn |>
+    group_by(variable) |>
+    summarise(mean_inf = mean(obs_influence, na.rm = TRUE), .groups = "drop") |>
+    filter(mean_inf > 0.8)
+
+  if (nrow(high_inf) > 0) {
+    findings[["high_influence"]] <- list(
+      severity = "warning",
+      symptom  = paste0("Very high observation influence (>0.8) for: ",
+                        paste(high_inf$variable, collapse = ", ")),
+      meaning  = "These observations are nearly fully controlling the analysis — the model ensemble is contributing almost nothing. This risks filter divergence if observation error is underspecified.",
+      actions  = c(
+        "**Increase `obs_sd`** for the high-influence variables in `observations_config.csv`.",
+        "**Increase ensemble spread** (via `model_sd` or `inflation_factor`) so the prior is wider.",
+        "**Enable localization** (`localization_distance` in `configure_flare.yml`) to prevent a single obs from updating distant depths."
+      )
+    )
+  }
+}
+
+# ── Parameter bounds ─────────────────────────────────────────────────────────
+if (has_pars) {
+  bound_issues <- par |>
+    group_by(parameter) |>
+    summarise(
+      max_lower = max(frac_at_lower_bound, na.rm = TRUE),
+      max_upper = max(frac_at_upper_bound, na.rm = TRUE),
+      .groups = "drop"
+    ) |>
+    filter(max_lower > 0.05 | max_upper > 0.05)
+
+  if (nrow(bound_issues) > 0) {
+    findings[["par_bounds"]] <- list(
+      severity = "warning",
+      symptom  = paste0("Parameter ensemble hitting bounds (>5% of members) for: ",
+                        paste(bound_issues$parameter, collapse = ", ")),
+      meaning  = "Members piling up at bounds reduce ensemble spread and can cause filter collapse for that parameter.",
+      actions  = c(
+        "**Widen bounds** in `parameter_calibration_config.csv`.",
+        "**Switch `par_fit_method`** from `perturb` to `perturb_const` to stabilise perturbation magnitude.",
+        "**Check spurious cross-variable updating** — if 'Other obs' dominates in the update decomposition, the parameter may be driven by biologically unrelated observations."
+      )
+    )
+  }
+}
+
+# ── Render findings ───────────────────────────────────────────────────────────
+if (length(findings) == 0) {
+  cat("::: {.callout-tip icon=true}\n")
+  cat("## Filter appears healthy\n")
+  cat("No significant issues detected across NIS, ensemble spread, rank histograms, ")
+  cat("observation influence, or parameter bounds.\n")
+  cat(":::\n\n")
+} else {
+  severity_icon <- c(critical = "🔴", warning = "🟡", info = "🔵")
+  severity_type <- c(critical = "callout-important", warning = "callout-warning",
+                     info = "callout-note")
+
+  for (key in names(findings)) {
+    f   <- findings[[key]]
+    sev <- f$severity
+    cat(sprintf("::: {.%s}\n", severity_type[sev]))
+    cat(sprintf("## %s %s\n\n", severity_icon[sev], f$symptom))
+    cat("**What this means:** ", f$meaning, "\n\n", sep = "")
+    cat("**Recommended actions:**\n\n")
+    for (a in f$actions) cat(sprintf("- %s\n", a))
+    cat(":::\n\n")
+  }
+}
+```
+
+---
+
+## 8 Hyperparameter Reference {#sec-reference}
+
+```{r hyperparameter-table}
+tibble::tribble(
+  ~Parameter,           ~`Config file`,                     ~`Typical range`,   ~`Too small → symptom`,                    ~`Too large → symptom`,
+  "ensemble_size",      "configure_flare.yml",              "31–500",           "Noisy covariance; needs inflation",        "Slow runtime",
+  "model_sd",           "states_config.csv / depth_model_sd.csv", "0.1–2.0 (var-dependent)", "Collapse; NIS >> 1; peaked rank hist", "Over-spread; NIS << 1; U-shaped rank hist",
+  "obs_sd",             "observations_config.csv",          "0.3–1.0 (var-dependent)", "High influence; filter divergence risk", "DA barely moves the ensemble",
+  "inflation_factor",   "configure_flare.yml",              "1.0–1.15",         "Ensemble collapse",                        "Over-spread; NIS << 1",
+  "localization_distance", "configure_flare.yml",           "2–10 m",           "Spurious long-range updates (disabled = ∞)", "Information doesn't propagate vertically",
+  "vert_decorr_length", "states_config.csv",                "1–10 m",           "Layer-to-layer noise; non-physical",       "Over-smooth vertical profiles",
+  "par_lowerbound / par_upperbound", "parameter_calibration_config.csv", "domain-specific", "Members hit wall; collapse",     "Implausible values enter ensemble"
+) |>
+  gt() |>
+  tab_header(
+    title    = "Hyperparameter Quick Reference",
+    subtitle = "FLARE EnKF filter tuning guide"
+  ) |>
+  tab_style(
+    style    = cell_text(weight = "bold"),
+    locations = cells_column_labels()
+  ) |>
+  tab_style(
+    style    = cell_fill(color = "#fef3cd"),
+    locations = cells_body(columns = `Too small → symptom`)
+  ) |>
+  tab_style(
+    style    = cell_fill(color = "#d1ecf1"),
+    locations = cells_body(columns = `Too large → symptom`)
+  ) |>
+  cols_width(Parameter ~ px(200), `Config file` ~ px(220))
+```
+
+---
+
+*Generated by `FLAREr::write_da_diagnostics()`. Enable with `save_da_diagnostics: TRUE` in `configure_flare.yml`.*

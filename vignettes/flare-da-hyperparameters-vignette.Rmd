@@ -1,0 +1,851 @@
+---
+title: "Tuning data assimilation hyperparameters in FLAREr"
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{Tuning data assimilation hyperparameters in FLAREr}
+  %\VignetteEncoding{UTF-8}
+  %\VignetteEngine{knitr::rmarkdown}
+editor_options:
+  markdown:
+    wrap: 72
+---
+
+```{r, include = FALSE}
+knitr::opts_chunk$set(
+  collapse = TRUE,
+  comment = "#>",
+  echo = TRUE
+)
+```
+
+This vignette describes the hyperparameters that most strongly affect
+data assimilation (DA) performance in FLAREr and gives practical
+guidance for setting and tuning them. For a conceptual introduction to
+how FLARE works see the [FLAREr concepts
+vignette](flare-concepts-vignette.html). For a complete reference to
+every configuration option see the [FLAREr configuration
+vignette](flare-config-vignette.html).
+
+## Overview
+
+FLAREr runs an ensemble of lake model simulations and uses DA to
+periodically correct the ensemble against real-world observations. How
+well this correction works depends on a small number of hyperparameters:
+
+| Category | Key hyperparameters | Where set |
+|---|---|---|
+| DA algorithm | `da_method`, `esmda_iterations`, `pf_always_resample`, `pf_tempering_factor` | `configure_flare.yml` → `da_setup` |
+| Ensemble size | `ensemble_size` | `configure_flare.yml` → `da_setup` |
+| Covariance localisation | `localization_distance` | `configure_flare.yml` → `da_setup` |
+| Covariance inflation | `use_inflation_factor`, `inflation_factor` | `configure_flare.yml` → `da_setup` |
+| Process uncertainty | `model_sd`, `vert_decorr_length` | `states_config.csv` |
+| Depth-varying process noise | depth × variable table | `depth_model_sd.csv` |
+| Observation uncertainty | `obs_sd` | `observations_config.csv` |
+| Parameter fitting | `par_fit_method`, `perturb_par` | `configure_flare.yml` + `parameter_calibration_config.csv` |
+| Initial ensemble spread | `initial_model_sd`, `par_init_mean`, `par_init_sd`, `par_init_lowerbound/_upperbound` | `states_config.csv`, `parameter_calibration_config.csv` |
+| DA diagnostics | `save_da_diagnostics`, `render_da_diagnostics_report` | `configure_flare.yml` → `da_setup` |
+
+These hyperparameters interact. The sections below explain each group,
+describe the failure modes that result from extreme settings, and give
+concrete starting-point values and diagnostic questions.
+
+---
+
+## 1. DA algorithm (`da_method`)
+
+**Where:** `configure_flare.yml` → `da_setup: da_method`
+
+The DA algorithm determines how observations update the ensemble. All
+algorithms in FLAREr share the same analysis-cycle structure; they differ
+in how the update is computed.
+
+```yaml
+da_setup:
+  da_method: enkf   # enkf | etkf | letkf | esmda | pf | none
+```
+
+> **Note:** Only the Ensemble Kalman Filter (`enkf`) has been extensively
+> tested and is recommended for production use. The other methods (`etkf`,
+> `letkf`, `esmda`, and `pf`) are **experimental** and have not undergone
+> extensive testing. The guidance below describes their intended behaviour,
+> but you should verify results carefully before relying on them.
+
+### Choosing an algorithm
+
+| Situation | Recommended method |
+|---|---|
+| General-purpose starting point | `enkf` |
+| Reduce sampling noise with small ensemble | `etkf` |
+| High-dimensional state (many depths + variables) | `letkf` |
+| Strongly nonlinear dynamics | `esmda` |
+| Non-Gaussian errors or bimodal distributions | `pf` |
+| Benchmarking without DA | `none` |
+
+**EnKF and ETKF** are the best choices for most lake applications. The
+ETKF produces a lower-variance posterior than the EnKF because it avoids
+adding random noise to each observation ("stochastic perturbation").
+
+**LETKF** should be preferred when the state vector is large (e.g.
+temperature + dissolved oxygen + nutrients at 30+ depths) because it
+prevents observations at one depth from spuriously altering the state at
+distant depths. It degrades gracefully to a global ETKF update for
+non-depth-resolved variables (Secchi, lake surface elevation,
+parameters).
+
+**ES-MDA** is useful when a single EnKF update produces unrealistic
+states — a symptom of strong nonlinearity. It applies multiple partial
+updates (see `esmda_iterations` below) rather than one large correction.
+
+**Particle filter** makes no Gaussian assumption and can represent
+multimodal posterior distributions. The trade-off is that it requires a
+much larger ensemble (typically 500–2,000 members) to avoid weight
+collapse in high-dimensional systems. If most weights collapse to a
+single particle the effective sample size drops sharply and the filter
+degenerates.
+
+---
+
+## 2. Ensemble size (`ensemble_size`)
+
+**Where:** `configure_flare.yml` → `da_setup: ensemble_size`
+
+```yaml
+da_setup:
+  ensemble_size: 256
+```
+
+Ensemble size is the single most important computational
+hyperparameter. More members produce a better-sampled covariance matrix
+and reduce the chance of filter degeneracy, but each member requires one
+independent run of GLM per timestep.
+
+### Practical guidance
+
+- **EnKF / ETKF / LETKF:** 100–500 members. Below ~50 members the
+  sample covariance becomes noisy and localisation / inflation become
+  necessary to stabilise the filter. Above ~500 members the improvement
+  is usually marginal for typical lake state dimensions.
+- **ES-MDA:** Same range as EnKF; ES-MDA's multiple-iteration structure
+  does not reduce the ensemble-size requirement.
+- **Particle filter:** 500–2,000 members as a starting point. Effective
+  sample size (ESS = 1/Σw²) should stay above N/2 between resample
+  events; if it consistently collapses, increase the ensemble or reduce
+  `pf_tempering_factor`.
+
+### Diagnosing ensemble collapse
+
+Filter inbreeding (ensemble variance → 0) can occur even with moderate
+ensemble sizes. Signs include:
+
+- Ensemble spread collapses to near zero within a few assimilation steps.
+- Posterior forecasts are overconfident and miss the verification
+  observations.
+- All ensemble members converge to the same trajectory.
+
+Remedies are **covariance inflation** (Section 4) and/or increasing
+`ensemble_size`.
+
+---
+
+## 3. Covariance localisation (`localization_distance`)
+
+**Where:** `configure_flare.yml` → `da_setup: localization_distance`
+
+```yaml
+da_setup:
+  localization_distance: 5.0   # metres; .na to disable
+```
+
+Localisation prevents observations at one depth from spuriously updating
+state variables at distant depths. FLAREr applies a **Gaussian taper**
+to the sample covariance:
+
+$$\rho_{ij} = \exp\!\left(-\frac{(z_i - z_j)^2}{2\,L^2}\right)$$
+
+where $z_i, z_j$ are the depths of state elements $i$ and $j$ and $L$
+is `localization_distance`.
+
+### Effect of different values
+
+| `localization_distance` | Effect |
+|---|---|
+| `.na` (disabled) | Full covariance used; distant spurious correlations can corrupt the update |
+| Very small (< 1 m) | Observations only correct their immediate depth layer; information propagates slowly |
+| Moderate (2–10 m) | Correlations across physically plausible mixing scales are preserved |
+| Very large (> lake depth) | Approximately equivalent to no localisation |
+
+### Practical guidance
+
+- Start with `localization_distance ≈ 2–5 m` for a thermally stratified
+  lake. This captures correlations within the epilimnion and hypolimnion
+  while suppressing cross-thermocline artefacts.
+- Increase the value in well-mixed lakes where temperature correlations
+  genuinely extend across the full depth.
+- Localisation is used by `enkf`, `etkf`, and `letkf`. Set to `.na`
+  when using `esmda` or `pf` (neither uses it; the field is ignored).
+- Non-depth-resolved variables (Secchi depth, lake surface elevation,
+  parameters) always receive a **global** update regardless of
+  `localization_distance`, because they have no depth dimension over
+  which to localise.
+
+---
+
+## 4. Covariance inflation (`inflation_factor`, `use_inflation_factor`)
+
+**Where:** `configure_flare.yml` → `da_setup`
+
+```yaml
+da_setup:
+  use_inflation_factor: TRUE
+  inflation_factor: 1.05
+```
+
+Ensemble Kalman methods systematically underestimate posterior variance
+over successive assimilation cycles (filter inbreeding). **State
+inflation** counteracts this by multiplying each state variable's
+ensemble deviations from its mean by `inflation_factor` after every DA
+update:
+
+$$x_i^{(m)} \leftarrow \bar{x} + \lambda\,(x_i^{(m)} - \bar{x})$$
+
+where $\lambda$ = `inflation_factor` and $\bar{x}$ is the ensemble mean.
+
+### Choosing `inflation_factor`
+
+| Value | Effect |
+|---|---|
+| 1.0 (or `use_inflation_factor: FALSE`) | No inflation; default |
+| 1.01–1.05 | Mild inflation; appropriate for most well-specified models |
+| 1.05–1.15 | Strong inflation; use when model error is poorly captured by process noise alone |
+| > 1.2 | Typically too aggressive; ensemble spread becomes unrealistically large |
+
+### When to enable inflation
+
+Enable `use_inflation_factor` if:
+
+- The ensemble spread collapses even with sufficient ensemble size.
+- Forecast skill degrades over successive runs despite well-tuned
+  process noise.
+- The posterior is consistently more confident than the verification
+  score warrants.
+
+Inflation is a correction for **sampling error and model
+misspecification**. It is distinct from process noise (Section 5), which
+represents genuine irreducible model error.
+
+---
+
+## 5. Process uncertainty (`model_sd`, `vert_decorr_length`)
+
+**Where:** `states_config.csv` columns `model_sd` and
+`vert_decorr_length`; optionally overridden by `depth_model_sd.csv`
+
+```
+state_names,initial_conditions,model_sd,vert_decorr_length,...
+temp,20,1.35,2,...
+OXY_oxy,8,0.5,1,...
+```
+
+Process noise represents irreducible model error: the random
+perturbations added to each state variable at every timestep. It keeps
+the ensemble from collapsing and ensures the filter assigns some
+probability to states the model did not predict.
+
+### `model_sd` — process noise amplitude
+
+`model_sd` is the **standard deviation** of the random perturbations
+added to each ensemble member's state at each timestep (in the units of
+that state variable).
+
+| `model_sd` | Effect |
+|---|---|
+| 0 | No process noise; ensemble collapses to deterministic spread |
+| Small relative to variability | Ensemble spread shrinks toward zero; filter becomes overconfident |
+| Appropriate | Ensemble maintains realistic spread; filter tracks observations without overshooting |
+| Too large | Posterior is broad and uncertain; model signal is drowned by noise |
+
+**Practical guidance:** Set `model_sd` to roughly the **root-mean-square
+residual** of the model without DA (i.e. the model's typical daily
+prediction error). For lake temperature this is often 0.5–2.0 °C;
+for dissolved oxygen 0.3–1.0 mg/L. When in doubt, start conservatively
+large and reduce as you evaluate forecast skill.
+
+Process noise is only added when `uncertainty: process: TRUE` in
+`configure_flare.yml` and `add_random_noise: 1`.
+
+### `vert_decorr_length` — vertical correlation scale
+
+Process noise is not added independently at each layer. Instead, FLAREr
+draws spatially correlated noise using a first-order autoregressive
+structure:
+
+$$w_k = \alpha\, w_{k-1} + \sqrt{1-\alpha^2}\, \epsilon_k, \quad \alpha = \exp\!\left(-\frac{L}{\Delta z_k}\right)$$
+
+where $L$ = `vert_decorr_length` and $\Delta z_k$ is the layer
+thickness. Large $L$ produces smooth, depth-coherent perturbations;
+small $L$ produces layer-by-layer independent noise.
+
+| `vert_decorr_length` | Effect |
+|---|---|
+| 0 | Independent noise at each layer; unrealistic for most lake states |
+| 1–3 m | Noise correlated at the scale of typical mixing layers |
+| 5–10 m | Broad, smooth depth profiles of noise |
+| ≫ lake depth | Effectively uniform noise across all layers |
+
+**Practical guidance:** Set `vert_decorr_length` to the typical vertical
+mixing scale. For temperature in a stratified lake, 2–4 m is a
+reasonable starting point. For biogeochemical variables that vary on
+finer vertical scales (e.g. dissolved oxygen near the oxycline), 1–2 m
+may be more appropriate.
+
+### Depth-varying process noise (`depth_model_sd.csv`)
+
+In stratified lakes, model error often differs by depth. The thermocline
+is harder to model than the well-mixed epilimnion, so you may want
+higher `model_sd` at mid-depth. Provide `depth_model_sd.csv` to specify
+this:
+
+```
+depth,temp
+0.1,0.8
+1,0.8
+5,1.2
+9,0.3
+13,0.3
+```
+
+Values are linearly interpolated between listed depths. This file is
+optional; if absent, the uniform `model_sd` from `states_config.csv` is
+used at all depths.
+
+---
+
+## 6. Observation uncertainty (`obs_sd`)
+
+**Where:** `observations_config.csv` column `obs_sd`
+
+```
+state_names_obs,obs_units,obs_sd,...
+temp,degC,0.5,...
+OXY_oxy,mg/L,0.3,...
+```
+
+`obs_sd` is the standard deviation of the observation error, in the
+same units as the observation. It enters the DA update as the diagonal
+of the observation error covariance matrix $\mathbf{R}$.
+
+### Why `obs_sd` matters
+
+The Kalman gain $\mathbf{K}$ is a weighted average of model and
+observation:
+
+$$\mathbf{K} = \mathbf{P}\mathbf{H}^T (\mathbf{H}\mathbf{P}\mathbf{H}^T + \mathbf{R})^{-1}$$
+
+- **Small `obs_sd` (observation trusted):** $\mathbf{K}$ is large; the
+  update pulls the ensemble strongly toward the observation. If `obs_sd`
+  underestimates the true error, the filter will over-trust noisy
+  measurements, degrade ensemble diversity, and potentially become
+  unstable.
+- **Large `obs_sd` (observation distrusted):** $\mathbf{K}$ is small;
+  the model forecast is barely changed by the observation. If `obs_sd`
+  overestimates the true error, the DA adds little value.
+
+### Setting `obs_sd`
+
+A principled approach is to set `obs_sd` to the **combined** sensor
+noise plus representativeness error:
+
+$$\sigma_{\text{obs}} = \sqrt{\sigma_{\text{sensor}}^2 + \sigma_{\text{repr}}^2}$$
+
+- **Sensor noise** ($\sigma_{\text{sensor}}$): typically provided by the
+  manufacturer or estimated from repeated calibration measurements. For
+  a thermistor chain this is often 0.1–0.3 °C.
+- **Representativeness error** ($\sigma_{\text{repr}}$): the mismatch
+  between a point measurement and the spatial average that the 1-D model
+  represents. This is often much larger than sensor noise (0.3–1.0 °C for
+  temperature in a lake with horizontal gradients).
+
+In practice, `obs_sd` is a tuning parameter. If the filter is unstable
+or ensemble spread collapses, try increasing `obs_sd`. If the filter
+barely responds to observations, try decreasing it.
+
+---
+
+## 7. Parameter fitting (`par_fit_method`, `perturb_par`, `par_min_sd`)
+
+**Where:** `configure_flare.yml` → `da_setup: par_fit_method`;
+`parameter_calibration_config.csv` → `perturb_par`, `par_min_sd`
+
+### `par_fit_method`
+
+The parameter fitting method controls how parameter uncertainty is
+maintained between DA updates. Without ongoing perturbation, the DA
+update shrinks parameter spread toward zero over successive cycles.
+
+```yaml
+da_setup:
+  par_fit_method: inflate   # inflate | perturb | perturb_const | perturb_init
+```
+
+| Method | Mechanism | When to use |
+|---|---|---|
+| `inflate` | Multiplies post-update deviations by `perturb_par` (≥ 1) | Default; counteracts collapse without injecting random noise |
+| `perturb` | Adds N(0, `perturb_par`) noise at every step | When parameters have high uncertainty that should not shrink |
+| `perturb_const` | Rescales spread to exactly `perturb_par` each step | When you want a fixed exploration budget regardless of how well the DA has constrained the parameter |
+| `perturb_init` | Each member draws a different initial value; held fixed thereafter | When you want to propagate initial parameter uncertainty but not update parameters during the run |
+
+### `perturb_par` — noise/inflation scale
+
+`perturb_par` is set per parameter in `parameter_calibration_config.csv`.
+Its interpretation depends on `par_fit_method`:
+
+| `par_fit_method` | Interpretation of `perturb_par` |
+|---|---|
+| `inflate` | Multiplicative factor ≥ 1 applied to post-update deviations. `1.0` = no inflation; `1.05` = 5 % inflation |
+| `perturb` | SD of the random noise added each step (in the parameter's units) |
+| `perturb_const` | Target SD of the parameter distribution each step |
+| `perturb_init` | Not used (column must still be present) |
+
+### `par_min_sd` — minimum ensemble standard deviation
+
+`par_min_sd` is an optional per-parameter column in
+`parameter_calibration_config.csv`. It sets a floor on the posterior
+parameter ensemble SD after each DA update, preventing ensemble collapse
+— the state where all members converge to nearly the same value and the
+filter loses the ability to respond to future observations (the Kalman
+gain goes to zero when parameter variance goes to zero).
+
+The floor is applied after inflation and before the bounds clamp,
+using the following logic:
+
+| Condition | Action |
+|---|---|
+| posterior SD > `par_min_sd` | No action; spread is sufficient |
+| 0 < posterior SD < `par_min_sd` | Multiplicative rescaling: members are stretched symmetrically around the posterior mean until SD equals `par_min_sd`, preserving the relative structure of the ensemble |
+| posterior SD = 0 (complete collapse) | Full redraw: all members are independently resampled from N(posterior mean, `par_min_sd`) |
+
+Omitting the column or setting it to `NA` disables the floor for that
+parameter.
+
+**Choosing `par_min_sd`:** set it to the smallest spread that still
+represents meaningful parameter uncertainty — typically a small fraction
+of the parameter's physical range. Values that are too large prevent the
+filter from ever tightening the parameter distribution; values that are
+too small provide no protection against collapse.
+
+```
+# Example: floor sediment temperature SD at 0.1 °C, lw_factor at 0.001
+par_names,par_names_save,...,perturb_par,par_units,fix_par,par_min_sd
+sed_temp_mean,zone1temp,...,1,deg_C,0,0.1
+lw_factor,lw_factor,...,0.02,unitless,0,0.001
+```
+
+### Practical guidance
+
+- Start with `par_fit_method: inflate` and `perturb_par ≈ 1.02–1.10`
+  for most parameters.
+- If ensemble collapse is a recurring problem (parameter SD drops to
+  near zero within a few cycles), add `par_min_sd` as a safety floor
+  rather than aggressively increasing `perturb_par`. A floor of ~1–5 %
+  of the parameter's physical range is a reasonable starting point.
+- If a parameter converges quickly to a physically implausible value,
+  tighten its bounds (`par_lowerbound`, `par_upperbound`) rather than
+  increasing `perturb_par`.
+- If a parameter shows no sign of convergence even with many
+  assimilation cycles, check that the state the parameter controls is
+  actually observed (i.e. there is an observation mapped to that state in
+  `observations_config.csv`).
+- Use `fix_par: 1` to hold a parameter at its initial value and remove
+  it from the fitting problem. This is useful for parameters that are
+  well known or that cannot be identified from the available
+  observations.
+
+---
+
+## 8. ES-MDA iterations (`esmda_iterations`)
+
+**Where:** `configure_flare.yml` → `da_setup: esmda_iterations`
+(only applies when `da_method: esmda`)
+
+```yaml
+da_setup:
+  da_method: esmda
+  esmda_iterations: 4
+```
+
+ES-MDA repeats the EnKF update $N$ times per assimilation step, inflating
+the observation error by $\sqrt{N}$ each iteration so that the cumulative
+effect is statistically equivalent to a single update:
+
+$$\mathbf{R}_{\text{iter}} = N \cdot \mathbf{R}$$
+
+Each iteration costs one additional solution of the Kalman gain matrix
+(no additional model runs are required).
+
+| `esmda_iterations` | Effect |
+|---|---|
+| 1 | Equivalent to EnKF (single update) |
+| 4 | Default; good balance of nonlinearity handling vs. cost |
+| 8–16 | More iterations for strongly nonlinear dynamics; diminishing returns beyond ~8 |
+
+Increase `esmda_iterations` if a single update causes ensemble members
+to jump to physically unrealistic states (a sign of strong nonlinearity
+between observations and the state). Decrease it to reduce runtime when
+the system is approximately linear.
+
+---
+
+## 9. Particle filter settings (`pf_always_resample`, `pf_tempering_factor`)
+
+**Where:** `configure_flare.yml` → `da_setup`
+(only applies when `da_method: pf`)
+
+### `pf_always_resample`
+
+```yaml
+da_setup:
+  da_method: pf
+  pf_always_resample: FALSE
+```
+
+When `FALSE` (default), FLAREr resamples only when the effective sample
+size (ESS) falls below $N/2$. When `TRUE`, it resamples at every
+timestep. Always resampling is equivalent to the bootstrap particle
+filter; adaptive resampling is generally preferred because it reduces
+the loss of diversity through resampling.
+
+### `pf_tempering_factor`
+
+```yaml
+da_setup:
+  pf_tempering_factor: 1.0   # in (0, 1]
+```
+
+The tempering factor $\phi$ raises the likelihood to a fractional power
+before computing particle weights:
+
+$$w_m \propto p(\mathbf{y} \mid \mathbf{x}_m)^{\phi}$$
+
+| `pf_tempering_factor` | Effect |
+|---|---|
+| 1.0 (default) | Standard bootstrap PF; full likelihood |
+| 0.5 | Likelihood softened; observations have half the normal influence |
+| < 0.3 | Observations have little influence; useful only in extreme weight-collapse situations |
+
+**When to reduce `pf_tempering_factor`:** if ESS consistently collapses
+to near 1 even with a large ensemble, the prior ensemble spread is too
+narrow relative to the observation uncertainty. Increasing `ensemble_size`,
+increasing `model_sd` (Section 5), or reducing `pf_tempering_factor`
+are all valid remedies. Reduce `pf_tempering_factor` last — it directly
+reduces the information extracted from observations.
+
+---
+
+## 10. Initial ensemble spread
+
+**Where:** `states_config.csv` → `initial_model_sd`;
+`parameter_calibration_config.csv` → `par_init_mean`, `par_init_sd`,
+`par_init_lowerbound`, `par_init_upperbound`
+
+The initial ensemble determines the starting distribution of lake states
+and parameters before the first DA update.
+
+### State initial spread (`initial_model_sd`)
+
+```
+state_names,...,initial_model_sd,...
+temp,...,1.35,...
+```
+
+`initial_model_sd` is the standard deviation of the Gaussian noise added
+to each ensemble member's initial state. Set it to reflect how uncertain
+the initial conditions are. If a restart file from a previous run is
+used, the initial spread is inherited from the restart and
+`initial_model_sd` is only used for newly added states.
+
+### Parameter initial spread (`par_init_mean`, `par_init_sd`, `par_init_lowerbound`, `par_init_upperbound`)
+
+The initial parameter ensemble is generated by one of two methods,
+selected by whether `par_init_sd` is set:
+
+**Uniform initialisation** (`par_init_sd = NA`, default): each ensemble
+member is drawn independently from Uniform(`par_init_lowerbound`,
+`par_init_upperbound`). Use this when you want to specify the initial
+range directly. Wider bounds produce more initial diversity, which helps
+the DA find good parameter values faster but may slow convergence if the
+bounds are much wider than the plausible range.
+
+**Normal initialisation** (`par_init_sd` = positive number): each
+ensemble member is drawn from N(`par_init_mean`, `par_init_sd`). Values
+that fall outside [`par_lowerbound`, `par_upperbound`] are reflected
+back into the feasible region (and any remaining outliers are clamped).
+Use this when you have a prior belief about the most likely value and
+want a Gaussian spread around it. A useful starting point is to set
+`par_init_sd` to roughly one-quarter of the plausible parameter range.
+
+---
+
+## 11. Log-transforming water quality observations
+
+**Where:** `configure_flare.yml` → `da_setup`
+
+```yaml
+da_setup:
+  log_transform_wq_obs: TRUE
+  log_transform_wq_zero_collapse: FALSE
+```
+
+Many water quality variables (chlorophyll, nutrients, dissolved organic
+carbon) are non-negative and often right-skewed. The EnKF assumes
+Gaussian observation errors, which is a poor approximation for these
+variables: perturbed observations can go negative, biasing the update.
+
+When `log_transform_wq_obs: TRUE`, FLAREr samples each perturbed
+observation in log space using a lognormal approximation that matches
+the mean and variance of the original Gaussian specification, then
+back-transforms to linear space. This ensures all perturbed observations
+are positive.
+
+When an observation equals exactly zero (a common occurrence for
+variables like cyanobacterial biovolume), `log_transform_wq_zero_collapse`
+controls what happens:
+
+- `FALSE` (default): negative perturbed observations are clamped to
+  zero. The effective observation distribution is a half-normal, which
+  may introduce a small bias.
+- `TRUE`: the entire perturbed observation matrix row is collapsed to
+  zero. The update treats the zero as a hard constraint rather than a
+  probabilistic observation.
+
+Enable `log_transform_wq_obs` whenever you are assimilating water
+quality variables that have a natural lower bound of zero and whose
+observed values span more than one order of magnitude.
+
+---
+
+## 12. Uncertainty partitioning (`uncertainty:` block)
+
+**Where:** `configure_flare.yml` → `uncertainty`
+
+```yaml
+uncertainty:
+  observation: TRUE
+  process: TRUE
+  weather: TRUE
+  initial_condition: TRUE
+  parameter: TRUE
+  inflow: TRUE
+```
+
+Each flag activates or deactivates one source of uncertainty during the
+**forecast** period (after `forecast_start_datetime`). Observations are
+always assimilated during the hindcast regardless of these settings.
+
+Running FLARE with individual flags set to `FALSE` while keeping others
+`TRUE` is the standard way to partition total forecast uncertainty among
+its sources. For example:
+
+- Set `weather: FALSE` to isolate uncertainty that is not due to
+  meteorological forcing.
+- Set `parameter: FALSE` to propagate the ensemble-mean parameter value
+  rather than the full parameter distribution.
+- Set all flags to `FALSE` to produce a deterministic ensemble where all
+  members are identical — useful as a benchmark.
+
+---
+
+## 13. DA diagnostics (`save_da_diagnostics`, `render_da_diagnostics_report`)
+
+**Where:** `configure_flare.yml` → `da_setup`
+
+```yaml
+da_setup:
+  save_da_diagnostics: FALSE           # write parquet files after each run
+  render_da_diagnostics_report: FALSE  # auto-render HTML report after each run
+```
+
+FLAREr can write a set of per-step diagnostic tables and render them into a
+self-contained HTML report. These tools are the primary way to answer the
+diagnostic questions raised throughout this vignette — "is my NIS healthy?",
+"which states are collapsing?", "are my parameter bounds too tight?" — without
+writing custom post-processing code.
+
+### Enabling diagnostics
+
+Set `save_da_diagnostics: TRUE` to have `run_flare()` write diagnostic parquet
+files to `<lake_directory>/da_diagnostics/` after every run. Set
+`render_da_diagnostics_report: TRUE` to additionally render the HTML report
+automatically at the end of each run. Both flags are `FALSE` by default because
+the parquet writes and Quarto rendering add a small amount of overhead.
+
+### What gets saved
+
+Seven parquet files are written to `da_diagnostics/`:
+
+| File | Content |
+|---|---|
+| `da_filter_health.parquet` | One row per DA step: NIS, DFS, number of observations assimilated, inflation applied |
+| `da_innovations.parquet` | One row per active observation per step: innovation, per-obs NIS, observation influence |
+| `da_ensemble_spread.parquet` | One row per state × depth per step: prior/posterior mean and SD, update magnitude, spread ratio |
+| `da_ranks.parquet` | One row per observation per step: rank of the observation within the prior ensemble |
+| `da_parameters.parquet` | One row per parameter per step: prior/posterior mean and SD, fraction of members at bounds (only when parameters are estimated) |
+| `da_cross_state.parquet` | Covariance of each state with the PHY_TCHLA predicted observation and the resulting update (only when PHY_TCHLA observations are active) |
+| `da_cross_depth.parquet` | Per-(obs depth × state depth) update contribution for each PHY state (only when PHY_TCHLA observations are active) |
+
+Every table includes `site_id`, `model_id`, and `reference_date` columns so
+that diagnostics from multiple runs can be accumulated and compared.
+
+### Generating the report
+
+#### Automatically (recommended for routine monitoring)
+
+```yaml
+da_setup:
+  save_da_diagnostics: TRUE
+  render_da_diagnostics_report: TRUE
+```
+
+`run_flare()` calls `render_da_diagnostics(lake_directory)` after writing the
+parquet files. The report is saved as
+`<lake_directory>/da_diagnostics_report.html`.
+
+#### Manually (for ad-hoc investigation or filtering)
+
+```r
+FLAREr::render_da_diagnostics(
+  lake_directory  = "/path/to/lake_repo",
+  diagnostics_dir = "da_diagnostics",       # relative to lake_directory
+  site_id         = "fcre",                 # NULL = all sites
+  model_id        = "test_run",             # NULL = all model IDs
+  output_file     = "da_diagnostics_report.html",
+  quiet           = TRUE
+)
+```
+
+`render_da_diagnostics()` copies the built-in Quarto template into
+`lake_directory`, renders it against the parquet files, and removes the
+temporary `.qmd` file. The `site_id` and `model_id` arguments are useful when
+parquet files from multiple runs have been accumulated in the same directory and
+you want to focus on one configuration.
+
+### What the report shows
+
+The HTML report has eight sections, each linked to the hyperparameters in this
+vignette:
+
+| Report section | Key quantities | Hyperparameter connection |
+|---|---|---|
+| **1 Filter Health** | NIS time series (colour-coded healthy/warning/critical), DFS bar chart, n_obs bar chart | `model_sd`, `inflation_factor`, `obs_sd` |
+| **2 Innovation Analysis** | Per-variable mean innovation, NIS, observation influence; innovation time series; per-obs NIS violins | `obs_sd`, `model_sd`, `localization_distance` |
+| **3 Ensemble Spread** | Spread-ratio heatmap (state × depth); prior SD collapse plot; update magnitude time series | `model_sd`, `inflation_factor`, `ensemble_size` |
+| **4 Rank Histograms** | Rank histogram per observation type with chi-squared uniformity test | Ensemble calibration overall |
+| **5 Parameter Estimation** | Parameter prior/posterior trajectory ribbons; fraction-at-bounds plot; update decomposition (PHY_TCHLA vs other obs) | `par_fit_method`, `perturb_par`, bound settings |
+| **6 Cross-State & Cross-Depth Coupling** | Covariance of each state with PHY_TCHLA predicted obs; cross-depth update heatmap | `localization_distance`, `da_method` |
+| **7 Summary & Recommendations** | Automated callout cards (critical/warning) with specific config changes | All hyperparameters |
+| **8 Hyperparameter Reference** | Quick-reference table of typical ranges and failure-mode symptoms | — |
+
+The **Summary & Recommendations** section (§7) automatically checks NIS,
+ensemble collapse, rank histogram shape, observation influence, and parameter
+bounds, and emits colour-coded callout cards with the exact configuration
+changes needed to fix each problem. If no issues are detected it renders a
+single "Filter appears healthy" tip.
+
+### Typical diagnostic workflow
+
+1. Enable `save_da_diagnostics: TRUE` and run a hindcast over at least
+   2–4 weeks of data.
+2. Open `da_diagnostics_report.html` and check the **Filter Health** panel
+   first. If mean NIS is not near 1, go to §7 for targeted recommendations.
+3. Check **Rank Histograms** (§4) for each observation type. Peaked histograms
+   indicate under-dispersion; U-shaped histograms indicate over-dispersion.
+4. Inspect **Ensemble Spread** (§3) for any states with a mean spread ratio
+   below 0.05 — these are collapsing.
+5. If parameters are estimated, check **Parameter Estimation** (§5) for members
+   piling at bounds or for parameters driven by biologically unrelated
+   observations.
+6. Adjust one hyperparameter group at a time (process noise, inflation, or obs
+   uncertainty) and re-run to isolate the effect.
+
+---
+
+## Summary: a recommended tuning workflow
+
+1. **Start simple.** Use `da_method: enkf`, `ensemble_size: 100`,
+   `use_inflation_factor: FALSE`, and uniform `model_sd` values from the
+   literature or model residuals without DA.
+
+2. **Set `obs_sd` from instrument specs.** Add representativeness error
+   (0.3–1.0 °C for temperature; 0.2–0.5 mg/L for dissolved oxygen) on
+   top of sensor noise.
+
+3. **Enable diagnostics.** Set `save_da_diagnostics: TRUE` and
+   `render_da_diagnostics_report: TRUE` (Section 13) so every run
+   produces an HTML report.
+
+4. **Run a hindcast.** Open the DA diagnostics report and check the Filter
+   Health panel. If mean NIS is not near 1, follow the recommendations in
+   §7 of the report. If ensemble spread collapses, enable
+   `use_inflation_factor: TRUE` with `inflation_factor ≈ 1.02`. If spread
+   is unrealistically large, reduce `model_sd`.
+
+5. **Add localisation** if using many depths. Start with
+   `localization_distance ≈ 2–5 m` and adjust based on whether the
+   posterior looks physically smooth.
+
+6. **Enable parameter fitting.** Add parameters one at a time, starting
+   with those most strongly correlated with assimilated observations.
+   Use `par_fit_method: inflate` with `perturb_par ≈ 1.05`.
+
+7. **Evaluate with skill scores.** Use CRPS or log-score from
+   `score4cast` to compare configurations. A well-tuned system should
+   have higher skill than the open-loop run (`da_method: none`) and
+   should not be systematically over- or underconfident.
+
+8. **Scale up.** Once the filter is stable, increase `ensemble_size` to
+   200–500. If you are running many state variables at many depths and
+   find that `localization_distance` alone is not preventing spurious
+   cross-depth updates, consider switching to `letkf`. The relevant
+   criterion is state-vector dimensionality, not ensemble size.
+
+---
+
+## Quick reference: symptom → fix
+
+| Symptom | Likely cause | Fix |
+|---|---|---|
+| Ensemble spread collapses to zero | Filter inbreeding | Increase `inflation_factor`; increase `model_sd`; increase `ensemble_size` |
+| Forecast is overconfident (too narrow) | `obs_sd` too small; `model_sd` too small | Increase `obs_sd` and/or `model_sd` |
+| Forecast is underconfident (too wide) | `model_sd` too large; `obs_sd` too large | Decrease `model_sd` and/or `obs_sd` |
+| Ensemble jumps to unrealistic states | EnKF nonlinearity; `obs_sd` too small | Switch to `esmda` with `esmda_iterations: 4`; increase `obs_sd` |
+| Particle filter degenerates (ESS → 1) | Ensemble too small; likelihood too sharp | Increase `ensemble_size`; decrease `pf_tempering_factor` |
+| Distant depths updated spuriously | No localisation | Set `localization_distance` to 2–5 m; consider `letkf` |
+| Parameters converge to implausible values | Bounds too loose; wrong `par_fit_method` | Tighten `par_lowerbound`/`par_upperbound`; check observation coverage |
+| Negative WQ perturbed observations | Gaussian perturbation of bounded variable | Set `log_transform_wq_obs: TRUE` |
+
+---
+
+## Key references
+
+- Evensen, G. (1994). Sequential data assimilation with a nonlinear
+  quasi-geostrophic model using Monte Carlo methods to forecast error
+  statistics. *Journal of Geophysical Research*, 99, 10,143–10,162.
+  <https://doi.org/10.1029/94JC00572>
+
+- Hunt, B.R., Kostelich, E.J., and Szunyogh, I. (2007). Efficient data
+  assimilation for spatiotemporal chaos: A local ensemble transform
+  Kalman filter. *Physica D*, 230, 112–126.
+  <https://doi.org/10.1016/j.physd.2006.11.008>
+
+- Emerick, A.A. and Reynolds, A.C. (2013). Ensemble smoother with
+  multiple data assimilation. *Computers & Geosciences*, 55, 3–15.
+  <https://doi.org/10.1016/j.cageo.2012.03.011>
+
+- Thomas, R.Q., et al. (2020). A near-term iterative forecasting system
+  successfully predicts reservoir hydrodynamics and partitions
+  uncertainty in real time. *Water Resources Research*, 56,
+  e2019WR026138. <https://doi.org/10.1029/2019WR026138>
+
+- Wander, H.L., et al. (2024). Data assimilation experiments inform
+  monitoring needs for near-term ecological forecasts in a eutrophic
+  reservoir. *Ecosphere*, 15, e4752.
+  <https://doi.org/10.1002/ecs2.4752>

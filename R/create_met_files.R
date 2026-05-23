@@ -44,30 +44,27 @@ create_met_files <- function(config, lake_directory, met_forecast_start_datetime
       stop("Only forecasts that start at 00:00:00 UTC are currently supported")
     }
 
-    if(config$met$future_met_use_s3){
-
-      if(is.null(bucket) | is.null(endpoint)){
-        stop("inflow forecast function needs bucket and endpoint if use_s3=TRUE")
-      }
-      vars <- arrow_env_vars()
-
-      reference_date <- forecast_date
-
-      forecast_dir <- arrow::s3_bucket(bucket = glue::glue(bucket, "/", config$met$future_met_model),
-                                       endpoint_override =  endpoint, anonymous = TRUE)
-
-      unset_arrow_vars(vars)
-    }else{
-      if(is.null(local_directory)){
-        stop("met forecast function needs local_directory if use_s3=FALSE")
-      }
-
-
-
-      forecast_dir <- arrow::SubTreeFileSystem$create(glue::glue(lake_directory, "/",
-                                                                 local_directory, "/",
-                                                                 config$met$future_met_model))
+    if(config$met$future_met_use_s3 && (is.null(bucket) || is.null(endpoint))){
+      stop("met forecast function needs bucket and endpoint if future_met_use_s3=TRUE")
     }
+    if(!config$met$future_met_use_s3 && is.null(local_directory)){
+      stop("met forecast function needs local_directory if future_met_use_s3=FALSE")
+    }
+
+    vars <- arrow_env_vars()
+    on.exit(unset_arrow_vars(vars), add = TRUE)
+
+    reference_date <- forecast_date
+    faasr_prefix <- if (config$met$future_met_use_s3) {
+      glue::glue(stringr::str_split_fixed(bucket, "/", n = 2)[2], "/", config$met$future_met_model)
+    } else ""
+    forecast_dir <- flare_arrow_s3_bucket(
+      server_name   = "drivers",
+      faasr_prefix  = faasr_prefix,
+      local_path    = glue::glue(lake_directory, "/", local_directory, "/", config$met$future_met_model),
+      mode_override = if (config$met$future_met_use_s3) NULL else "local",
+      config        = config
+    )
   }
 
   if(forecast_horizon == 0){
@@ -75,18 +72,16 @@ create_met_files <- function(config, lake_directory, met_forecast_start_datetime
   }
 
   if(start_datetime < forecast_start_datetime){
-    if(config$met$historical_met_use_s3){
-
-      past_dir <- arrow::s3_bucket(bucket =  glue::glue(bucket, "/",
-                                                        config$met$historical_met_model),
-                                   endpoint_override =  endpoint,
-                                   anonymous = TRUE)
-
-    }else{
-      past_dir <-  arrow::SubTreeFileSystem$create(glue::glue(lake_directory, "/",
-                                                              local_directory, "/",
-                                                              config$met$historical_met_model))
-    }
+    faasr_prefix <- if (config$met$historical_met_use_s3) {
+      glue::glue(stringr::str_split_fixed(bucket, "/", n = 2)[2], "/", config$met$historical_met_model)
+    } else ""
+    past_dir <- flare_arrow_s3_bucket(
+      server_name   = "drivers",
+      faasr_prefix  = faasr_prefix,
+      local_path    = glue::glue(lake_directory, "/", local_directory, "/", config$met$historical_met_model),
+      mode_override = if (config$met$historical_met_use_s3) NULL else "local",
+      config        = config
+    )
   }else{
     past_dir <- NULL
   }
@@ -104,6 +99,7 @@ create_met_files <- function(config, lake_directory, met_forecast_start_datetime
   }
 
   if(!is.null(past_dir)){
+
 
     hist_met <- arrow::open_dataset(past_dir) |>
       dplyr::select(datetime, parameter,variable,prediction) |>
@@ -176,8 +172,6 @@ create_met_files <- function(config, lake_directory, met_forecast_start_datetime
     hist_met <- NULL
   }
 
-
-
   if(is.null(forecast_dir)){
 
     ensemble_members <- unique(hist_met$ensemble)
@@ -214,6 +208,8 @@ create_met_files <- function(config, lake_directory, met_forecast_start_datetime
 
     #### test if the forecast directory exists, stop with helpful error if it does not ####
     tryCatch({
+      ds <- arrow::open_dataset(forecast_dir)
+
       forecast <- arrow::open_dataset(forecast_dir) |>
         dplyr::select(datetime, parameter,variable,prediction) |>
         dplyr::collect()
@@ -222,6 +218,7 @@ create_met_files <- function(config, lake_directory, met_forecast_start_datetime
     })
 
     forecast <- forecast |>
+      dplyr::filter(datetime > config$run_config$forecast_start_datetime) |>
       dplyr::distinct() |>
       tidyr::pivot_wider(names_from = variable, values_from = prediction) |>
       dplyr::arrange(parameter, datetime)
@@ -254,6 +251,7 @@ create_met_files <- function(config, lake_directory, met_forecast_start_datetime
       dplyr::group_by(ensemble) |>
       dplyr::slice(-dplyr::n()) |>
       dplyr::ungroup()
+
 
     ensemble_members <- unique(forecast$ensemble)
 
@@ -290,7 +288,7 @@ create_met_files <- function(config, lake_directory, met_forecast_start_datetime
       }
 
       # check for bad data
-      missing_data_check(df)
+      FLAREr:::missing_data_check(df)
 
       fn <- paste0("met_",stringr::str_pad(ens, width = 2, side = "left", pad = "0"),".csv")
       fn <- file.path(out_dir, fn)

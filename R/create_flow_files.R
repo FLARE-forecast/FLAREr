@@ -20,6 +20,65 @@
 #' @noRd
 #'
 
+# Prepare one ensemble member's historical period data slice
+prep_hist_slice <- function(df, flow_num, member, start_dt,
+                            forecast_start_dt, variables, round_level) {
+  df |>
+    dplyr::filter(
+      flow_number == flow_num,
+      parameter == member,
+      datetime >= start_dt,
+      datetime < lubridate::as_date(forecast_start_dt)
+    ) |>
+    tidyr::pivot_wider(names_from = variable, values_from = prediction) |>
+    dplyr::rename(time = datetime) |>
+    dplyr::select(dplyr::all_of(variables)) |>
+    dplyr::mutate_if(where(is.numeric), list(~round(., round_level)))
+}
+
+# Prepare one ensemble member's future period data slice
+prep_future_slice <- function(df, flow_num, member,
+                              forecast_start_dt, variables, round_level) {
+  df |>
+    dplyr::filter(
+      flow_number == flow_num,
+      parameter == member,
+      datetime >= lubridate::as_date(forecast_start_dt)
+    ) |>
+    tidyr::pivot_wider(names_from = variable, values_from = prediction) |>
+    dplyr::rename(time = datetime) |>
+    dplyr::select(dplyr::all_of(variables)) |>
+    dplyr::mutate_if(where(is.numeric), list(~round(., round_level)))
+}
+
+# Apply LER variable renaming (or plain date conversion), then write the CSV
+write_flow_csv <- function(flow, use_ler_vars, hour_step, flow_type,
+                           flow_num, ens_index, out_dir) {
+  ler_vars_lookup <- c(
+    Flow_metersCubedPerSecond       = "FLOW",
+    Water_Temperature_celsius       = "TEMP",
+    Salinity_practicalSalinityUnits = "SALT"
+  )
+
+  if (use_ler_vars) {
+    flow <- as.data.frame(flow)
+    flow[, 1] <- format(flow[, 1], format = "%Y-%m-%d %H:%M:%S")
+    flow[, 1] <- lubridate::with_tz(flow[, 1]) + lubridate::hours(hour_step)
+    flow[, 1] <- format(flow[, 1], format = "%Y-%m-%d %H:%M:%S")
+    flow <- flow |>
+      dplyr::select(dplyr::any_of(c("time", "FLOW", "TEMP", "SALT"))) |>
+      dplyr::rename(dplyr::any_of(ler_vars_lookup))
+  } else {
+    flow <- dplyr::mutate(flow, time = lubridate::as_date(time))
+  }
+
+  flow_file_name <- file.path(
+    out_dir, paste0(flow_type, flow_num, "_ens", ens_index, ".csv")
+  )
+  readr::write_csv(x = flow, file = flow_file_name, quote = "none")
+  flow_file_name
+}
+
 create_flow_files <- function(flow_forecast_dir = NULL,
                               flow_historical_dir = NULL,
                               flow_type = "inflow",
@@ -34,62 +93,71 @@ create_flow_files <- function(flow_forecast_dir = NULL,
                               bucket = NULL,
                               endpoint = NULL,
                               local_directory = NULL,
-                              use_ler_vars = FALSE) {
+                              use_ler_vars = FALSE,
+                              config = config) {
 
-  lake_name_code <- site_id
+  server_name <- if (flow_type == "inflow") {
+    "inflow_drivers"
+  } else if (flow_type == "outflow") {
+    "outflow_drivers"
+  } else {
+    stop("Invalid flow_type. Please use 'inflow' or 'outflow'.")
+  }
 
   round_level <- 10
 
   # set locations of flow drivers (s3 or local)
-  if (!is.null(flow_forecast_dir) & !is.null(flow_historical_dir)) {
+  if (!is.null(flow_forecast_dir) && !is.null(flow_historical_dir)) {
     if (use_s3) {
-      if (is.null(bucket) | is.null(endpoint)) {
+      if (is.null(bucket) || is.null(endpoint)) {
         stop("needs bucket and endpoint if use_s3=TRUE")
       }
       vars <- arrow_env_vars()
-      future_s3 <- arrow::s3_bucket(bucket = file.path(bucket, flow_forecast_dir),
-                                    endpoint_override = endpoint)
-      hist_s3 <- arrow::s3_bucket(bucket = file.path(bucket,flow_historical_dir),
-                                  endpoint_override = endpoint)
+      prefix <- file.path(stringr::str_split_fixed(bucket, "/", n = 2)[2], flow_forecast_dir)
+      future_s3 <- flare_arrow_s3_bucket(server_name = server_name, faasr_prefix = prefix, config = config)
+      prefix <- file.path(stringr::str_split_fixed(bucket, "/", n = 2)[2], flow_historical_dir)
+      hist_s3 <- flare_arrow_s3_bucket(server_name = server_name, faasr_prefix = prefix, config = config)
       unset_arrow_vars(vars)
     } else {
       if (is.null(local_directory)) {
         stop("needs local_directory if use_s3=FALSE")
       }
       future_s3 <- arrow::SubTreeFileSystem$create(file.path(local_directory, flow_forecast_dir))
-      hist_s3 <-  arrow::SubTreeFileSystem$create(file.path(local_directory, flow_historical_dir))
+      hist_s3   <- arrow::SubTreeFileSystem$create(file.path(local_directory, flow_historical_dir))
     }
-  }  else if (is.null(flow_forecast_dir) & !is.null(flow_historical_dir)) {
+  } else if (is.null(flow_forecast_dir) && !is.null(flow_historical_dir)) {
     if (use_s3) {
-      if (is.null(bucket) | is.null(endpoint)) {
+      if (is.null(bucket) || is.null(endpoint)) {
         stop("needs bucket and endpoint if use_s3=TRUE")
       }
       vars <- arrow_env_vars()
       future_s3 <- NULL
-      hist_s3 <- arrow::s3_bucket(bucket = file.path(bucket,flow_historical_dir), endpoint_override = endpoint)
+      prefix <- file.path(stringr::str_split_fixed(bucket, "/", n = 2)[2], flow_historical_dir)
+      hist_s3 <- flare_arrow_s3_bucket(server_name = server_name, faasr_prefix = prefix, config = config)
       unset_arrow_vars(vars)
     } else {
       if (is.null(local_directory)) {
         stop("needs local_directory if use_s3=FALSE")
       }
       future_s3 <- NULL
-      hist_s3 <-  arrow::SubTreeFileSystem$create(file.path(local_directory, flow_historical_dir))
+      hist_s3   <- arrow::SubTreeFileSystem$create(file.path(local_directory, flow_historical_dir))
     }
-  }else if (!is.null(flow_forecast_dir) & is.null(flow_historical_dir)) {
+  } else if (!is.null(flow_forecast_dir) && is.null(flow_historical_dir)) {
     if (use_s3) {
-      if (is.null(bucket) | is.null(endpoint)) {
+      if (is.null(bucket) || is.null(endpoint)) {
         stop("needs bucket and endpoint if use_s3=TRUE")
       }
       vars <- arrow_env_vars()
       hist_s3 <- NULL
-      future_s3 <- arrow::s3_bucket(bucket = file.path(bucket,flow_forecast_dir), endpoint_override = endpoint)
+      prefix <- file.path(stringr::str_split_fixed(bucket, "/", n = 2)[2], flow_forecast_dir)
+      future_s3 <- flare_arrow_s3_bucket(server_name = server_name, faasr_prefix = prefix, config = config)
       unset_arrow_vars(vars)
     } else {
       if (is.null(local_directory)) {
         stop("needs local_directory if use_s3=FALSE")
       }
-      hist_s3 <- NULL
-      future_s3 <-  arrow::SubTreeFileSystem$create(file.path(local_directory, flow_forecast_dir))
+      hist_s3   <- NULL
+      future_s3 <- arrow::SubTreeFileSystem$create(file.path(local_directory, flow_forecast_dir))
     }
   } else {
     future_s3 <- NULL
@@ -102,11 +170,10 @@ create_flow_files <- function(flow_forecast_dir = NULL,
   if (is.na(forecast_start_datetime)) {
     end_datetime <- lubridate::as_datetime(end_datetime)
     forecast_start_datetime <- end_datetime
-  }  else {
+  } else {
     forecast_start_datetime <- lubridate::as_datetime(forecast_start_datetime)
     end_datetime <- forecast_start_datetime + lubridate::days(forecast_horizon)
   }
-
 
   # Access the data
   if (!is.null(future_s3)) {
@@ -115,210 +182,91 @@ create_flow_files <- function(flow_forecast_dir = NULL,
              datetime <= end_datetime) |>
       dplyr::distinct()
   } else {
-    future_df <- NULL # No future data
+    future_df <- NULL
   }
 
   if (!is.null(hist_s3)) {
     hist_df <- dplyr::collect(arrow::open_dataset(hist_s3)) |>
       dplyr::filter(datetime < forecast_start_datetime,
-             datetime >= start_datetime) |>
+                    datetime >= start_datetime) |>
       dplyr::distinct()
 
-
-    if(!("parameter" %in% colnames(hist_df))){
-      hist_df <- hist_df |> mutate(parameter = 1)
+    if (!("parameter" %in% colnames(hist_df))) {
+      hist_df <- hist_df |> dplyr::mutate(parameter = 1)
     }
-
-    if("observation" %in% colnames(hist_df)){
-      hist_df <- hist_df |> rename(prediction = observation)
+    if ("observation" %in% colnames(hist_df)) {
+      hist_df <- hist_df |> dplyr::rename(prediction = observation)
     }
-
   } else {
-    hist_df <- NULL # No historical data
+    hist_df <- NULL
   }
 
-
-
-  if (!is.null(future_df) & !is.null(hist_df)) { # when there is historical and future data
-    if (!setequal(unique(future_df$flow_number), unique(hist_df$flow_number))) { # Checks the data are consistent across the periods (same number of flows)
-        print(tail(future_df))
-        print(tail(hist_df))
-            stop('need the same number of flows in historical and future periods')
-    } else {
-      num_flows <- max(future_df$flow_number)
+  if (!is.null(future_df) && !is.null(hist_df)) {
+    if (!setequal(unique(future_df$flow_number), unique(hist_df$flow_number))) {
+      print(tail(future_df))
+      print(tail(hist_df))
+      stop("need the same number of flows in historical and future periods")
     }
-
-
-    future_ensemble_members <- unique(future_df$parameter)
-    hist_ensemble_members <- unique(hist_df$parameter)
-
-
-    # If there are a different number of ensemble members in the historical and future periods
-    # this will resample the period with fewer ensemble members to match
-    if (length(hist_ensemble_members) < length(future_ensemble_members)) {
-      hist_ensemble_members <- sample(hist_ensemble_members, size = length(future_ensemble_members), replace = T)
-    } else if (length(future_ensemble_members) < length(hist_ensemble_members)) {
-      future_ensemble_members <- sample(future_ensemble_members, size = length(hist_ensemble_members), replace = T)
-    }
-
-    # Create an empty array to put the results in
-    flow_file_names <- array(NA, dim = c(max(c(1, length(future_ensemble_members))),
-                                         num_flows))
-
-    for (j in 1:num_flows) {
-      for (i in 1:length(future_ensemble_members)) {
-        # generate the future period
-        future_ens <- future_df |>
-          dplyr::filter(flow_number == j,
-                        parameter == future_ensemble_members[i],
-                        datetime >= lubridate::as_date(forecast_start_datetime)) |>
-          tidyr::pivot_wider(names_from = variable, values_from = prediction) |>
-          dplyr::rename(time = datetime) |>
-          dplyr::select(dplyr::all_of(variables)) |>
-          dplyr::mutate_if(where(is.numeric), list(~round(., round_level)))
-
-        # generate the historical period
-        hist_ens <- hist_df |>
-          dplyr::filter(flow_number == j,
-                        parameter == hist_ensemble_members[i],
-                        datetime >= start_datetime,
-                        datetime < lubridate::as_date(forecast_start_datetime)) |>
-          tidyr::pivot_wider(names_from = variable, values_from = prediction) |>
-          dplyr::rename(time = datetime) |>
-          dplyr::select(dplyr::all_of(variables)) |>
-          dplyr::mutate_if(where(is.numeric), list(~round(., round_level)))
-
-        # combine to single df
-        flow <- dplyr::bind_rows(hist_ens,
-                                 future_ens) |>
-          arrange(time)
-
-        if (use_ler_vars) {
-          flow <- as.data.frame(flow)
-
-          ler_vars_lookup <- c(Flow_metersCubedPerSecond = "FLOW",
-                               Water_Temperature_celsius = "TEMP",
-                               Salinity_practicalSalinityUnits = "SALT")
-
-          flow[, 1] <- format(flow[, 1], format = "%Y-%m-%d %H:%M:%S")
-          flow[, 1] <- lubridate::with_tz(flow[, 1]) + lubridate::hours(hour_step)
-          flow[, 1] <- format(flow[, 1], format = "%Y-%m-%d %H:%M:%S")
-          flow <- flow |>
-            dplyr::select(any_of(c("time", "FLOW", "TEMP", "SALT"))) |>
-            dplyr::rename(any_of(ler_vars_lookup))
-        }        else {
-          flow <- mutate(flow, time = lubridate::as_date(time))
-        }
-
-        flow_file_name <- file.path(out_dir, paste0(flow_type,
-                                                    j, "_ens", i, ".csv"))
-        flow_file_names[i, j] <- flow_file_name
-        readr::write_csv(x = flow, file = flow_file_name,
-                         quote = "none")
-      }
-    }
-  } else if (!is.null(hist_df) & is.null(future_df)) { # do the same thing but when there is only historical data
-
-    num_flows <- max(hist_df$flow_number)
-    hist_ensemble_members <- unique(hist_df$parameter)
-
-
-    flow_file_names <- array(NA, dim = c(max(c(1, length(hist_ensemble_members))),
-                                         num_flows))
-
-
-    for (j in 1:num_flows) {
-      for (i in 1:length(hist_ensemble_members)) {
-        hist_ens <- hist_df |>
-          dplyr::filter(flow_number == j,
-                        parameter == hist_ensemble_members[i],
-                        datetime >= start_datetime,
-                        datetime < lubridate::as_date(forecast_start_datetime)) |>
-          tidyr::pivot_wider(names_from = variable, values_from = prediction) |>
-          dplyr::rename(time = datetime) |>
-          dplyr::select(dplyr::all_of(variables)) |>
-          dplyr::mutate_if(where(is.numeric), list(~round(., round_level)))
-
-
-        flow <- hist_ens |>
-          arrange(time)
-
-        if (use_ler_vars) {
-          flow <- as.data.frame(flow)
-
-          ler_vars_lookup <- c(Flow_metersCubedPerSecond = "FLOW",
-                               Water_Temperature_celsius = "TEMP",
-                               Salinity_practicalSalinityUnits = "SALT")
-
-          flow[, 1] <- format(flow[, 1], format = "%Y-%m-%d %H:%M:%S")
-          flow[, 1] <- lubridate::with_tz(flow[, 1]) + lubridate::hours(hour_step)
-          flow[, 1] <- format(flow[, 1], format = "%Y-%m-%d %H:%M:%S")
-          flow <- flow |>
-            dplyr::select(any_of(c("time", "FLOW", "TEMP", "SALT"))) |>
-            dplyr::rename(any_of(ler_vars_lookup))
-        }        else {
-          flow <- mutate(flow, time = lubridate::as_date(time))
-        }
-
-        flow_file_name <- file.path(out_dir, paste0(flow_type,
-                                                    j, "_ens", i, ".csv"))
-        flow_file_names[i, j] <- flow_file_name
-        readr::write_csv(x = flow, file = flow_file_name,
-                         quote = "none")
-      }
-    }
-  } else if (is.null(hist_df) & !is.null(future_df)) { # do the same thing but when there is only future data
-
     num_flows <- max(future_df$flow_number)
-    future_ensemble_members <- unique(future_df$parameter)
 
-    flow_file_names <- array(NA, dim = c(max(c(1, length(future_ensemble_members))),
-                                         num_flows))
+    future_members <- unique(future_df$parameter)
+    hist_members   <- unique(hist_df$parameter)
+
+    # Resample whichever period has fewer ensemble members to match
+    if (length(hist_members) < length(future_members)) {
+      hist_members <- sample(hist_members, size = length(future_members), replace = TRUE)
+    } else if (length(future_members) < length(hist_members)) {
+      future_members <- sample(future_members, size = length(hist_members), replace = TRUE)
+    }
+
+    flow_file_names <- array(NA, dim = c(max(c(1, length(future_members))), num_flows))
 
     for (j in 1:num_flows) {
-      for (i in 1:length(future_ensemble_members)) {
-        future_ens <- future_df |>
-          dplyr::filter(flow_number == j,
-                        parameter == future_ensemble_members[i],
-                        datetime >= lubridate::as_date(forecast_start_datetime)) |>
-          tidyr::pivot_wider(names_from = variable, values_from = prediction) |>
-          dplyr::rename(time = datetime) |>
-          dplyr::select(dplyr::all_of(variables)) |>
-          dplyr::mutate_if(where(is.numeric), list(~round(., round_level)))
+      for (i in seq_along(future_members)) {
+        hist_ens   <- prep_hist_slice(hist_df, j, hist_members[i], start_datetime,
+                                     forecast_start_datetime, variables, round_level)
+        future_ens <- prep_future_slice(future_df, j, future_members[i],
+                                       forecast_start_datetime, variables, round_level)
+        flow <- dplyr::bind_rows(hist_ens, future_ens) |> dplyr::arrange(time)
+        flow_file_names[i, j] <- write_flow_csv(flow, use_ler_vars, hour_step,
+                                                flow_type, j, i, out_dir)
+      }
+    }
 
+  } else if (!is.null(hist_df) && is.null(future_df)) {
+    num_flows    <- max(hist_df$flow_number)
+    hist_members <- unique(hist_df$parameter)
+    flow_file_names <- array(NA, dim = c(max(c(1, length(hist_members))), num_flows))
 
-        flow <- future_ens |>
-          arrange(time)
+    for (j in 1:num_flows) {
+      for (i in seq_along(hist_members)) {
+        flow <- prep_hist_slice(hist_df, j, hist_members[i], start_datetime,
+                                forecast_start_datetime, variables, round_level) |>
+          dplyr::arrange(time)
+        flow_file_names[i, j] <- write_flow_csv(flow, use_ler_vars, hour_step,
+                                                flow_type, j, i, out_dir)
+      }
+    }
 
-        if (use_ler_vars) {
-          flow <- as.data.frame(flow)
+  } else if (is.null(hist_df) && !is.null(future_df)) {
+    num_flows      <- max(future_df$flow_number)
+    future_members <- unique(future_df$parameter)
+    flow_file_names <- array(NA, dim = c(max(c(1, length(future_members))), num_flows))
 
-          ler_vars_lookup <- c(Flow_metersCubedPerSecond = "FLOW",
-                               Water_Temperature_celsius = "TEMP",
-                               Salinity_practicalSalinityUnits = "SALT")
-
-          flow[, 1] <- format(flow[, 1], format = "%Y-%m-%d %H:%M:%S")
-          flow[, 1] <- lubridate::with_tz(flow[, 1]) + lubridate::hours(hour_step)
-          flow[, 1] <- format(flow[, 1], format = "%Y-%m-%d %H:%M:%S")
-          flow <- flow |>
-            dplyr::select(any_of(c("time", "FLOW", "TEMP", "SALT"))) |>
-            dplyr::rename(any_of(ler_vars_lookup))
-        }        else {
-          flow <- mutate(flow, time = lubridate::as_date(time))
-        }
-
-        flow_file_name <- file.path(out_dir, paste0(flow_type,
-                                                    j, "_ens", i, ".csv"))
-        flow_file_names[i, j] <- flow_file_name
-        readr::write_csv(x = flow, file = flow_file_name,
-                         quote = "none")
+    for (j in 1:num_flows) {
+      for (i in seq_along(future_members)) {
+        flow <- prep_future_slice(future_df, j, future_members[i],
+                                  forecast_start_datetime, variables, round_level) |>
+          dplyr::arrange(time)
+        flow_file_names[i, j] <- write_flow_csv(flow, use_ler_vars, hour_step,
+                                                flow_type, j, i, out_dir)
       }
     }
   }
 
-  if (!is.null(flow_historical_dir) | !is.null(flow_forecast_dir)) {
-    return(flow_file_names)
+  if (!is.null(flow_historical_dir) || !is.null(flow_forecast_dir)) {
+    flow_file_names
   } else {
-    return(NULL)
+    NULL
   }
 }
