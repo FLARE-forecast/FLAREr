@@ -25,10 +25,15 @@ jobs:
         with:
           use-public-rspm: true
 
-      - uses: r-lib/actions/setup-r-dependencies@v2
+            - uses: r-lib/actions/setup-r-dependencies@v2
         with:
           extra-packages: any::covr, any::xml2
           needs: coverage
+
+      - name: Install GLM build dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y libgd-dev debhelper
 
       - name: Test coverage
         run: |
