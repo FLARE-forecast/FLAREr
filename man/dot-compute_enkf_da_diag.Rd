@@ -24,21 +24,21 @@
 )
 }
 \arguments{
-\item{x_matrix}{prior ensemble \link{n_cols x nmembers}}
+\item{x_matrix}{prior ensemble \verb{[n_cols x nmembers]}}
 
-\item{update}{posterior ensemble \link{n_cols x nmembers} (before bound clipping)}
+\item{update}{posterior ensemble \verb{[n_cols x nmembers]} (before bound clipping)}
 
-\item{h}{observation operator \link{n_obs x n_cols}}
+\item{h}{observation operator \verb{[n_obs x n_cols]}}
 
-\item{k_t}{Kalman gain \link{n_cols x n_obs}}
+\item{k_t}{Kalman gain \verb{[n_cols x n_obs]}}
 
-\item{s_mat}{innovation covariance H\emph{P}H^T + R \link{n_obs x n_obs}}
+\item{s_mat}{innovation covariance H\emph{P}H^T + R \verb{[n_obs x n_obs]}}
 
-\item{zt}{active observation vector \link{n_obs}}
+\item{zt}{active observation vector \verb{[n_obs]}}
 
-\item{curr_psi}{observation variances \link{n_obs} (= psi\link{z_index}^2)}
+\item{curr_psi}{observation variances \verb{[n_obs]} (= \code{psi[z_index]^2})}
 
-\item{ens_mean}{prior ensemble row means \link{n_cols}}
+\item{ens_mean}{prior ensemble row means \verb{[n_cols]}}
 
 \item{nstates, ndepths_modeled, n_non_vertical, npars}{dimension integers}
 

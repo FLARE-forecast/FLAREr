@@ -62,13 +62,13 @@ resolve_depth_index <- function(model_depth_m, config) {
 #'
 #' @param var_name character; state_names_obs identifier
 #' @param meta list; one element of obs_non_vertical (has model_source, model_variable, model_depth_m)
-#' @param states_depth array [nstates, ndepths, nmembers] of current model states
-#' @param diagnostics array [ndiag, ntime, ndepths, nmembers] of model diagnostics
-#' @param lake_depth numeric vector [nmembers] of current lake depth
+#' @param states_depth array `[nstates, ndepths, nmembers]` of current model states
+#' @param diagnostics array `[ndiag, ntime, ndepths, nmembers]` of model diagnostics
+#' @param lake_depth numeric vector `[nmembers]` of current lake depth
 #' @param states_config states configuration data frame
 #' @param config FLARE configuration list
 #' @param time_index integer current time step index
-#' @return numeric vector [nmembers], or NULL if value cannot yet be extracted
+#' @return numeric vector `[nmembers]`, or NULL if value cannot yet be extracted
 #' @noRd
 extract_modeled_non_vertical <- function(var_name, meta, states_depth, diagnostics,
                                          lake_depth, states_config, config, time_index) {
@@ -154,8 +154,8 @@ validate_non_vertical_noise_config <- function(non_vertical_noise_config, config
 #'   Supported model_source values: "state", "diagnostic", "diagnostic_daily".
 #'   NULL or zero-row data frame means no noise is applied.
 #' @param lake_depth_m scalar; lake depth for this member at this time step
-#' @param diagnostics_slice matrix [ndiag, ndepths] for this member and time step
-#' @param diagnostics_daily_slice numeric vector [ndiag_daily] for this member
+#' @param diagnostics_slice matrix `[ndiag, ndepths]` for this member and time step
+#' @param diagnostics_daily_slice numeric vector `[ndiag_daily]` for this member
 #'   and time step; NULL if no diagnostics_daily are configured
 #' @param config FLARE configuration list
 #' @return named list with elements \code{lake_depth_m}, \code{diagnostics_slice},

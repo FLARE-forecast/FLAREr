@@ -14,7 +14,7 @@ columns}
 \item{obs_config}{data frame of observation configuration}
 
 \item{model_sd}{numeric matrix of model error SDs, dimensions
-\link{n_states x n_depths} as returned by initiate_model_error}
+\verb{[n_states x n_depths]} as returned by initiate_model_error}
 }
 \value{
 invisibly, a data frame with one row per observation containing

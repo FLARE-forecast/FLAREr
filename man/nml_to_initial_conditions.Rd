@@ -39,8 +39,8 @@ matching the structure returned by generate_initial_conditions().
 \description{
 The GLM nml stores the_heights, the_temps, the_sals, and wq_init_vals in
 bottom-to-top (ascending height) order.  wq_init_vals is a flat vector
-where the first num_heights values belong to wq_names\link{1}, the next
-num_heights values to wq_names\link{2}, etc. (same ordering written by
+where the first num_heights values belong to \code{wq_names[1]}, the next
+num_heights values to \code{wq_names[2]}, etc. (same ordering written by
 run_model.R).  This function reverses that encoding back into the depth-
 major, surface-first layout used by the FLARE states array.
 }

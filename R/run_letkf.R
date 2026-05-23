@@ -84,7 +84,7 @@ run_letkf <- function(x_matrix,
   A        <- x_matrix - ens_mean   # [nx, N]
 
   # Full predicted-observation perturbations and innovation (reused each layer)
-  R <- FLAREr:::build_R_matrix(psi, z_index)   # [nobs, nobs]
+  R <- build_R_matrix(psi, z_index)   # [nobs, nobs]
   Y <- h %*% A                                  # [nobs, N]
   d <- zt - h %*% ens_mean                      # [nobs]
 
@@ -148,7 +148,7 @@ run_letkf <- function(x_matrix,
                              A_global %*% T_global
   }
 
-  FLAREr:::apply_da_updates(
+  apply_da_updates(
     update                       = update,
     states_depth_start           = states_depth_start,
     states_height_start          = states_height_start,

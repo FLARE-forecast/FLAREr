@@ -67,18 +67,6 @@ GLMAEDr::glm_install()
 Sys.setenv('GLM_PATH'=GLMAEDr::glm_path())
 ```
 
-Alternatively, you can install the `GLM3r` package from Github using
-
-```{r}
-remotes::install_github("rqthomas/GLM3r")
-```
-
-After installing GLM3r you need to set an environment variable that points to the GLM code.
-
-```{r}
-Sys.setenv('GLM_PATH'='GLM3r')
-```
-
 Third, create a directory that will be your working directory for your FLARE run.  To find this directory on your computer you can use `print(lake_directory)`
 
 ```{r}

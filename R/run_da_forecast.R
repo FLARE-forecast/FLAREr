@@ -317,7 +317,7 @@ run_da_forecast <- function(states_init,
     if (dir.exists(dir_path)) unlink(dir_path, recursive = TRUE)
     dir.create(dir_path, showWarnings = FALSE)
     if (!is.null(rst_tmp)) file.copy(rst_tmp, rst_path)
-    FLAREr:::set_up_model(config,
+    set_up_model(config,
       ens_working_directory = dir_path,
       state_names = states_config$state_names,
       inflow_file_names = inflow_file_names,
@@ -353,7 +353,7 @@ run_da_forecast <- function(states_init,
 
   ### START EnKF
 
-  nml_glm <- FLAREr:::read_nml(file.path(config$file_path$configuration_directory, config$model_settings$base_GLM_nml))
+  nml_glm <- read_nml(file.path(config$file_path$configuration_directory, config$model_settings$base_GLM_nml))
   lake_max_depth <- nml_glm$morphometry$H[length(nml_glm$morphometry$H)] - nml_glm$morphometry$H[1]
 
   glm_restart_staged <- list()
@@ -449,7 +449,7 @@ run_da_forecast <- function(states_init,
           inflow_file_name  <- NULL
           outflow_file_name <- NULL
         }
-        curr_pars_ens <- FLAREr:::propose_parameters(
+        curr_pars_ens <- propose_parameters(
           i                   = 1L,
           m                   = m,
           pars                = pars,
@@ -477,7 +477,7 @@ run_da_forecast <- function(states_init,
         )
       })
       diag_init <- .par_apply(spinup_inputs, function(sl) {
-        FLAREr:::run_model(
+        run_model(
           i                        = 1L,
           m                        = sl$m,
           curr_start               = sl$spinup_start,
@@ -574,7 +574,7 @@ run_da_forecast <- function(states_init,
           inflow_file_name  <- NULL
           outflow_file_name <- NULL
         }
-        curr_pars_ens <- FLAREr:::propose_parameters(
+        curr_pars_ens <- propose_parameters(
           i, m, pars, pars_config, npars,
           par_fit_method, da_method, hist_days,
           include_uncertainty = config$uncertainty$parameter
@@ -599,7 +599,7 @@ run_da_forecast <- function(states_init,
       })
 
       out <- .par_apply(step_inputs, function(sl) {
-        FLAREr:::run_model(
+        run_model(
           i                        = sl$i,
           m                        = sl$m,
           curr_start               = sl$curr_start,
@@ -687,7 +687,7 @@ run_da_forecast <- function(states_init,
         }
 
         if (config$da_setup$add_random_noise != 0) {
-          nv_noise <- FLAREr:::apply_non_vertical_process_noise(
+          nv_noise <- apply_non_vertical_process_noise(
             non_vertical_noise_config = non_vertical_noise_config,
             lake_depth_m = lake_depth[i, m],
             diagnostics_slice = if (length(config$output_settings$diagnostics_names) > 0) {
@@ -710,7 +710,7 @@ run_da_forecast <- function(states_init,
             diagnostics_daily[, i, m] <- nv_noise$diagnostics_daily_slice
           }
 
-          with_noise <- FLAREr:::add_process_noise(
+          with_noise <- add_process_noise(
             states_height_ens = states_height[i, , , m],
             model_sd = model_sd,
             model_internal_heights_ens = model_internal_heights[i, , m],
@@ -951,7 +951,7 @@ run_da_forecast <- function(states_init,
       }
 
       if (da_method == "enkf") {
-        updates <- FLAREr:::run_enkf(x_matrix,
+        updates <- run_enkf(x_matrix,
           h,
           pars_corr,
           zt,
@@ -977,7 +977,7 @@ run_da_forecast <- function(states_init,
           obs_diag_meta = obs_diag_meta
         )
       } else if (da_method == "pf") {
-        updates <- FLAREr:::run_particle_filter(x_matrix,
+        updates <- run_particle_filter(x_matrix,
           h,
           pars_corr,
           zt,
@@ -1003,7 +1003,7 @@ run_da_forecast <- function(states_init,
           inflation_start = inflation[i - 1]
         )
       } else if (da_method == "etkf") {
-        updates <- FLAREr:::run_etkf(x_matrix,
+        updates <- run_etkf(x_matrix,
           h,
           pars_corr,
           zt,
@@ -1027,7 +1027,7 @@ run_da_forecast <- function(states_init,
           lake_max_depth = lake_max_depth
         )
       } else if (da_method == "esmda") {
-        updates <- FLAREr:::run_esmda(x_matrix,
+        updates <- run_esmda(x_matrix,
           h,
           pars_corr,
           zt,
@@ -1051,7 +1051,7 @@ run_da_forecast <- function(states_init,
           lake_max_depth = lake_max_depth
         )
       } else if (da_method == "letkf") {
-        updates <- FLAREr:::run_letkf(x_matrix,
+        updates <- run_letkf(x_matrix,
           h,
           pars_corr,
           zt,
@@ -1079,7 +1079,7 @@ run_da_forecast <- function(states_init,
       }
 
       if (!is.null(updates$da_diag)) {
-        da_diag_steps[[length(da_diag_steps) + 1L]] <- FLAREr:::collect_da_diagnostics(
+        da_diag_steps[[length(da_diag_steps) + 1L]] <- collect_da_diagnostics(
           da_diag        = updates$da_diag,
           time           = full_time[i],
           states_config  = states_config,
@@ -1094,7 +1094,7 @@ run_da_forecast <- function(states_init,
           # state ensemble to compute predicted observations.  This avoids
           # state-parameter cross-covariance artifacts in the state filter.
           predicted_obs_forecast <- h %*% x_forecast_states
-          pars[i, , ] <- FLAREr:::update_parameters_enkf(
+          pars[i, , ] <- update_parameters_enkf(
             pars          = pars_corr,
             predicted_obs = predicted_obs_forecast,
             zt            = zt,
