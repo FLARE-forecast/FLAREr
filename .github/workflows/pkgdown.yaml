@@ -33,16 +33,19 @@ jobs:
       - name: Install system dependencies
         run: |
           sudo apt-get update
-          sudo apt-get -y install libnetcdf-dev
-          sudo apt-get -y install libgd-dev
+          sudo apt-get -y install gfortran libnetcdf-dev libgd-dev debhelper
 
       - uses: r-lib/actions/setup-r-dependencies@v2
         with:
-          extra-packages: any::pkgdown, local::.
+          extra-packages: any::pkgdown, local::., github::flare-forecast/GLMAEDr
           needs: website
 
       - name: install packages
         run: R -e 'install.packages("tidyverse")'
+
+      - name: Install GLM binary
+        run: GLMAEDr::glm_install()
+        shell: Rscript {0}
 
       - name: Build site
         run: pkgdown::build_site_github_pages(new_process = FALSE, install = FALSE)
