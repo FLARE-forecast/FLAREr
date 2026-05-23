@@ -35,14 +35,15 @@ Run FLARE for a single forecast
 Combines functions necessary to do a complete execution of FLARE
 }
 \examples{
-\dontshow{if (interactive()) (if (getRversion() >= "3.4") withAutoprint else force)(\{ # examplesIf}
+\dontshow{if (interactive()) withAutoprint(\{ # examplesIf}
 #Load and install dependencies
 library(dplyr)
 library(ggplot2)
 library(readr)
 library(lubridate)
-remotes::install_github("rqthomas/GLM3r")
-Sys.setenv('GLM_PATH'='GLM3r')
+remotes::install_github("flare-forecast/GLMAEDr")
+GLMAEDr::glm_install()
+Sys.setenv('GLM_PATH'='GLMAEDr')
 
 dir <- normalizePath(tempdir(),  winslash = "/")
 lake_directory <- file.path(dir, "extdata")
