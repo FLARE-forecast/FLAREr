@@ -42,6 +42,8 @@ GLMAEDr::glm_install()
 Sys.setenv('GLM_PATH'=GLMAEDr::glm_path())
 ```
 
+> **Windows is not currently supported.** GLM-AED version 4 binaries are not yet built for Windows, so `GLMAEDr` cannot provide a working GLM binary on that platform. Use macOS or Linux (for example, via WSL2 on Windows) until v4 Windows binaries are available.
+
 The alternative pathways below predate GLM-AED 4 and may not include the NetCDF restart capacity. Use them only if the binary they provide is a GLM-AED 4 (`v4alpha`) build; otherwise the FLARE restart workflow will not work.
 
 Alternatively, you can install the `GLM3r` package from Github using

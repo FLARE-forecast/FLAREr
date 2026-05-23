@@ -36,6 +36,7 @@ A major release introducing new data assimilation methods, a generalised non-ver
 
 * GLM-AED phytoplankton parameter calibration: parameters stored in `aed_phyto_pars.csv` can now be calibrated by referencing that file in the `par_file` column of `parameter_calibration_config.csv`.
 * Added support for the `GLMAEDr` package for installing and managing the GLM binary.
+* **Note:** Windows is not currently supported, as GLM-AED version 4 binaries are not yet built for Windows. Use macOS or Linux (e.g. via WSL2) until Windows v4 binaries are available.
 * Support for plunging inflows and dynamic benthic variables (the latter not assimilated).
 
 ## Documentation and performance
