@@ -2,14 +2,14 @@
 #' @param psi vector of observation standard deviations (all types)
 #' @param z_index integer indices of active observations this time-step
 #' @noRd
-#' @return diagonal [nobs, nobs] matrix with squared SDs on the diagonal
+#' @return diagonal `[nobs, nobs]` matrix with squared SDs on the diagonal
 build_R_matrix <- function(psi, z_index) {
   diag(psi[z_index]^2, nrow = length(z_index))
 }
 
 #' @title Apply DA posterior updates shared across all linear DA methods
 #'
-#' @param update [nstates*ndepths + n_non_vertical + npars, nmembers] updated state matrix
+#' @param update `[nstates*ndepths + n_non_vertical + npars, nmembers]` updated state matrix
 #' @param states_depth_start states orientated by depth
 #' @param states_height_start states orientated by height
 #' @param model_internal_heights_start heights predicted by GLM model
@@ -243,14 +243,14 @@ apply_da_updates <- function(update,
 
 #' @title Parameter-only EnKF update for one-step lag dual EnKF
 #'
-#' @param pars [npars, nmembers] prior parameter ensemble (after inflation/perturbation)
-#' @param predicted_obs [nobs_active, nmembers] H*x_forecast from the state filter
+#' @param pars `[npars, nmembers]` prior parameter ensemble (after inflation/perturbation)
+#' @param predicted_obs `[nobs_active, nmembers]` H*x_forecast from the state filter
 #' @param zt vector of active observations (length nobs_active)
 #' @param psi vector of all observation SDs (indexed by z_index)
 #' @param z_index integer indices of active observations into psi
 #' @param pars_config parameter configuration list
 #' @noRd
-#' @return [npars, nmembers] updated parameter ensemble
+#' @return `[npars, nmembers]` updated parameter ensemble
 update_parameters_enkf <- function(pars, predicted_obs, zt, psi, z_index, pars_config) {
   npars    <- nrow(pars)
   nmembers <- ncol(pars)

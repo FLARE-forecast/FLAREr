@@ -111,7 +111,7 @@ run_esmda <- function(x_matrix,
 
     if (!is.null(config$da_setup$localization_distance) &&
           !is.na(config$da_setup$localization_distance)) {
-      p_t <- FLAREr:::localization(
+      p_t <- localization(
         mat                   = p_t,
         nstates               = nstates,
         modeled_depths        = config$model_settings$modeled_depths,
@@ -125,7 +125,7 @@ run_esmda <- function(x_matrix,
     x_cur <- x_cur + k_t %*% (d_mat - h %*% x_cur)
   }
 
-  FLAREr:::apply_da_updates(
+  apply_da_updates(
     update                       = x_cur,
     states_depth_start           = states_depth_start,
     states_height_start          = states_height_start,

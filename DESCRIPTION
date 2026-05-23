@@ -36,8 +36,6 @@ Imports:
     stringr,
     imputeTS,
     tools,
-    furrr,
-    future,
     purrr,
     zoo,
     tidyr,
@@ -49,14 +47,19 @@ Imports:
     aws.s3,
     zip,
     processx
-Suggests: 
+Suggests:
     knitr,
     rmarkdown,
     testthat (>= 3.0.0),
     remotes,
-    ropenmeteo
+    ropenmeteo,
+    GLM3r,
+    GLMAEDr,
+    quarto
 Remotes:
-    github::flare-forecast/ropenmeteo
+    github::flare-forecast/ropenmeteo,
+    github::rqthomas/GLM3r,
+    github::flare-forecast/GLMAEDr
 VignetteBuilder: knitr
 Config/testthat/edition: 3
 URL: http://flare-forecast.org/FLAREr/

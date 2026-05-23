@@ -218,7 +218,7 @@ run_flare <- function(lake_directory,
 
   if (isTRUE(config$da_setup$save_da_diagnostics)) {
     message("writing DA diagnostics")
-    FLAREr:::write_da_diagnostics(
+    write_da_diagnostics(
       da_forecast_output = da_forecast_output,
       local_directory    = file.path(lake_directory, "da_diagnostics")
     )

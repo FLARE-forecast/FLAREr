@@ -61,7 +61,7 @@ run_etkf <- function(x_matrix,
   nstates         <- dim(states_depth_start)[1]
   ndepths_modeled <- length(config$model_settings$modeled_depths)
 
-  R        <- FLAREr:::build_R_matrix(psi, z_index)
+  R        <- build_R_matrix(psi, z_index)
   ens_mean <- rowMeans(x_matrix)
   A        <- x_matrix - ens_mean  # [nx, N]
   Y        <- h %*% A              # [nobs, N]
@@ -73,7 +73,7 @@ run_etkf <- function(x_matrix,
     # Localized path: materialize P_t, apply Schur taper, then use
     # a deterministic (noise-free) Kalman update on the ensemble.
     p_t <- A %*% t(A) / (nmembers - 1)
-    p_t <- FLAREr:::localization(
+    p_t <- localization(
       mat                   = p_t,
       nstates               = nstates,
       modeled_depths        = config$model_settings$modeled_depths,
@@ -109,7 +109,7 @@ run_etkf <- function(x_matrix,
               sqrt(nmembers - 1) * A %*% T_mat
   }
 
-  FLAREr:::apply_da_updates(
+  apply_da_updates(
     update                       = update,
     states_depth_start           = states_depth_start,
     states_height_start          = states_height_start,

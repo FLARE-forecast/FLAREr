@@ -112,7 +112,7 @@ run_enkf <- function(x_matrix,
 
   if (!is.null(config$da_setup$localization_distance) &&
         !is.na(config$da_setup$localization_distance)) {
-    p_t <- FLAREr:::localization(
+    p_t <- localization(
       mat                   = p_t,
       nstates               = nstates,
       modeled_depths        = config$model_settings$modeled_depths,
@@ -126,7 +126,7 @@ run_enkf <- function(x_matrix,
   k_t   <- t(solve(s_mat, h %*% p_t, tol = .Machine$double.eps))
 
   if (isTRUE(getOption("flare.enkf.debug_phy")) && !is.null(states_config)) {
-    FLAREr:::.diagnose_enkf_phy_update(
+    .diagnose_enkf_phy_update(
       x_matrix        = x_matrix,
       h               = h,
       k_t             = k_t,
@@ -135,7 +135,7 @@ run_enkf <- function(x_matrix,
       states_config   = states_config
     )
     if (isTRUE(npars > 0L)) {
-      FLAREr:::.diagnose_enkf_par_update(
+      .diagnose_enkf_par_update(
         x_matrix        = x_matrix,
         h               = h,
         k_t             = k_t,
@@ -151,7 +151,7 @@ run_enkf <- function(x_matrix,
 
   update <- x_matrix + k_t %*% (d_mat - h %*% x_matrix)
 
-  result <- FLAREr:::apply_da_updates(
+  result <- apply_da_updates(
     update                       = update,
     states_depth_start           = states_depth_start,
     states_height_start          = states_height_start,
@@ -204,14 +204,14 @@ run_enkf <- function(x_matrix,
 #' All quantities are computed from objects that already exist at the call
 #' site in \code{run_enkf}, so there is no redundant matrix work.
 #'
-#' @param x_matrix  prior ensemble [n_cols x nmembers]
-#' @param update    posterior ensemble [n_cols x nmembers] (before bound clipping)
-#' @param h         observation operator [n_obs x n_cols]
-#' @param k_t       Kalman gain [n_cols x n_obs]
-#' @param s_mat     innovation covariance H*P*H^T + R [n_obs x n_obs]
-#' @param zt        active observation vector [n_obs]
-#' @param curr_psi  observation variances [n_obs] (= psi[z_index]^2)
-#' @param ens_mean  prior ensemble row means [n_cols]
+#' @param x_matrix  prior ensemble `[n_cols x nmembers]`
+#' @param update    posterior ensemble `[n_cols x nmembers]` (before bound clipping)
+#' @param h         observation operator `[n_obs x n_cols]`
+#' @param k_t       Kalman gain `[n_cols x n_obs]`
+#' @param s_mat     innovation covariance H*P*H^T + R `[n_obs x n_obs]`
+#' @param zt        active observation vector `[n_obs]`
+#' @param curr_psi  observation variances `[n_obs]` (= `psi[z_index]^2`)
+#' @param ens_mean  prior ensemble row means `[n_cols]`
 #' @param nstates,ndepths_modeled,n_non_vertical,npars  dimension integers
 #' @param inflation_start  covariance inflation factor applied this step
 #' @param pars_config,states_config  config data frames (may be NULL)

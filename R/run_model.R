@@ -284,18 +284,18 @@ run_model <- function(i,
 
   glm_nml_path <- file.path(ens_working_directory, "glm3.nml")
   if (is.null(glm_nml)) {
-    glm_nml <- FLAREr:::read_nml(glm_nml_path)
+    glm_nml <- read_nml(glm_nml_path)
   }
-  glm_nml <- FLAREr:::modify_nml(glm_nml, update_glm_nml_list, update_glm_nml_names)
-  FLAREr:::write_nml(glm_nml, glm_nml_path)
+  glm_nml <- modify_nml(glm_nml, update_glm_nml_list, update_glm_nml_names)
+  write_nml(glm_nml, glm_nml_path)
 
   if(list_index_aed > 1){
     aed_nml_path <- file.path(ens_working_directory, "aed2.nml")
     if (is.null(aed_nml)) {
-      aed_nml <- FLAREr:::read_nml(aed_nml_path)
+      aed_nml <- read_nml(aed_nml_path)
     }
-    aed_nml <- FLAREr:::modify_nml(aed_nml, update_aed_nml_list, update_aed_nml_names)
-    FLAREr:::write_nml(aed_nml, aed_nml_path)
+    aed_nml <- modify_nml(aed_nml, update_aed_nml_list, update_aed_nml_names)
+    write_nml(aed_nml, aed_nml_path)
   }
 
   if(list_index_phyto > 1){

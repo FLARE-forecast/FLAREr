@@ -67,18 +67,6 @@ GLMAEDr::glm_install()
 Sys.setenv('GLM_PATH'=GLMAEDr::glm_path())
 ```
 
-Alternatively, you can install the `GLM3r` package from Github using
-
-```{r}
-remotes::install_github("rqthomas/GLM3r")
-```
-
-After installing GLM3r you need to set an environment variable that points to the GLM code.
-
-```{r}
-Sys.setenv('GLM_PATH'='GLM3r')
-```
-
 Third, create a directory that will be your working directory for your FLARE run.  To find this directory on your computer you can use `print(lake_directory)`
 
 ```{r}
@@ -104,6 +92,7 @@ file.copy(system.file("extdata", "configuration", "default", "parameter_calibrat
 file.copy(system.file("extdata", "configuration", "default", "states_config.csv", package = "FLAREr"), file.path(lake_directory, "configuration", "default", "states_config.csv"))
 file.copy(system.file("extdata", "configuration", "default", "depth_model_sd.csv", package = "FLAREr"), file.path(lake_directory, "configuration", "default", "depth_model_sd.csv"))
 file.copy(system.file("extdata", "configuration", "default", "observations_config.csv", package = "FLAREr"), file.path(lake_directory, "configuration", "default", "observations_config.csv"))
+file.copy(system.file("extdata", "configuration", "default", "non_vertical_noise_config.csv", package = "FLAREr"), file.path(lake_directory, "configuration", "default", "non_vertical_noise_config.csv"))
 ```
 
 Third, FLAREr requires GLM specific configurations files.  For applications that require on water temperature, only the GLM namelist file is needed.  Applications that require other water quality variables will require additional namelist files that are associated with the aed model.

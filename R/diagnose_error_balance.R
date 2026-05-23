@@ -23,7 +23,7 @@
 #'   columns
 #' @param obs_config data frame of observation configuration
 #' @param model_sd numeric matrix of model error SDs, dimensions
-#'   [n_states x n_depths] as returned by initiate_model_error
+#'   `[n_states x n_depths]` as returned by initiate_model_error
 #' @return invisibly, a data frame with one row per observation containing
 #'   obs_name, obs_sd, model_sd_obs_space, var_ratio, and contributing_states
 #' @keywords internal
