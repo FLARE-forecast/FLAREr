@@ -14,78 +14,60 @@
 
 get_run_config <- function(configure_run_file = "configure_run.yml", lake_directory, config, clean_start = FALSE, config_set_name = "default", sim_name = NA){
 
+  # List-then-get keeps the local and remote paths uniform:
+  # flare_get_folder_list enumerates the local restart folder when
+  # mode=local and lists S3 otherwise; flare_get_file is a no-op in
+  # mode=local since the file is already at local_folder when the
+  # listing reports it.
+  #   clean_start=TRUE          -> always rewrite from configuration/
+  #   mode=local, file present  -> read back
+  #   mode=local, file absent   -> write fresh
+  #   mode=remote, file present -> download, read back
+  #   mode=remote, file absent  -> write fresh
+
   run_config <- yaml::read_yaml(file.path(lake_directory,"configuration", config_set_name, configure_run_file))
 
   if(is.na(sim_name)){
     sim_name <- run_config$sim_name
   }
 
-  dir.create(file.path(lake_directory, "restart", config$location$site_id, sim_name), recursive = TRUE, showWarnings = FALSE)
+  server_name   <- "restart"
+  remote_folder <- file.path(stringr::str_split_fixed(config$s3$restart$bucket, "/", n = 2)[2],
+                             config$location$site_id, sim_name)
+  remote_file   <- configure_run_file
+  local_folder  <- file.path(lake_directory, "restart", config$location$site_id, sim_name)
+  local_file    <- configure_run_file
+  local_yaml    <- file.path(local_folder, local_file)
 
-  if(!config$run_config$use_s3 | clean_start){
+  dir.create(local_folder, recursive = TRUE, showWarnings = FALSE)
 
-    restart_exists <- file.exists(file.path(lake_directory, "restart", config$location$site_id, sim_name, configure_run_file))
-    if(!restart_exists){
-      yaml::write_yaml(run_config, file.path(lake_directory,"restart", config$location$site_id, sim_name, configure_run_file))
-    }else if(clean_start){
-      yaml::write_yaml(run_config, file.path(lake_directory,"restart", config$location$site_id, sim_name, configure_run_file))
-    }
-  }else if(config$run_config$use_s3 & !clean_start){
-
-    server_name <- "restart"
-    remote_folder <- file.path(stringr::str_split_fixed(config$s3$restart$bucket, "/", n = 2)[2], config$location$site_id, sim_name)
-    remote_file <- configure_run_file
-    local_folder <- file.path(lake_directory, "restart", config$location$site_id, sim_name)
-    local_file <- configure_run_file
-
-    restart_exists <- tryCatch({
-      FaaSr::faasr_get_file(
-        server_name = server_name,
-        remote_folder = remote_folder,
-        remote_file = remote_file,
-        local_folder = local_folder,
-        local_file = local_file,
-        faasr_config = config$faasr
-      )
-
-      downloaded_file <- normalizePath(file.path(local_folder, local_file))
-
-      if (file.exists(downloaded_file)) {
-        TRUE
-      } else {
-        print("File does not exist in S3.")
-        FALSE
-      }
-    }, error = function(e) {
-      if (grepl("404", e$message, fixed = TRUE) || grepl("Not Found", e$message, ignore.case = TRUE)) {
-        message("Error: run config file not found in s3 (404).")
-        return(FALSE)
-      } else {
-        stop(paste("Error:", e$message))
-      }
-    })
-
-    # restart_exists <- suppressMessages(aws.s3::object_exists(object = file.path(stringr::str_split_fixed(config$s3$restart$bucket, "/", n = 2)[2],
-    #                                                                             config$location$site_id, sim_name, configure_run_file),
-    #                                                          bucket = stringr::str_split_fixed(config$s3$restart$bucket, "/", n = 2)[1],
-    #                                                          region = stringr::str_split_fixed(config$s3$restart$endpoint, pattern = "\\.", n = 2)[1],
-    #                                                          base_url = stringr::str_split_fixed(config$s3$restart$endpoint, pattern = "\\.", n = 2)[2],
-    #                                                          use_https = as.logical(Sys.getenv("USE_HTTPS"))))
-
-    if(restart_exists){
-
-      # aws.s3::save_object(object = file.path(stringr::str_split_fixed(config$s3$restart$bucket, "/", n = 2)[2], config$location$site_id, sim_name, configure_run_file),
-      #                     bucket = stringr::str_split_fixed(config$s3$restart$bucket, "/", n = 2)[1],
-      #                     file = file.path(lake_directory, "restart", config$location$site_id, sim_name, configure_run_file),
-      #                     region = stringr::str_split_fixed(config$s3$restart$endpoint, pattern = "\\.", n = 2)[1],
-      #                     base_url = stringr::str_split_fixed(config$s3$restart$endpoint, pattern = "\\.", n = 2)[2],
-      #                     use_https = as.logical(Sys.getenv("USE_HTTPS")))
-    }else{
-      yaml::write_yaml(run_config, file.path(lake_directory,"restart", config$location$site_id, sim_name, configure_run_file))
-    }
+  restart_exists <- !clean_start && {
+    files <- unlist(flare_get_folder_list(
+      server_name = server_name,
+      prefix      = remote_folder,
+      local_path  = local_folder,
+      config      = config
+    ))
+    length(files) > 0 && any(basename(files) == remote_file)
   }
-  run_config <- yaml::read_yaml(file.path(lake_directory, "restart", config$location$site_id, sim_name, configure_run_file))
-  invisible(run_config)
+
+  if (restart_exists) {
+    flare_get_file(
+      server_name   = server_name,
+      remote_folder = remote_folder,
+      remote_file   = remote_file,
+      local_folder  = local_folder,
+      local_file    = local_file,
+      config        = config
+    )
+  } else {
+    if (!clean_start) {
+      message("run config not found - clean start")
+    }
+    yaml::write_yaml(run_config, local_yaml)
+  }
+
+  invisible(yaml::read_yaml(local_yaml))
 }
 
 #' Get data from Github repository
@@ -119,11 +101,9 @@ get_git_repo <- function(lake_directory, directory, git_repo){
 #'
 put_targets <- function(site_id, cleaned_insitu_file = NA, cleaned_met_file = NA, cleaned_inflow_file = NA, use_s3 = FALSE, config=NULL){
 
-  if(use_s3){
+  # use_s3 is retained for signature compatibility; dispatch is handled by
+  # flare_put_file via flare_io_mode().
 
-    if(!is.null(config) && !is.null(config$faasr)) {
-      faasr_config <- config$faasr
-    }
     if(!is.na(cleaned_insitu_file)){
 
       # aws.s3::put_object(file = cleaned_insitu_file,
@@ -140,12 +120,12 @@ put_targets <- function(site_id, cleaned_insitu_file = NA, cleaned_met_file = NA
       local_folder <- dirname(cleaned_insitu_file)
 
 
-      FaaSr::faasr_put_file(server_name = server_name,
+      flare_put_file(server_name = server_name,
                      local_folder = local_folder,
                      local_file = local_file,
                      remote_folder = remote_folder,
                      remote_file = remote_file,
-                     faasr_config=faasr_config)
+                     config = config)
 
     }
     if(!is.na(cleaned_inflow_file)){
@@ -156,12 +136,12 @@ put_targets <- function(site_id, cleaned_insitu_file = NA, cleaned_met_file = NA
       local_file <- basename(cleaned_inflow_file)
       local_folder <- dirname(cleaned_inflow_file)
 
-      FaaSr::faasr_put_file(server_name = server_name,
+      flare_put_file(server_name = server_name,
                      local_folder = local_folder,
                      local_file = local_file,
                      remote_folder = remote_folder,
                      remote_file = remote_file,
-                     faasr_config=faasr_config)
+                     config = config)
 
       # aws.s3::put_object(file = cleaned_inflow_file,
       #                    object = file.path(stringr::str_split_fixed(config$s3$targets$bucket, "/", n = 2)[2], site_id, basename(cleaned_inflow_file)),
@@ -179,12 +159,12 @@ put_targets <- function(site_id, cleaned_insitu_file = NA, cleaned_met_file = NA
       local_folder <- dirname(cleaned_met_file)
 
 
-      FaaSr::faasr_put_file(server_name = server_name,
-                            local_folder = local_folder,
-                            local_file = local_file,
-                            remote_folder = remote_folder,
-                            remote_file = remote_file,
-                            faasr_config=faasr_config)
+      flare_put_file(server_name = server_name,
+                     local_folder = local_folder,
+                     local_file = local_file,
+                     remote_folder = remote_folder,
+                     remote_file = remote_file,
+                     config = config)
 
 
       # aws.s3::put_object(file = cleaned_met_file,
@@ -194,7 +174,6 @@ put_targets <- function(site_id, cleaned_insitu_file = NA, cleaned_met_file = NA
       #                    base_url = stringr::str_split_fixed(config$s3$targets$endpoint, pattern = "\\.", n = 2)[2],
       #                    use_https = as.logical(Sys.getenv("USE_HTTPS")))
     }
-  }
 }
 
 #' Download target data from s3
@@ -204,13 +183,13 @@ put_targets <- function(site_id, cleaned_insitu_file = NA, cleaned_met_file = NA
 #' @keywords internal
 #'
 get_targets <- function(lake_directory, config=NULL){
-  if(config$run_config$use_s3){
-    download_s3_objects(lake_directory,
-                        bucket = stringr::str_split_fixed(config$s3$targets$bucket, "/", n = 2)[1],
-                        prefix = file.path(stringr::str_split_fixed(config$s3$targets$bucket, "/", n = 2)[2], config$location$site_id),
-                        region = stringr::str_split_fixed(config$s3$targets$endpoint, pattern = "\\.", n = 2)[1],
-                        base_url = stringr::str_split_fixed(config$s3$targets$endpoint, pattern = "\\.", n = 2)[2],faasr_config=config$faasr)
-  }
+  # flare_get_folder_list returns character(0) in mode=local, so no
+  # explicit use_s3 gate is needed here.
+  download_s3_objects(lake_directory,
+                      bucket = stringr::str_split_fixed(config$s3$targets$bucket, "/", n = 2)[1],
+                      prefix = file.path(stringr::str_split_fixed(config$s3$targets$bucket, "/", n = 2)[2], config$location$site_id),
+                      region = stringr::str_split_fixed(config$s3$targets$endpoint, pattern = "\\.", n = 2)[1],
+                      base_url = stringr::str_split_fixed(config$s3$targets$endpoint, pattern = "\\.", n = 2)[2], config = config)
 }
 
 #' Get file path for driver forecasts
@@ -266,12 +245,12 @@ get_restart_file <- function(config, lake_directory){
                                 config$location$site_id,
                                 config$run_config$sim_name)
       tryCatch({
-        FaaSr::faasr_get_file(server_name = server_name,
-                              remote_folder = remote_folder,
-                              remote_file = restart_file,
-                              local_folder = local_folder,
-                              local_file = restart_file,
-                              faasr_config = config$faasr)
+        flare_get_file(server_name = server_name,
+                       remote_folder = remote_folder,
+                       remote_file = restart_file,
+                       local_folder = local_folder,
+                       local_file = restart_file,
+                       config = config)
         downloaded_file <- normalizePath(
           file.path(local_folder, restart_file), mustWork = FALSE)
         if(!file.exists(downloaded_file)) {
@@ -357,7 +336,7 @@ update_run_config <- function(lake_directory,
                                use_s3,
                                bucket,
                                endpoint,
-                              config,
+                               config = NULL,
                                use_https = TRUE){
 
   run_config <- NULL
@@ -387,31 +366,26 @@ update_run_config <- function(lake_directory,
   run_config$configure_flare <- configure_flare
   run_config$configure_obs <- configure_obs
   run_config$use_s3 <- use_s3
+  # Preserve use_faasr through the rewritten YAML so flare_io_mode() resolves
+  # correctly on the next set_up_simulation. NULL config (e.g. example usage)
+  # falls back to FALSE.
+  run_config$use_faasr <- isTRUE(config$run_config$use_faasr)
 
   file_name <- file.path(lake_directory,"restart",site_id, sim_name, configure_run_file)
   yaml::write_yaml(run_config, file_name)
-  if(use_s3){
 
-    local_folder <- dirname(file_name)
-    local_file <- basename(file_name)
-    remote_folder <- file.path(stringr::str_split_fixed(bucket, "/", n = 2)[2], site_id, sim_name)
-    remote_file <- configure_run_file
-    server_name <- "restart"
+  local_folder <- dirname(file_name)
+  local_file <- basename(file_name)
+  remote_folder <- file.path(stringr::str_split_fixed(bucket, "/", n = 2)[2], site_id, sim_name)
+  remote_file <- configure_run_file
+  server_name <- "restart"
 
-    FaaSr::faasr_put_file(server_name = server_name,
-                   local_folder = local_folder,
-                   local_file = local_file,
-                   remote_folder = remote_folder,
-                   remote_file = remote_file,
-                   faasr_config=config$faasr)
-
-    # aws.s3::put_object(file = file_name,
-    #                    object = file.path(stringr::str_split_fixed(bucket, "/", n = 2)[2], site_id, sim_name, configure_run_file),
-    #                    bucket = stringr::str_split_fixed(bucket, "/", n = 2)[1],
-    #                    region = stringr::str_split_fixed(endpoint, pattern = "\\.", n = 2)[1],
-    #                    base_url = stringr::str_split_fixed(endpoint, pattern = "\\.", n = 2)[2],
-    #                    use_https = as.logical(Sys.getenv("USE_HTTPS")))
-  }
+  flare_put_file(server_name = server_name,
+                 local_folder = local_folder,
+                 local_file = local_file,
+                 remote_folder = remote_folder,
+                 remote_file = remote_file,
+                 config = config)
 }
 
 #' Upload restart netcdf file to s3 bucket
@@ -440,12 +414,12 @@ put_restart_file <- function(saved_file, config){
       local_folder <- dirname(saved_file)
       local_file <- basename(saved_file)
 
-      FaaSr::faasr_put_file(server_name = server_name,
+      flare_put_file(server_name = server_name,
                      local_folder = local_folder,
                      local_file = local_file,
                      remote_folder = remote_folder,
                      remote_file = remote_file,
-                     faasr_config=config$faasr)
+                     config = config)
       TRUE
     }, error = function(e) {
       message("Error during file upload: ", e)
@@ -468,9 +442,8 @@ put_restart_file <- function(saved_file, config){
 #' @param base_url S3 endpoint
 #' @noRd
 #' @keywords internal
-download_s3_objects <- function(lake_directory, bucket, prefix, region, base_url, faasr_config){
+download_s3_objects <- function(lake_directory, bucket, prefix, region, base_url, config){
 
-  faasr_config <- faasr_config
   server_name <- "targets"
 
   # files <- aws.s3::get_bucket(bucket = bucket,
@@ -480,7 +453,7 @@ download_s3_objects <- function(lake_directory, bucket, prefix, region, base_url
   #                             use_https = as.logical(Sys.getenv("USE_HTTPS")))
 
 
-  files <- unlist(FaaSr::faasr_get_folder_list(server_name = server_name, faasr_prefix=prefix,faasr_config=faasr_config))
+  files <- unlist(flare_get_folder_list(server_name = server_name, prefix = prefix, config = config))
 
   if (!is.null(files)) {
     files <- files[!grepl("/$", files)]
@@ -497,13 +470,13 @@ download_s3_objects <- function(lake_directory, bucket, prefix, region, base_url
 
 
         tryCatch({
-          FaaSr::faasr_get_file(
+          flare_get_file(
             server_name = server_name,
             remote_folder = remote_folder,
             remote_file = remote_file,
             local_folder = local_folder,
             local_file = local_file,
-            faasr_config = faasr_config
+            config = config
           )
         }, error = function(e) {
           message("Error occurred while downloading the file: ", e$message)
@@ -537,9 +510,6 @@ download_s3_objects <- function(lake_directory, bucket, prefix, region, base_url
 #'
 delete_restart <- function(site_id, sim_name, bucket = "restart", endpoint,config=NULL){
 
-  if(!is.null(config) && !is.null(config$faasr)) {
-    faasr_config <- faasr_config
-  }
   server_name <- "restart"
   prefix <- file.path(stringr::str_split_fixed(bucket, "/", n = 2)[2], site_id, sim_name)
 
@@ -549,7 +519,7 @@ delete_restart <- function(site_id, sim_name, bucket = "restart", endpoint,confi
   #                             base_url = stringr::str_split_fixed(endpoint, pattern = "\\.", n = 2)[2],
   #                             use_https = as.logical(Sys.getenv("USE_HTTPS")))
 
-  files <- unlist(FaaSr::faasr_get_folder_list(server_name = server_name, faasr_prefix = prefix,faasr_config=faasr_config))
+  files <- unlist(flare_get_folder_list(server_name = server_name, prefix = prefix, config = config))
 
 
   if (!is.null(files)) {
@@ -562,11 +532,11 @@ delete_restart <- function(site_id, sim_name, bucket = "restart", endpoint,confi
         folder_path <- dirname(keys[i])
 
         tryCatch({
-          FaaSr::faasr_delete_file(
+          flare_delete_file(
             server_name = server_name,
             remote_folder = folder_path,
             remote_file = filename,
-            faasr_config = faasr_config
+            config = config
           )
         }, error = function(e) {
           message("Error occurred while deleting restart file: ", e$message)
@@ -662,7 +632,7 @@ check_noaa_present <- function(lake_directory, configure_run_file = "configure_r
 
     prefix <- glue::glue(stringr::str_split_fixed(config$s3$drivers$bucket, "/", n = 2)[2], "/", config$met$future_met_model)
     server_name <- "drivers"
-    forecast_dir <- FaaSr::faasr_arrow_s3_bucket(server_name = server_name, faasr_prefix = prefix,faasr_config=config$faasr)
+    forecast_dir <- flare_arrow_s3_bucket(server_name = server_name, faasr_prefix = prefix, config = config)
 
     #forecast_dir <- arrow::s3_bucket(bucket = glue::glue(config$s3$drivers$bucket, "/", config$met$future_met_model),
                                      #endpoint_override =  config$s3$drivers$endpoint, anonymous = TRUE)
@@ -722,16 +692,13 @@ delete_sim <- function(site_id, sim_name, config){
     prefix <- file.path(stringr::str_split_fixed(config$s3$analysis$bucket, "/", n = 2)[2], site_id)
 
 
-    files <- FaaSr::faasr_get_folder_list(
+    files <- flare_get_folder_list(
       server_name = server_name,
       prefix = prefix,
-      faasr_config=config$faasr
+      config = config
     )
 
-
-    keys <- vapply(files, `[[`, "", "Key", USE.NAMES = FALSE)
-    empty <- grepl("/$", keys)
-    keys <- keys[!empty]
+    keys <- files[!grepl("/$", files)]
     keys <- keys[stringr::str_detect(keys, sim_name)]
     if(length(keys > 0)){
       for(i in 1:length(keys)){
@@ -739,11 +706,11 @@ delete_sim <- function(site_id, sim_name, config){
         filename <- basename(keys[i])
         folder_path <- dirname(keys[i])
 
-        FaaSr::faasr_delete_file(
+        flare_delete_file(
           server_name = server_name,
           remote_folder = folder_path,
           remote_file = filename,
-          faasr_config = config$faasr
+          config = config
         )
 
        # aws.s3::delete_object(object = keys[i],
@@ -765,14 +732,12 @@ delete_sim <- function(site_id, sim_name, config){
     server_name <- "restart"
     prefix <- file.path(stringr::str_split_fixed(config$s3$restart$bucket, "/", n = 2)[2], site_id)
 
-    files <- FaaSr::faasr_get_folder_list(
+    files <- flare_get_folder_list(
       server_name = server_name,
       prefix = prefix,
-      faasr_config = config$faasr
+      config = config
     )
-    keys <- vapply(files, `[[`, "", "Key", USE.NAMES = FALSE)
-    empty <- grepl("/$", keys)
-    keys <- keys[!empty]
+    keys <- files[!grepl("/$", files)]
     keys <- keys[stringr::str_detect(keys, sim_name)]
     if(length(keys > 0)){
       for(i in 1:length(keys)){
@@ -780,11 +745,11 @@ delete_sim <- function(site_id, sim_name, config){
         filename <- basename(keys[i])
         folder_path <- dirname(keys[i])
 
-        FaaSr::faasr_delete_file(
+        flare_delete_file(
           server_name = server_name,
           remote_folder = folder_path,
           remote_file = filename,
-          faasr_config = config$faasr
+          config = config
         )
 
 
@@ -804,27 +769,25 @@ delete_sim <- function(site_id, sim_name, config){
                                # use_https = as.logical(Sys.getenv("USE_HTTPS")))
 
     server_name <- "restart"
-    prefix <- file.path(stringr::str_split_fixed(config$s3$restarts$bucket, "/", n = 2)[2], site_id,sim_name)
+    prefix <- file.path(stringr::str_split_fixed(config$s3$restart$bucket, "/", n = 2)[2], site_id,sim_name)
 
-    files <- FaaSr::faasr_get_folder_list(
+    files <- flare_get_folder_list(
       server_name = server_name,
       prefix = prefix,
-      faasr_config = config$faasr
+      config = config
     )
-    keys <- vapply(files, `[[`, "", "Key", USE.NAMES = FALSE)
-    empty <- grepl("/$", keys)
-    keys <- keys[!empty]
+    keys <- files[!grepl("/$", files)]
     if(length(keys > 0)){
       for(i in 1:length(keys)){
 
         filename <- basename(keys[i])
         folder_path <- dirname(keys[i])
 
-        FaaSr::faasr_delete_file(
+        flare_delete_file(
           server_name = server_name,
           remote_folder = folder_path,
           remote_file = filename,
-          faasr_config = config$faasr
+          config = config
         )
 
        # aws.s3::delete_object(object = keys[i],

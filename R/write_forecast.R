@@ -17,30 +17,25 @@ write_forecast <- function(da_forecast_output,
                                  endpoint = NULL,
                                  local_directory = NULL,config = NULL){
 
-  if(!is.null(config) && !is.null(config$faasr)) {
-
-    faasr_config <- config$faasr
+  if(use_s3 && (is.null(bucket) || is.null(endpoint))){
+    stop("write_forecast needs bucket and endpoint if use_s3=TRUE")
+  }
+  if(!use_s3 && is.null(local_directory)){
+    stop("write_forecast needs local_directory if use_s3=FALSE")
   }
 
-  if(use_s3){
-    if(is.null(bucket) | is.null(endpoint)){
-      stop("scoring function needs bucket and endpoint if use_s3=TRUE")
-    }
+  vars <- arrow_env_vars()
+  on.exit(unset_arrow_vars(vars))
 
-    vars <- arrow_env_vars()
-    server_name <-  "forecasts_parquet"
-    prefix <- glue::glue(stringr::str_split_fixed(bucket, "/", n = 2)[2])
-
-    output_directory <- FaaSr::faasr_arrow_s3_bucket(server_name = server_name,faasr_prefix = prefix,faasr_config=faasr_config)
-    #output_directory <- arrow::s3_bucket(bucket = bucket,
-                                         #endpoint_override =  endpoint)
-    on.exit(unset_arrow_vars(vars))
-  }else{
-    if(is.null(local_directory)){
-      stop("scoring function needs local_directory if use_s3=FALSE")
-    }
-    output_directory <- arrow::SubTreeFileSystem$create(local_directory)
-  }
+  # flare_arrow_s3_bucket dispatches arrow::s3_bucket() for s3/faasr
+  # modes and a SubTreeFileSystem rooted at local_directory for local.
+  prefix <- if (use_s3) glue::glue(stringr::str_split_fixed(bucket, "/", n = 2)[2]) else ""
+  output_directory <- flare_arrow_s3_bucket(
+    server_name  = "forecasts_parquet",
+    faasr_prefix = prefix,
+    local_path   = local_directory,
+    config       = config
+  )
 
   x <- da_forecast_output$states_depth
   pars <- da_forecast_output$pars

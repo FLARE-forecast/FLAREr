@@ -2,42 +2,23 @@
 % Please edit documentation in R/initialize_faasr.R
 \name{initialize_faasr}
 \alias{initialize_faasr}
-\title{Initialize FaaSr configuration}
+\title{Validate FaaSr / S3 / local-mode configuration at setup time.}
 \usage{
 initialize_faasr(config)
 }
 \arguments{
-\item{config}{A list containing configuration settings, including S3 bucket information.
-Should have elements \code{s3} (optional) and \code{run_config$use_s3}.}
+\item{config}{FLAREr config list with \code{run_config$use_s3} and
+optionally \code{run_config$use_faasr}.}
 }
 \value{
-Returns (invisibly) the created \code{.faasr} configuration object.
+\code{NULL}, invisibly. Errors if \code{use_faasr=TRUE} while
+\code{use_s3=FALSE}. Warns if \code{use_s3=TRUE} and AWS credentials are
+not set in the environment.
 }
 \description{
-Creates a FaaSr configuration object with proper settings for
-data storage and S3 connections based on the provided configuration.
+The \code{flare_io.R} wrappers read \code{config$s3} and \code{config$run_config}
+directly, so no global state needs initializing. This function
+exists to fail fast on internally inconsistent configurations and to
+surface a warning early when AWS credentials are missing under
+\code{mode="s3"}.
 }
-\details{
-This function initializes the global \code{.faasr} object with default data store
-settings and configures S3 connections based on the provided configuration. It sets up
-access keys, buckets, regions, and endpoints for each data store specified in the configuration.
-The function also provides warnings if AWS credentials are missing when S3 usage is enabled.
-}
-\examples{
-\dontrun{
-config <- list(
-  s3 = list(
-    forecast_output = list(
-      endpoint = "s3.us-east-1.amazonaws.com",
-      bucket = "my-forecast-bucket"
-    )
-  ),
-  run_config = list(
-    use_s3 = TRUE
-  )
-)
-initialize_faasr(config)
-}
-
-}
-\keyword{internal}

@@ -46,7 +46,7 @@ Imports:
     tibble,
     arrow,
     glue,
-    FaaSr,
+    aws.s3,
     zip,
     processx
 Suggests: 
