@@ -20,7 +20,7 @@ da_setup:
     save_da_diagnostics: FALSE #write per-step DA diagnostic parquet files to da_diagnostics/
     render_da_diagnostics_report: FALSE #render da_diagnostics_report.html after each run
 model_settings:
-   ncore: 4
+   ncore: 1
    max_model_layers: 75
    base_GLM_nml: glm3.nml
    base_AED_nml: aed2.nml

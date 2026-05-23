@@ -2,7 +2,7 @@
 % Please edit documentation in R/create_obs_non_vertical.R
 \name{create_obs_non_vertical}
 \alias{create_obs_non_vertical}
-\title{Process observation for variables that don't have depth}
+\title{Process observations for variables that don't have depth}
 \usage{
 create_obs_non_vertical(
   cleaned_observations_file_long,
@@ -14,9 +14,12 @@ create_obs_non_vertical(
 )
 }
 \arguments{
-\item{cleaned_observations_file_long}{string; file name (with full path) of the long-format observation file}
+\item{cleaned_observations_file_long}{string; file name (with full path) of
+the long-format observation file}
 
-\item{obs_config}{string; file name (with full path) of the long-format observation file}
+\item{obs_config}{data frame; observation configuration (must include
+state_names_obs, obs_sd, multi_depth, model_source, model_variable,
+model_depth_m)}
 
 \item{start_datetime}{first datetime of the simulation}
 
@@ -27,12 +30,25 @@ create_obs_non_vertical(
 \item{forecast_horizon}{number of days forecasted}
 }
 \value{
-list of secchi and depth observations for use in FLAREs
+named list; one element per non-vertical variable (keyed by
+state_names_obs).  Each element is a list with:
+\describe{
+\item{obs}{numeric vector aligned to the daily simulation grid}
+\item{sd}{observation uncertainty standard deviation}
+\item{model_source}{"state" or "diagnostic"}
+\item{model_variable}{name of the corresponding model variable}
+\item{model_depth_m}{depth in metres for extraction, NA, or "bottom"}
+}
 }
 \description{
-Process observation for variables that don't have depth
+Process observations for variables that don't have depth
 }
 \details{
-Process observation for variables that don't have depth
+Reads each non-vertical observation variable (multi_depth == 0 in
+obs_config) from the cleaned observations file and aligns it to the
+simulation time grid.  Returns a named list keyed by state_names_obs; each
+element carries the time-aligned observation vector, its uncertainty SD,
+and the metadata needed to connect it to the model (model_source,
+model_variable, model_depth_m).
 }
 \keyword{internal}

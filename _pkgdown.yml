@@ -70,6 +70,7 @@ reference:
   - write_forecast
   - write_restart
   - plotting_general
+  - render_da_diagnostics
 
 - subtitle: Storage and targets
   contents:
@@ -80,3 +81,8 @@ reference:
   - delete_restart
   - delete_sim
   - get_driver_forecast_path
+  - flare_arrow_s3_bucket
+  - flare_get_file
+  - flare_put_file
+  - flare_delete_file
+  - flare_get_folder_list

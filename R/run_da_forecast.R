@@ -1,65 +1,3 @@
-#' @title Run ensemble data assimilation and/or produce forecasts
-#'
-#' @details Uses the ensemble data assimilation to predict water quality for a lake
-#' or reservoir.  The function requires the initial conditions (`states_init`) for each
-#' state and ensemble member using an array with the following dimension order:
-#' states, depth, ensembles member.  If you are fitting parameters, it also requires
-#' initial conditions for each parameter and ensemble member using an array (`par_init`) with the
-#' following dimension order: parameters, ensemble member.  The arrays for states_init
-#' and pars_init can be created using the `generate_initial_conditions()` function, if
-#' starting from initial conditions in the  `states_config` data frame or from observations
-#' in first time column of the `obs` array.
-#'
-#' @param states_init array of the initial states.  Required dimensions are `[states, depths, ensemble]`
-#' @param pars_init array of the initial states.  Required dimensions are `[pars, depths, ensemble]`.  (Default = NULL)
-#' @param aux_states_init list of initial conditions for auxillary states.  These are states in the GLM that
-#' are require for restarting the model but are not included in data assimilation.  These are states that are not associated
-#' with a value in `model_sd`.
-#' @param obs array; array of the observations. Required dimensions are `[nobs, time, depth]`
-#' @param obs_sd vector; vector of standard deviation for observation
-#' @param model_sd vector vector of standard deviations describing the model error for each state
-#' @param working_directory string; full path to directory where model executes
-#' @param met_file_names vector; vector of full path meteorology file names
-#' @param inflow_file_names vector or matrix;; vector of inflow file names
-#' @param outflow_file_names vector or matrix; vector of outflow file names
-#' @param config list; list of configurations
-#' @param pars_config list; list of parameter configurations  (Default = NULL)
-#' @param states_config list; list of state configurations
-#' @param obs_config list; list of observation configurations
-#' @param da_method string; data assimilation method (one of "enkf", "etkf",
-#'   "esmda", "letkf", "pf", or "none"; Default = "enkf"). NOTE: only "enkf" has
-#'   been extensively tested. All other methods ("etkf", "esmda", "letkf", "pf")
-#'   are experimental and should be used with caution.
-#' @param par_fit_method string; method for adding noise to parameters during calibration
-#' @param obs_non_vertical named list of non-vertical observations (from create_obs_non_vertical)
-#' @return a named list with the following elements:
-#'   \describe{
-#'     \item{full_time}{vector of all modeled datetimes}
-#'     \item{forecast_start_datetime}{datetime when the forecast period begins}
-#'     \item{states_depth}{array \[states, depths, time, ensemble\] of DA-updated model states indexed by depth}
-#'     \item{states_height}{array \[states, heights, time, ensemble\] of DA-updated model states indexed by GLM internal height}
-#'     \item{pars}{array \[pars, ensemble\] of DA-updated parameter values}
-#'     \item{obs}{observation array passed through unchanged}
-#'     \item{save_file_name}{full output filename stem (includes history period)}
-#'     \item{save_file_name_short}{short output filename stem (forecast start date only)}
-#'     \item{forecast_iteration_id}{timestamp string identifying this forecast run}
-#'     \item{forecast_project_id}{sim_name from run config}
-#'     \item{time_of_forecast}{POSIXct timestamp when forecast was generated}
-#'     \item{snow_ice_thickness}{GLM restart variable}
-#'     \item{lake_depth}{array \[time, ensemble\] of lake depths}
-#'     \item{model_internal_heights}{array of GLM internal layer heights}
-#'     \item{diagnostics}{array of per-timestep diagnostic variables}
-#'     \item{diagnostics_daily}{array of daily diagnostic variables}
-#'     \item{data_assimilation_flag, forecast_flag, da_qc_flag}{integer vectors flagging DA/forecast/QC status per timestep}
-#'     \item{config, states_config, pars_config, obs_config}{configuration lists passed through}
-#'     \item{met_file_names}{meteorology file paths used}
-#'     \item{log_particle_weights}{log particle weights (particle filter only; NULL for EnKF)}
-#'     \item{inflation}{covariance inflation factor}
-#'     \item{glm_restart_staged}{path to the staged GLM restart file}
-#'   }
-#'
-#' @keywords internal
-
 # Allocate and fill all output arrays with initial conditions before the main
 # data-assimilation loop.  Keeping this separate lets the loop body focus on
 # updating state rather than housekeeping.
@@ -158,6 +96,67 @@ initialize_forecast_arrays <- function(nsteps, nstates, ndepths_modeled,
 }
 
 
+#' @title Run ensemble data assimilation and/or produce forecasts
+#'
+#' @details Uses the ensemble data assimilation to predict water quality for a lake
+#' or reservoir.  The function requires the initial conditions (`states_init`) for each
+#' state and ensemble member using an array with the following dimension order:
+#' states, depth, ensembles member.  If you are fitting parameters, it also requires
+#' initial conditions for each parameter and ensemble member using an array (`par_init`) with the
+#' following dimension order: parameters, ensemble member.  The arrays for states_init
+#' and pars_init can be created using the `generate_initial_conditions()` function, if
+#' starting from initial conditions in the  `states_config` data frame or from observations
+#' in first time column of the `obs` array.
+#'
+#' @param states_init array of the initial states.  Required dimensions are `[states, depths, ensemble]`
+#' @param pars_init array of the initial states.  Required dimensions are `[pars, depths, ensemble]`.  (Default = NULL)
+#' @param aux_states_init list of initial conditions for auxillary states.  These are states in the GLM that
+#' are require for restarting the model but are not included in data assimilation.  These are states that are not associated
+#' with a value in `model_sd`.
+#' @param obs array; array of the observations. Required dimensions are `[nobs, time, depth]`
+#' @param obs_sd vector; vector of standard deviation for observation
+#' @param model_sd vector vector of standard deviations describing the model error for each state
+#' @param working_directory string; full path to directory where model executes
+#' @param met_file_names vector; vector of full path meteorology file names
+#' @param inflow_file_names vector or matrix;; vector of inflow file names
+#' @param outflow_file_names vector or matrix; vector of outflow file names
+#' @param config list; list of configurations
+#' @param pars_config list; list of parameter configurations  (Default = NULL)
+#' @param states_config list; list of state configurations
+#' @param obs_config list; list of observation configurations
+#' @param da_method string; data assimilation method (one of "enkf", "etkf",
+#'   "esmda", "letkf", "pf", or "none"; Default = "enkf"). NOTE: only "enkf" has
+#'   been extensively tested. All other methods ("etkf", "esmda", "letkf", "pf")
+#'   are experimental and should be used with caution.
+#' @param par_fit_method string; method for adding noise to parameters during calibration
+#' @param obs_non_vertical named list of non-vertical observations (from create_obs_non_vertical)
+#' @return a named list with the following elements:
+#'   \describe{
+#'     \item{full_time}{vector of all modeled datetimes}
+#'     \item{forecast_start_datetime}{datetime when the forecast period begins}
+#'     \item{states_depth}{array \[states, depths, time, ensemble\] of DA-updated model states indexed by depth}
+#'     \item{states_height}{array \[states, heights, time, ensemble\] of DA-updated model states indexed by GLM internal height}
+#'     \item{pars}{array \[pars, ensemble\] of DA-updated parameter values}
+#'     \item{obs}{observation array passed through unchanged}
+#'     \item{save_file_name}{full output filename stem (includes history period)}
+#'     \item{save_file_name_short}{short output filename stem (forecast start date only)}
+#'     \item{forecast_iteration_id}{timestamp string identifying this forecast run}
+#'     \item{forecast_project_id}{sim_name from run config}
+#'     \item{time_of_forecast}{POSIXct timestamp when forecast was generated}
+#'     \item{snow_ice_thickness}{GLM restart variable}
+#'     \item{lake_depth}{array \[time, ensemble\] of lake depths}
+#'     \item{model_internal_heights}{array of GLM internal layer heights}
+#'     \item{diagnostics}{array of per-timestep diagnostic variables}
+#'     \item{diagnostics_daily}{array of daily diagnostic variables}
+#'     \item{data_assimilation_flag, forecast_flag, da_qc_flag}{integer vectors flagging DA/forecast/QC status per timestep}
+#'     \item{config, states_config, pars_config, obs_config}{configuration lists passed through}
+#'     \item{met_file_names}{meteorology file paths used}
+#'     \item{log_particle_weights}{log particle weights (particle filter only; NULL for EnKF)}
+#'     \item{inflation}{covariance inflation factor}
+#'     \item{glm_restart_staged}{path to the staged GLM restart file}
+#'   }
+#'
+#' @keywords internal
 run_da_forecast <- function(states_init,
                             pars_init = NULL,
                             aux_states_init,

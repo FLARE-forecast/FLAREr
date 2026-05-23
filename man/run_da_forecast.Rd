@@ -21,8 +21,8 @@ run_da_forecast(
   obs_config,
   da_method = "enkf",
   par_fit_method = "perturb",
-  obs_secchi = NULL,
-  obs_depth = NULL
+  obs_non_vertical = NULL,
+  non_vertical_noise_config = NULL
 )
 }
 \arguments{
@@ -56,16 +56,41 @@ with a value in \code{model_sd}.}
 
 \item{obs_config}{list; list of observation configurations}
 
-\item{da_method}{string; data assimilation method (enkf or pf; Default = enkf)}
+\item{da_method}{string; data assimilation method (one of "enkf", "etkf",
+"esmda", "letkf", "pf", or "none"; Default = "enkf"). NOTE: only "enkf" has
+been extensively tested. All other methods ("etkf", "esmda", "letkf", "pf")
+are experimental and should be used with caution.}
 
 \item{par_fit_method}{string; method for adding noise to parameters during calibration}
 
-\item{obs_secchi}{list of secchi observations}
-
-\item{obs_depth}{list of depth observations}
+\item{obs_non_vertical}{named list of non-vertical observations (from create_obs_non_vertical)}
 }
 \value{
-a list
+a named list with the following elements:
+\describe{
+\item{full_time}{vector of all modeled datetimes}
+\item{forecast_start_datetime}{datetime when the forecast period begins}
+\item{states_depth}{array [states, depths, time, ensemble] of DA-updated model states indexed by depth}
+\item{states_height}{array [states, heights, time, ensemble] of DA-updated model states indexed by GLM internal height}
+\item{pars}{array [pars, ensemble] of DA-updated parameter values}
+\item{obs}{observation array passed through unchanged}
+\item{save_file_name}{full output filename stem (includes history period)}
+\item{save_file_name_short}{short output filename stem (forecast start date only)}
+\item{forecast_iteration_id}{timestamp string identifying this forecast run}
+\item{forecast_project_id}{sim_name from run config}
+\item{time_of_forecast}{POSIXct timestamp when forecast was generated}
+\item{snow_ice_thickness}{GLM restart variable}
+\item{lake_depth}{array [time, ensemble] of lake depths}
+\item{model_internal_heights}{array of GLM internal layer heights}
+\item{diagnostics}{array of per-timestep diagnostic variables}
+\item{diagnostics_daily}{array of daily diagnostic variables}
+\item{data_assimilation_flag, forecast_flag, da_qc_flag}{integer vectors flagging DA/forecast/QC status per timestep}
+\item{config, states_config, pars_config, obs_config}{configuration lists passed through}
+\item{met_file_names}{meteorology file paths used}
+\item{log_particle_weights}{log particle weights (particle filter only; NULL for EnKF)}
+\item{inflation}{covariance inflation factor}
+\item{glm_restart_staged}{path to the staged GLM restart file}
+}
 }
 \description{
 Run ensemble data assimilation and/or produce forecasts
