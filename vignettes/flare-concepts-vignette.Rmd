@@ -189,6 +189,12 @@ FLAREr supports several DA algorithms. All of them operate on the same
 ensemble of model states and share the same analysis-cycle structure;
 they differ in how they compute the update.
 
+> **Note:** Only the Ensemble Kalman Filter (`enkf`) has been extensively
+> tested and is recommended for production use. The other methods described
+> below (`etkf`, `letkf`, `esmda`, and `pf`) are **experimental** and have
+> not undergone extensive testing — use them with caution and verify
+> results carefully.
+
 **Ensemble Kalman Filter (`enkf`).** The standard algorithm in FLARE.
 It approximates the covariance of the model state using the spread of
 the ensemble, then computes an update that is optimal under the

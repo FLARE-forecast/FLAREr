@@ -1,5 +1,9 @@
 #' @title Run Ensemble Smoother with Multiple Data Assimilation
 #'
+#' @description EXPERIMENTAL: this data assimilation method has not been
+#'   extensively tested. Only the Ensemble Kalman Filter ("enkf") is recommended
+#'   for production use; use this method with caution.
+#'
 #' @param x_matrix matrix of model states (includes secchi and depths)
 #' @param h matrix to map x matrix to zt vector
 #' @param pars_corr matrix of parameters

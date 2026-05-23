@@ -64,6 +64,12 @@ da_setup:
   da_method: enkf   # enkf | etkf | letkf | esmda | pf | none
 ```
 
+> **Note:** Only the Ensemble Kalman Filter (`enkf`) has been extensively
+> tested and is recommended for production use. The other methods (`etkf`,
+> `letkf`, `esmda`, and `pf`) are **experimental** and have not undergone
+> extensive testing. The guidance below describes their intended behaviour,
+> but you should verify results carefully before relying on them.
+
 ### Choosing an algorithm
 
 | Situation | Recommended method |

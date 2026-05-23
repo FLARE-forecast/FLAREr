@@ -239,6 +239,11 @@ df |>
 ### Turning off data assimilation
 
 In configure_flare.yml you can change `da_method` to "none"
+
+> **Note:** `da_method` also accepts other algorithms (`etkf`, `letkf`,
+> `esmda`, `pf`), but only the Ensemble Kalman Filter (`enkf`, the default)
+> has been extensively tested. The other methods are **experimental** —
+> use them with caution and verify results carefully.
   
 ### Removing parameter estimation
 

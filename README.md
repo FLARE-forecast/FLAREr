@@ -14,7 +14,7 @@ FLAREr is a set of R scripts that
 * Processing and archiving forecast output
 * Visualizing forecast output
 
-FLARE uses the 1-D General Lake Model ([Hipsey et al. 2019](https://www.geosci-model-dev.net/12/473/2019/)) as the mechanistic process model that predicts hydrodynamics of the lake or reservoir. For forecasts of water quality, it uses GLM with the Aquatic Ecosystem Dynamics library. FLARE v4.0 requires GLM version 3.9 or higher.
+FLARE uses the 1-D General Lake Model ([Hipsey et al. 2019](https://www.geosci-model-dev.net/12/473/2019/)) as the mechanistic process model that predicts hydrodynamics of the lake or reservoir. For forecasts of water quality, it uses GLM with the Aquatic Ecosystem Dynamics library. FLARE v4.0 requires GLM-AED version 4, which adds the NetCDF restart capacity that FLARE's restart workflow depends on. GLM-AED 4 is currently available on the `v4alpha` branch of GLM-AED and is provided by the `GLMAEDr` package (see [Installation](#installation) below).
 
 More information about the GLM can be found here:
 
@@ -34,13 +34,15 @@ remotes::install_github("FLARE-forecast/FLAREr")
 
 Next, you need the GLM model.  You can get in using multiple pathways
 
-The easiest way is to install the `GLMAEDr` package from Github, which downloads and manages the GLM binary for you:
+The recommended way is to install the `GLMAEDr` package from Github, which downloads and manages the GLM binary for you. It provides GLM-AED version 4 (the `v4alpha` build), which FLARE v4.0 requires for its NetCDF restart capacity:
 
 ```
 remotes::install_github("flare-forecast/GLMAEDr")
 GLMAEDr::glm_install()
 Sys.setenv('GLM_PATH'=GLMAEDr::glm_path())
 ```
+
+The alternative pathways below predate GLM-AED 4 and may not include the NetCDF restart capacity. Use them only if the binary they provide is a GLM-AED 4 (`v4alpha`) build; otherwise the FLARE restart workflow will not work.
 
 Alternatively, you can install the `GLM3r` package from Github using
 
@@ -121,6 +123,55 @@ open_dataset(file.path(lake_directory,"forecasts/parquet")) |>
   geom_vline(aes(xintercept = as_datetime(reference_datetime))) +
   labs(title = "1 m water temperature forecast")
 ```
+
+## Storage backends (local, S3, and FaaSr)
+
+FLAREr reads its drivers, targets, and configuration — and writes its
+forecast output, scores, and restart files — through a single I/O layer
+that can target three different backends. The backend is selected per run
+from two flags in `configure_run.yml`:
+
+| `use_s3` | `use_faasr` | Mode    | Where data lives |
+|----------|-------------|---------|------------------|
+| `FALSE`  | `FALSE`     | `local` | the local filesystem under `lake_directory` |
+| `TRUE`   | `FALSE`     | `s3`    | an S3-compatible bucket, accessed directly with `aws.s3` / `arrow` |
+| `TRUE`   | `TRUE`      | `faasr` | a FaaSr DataStore, accessed through the FaaSr runtime |
+
+When neither flag is set both default to `FALSE` (`local` mode), so
+existing local configurations keep working unchanged. `use_faasr: TRUE`
+requires `use_s3: TRUE` — FaaSr mode is always cloud-backed and FLAREr
+errors at startup if `use_faasr` is set without `use_s3`.
+
+Bucket names and endpoints for `s3` and `faasr` modes are defined in the
+`s3:` block of `configure_flare.yml`, with one entry per DataStore (e.g.
+`drivers`, `targets`, `forecasts_parquet`, `restart`, `scores`). Set
+`anonymous: true` on a store for public read-only buckets; non-anonymous
+access reads `AWS_ACCESS_KEY_ID` and `AWS_SECRET_ACCESS_KEY` from the
+environment.
+
+### FaaSr (serverless cloud execution)
+
+[FaaSr](https://faasr.io) runs R functions as serverless actions on
+platforms such as GitHub Actions, AWS Lambda, and OpenWhisk, using
+S3-compatible *DataStores* for persistent storage. When FLAREr runs as a
+FaaSr action, set `use_faasr: TRUE` so that all object I/O is routed
+through the FaaSr runtime's helpers (`faasr_get_file()`,
+`faasr_put_file()`, `faasr_arrow_s3_bucket()`, …) instead of calling
+`aws.s3` directly. FaaSr supplies the DataStore credentials, so they do
+not need to be baked into the FLAREr configuration.
+
+FaaSr is **not** a package dependency of FLAREr: its helper functions are
+injected into the global environment by the FaaSr executor when an action
+starts. If `use_faasr: TRUE` but those helpers are not present — for
+example, when the same configuration is run outside a FaaSr container —
+FLAREr prints a warning and falls back to `s3` mode.
+
+Inside a FaaSr action function, call `initialize_faasr(config)` once
+before `run_flare()` to validate the configuration: it errors on the
+inconsistent `use_faasr: TRUE` / `use_s3: FALSE` combination and warns
+early if AWS credentials are missing. See `?initialize_faasr` and the
+[FLAREr upgrade vignette](articles/flare-upgrade-vignette.html) for
+details.
 
 
 

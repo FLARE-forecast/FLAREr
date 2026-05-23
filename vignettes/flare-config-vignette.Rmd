@@ -42,6 +42,7 @@ sim_name: test
 configure_flare: configure_flare.yml
 configure_obs: observation_processing.yml
 use_s3: FALSE
+use_faasr: FALSE
 ```
 
 -   **restart_file:** path to a restart file (a zip file) from a previous run, or
@@ -71,6 +72,25 @@ use_s3: FALSE
 -   **use_s3:** access drivers, targets, and output on an S3 bucket
     (`TRUE` or `FALSE`)
 
+-   **use_faasr:** route all object I/O through the
+    [FaaSr](https://faasr.io) serverless runtime instead of calling
+    `aws.s3` directly (`TRUE` or `FALSE`; optional, defaults to `FALSE`).
+    Set this only when FLAREr runs as a FaaSr action. `use_faasr: TRUE`
+    requires `use_s3: TRUE` — FaaSr mode is always cloud-backed and FLAREr
+    errors at startup if `use_faasr` is set while `use_s3` is `FALSE`. If
+    the FaaSr runtime helpers are not present (e.g. the configuration is
+    run outside a FaaSr container) FLAREr warns and falls back to plain
+    S3 access. See the *Storage backends* section of the upgrade vignette
+    for details.
+
+Together `use_s3` and `use_faasr` select the storage backend for a run:
+
+| `use_s3` | `use_faasr` | Mode    | Where data lives |
+|----------|-------------|---------|------------------|
+| `FALSE`  | `FALSE`     | `local` | local filesystem under `lake_directory` |
+| `TRUE`   | `FALSE`     | `s3`    | S3-compatible bucket via `aws.s3` / `arrow` |
+| `TRUE`   | `TRUE`      | `faasr` | FaaSr DataStore via the FaaSr runtime |
+
 ## configure_flare.yml
 
 `configure_flare.yml` defines the model structure, data assimilation
@@ -89,6 +109,12 @@ settings, inputs, and outputs.
 ### da_setup:
 
 -   **da_method:** data assimilation algorithm to use. Options:
+
+    > **Note:** Only the Ensemble Kalman Filter (`enkf`) has been
+    > extensively tested and is recommended for production use. The other
+    > methods (`etkf`, `letkf`, `esmda`, and `pf`) are **experimental** and
+    > have not undergone extensive testing — use them with caution and
+    > verify results carefully.
 
     -   **`enkf`**: Ensemble Kalman Filter. The classic stochastic EnKF
         — perturbs observations with random noise and updates the full
@@ -422,6 +448,14 @@ settings, inputs, and outputs.
         variables that are not depth-resolved (e.g. CO₂ flux).
 
 ### s3:
+
+Defines the S3-compatible DataStores used when `use_s3: TRUE` (or
+`use_faasr: TRUE`) in `configure_run.yml`. Each entry is a *server name*
+that FLAREr looks up by key when reading or writing the corresponding
+data. The block is ignored in `local` mode. Each store accepts an
+optional **anonymous:** flag (`TRUE` for public, read-only buckets);
+non-anonymous access reads `AWS_ACCESS_KEY_ID` and
+`AWS_SECRET_ACCESS_KEY` from the environment.
 
 -   **drivers:**
     -   **endpoint:** S3 endpoint for met drivers

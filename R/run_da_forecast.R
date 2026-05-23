@@ -26,7 +26,10 @@
 #' @param pars_config list; list of parameter configurations  (Default = NULL)
 #' @param states_config list; list of state configurations
 #' @param obs_config list; list of observation configurations
-#' @param da_method string; data assimilation method (enkf or pf; Default = enkf)
+#' @param da_method string; data assimilation method (one of "enkf", "etkf",
+#'   "esmda", "letkf", "pf", or "none"; Default = "enkf"). NOTE: only "enkf" has
+#'   been extensively tested. All other methods ("etkf", "esmda", "letkf", "pf")
+#'   are experimental and should be used with caution.
 #' @param par_fit_method string; method for adding noise to parameters during calibration
 #' @param obs_non_vertical named list of non-vertical observations (from create_obs_non_vertical)
 #' @return a named list with the following elements:
@@ -173,6 +176,16 @@ run_da_forecast <- function(states_init,
                             par_fit_method = "perturb",
                             obs_non_vertical = NULL,
                             non_vertical_noise_config = NULL) {
+
+  # Only the Ensemble Kalman Filter ("enkf") has been extensively tested.
+  # Warn users that the remaining data assimilation methods are experimental.
+  if (da_method %in% c("etkf", "esmda", "letkf", "pf")) {
+    warning(paste0("da_method = '", da_method, "' is experimental and has not ",
+                   "been extensively tested. Only 'enkf' is recommended for ",
+                   "production use; use other methods with caution."),
+            call. = FALSE)
+  }
+
   # States beyond temp and salinity (index > 2) are water-quality variables.
   if (length(states_config$state_names) > 2) {
     config$include_wq <- TRUE

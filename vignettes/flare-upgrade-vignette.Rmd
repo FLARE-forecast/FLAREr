@@ -155,6 +155,12 @@ from `default_init`.
 | `esmda` | Ensemble Smoother with Multiple Data Assimilation — iterative update that reduces filter inbreeding in nonlinear systems |
 | `none` | Open-loop — model runs without assimilating any observations |
 
+> **Note:** Of the data assimilation algorithms, only the Ensemble Kalman
+> Filter (`enkf`) has been extensively tested and is recommended for
+> production use. The methods `etkf`, `letkf`, `esmda`, and `pf` are
+> **experimental** and have not undergone extensive testing — use them with
+> caution and verify results carefully.
+
 To use these new methods, update `da_method` and optionally add the
 method-specific fields below. Existing configurations using `enkf` or
 `pf` do not require any changes to `da_method`.
@@ -202,17 +208,66 @@ needed to enable this — parameters in `parameter_calibration_config.csv`
 that reference `aed_phyto_pars.csv` in the `par_file` column will be
 picked up automatically.
 
-The new helper `generate_states_to_obs_mapping_from_nml()` can read the
-phytoplankton group names from `aed2.nml` to build the
-`states_to_obs_mapping` columns in `states_config.csv` automatically.
+The internal helper `update_phy_states_obs_mapping()` reads the
+phytoplankton parameter database referenced by `aed2.nml` and, for each
+`PHY_` state, sets the carbon-to-chlorophyll multiplier in the
+`states_to_obs_mapping_1` column of `states_config` to `12.0 / Xcc`
+(matching the AED2 conversion `chla = (carbon_mmolC_m3 / Xcc) * 12.0`).
+Call it as
+`FLAREr:::update_phy_states_obs_mapping(states_config, nml_path)` when
+building a `states_config` for a phytoplankton configuration.
 
-### FaaSr integration
+### Storage backends and FaaSr integration
 
-A new `initialize_faasr()` function sets up the FaaSr execution
-environment and configures S3 bucket paths from the FaaSr payload.
-Add a `faasr:` block to `configure_flare.yml` and call
-`initialize_faasr()` at the top of your FaaSr action function before
-calling `run_flare()`. See `?initialize_faasr` for details.
+FLAREr 4.0 routes all object I/O — drivers, targets, configuration,
+forecast output, scores, and restart files — through a single I/O layer
+(`flare_io.R`) that can target three backends. The backend is chosen per
+run from two flags in `configure_run.yml`:
+
+| `use_s3` | `use_faasr` | Mode    | Where data lives |
+|----------|-------------|---------|------------------|
+| `FALSE`  | `FALSE`     | `local` | local filesystem under `lake_directory` |
+| `TRUE`   | `FALSE`     | `s3`    | S3-compatible bucket via `aws.s3` / `arrow` |
+| `TRUE`   | `TRUE`      | `faasr` | FaaSr DataStore via the FaaSr runtime |
+
+This is backward compatible: `use_faasr` is optional and defaults to
+`FALSE`, so existing `local` and `s3` configurations behave exactly as
+before. The exported wrappers `flare_get_file()`, `flare_put_file()`,
+`flare_delete_file()`, `flare_get_folder_list()`, and
+`flare_arrow_s3_bucket()` dispatch to the resolved backend, so custom
+workflows that previously called `aws.s3` directly can use these instead
+to become backend-agnostic.
+
+[FaaSr](https://faasr.io) runs R functions as serverless actions on
+platforms such as GitHub Actions, AWS Lambda, and OpenWhisk, with
+S3-compatible *DataStores* for persistent storage. Setting
+`use_faasr: TRUE` makes the wrappers above route through the FaaSr
+runtime's helpers (`faasr_get_file()`, `faasr_put_file()`,
+`faasr_arrow_s3_bucket()`, …) rather than calling `aws.s3` directly;
+FaaSr supplies the DataStore credentials. The DataStores themselves are
+still configured in the `s3:` block of `configure_flare.yml` (the same
+block used in `s3` mode), keyed by server name.
+
+`use_faasr: TRUE` requires `use_s3: TRUE`; FLAREr errors at startup
+otherwise. FaaSr is **not** a package dependency — its helpers are
+injected into the global environment by the FaaSr executor when an action
+starts. If they are absent (for example, when the configuration is run
+outside a FaaSr container), FLAREr warns and falls back to `s3` mode.
+
+The new `initialize_faasr()` function is a fast-fail validator: call it
+once at the top of your FaaSr action function, before `run_flare()`. It
+errors on the inconsistent `use_faasr: TRUE` / `use_s3: FALSE`
+combination and warns early if AWS credentials are missing under S3
+access. It does not mutate global state — the I/O wrappers read
+`config$s3` and `config$run_config` directly. See `?initialize_faasr` for
+details.
+
+```r
+# inside a FaaSr action function
+config <- FLAREr::set_up_simulation(configure_run_file, lake_directory)
+FLAREr::initialize_faasr(config)   # validate before running
+FLAREr::run_flare(lake_directory, configure_run_file, config_set_name)
+```
 
 ---
 

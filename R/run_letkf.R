@@ -1,6 +1,10 @@
 #' @title Run Local Ensemble Transform Kalman Filter on model predictions
 #'
-#' @description Per-depth-layer ETKF with Gaussian observation localization.
+#' @description EXPERIMENTAL: this data assimilation method has not been
+#'   extensively tested. Only the Ensemble Kalman Filter ("enkf") is recommended
+#'   for production use; use this method with caution.
+#'
+#'   Per-depth-layer ETKF with Gaussian observation localization.
 #'   Each depth layer gets its own local analysis using only nearby observations,
 #'   with R inflated by 1/weight for partially-local observations.
 #'   Non-depth rows (lake depth, secchi, parameters) receive a global ETKF update.
