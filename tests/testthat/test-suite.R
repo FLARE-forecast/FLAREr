@@ -1,6 +1,8 @@
 # Met files ----
 test_that("met files are generated", {
 
+  skip_on_os(c("windows", "mac"))
+
   dir <-  file.path(normalizePath(tempdir(),  winslash = "/"))
   lake_directory <- file.path(dir, "extdata")
   configure_run_file <- "configure_run.yml"
@@ -28,6 +30,7 @@ test_that("met files are generated", {
 
 test_that("open-meteo met files are generated", {
 
+  skip_on_os(c("windows", "mac"))
   skip_if_offline()
 
   dir <-  file.path(normalizePath(tempdir(),  winslash = "/"))
@@ -68,6 +71,8 @@ test_that("open-meteo met files are generated", {
 
 test_that("inflow files are generated", {
 
+  skip_on_os(c("windows", "mac"))
+
   dir <- file.path(normalizePath(tempdir(),  winslash = "/"))
   lake_directory <- file.path(dir, "extdata")
   configure_run_file <- "configure_run.yml"
@@ -93,6 +98,8 @@ test_that("inflow files are generated", {
 
 
 test_that("observation matrix is created", {
+
+  skip_on_os(c("windows", "mac"))
 
   dir <-  file.path(normalizePath(tempdir(),  winslash = "/"))
   lake_directory <- file.path(dir, "extdata")
@@ -121,6 +128,8 @@ test_that("observation matrix is created", {
 
 
 test_that("observation non-vertical list is created", {
+
+  skip_on_os(c("windows", "mac"))
 
   dir <-  file.path(normalizePath(tempdir(),  winslash = "/"))
   lake_directory <- file.path(dir, "extdata")
@@ -152,6 +161,8 @@ test_that("observation non-vertical list is created", {
 
 test_that("state set up", {
 
+  skip_on_os(c("windows", "mac"))
+
   dir <-  file.path(normalizePath(tempdir(),  winslash = "/"))
   lake_directory <- file.path(dir, "extdata")
   configure_run_file <- "configure_run.yml"
@@ -179,6 +190,8 @@ test_that("state set up", {
 })
 
 test_that("initial conditions", {
+
+  skip_on_os(c("windows", "mac"))
 
   dir <-  file.path(normalizePath(tempdir(),  winslash = "/"))
   lake_directory <- file.path(dir, "extdata")
@@ -224,6 +237,7 @@ test_that("initial conditions", {
 
 test_that("run_flare enkf and restart works", {
 
+  skip_on_os(c("windows", "mac"))
   skip_if_offline()
   skip_on_cran()
 
@@ -284,6 +298,7 @@ test_that("run_flare enkf and restart works", {
 
 test_that("run_flare aed works", {
 
+  skip_on_os(c("windows", "mac"))
   skip_if_offline()
   skip_on_cran()
 
@@ -312,6 +327,8 @@ test_that("run_flare aed works", {
   })
 
 test_that("particle filter works", {
+
+  skip_on_os(c("windows", "mac"))
 
   dir <-  file.path(normalizePath(tempdir(),  winslash = "/"))
   lake_directory <- file.path(dir, "extdata")
@@ -360,6 +377,7 @@ test_that("particle filter works", {
 
 test_that("open meteo run works", {
 
+  skip_on_os(c("windows", "mac"))
   skip_if_offline()
   skip_on_cran()
   skip_if_not_installed("GLM3r")
