@@ -702,7 +702,54 @@ run_da_forecast <- function(states_init,
             },
             config = config
           )
+          # GLM-output surface (== max(model_internal_heights)) before depth noise
+          glm_lake_depth <- lake_depth[i, m]
           lake_depth[i, m] <- nv_noise$lake_depth_m
+          # Cap the lake surface (top height) at the basin's maximum height
+          # (last H minus first H from the GLM morphometry; see lake_max_depth
+          # above). Process noise on lake depth can otherwise push the surface
+          # above the basin top, which is physically impossible and would be
+          # written to the next GLM restart. The DA step applies the same cap
+          # in apply_da_updates(); this covers the process-noise path that runs
+          # before (and independently of) data assimilation.
+          if (lake_depth[i, m] > lake_max_depth) {
+            message(sprintf(
+              paste0("Top height %.3f m exceeded basin max height %.3f m after ",
+                     "process noise (member %d, %s); capping at basin max."),
+              lake_depth[i, m], lake_max_depth, m,
+              format(as.Date(full_time[i]), "%Y-%m-%d")
+            ))
+            lake_depth[i, m] <- lake_max_depth
+          }
+          # Process noise perturbed lake depth; rigidly shift the GLM layer
+          # heights by the same (capped) change so max(heights) tracks the
+          # perturbed surface. Done before add_process_noise() and DA so both
+          # operate on a consistent depth/height grid (lake_depth ==
+          # max(model_internal_heights) at GLM output). Layers driven below the
+          # bottom are pruned; a too-deep downward shift is clamped to keep at
+          # least 2 layers.
+          diff_height <- lake_depth[i, m] - glm_lake_depth
+          if (diff_height != 0) {
+            h_before <- model_internal_heights[i, , m]
+            res <- shift_heights_for_depth_change(h_before, diff_height,
+                                                  min_layers = 2L)
+            model_internal_heights[i, , m] <- res$heights
+            # If the >=2-layer guard clamped the shift, pull lake_depth back so
+            # it still equals the new top height.
+            if (res$diff_height != diff_height) {
+              lake_depth[i, m] <- glm_lake_depth + res$diff_height
+              message(sprintf(
+                paste0("Depth process noise would prune below 2 layers ",
+                       "(member %d, %s); limiting downward shift and lake ",
+                       "depth to keep 2 layers."),
+                m, format(as.Date(full_time[i]), "%Y-%m-%d")
+              ))
+            }
+            newly_pruned <- which(is.na(res$heights) & !is.na(h_before))
+            if (length(newly_pruned) > 0) {
+              states_height[i, , newly_pruned, m] <- NA
+            }
+          }
           if (length(config$output_settings$diagnostics_names) > 0) {
             diagnostics[, i, , m] <- nv_noise$diagnostics_slice
           }

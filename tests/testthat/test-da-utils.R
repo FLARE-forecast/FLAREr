@@ -378,3 +378,46 @@ test_that("update_parameters_enkf shifts parameter mean toward observation signa
   # Observation is above predicted → parameter should increase
   expect_gt(posterior_mean, prior_mean)
 })
+
+# shift_heights_for_depth_change() ----
+
+test_that("shift_heights_for_depth_change is a no-op for zero or NA shift", {
+  heights <- c(9, 6, 3, 1, NA)
+
+  r0 <- FLAREr:::shift_heights_for_depth_change(heights, 0)
+  expect_equal(r0$heights, heights)
+  expect_equal(r0$diff_height, 0)
+
+  rNA <- FLAREr:::shift_heights_for_depth_change(heights, NA_real_)
+  expect_equal(rNA$heights, heights)
+  expect_true(is.na(rNA$diff_height))
+})
+
+test_that("shift_heights_for_depth_change raises all non-NA heights on an upward shift without pruning", {
+  heights <- c(9, 6, 3, 1, NA)
+  res <- FLAREr:::shift_heights_for_depth_change(heights, 2)
+
+  expect_equal(res$diff_height, 2)                 # not clamped
+  expect_equal(res$heights, c(11, 8, 5, 3, NA))    # trailing NA preserved
+})
+
+test_that("shift_heights_for_depth_change prunes only layers driven below zero on a moderate downward shift", {
+  heights <- c(9, 6, 3, 1, NA)
+  res <- FLAREr:::shift_heights_for_depth_change(heights, -2)
+
+  expect_equal(res$diff_height, -2)                # -2 >= -(2nd highest = 6): no clamp
+  # layer at height 1 -> -1 is pruned; surviving block stays contiguous at front
+  expect_equal(res$heights, c(7, 4, 1, NA, NA))
+  expect_equal(which(!is.na(res$heights)), c(1L, 2L, 3L))
+})
+
+test_that("shift_heights_for_depth_change clamps a too-deep downward shift to keep min_layers", {
+  heights <- c(9, 6, 3, 1, NA)
+  res <- FLAREr:::shift_heights_for_depth_change(heights, -8, min_layers = 2L)
+
+  # 2nd-highest height is 6, so the deepest allowed shift is -6
+  expect_equal(res$diff_height, -6)
+  # exactly two layers survive; the 2nd-highest lands at exactly 0 (not pruned)
+  expect_equal(sum(!is.na(res$heights)), 2L)
+  expect_equal(res$heights[!is.na(res$heights)], c(3, 0))
+})

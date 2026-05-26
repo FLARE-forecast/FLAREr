@@ -7,6 +7,36 @@ build_R_matrix <- function(psi, z_index) {
   diag(psi[z_index]^2, nrow = length(z_index))
 }
 
+#' @title Rigidly shift GLM internal heights by a lake-depth change
+#'
+#' Adds `diff_height` to every non-NA layer height and prunes (sets NA) any layer
+#' pushed below the basin bottom. Mirrors the depth-update shift in
+#' `apply_da_updates()`. A downward shift is clamped so at least `min_layers`
+#' layers survive, since the `approx()` interpolations that consume the heights
+#' (in `add_process_noise()` and the DA reconstruction) need at least two points.
+#' The (possibly clamped) shift is returned so the caller can keep `lake_depth`
+#' consistent with the new top height.
+#'
+#' @param heights numeric vector of model internal heights (may contain trailing NA)
+#' @param diff_height scalar lake-depth change to apply
+#' @param min_layers minimum number of layers to keep after a downward shift
+#' @noRd
+#' @return list with `heights` (shifted/pruned) and `diff_height` (after clamping)
+shift_heights_for_depth_change <- function(heights, diff_height, min_layers = 2L) {
+  if (is.na(diff_height) || diff_height == 0) {
+    return(list(heights = heights, diff_height = diff_height))
+  }
+  non_na <- which(!is.na(heights))
+  if (diff_height < 0 && length(non_na) >= min_layers) {
+    # min_layers-th highest height; clamp so it (and everything above) stays >= 0
+    kth_highest <- sort(heights[non_na], decreasing = TRUE)[min_layers]
+    diff_height <- max(diff_height, -kth_highest)
+  }
+  heights[non_na] <- heights[non_na] + diff_height
+  heights[which(heights < 0)] <- NA          # prune layers with negative height
+  list(heights = heights, diff_height = diff_height)
+}
+
 #' @title Apply DA posterior updates shared across all linear DA methods
 #'
 #' @param update `[nstates*ndepths + n_non_vertical + npars, nmembers]` updated state matrix
