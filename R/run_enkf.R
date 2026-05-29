@@ -59,7 +59,9 @@ run_enkf <- function(x_matrix,
                      inflation_start,
                      lake_max_depth,
                      states_config = NULL,
-                     obs_diag_meta = NULL) {
+                     obs_diag_meta = NULL,
+                     n_da_states = NULL,
+                     da_idx = NULL) {
 
   if (!is.null(pars_config)) {
     npars <- dim(pars_corr)[1]
@@ -69,6 +71,13 @@ run_enkf <- function(x_matrix,
   nmembers        <- dim(states_depth_start)[3]
   nstates         <- dim(states_depth_start)[1]
   ndepths_modeled <- length(config$model_settings$modeled_depths)
+
+  # x_matrix's state block spans only the assimilated states (da_idx). NULL means
+  # every state is assimilated (legacy), so n_da_states == nstates and the column
+  # math below is identical to operating on the full state array.
+  if (is.null(da_idx)) da_idx <- seq_len(nstates)
+  if (is.null(n_da_states)) n_da_states <- length(da_idx)
+  states_config_da <- if (!is.null(states_config)) states_config[da_idx, ] else NULL
 
   curr_psi <- psi[z_index]^2
 
@@ -114,10 +123,10 @@ run_enkf <- function(x_matrix,
         !is.na(config$da_setup$localization_distance)) {
     p_t <- localization(
       mat                   = p_t,
-      nstates               = nstates,
+      nstates               = n_da_states,
       modeled_depths        = config$model_settings$modeled_depths,
       localization_distance = config$da_setup$localization_distance,
-      num_single_states     = dim(p_t)[1] - nstates * ndepths_modeled
+      num_single_states     = dim(p_t)[1] - n_da_states * ndepths_modeled
     )
   }
 
@@ -132,7 +141,7 @@ run_enkf <- function(x_matrix,
       k_t             = k_t,
       d_mat           = d_mat,
       ndepths_modeled = ndepths_modeled,
-      states_config   = states_config
+      states_config   = states_config_da
     )
     if (isTRUE(npars > 0L)) {
       .diagnose_enkf_par_update(
@@ -141,7 +150,7 @@ run_enkf <- function(x_matrix,
         k_t             = k_t,
         d_mat           = d_mat,
         ndepths_modeled = ndepths_modeled,
-        states_config   = states_config,
+        states_config   = states_config_da,
         pars_config     = pars_config,
         n_non_vertical  = n_non_vertical,
         npars           = npars
@@ -172,7 +181,9 @@ run_enkf <- function(x_matrix,
     nmembers                     = nmembers,
     nstates                      = nstates,
     ndepths_modeled              = ndepths_modeled,
-    npars                        = npars
+    npars                        = npars,
+    n_da_states                  = n_da_states,
+    da_idx                       = da_idx
   )
 
   if (isTRUE(config$da_setup$save_da_diagnostics) && length(zt) > 0L) {
@@ -185,13 +196,13 @@ run_enkf <- function(x_matrix,
       zt              = zt,
       curr_psi        = curr_psi,
       ens_mean        = ens_mean,
-      nstates         = nstates,
+      nstates         = n_da_states,
       ndepths_modeled = ndepths_modeled,
       n_non_vertical  = n_non_vertical,
       npars           = npars,
       inflation_start = inflation_start,
       pars_config     = pars_config,
-      states_config   = states_config,
+      states_config   = states_config_da,
       obs_diag_meta   = obs_diag_meta
     )
   }

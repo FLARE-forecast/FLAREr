@@ -55,7 +55,9 @@ run_letkf <- function(x_matrix,
                       n_non_vertical,
                       par_fit_method,
                       inflation_start,
-                      lake_max_depth) {
+                      lake_max_depth,
+                      n_da_states = NULL,
+                      da_idx = NULL) {
 
   if (!is.null(pars_config)) {
     npars <- dim(pars_corr)[1]
@@ -65,6 +67,11 @@ run_letkf <- function(x_matrix,
   nmembers        <- dim(states_depth_start)[3]
   nstates         <- dim(states_depth_start)[1]
   ndepths_modeled <- length(config$model_settings$modeled_depths)
+
+  # x_matrix's state block spans only the assimilated states (da_idx); NULL
+  # means all states are assimilated (legacy), so n_da_states == nstates.
+  if (is.null(da_idx)) da_idx <- seq_len(nstates)
+  if (is.null(n_da_states)) n_da_states <- length(da_idx)
   modeled_depths  <- config$model_settings$modeled_depths
   loc_dist        <- config$da_setup$localization_distance
   nobs            <- length(z_index)
@@ -120,18 +127,18 @@ run_letkf <- function(x_matrix,
                t(eig_l$vectors)
     w_mean  <- solve(C_local, crossprod(Y_local, solve(R_local, d_local)))
 
-    # Apply update to the nstates rows for this depth layer only
-    local_rows  <- d_idx + (seq_len(nstates) - 1L) * ndepths_modeled
-    A_local     <- A[local_rows, , drop = FALSE]   # [nstates, N]
+    # Apply update to the assimilated-state rows for this depth layer only
+    local_rows  <- d_idx + (seq_len(n_da_states) - 1L) * ndepths_modeled
+    A_local     <- A[local_rows, , drop = FALSE]   # [n_da_states, N]
     mean_local  <- ens_mean[local_rows] + A_local %*% w_mean
 
-    update[local_rows, ] <- matrix(mean_local, nstates, nmembers) +
+    update[local_rows, ] <- matrix(mean_local, n_da_states, nmembers) +
                             A_local %*% T_local
   }
 
   # ---- Global ETKF for non-depth rows (lake depth, secchi, parameters) ----
-  n_global    <- nrow(x_matrix) - nstates * ndepths_modeled
-  global_rows <- seq_len(n_global) + nstates * ndepths_modeled
+  n_global    <- nrow(x_matrix) - n_da_states * ndepths_modeled
+  global_rows <- seq_len(n_global) + n_da_states * ndepths_modeled
 
   if (n_global > 0) {
     C_global <- crossprod(Y, solve(R, Y)) + (nmembers - 1) * diag(nmembers)
@@ -169,6 +176,8 @@ run_letkf <- function(x_matrix,
     nmembers                     = nmembers,
     nstates                      = nstates,
     ndepths_modeled              = ndepths_modeled,
-    npars                        = npars
+    npars                        = npars,
+    n_da_states                  = n_da_states,
+    da_idx                       = da_idx
   )
 }

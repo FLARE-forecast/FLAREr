@@ -7,6 +7,36 @@ build_R_matrix <- function(psi, z_index) {
   diag(psi[z_index]^2, nrow = length(z_index))
 }
 
+#' @title Rigidly shift GLM internal heights by a lake-depth change
+#'
+#' Adds `diff_height` to every non-NA layer height and prunes (sets NA) any layer
+#' pushed below the basin bottom. Mirrors the depth-update shift in
+#' `apply_da_updates()`. A downward shift is clamped so at least `min_layers`
+#' layers survive, since the `approx()` interpolations that consume the heights
+#' (in `add_process_noise()` and the DA reconstruction) need at least two points.
+#' The (possibly clamped) shift is returned so the caller can keep `lake_depth`
+#' consistent with the new top height.
+#'
+#' @param heights numeric vector of model internal heights (may contain trailing NA)
+#' @param diff_height scalar lake-depth change to apply
+#' @param min_layers minimum number of layers to keep after a downward shift
+#' @noRd
+#' @return list with `heights` (shifted/pruned) and `diff_height` (after clamping)
+shift_heights_for_depth_change <- function(heights, diff_height, min_layers = 2L) {
+  if (is.na(diff_height) || diff_height == 0) {
+    return(list(heights = heights, diff_height = diff_height))
+  }
+  non_na <- which(!is.na(heights))
+  if (diff_height < 0 && length(non_na) >= min_layers) {
+    # min_layers-th highest height; clamp so it (and everything above) stays >= 0
+    kth_highest <- sort(heights[non_na], decreasing = TRUE)[min_layers]
+    diff_height <- max(diff_height, -kth_highest)
+  }
+  heights[non_na] <- heights[non_na] + diff_height
+  heights[which(heights < 0)] <- NA          # prune layers with negative height
+  list(heights = heights, diff_height = diff_height)
+}
+
 #' @title Apply DA posterior updates shared across all linear DA methods
 #'
 #' @param update `[nstates*ndepths + n_non_vertical + npars, nmembers]` updated state matrix
@@ -30,9 +60,15 @@ build_R_matrix <- function(psi, z_index) {
 #' @param inflation_start inflation array from prior
 #' @param lake_max_depth maximum lake depth
 #' @param nmembers number of ensemble members
-#' @param nstates number of states
+#' @param nstates number of states (full state array, all modeled variables)
 #' @param ndepths_modeled number of modeled depths
 #' @param npars number of parameters
+#' @param n_da_states number of assimilated states in the EnKF state block
+#'   (`length(da_idx)`); defaults to `nstates` when `da_idx` is NULL
+#' @param da_idx integer indices (into the full `nstates` arrays) of the
+#'   assimilated states; rows not in `da_idx` retain their forecast value (the
+#'   GLM-propagated state) and are excluded from covariance inflation. NULL
+#'   means every state is assimilated (legacy behavior).
 #' @noRd
 #'
 #' @return 13-element named list of updated model states, diagnostics, and parameters
@@ -56,12 +92,22 @@ apply_da_updates <- function(update,
                              nmembers,
                              nstates,
                              ndepths_modeled,
-                             npars) {
+                             npars,
+                             n_da_states = NULL,
+                             da_idx = NULL) {
+
+  if (is.null(da_idx)) da_idx <- seq_len(nstates)
+  if (is.null(n_da_states)) n_da_states <- length(da_idx)
 
   inflation_update <- inflation_start
 
-  states_depth_updated <- update[1:(ndepths_modeled*nstates), ]
-  states_depth_updated <- aperm(array(c(states_depth_updated), dim = c(ndepths_modeled, nstates, nmembers)), perm = c(2,1,3))
+  # The EnKF update block spans only the assimilated states (n_da_states). Start
+  # every state from its forecast, then overwrite the assimilated rows, so
+  # da_updated == 0 states keep their GLM-propagated value (zero DA delta).
+  states_depth_updated <- states_depth_start
+  da_block <- update[1:(ndepths_modeled * n_da_states), , drop = FALSE]
+  da_block <- aperm(array(c(da_block), dim = c(ndepths_modeled, n_da_states, nmembers)), perm = c(2,1,3))
+  states_depth_updated[da_idx, , ] <- da_block
 
   model_internal_heights_updated <- model_internal_heights_start
   lake_depth_updated <- lake_depth_start
@@ -75,7 +121,7 @@ apply_da_updates <- function(update,
     nv_var      <- active_in_xmatrix[k]
     meta        <- obs_non_vertical[[nv_var]]
     ops         <- get_non_vertical_operator(nv_var)
-    row_idx     <- ndepths_modeled * nstates + k
+    row_idx     <- ndepths_modeled * n_da_states + k
     updated_val <- update[row_idx, ]
 
     if (nv_var == "depth") {
@@ -138,7 +184,7 @@ apply_da_updates <- function(update,
   if(isTRUE(config$da_setup$use_inflation_factor) && !is.null(config$da_setup$inflation_factor)){
     inf <- config$da_setup$inflation_factor
     nlayers <- dim(states_height_updated)[2]
-    for(s in 1:nstates){
+    for(s in da_idx){
       for(h_idx in 1:nlayers){
         valid_m <- which(!is.na(states_height_updated[s, h_idx, ]))
         if(length(valid_m) > 1){
@@ -195,8 +241,10 @@ apply_da_updates <- function(update,
 
   num_out_depths <- length(which(!is.na(states_height_start[1, ,1])))
 
+
   #Correct any parameter values outside bounds using reflective bounds to preserve ensemble spread
   if(isTRUE(npars > 0)){
+
     for(par in 1:npars){
       if(par_fit_method == "inflate" && pars_config$fix_par[par] == 0){
         par_mean <- mean(pars_updated[par, ])
@@ -215,7 +263,6 @@ apply_da_updates <- function(update,
           pars_updated[par, ] <- par_mean + (par_min_sd / par_sd) * (pars_updated[par, ] - par_mean)
         }
       }
-
       lb <- pars_config$par_lowerbound[par]
       ub <- pars_config$par_upperbound[par]
       low_index  <- which(pars_updated[par, ] < lb)

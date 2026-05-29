@@ -39,7 +39,16 @@ flare_io_mode <- function(config) {
 }
 
 .flare_split_bucket   <- function(s) stringr::str_split_fixed(s, "/", n = 2)
-.flare_split_endpoint <- function(s) stringr::str_split_fixed(s, "\\.", n = 2)
+.flare_split_endpoint <- function(s) {
+  # Standard AWS S3 endpoints (s3.REGION.amazonaws.com) must return
+  # base_url = "s3.amazonaws.com" so aws.s3's setup_s3_url takes the
+  # standard branch and builds the correct s3-REGION.amazonaws.com URL.
+  if (grepl("^s3\\.[a-z0-9-]+\\.amazonaws\\.com$", s)) {
+    region <- sub("^s3\\.([a-z0-9-]+)\\.amazonaws\\.com$", "\\1", s)
+    return(matrix(c(region, "s3.amazonaws.com"), nrow = 1))
+  }
+  stringr::str_split_fixed(s, "\\.", n = 2)
+}
 
 # Filesystem root used as the object store in mode="local". Honor an
 # explicit lake_directory if set; otherwise derive from the

@@ -86,6 +86,27 @@ run_flare <- function(lake_directory,
   if(!"temp" %in% states_config$state_names) stop("missing temp as a state name in states config")
   if(!"salt" %in% states_config$state_names) stop("missing salt as a state name in states config")
 
+  # `da_updated` flags which states participate in data assimilation. States with
+  # da_updated == 0 are still modeled by GLM and initialized/output by FLAREr, but
+  # are excluded from the EnKF state vector and left untouched in the GLM restart
+  # (GLM's own restart carries them forward). A missing column defaults to 1 for
+  # every state, reproducing the previous behavior (all states assimilated).
+  if(!"da_updated" %in% names(states_config)) states_config$da_updated <- 1L
+  states_config$da_updated[is.na(states_config$da_updated)] <- 1L
+  if(!all(states_config$da_updated %in% c(0L, 1L))){
+    stop("`da_updated` column in states config must contain only 0 or 1")
+  }
+  if(any(states_config$da_updated == 1L) == FALSE){
+    stop("at least one state must have da_updated == 1")
+  }
+  for(req in c("temp", "salt")){
+    req_row <- which(states_config$state_names == req)
+    if(length(req_row) == 1 && states_config$da_updated[req_row] == 0L){
+      warning(paste0("state '", req, "' has da_updated == 0; temp and salt are ",
+                     "normally assimilated and are always written to the GLM nml"))
+    }
+  }
+
   if(is.null(config$met$use_openmeteo)) config$met$use_openmeteo <- FALSE
 
   met_start_datetime <- lubridate::as_datetime(config$run_config$start_datetime)

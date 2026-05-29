@@ -122,7 +122,12 @@ initialize_forecast_arrays <- function(nsteps, nstates, ndepths_modeled,
 #' @param outflow_file_names vector or matrix; vector of outflow file names
 #' @param config list; list of configurations
 #' @param pars_config list; list of parameter configurations  (Default = NULL)
-#' @param states_config list; list of state configurations
+#' @param states_config data frame of state configurations (read from
+#'   `states_config.csv`). Required columns: `state_names`, `model_sd`,
+#'   `vert_decorr_length`, `initial_model_sd`, `states_to_obs_1`,
+#'   `states_to_obs_mapping_1`. Optional column: `da_updated` (integer 0/1;
+#'   defaults to 1 for all states if absent). States with `da_updated = 0` are
+#'   simulated by GLM but excluded from the EnKF update step.
 #' @param obs_config list; list of observation configurations
 #' @param da_method string; data assimilation method (one of "enkf", "etkf",
 #'   "esmda", "letkf", "pf", or "none"; Default = "enkf"). NOTE: only "enkf" has
@@ -198,6 +203,32 @@ run_da_forecast <- function(states_init,
   }
 
   nstates <- dim(states_init)[1]
+  # States flagged da_updated == 0 are excluded from the EnKF state vector and
+  # carried through GLM's restart instead. Default to all-assimilated when the
+  # column is absent (configs/tests predating the feature) so behavior is
+  # unchanged: da_idx == 1:nstates makes every subset below a no-op.
+  if (is.null(states_config$da_updated)) states_config$da_updated <- 1L
+  states_config$da_updated[is.na(states_config$da_updated)] <- 1L
+  da_idx <- which(states_config$da_updated == 1L)
+  n_da_states <- length(da_idx)
+  states_config_da <- states_config[da_idx, ]
+
+  # An observation can only be assimilated if at least one assimilated state maps
+  # to it. If every state mapping to an observation has da_updated == 0, that
+  # observation would be orphaned (present in zt but absent from the H operator),
+  # so reject the configuration up front rather than fail mid-EnKF.
+  if (n_da_states < nstates && "states_to_obs" %in% names(states_config)) {
+    covered    <- unique(unlist(states_config$states_to_obs[da_idx]))
+    all_mapped <- unique(unlist(states_config$states_to_obs))
+    all_mapped <- all_mapped[!is.na(all_mapped)]
+    orphaned   <- setdiff(all_mapped, covered)
+    if (length(orphaned) > 0) {
+      orphan_names <- obs_config$state_names_obs[orphaned]
+      stop(paste0("observation(s) [", paste(orphan_names, collapse = ", "),
+        "] map only to states with da_updated == 0 and cannot be assimilated; ",
+        "set da_updated = 1 for at least one state mapping to each observation."))
+    }
+  }
   ndepths_modeled <- length(config$model_settings$modeled_depths)
   nmembers <- dim(states_init)[3]
   model <- config$model_settings$model
@@ -504,6 +535,7 @@ run_da_forecast <- function(states_init,
           snow_ice_thickness_start = sl$snow_ice_thickness_start,
           nstates                  = nstates,
           state_names              = states_config$state_names,
+          da_updated               = states_config$da_updated,
           include_wq               = config$include_wq,
           max_layers               = config$model_settings$max_model_layers,
           states_heights_start     = sl$states_heights_start,
@@ -626,6 +658,7 @@ run_da_forecast <- function(states_init,
           snow_ice_thickness_start = sl$snow_ice_thickness_start,
           nstates                  = nstates,
           state_names              = states_config$state_names,
+          da_updated               = states_config$da_updated,
           include_wq               = config$include_wq,
           max_layers               = config$model_settings$max_model_layers,
           states_heights_start     = sl$states_heights_start,
@@ -702,7 +735,54 @@ run_da_forecast <- function(states_init,
             },
             config = config
           )
+          # GLM-output surface (== max(model_internal_heights)) before depth noise
+          glm_lake_depth <- lake_depth[i, m]
           lake_depth[i, m] <- nv_noise$lake_depth_m
+          # Cap the lake surface (top height) at the basin's maximum height
+          # (last H minus first H from the GLM morphometry; see lake_max_depth
+          # above). Process noise on lake depth can otherwise push the surface
+          # above the basin top, which is physically impossible and would be
+          # written to the next GLM restart. The DA step applies the same cap
+          # in apply_da_updates(); this covers the process-noise path that runs
+          # before (and independently of) data assimilation.
+          if (lake_depth[i, m] > lake_max_depth) {
+            message(sprintf(
+              paste0("Top height %.3f m exceeded basin max height %.3f m after ",
+                     "process noise (member %d, %s); capping at basin max."),
+              lake_depth[i, m], lake_max_depth, m,
+              format(as.Date(full_time[i]), "%Y-%m-%d")
+            ))
+            lake_depth[i, m] <- lake_max_depth
+          }
+          # Process noise perturbed lake depth; rigidly shift the GLM layer
+          # heights by the same (capped) change so max(heights) tracks the
+          # perturbed surface. Done before add_process_noise() and DA so both
+          # operate on a consistent depth/height grid (lake_depth ==
+          # max(model_internal_heights) at GLM output). Layers driven below the
+          # bottom are pruned; a too-deep downward shift is clamped to keep at
+          # least 2 layers.
+          diff_height <- lake_depth[i, m] - glm_lake_depth
+          if (diff_height != 0) {
+            h_before <- model_internal_heights[i, , m]
+            res <- shift_heights_for_depth_change(h_before, diff_height,
+                                                  min_layers = 2L)
+            model_internal_heights[i, , m] <- res$heights
+            # If the >=2-layer guard clamped the shift, pull lake_depth back so
+            # it still equals the new top height.
+            if (res$diff_height != diff_height) {
+              lake_depth[i, m] <- glm_lake_depth + res$diff_height
+              message(sprintf(
+                paste0("Depth process noise would prune below 2 layers ",
+                       "(member %d, %s); limiting downward shift and lake ",
+                       "depth to keep 2 layers."),
+                m, format(as.Date(full_time[i]), "%Y-%m-%d")
+              ))
+            }
+            newly_pruned <- which(is.na(res$heights) & !is.na(h_before))
+            if (length(newly_pruned) > 0) {
+              states_height[i, , newly_pruned, m] <- NA
+            }
+          }
           if (length(config$output_settings$diagnostics_names) > 0) {
             diagnostics[, i, , m] <- nv_noise$diagnostics_slice
           }
@@ -808,7 +888,9 @@ run_da_forecast <- function(states_init,
       # afterward using the forecast predicted observations.
       use_one_step_lag <- isTRUE(config$da_setup$use_one_step_lag) && npars > 0
 
-      x_matrix <- apply(aperm(states_depth_w_noise[, 1:ndepths_modeled, ], perm = c(2, 1, 3)), 3, rbind)
+      # Build the EnKF state block from only the assimilated states (da_idx).
+      # Row order is (assimilated-state, depth) matching the h columns below.
+      x_matrix <- apply(aperm(states_depth_w_noise[da_idx, 1:ndepths_modeled, , drop = FALSE], perm = c(2, 1, 3)), 3, rbind)
 
       # Append each non-vertical observation variable to the augmented state vector.
       # active_in_xmatrix tracks which variables were successfully extracted (diagnostic
@@ -870,13 +952,18 @@ run_da_forecast <- function(states_init,
       # For one_step_lag the parameter columns are absent from H; npars_in_h
       # keeps the non-vertical column offsets correct in both modes.
       npars_in_h <- if (use_one_step_lag) 0L else npars
+      # Columns span only the assimilated states (da_idx); rows still span all
+      # observation types/depths. states_to_obs values are observation indices,
+      # so they are unaffected by state subsetting -- only the column count and
+      # iteration order compress to the da_idx subset.
       h <- matrix(0,
         nrow = vertical_obs * ndepths_modeled + n_non_vertical,
-        ncol = nstates * ndepths_modeled + n_non_vertical + npars_in_h
+        ncol = n_da_states * ndepths_modeled + n_non_vertical + npars_in_h
       )
 
       index <- 0
-      for (k in 1:nstates) {
+      for (kk in seq_along(da_idx)) {
+        k <- da_idx[kk]
         for (j in 1:ndepths_modeled) {
           index <- index + 1
           if (!is.na(dplyr::first(states_config$states_to_obs[[k]]))) {
@@ -897,7 +984,7 @@ run_da_forecast <- function(states_init,
         obs_val <- obs_non_vertical[[nv_var]]$obs[i]
         if (!is.na(obs_val)) {
           h_row <- vertical_obs * ndepths_modeled + k
-          h_col <- nstates * ndepths_modeled + k
+          h_col <- n_da_states * ndepths_modeled + k
           h[h_row, h_col] <- 1
         }
       }
@@ -974,7 +1061,9 @@ run_da_forecast <- function(states_init,
           inflation_start = inflation[i - 1],
           lake_max_depth = lake_max_depth,
           states_config = states_config,
-          obs_diag_meta = obs_diag_meta
+          obs_diag_meta = obs_diag_meta,
+          n_da_states = n_da_states,
+          da_idx = da_idx
         )
       } else if (da_method == "pf") {
         updates <- run_particle_filter(x_matrix,
@@ -1000,7 +1089,9 @@ run_da_forecast <- function(states_init,
           vertical_obs,
           working_directory,
           obs_config,
-          inflation_start = inflation[i - 1]
+          inflation_start = inflation[i - 1],
+          n_da_states = n_da_states,
+          da_idx = da_idx
         )
       } else if (da_method == "etkf") {
         updates <- run_etkf(x_matrix,
@@ -1024,7 +1115,9 @@ run_da_forecast <- function(states_init,
           n_non_vertical,
           par_fit_method,
           inflation_start = inflation[i - 1],
-          lake_max_depth = lake_max_depth
+          lake_max_depth = lake_max_depth,
+          n_da_states = n_da_states,
+          da_idx = da_idx
         )
       } else if (da_method == "esmda") {
         updates <- run_esmda(x_matrix,
@@ -1048,7 +1141,9 @@ run_da_forecast <- function(states_init,
           n_non_vertical,
           par_fit_method,
           inflation_start = inflation[i - 1],
-          lake_max_depth = lake_max_depth
+          lake_max_depth = lake_max_depth,
+          n_da_states = n_da_states,
+          da_idx = da_idx
         )
       } else if (da_method == "letkf") {
         updates <- run_letkf(x_matrix,
@@ -1072,7 +1167,9 @@ run_da_forecast <- function(states_init,
           n_non_vertical,
           par_fit_method,
           inflation_start = inflation[i - 1],
-          lake_max_depth = lake_max_depth
+          lake_max_depth = lake_max_depth,
+          n_da_states = n_da_states,
+          da_idx = da_idx
         )
       } else {
         stop("da_method not supported; select enkf, etkf, esmda, letkf, or pf or none")
@@ -1082,7 +1179,7 @@ run_da_forecast <- function(states_init,
         da_diag_steps[[length(da_diag_steps) + 1L]] <- collect_da_diagnostics(
           da_diag        = updates$da_diag,
           time           = full_time[i],
-          states_config  = states_config,
+          states_config  = states_config_da,
           pars_config    = pars_config,
           modeled_depths = config$model_settings$modeled_depths
         )

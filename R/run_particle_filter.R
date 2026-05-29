@@ -58,12 +58,19 @@ run_particle_filter <- function(x_matrix,
                                 vertical_obs,
                                 working_directory,
                                 obs_config,
-                                inflation_start) {
+                                inflation_start,
+                                n_da_states = NULL,
+                                da_idx = NULL) {
 
   npars           <- if (is.null(pars_corr)) 0L else nrow(pars_corr)
   nmembers        <- dim(states_depth_start)[3]   # FIX: was length(nmembers) = 1
   nstates         <- dim(states_depth_start)[1]
   ndepths_modeled <- length(config$model_settings$modeled_depths)
+
+  # x_matrix's state block spans only the assimilated states (da_idx); NULL
+  # means all states are assimilated (legacy), so n_da_states == nstates.
+  if (is.null(da_idx)) da_idx <- seq_len(nstates)
+  if (is.null(n_da_states)) n_da_states <- length(da_idx)
 
   # Project all ensemble members through the observation operator.
   # Result: obs_states[m, i] = predicted value of observation i by member m.
@@ -224,10 +231,16 @@ run_particle_filter <- function(x_matrix,
   # so the same indexing code handles both the resample and pass-through cases,
   # eliminating the duplicate branch that existed in the original implementation.
 
-  update              <- x_matrix[seq_len(ndepths_modeled * nstates), idx]
-  states_depth_updated   <- aperm(array(c(update),
-                                        dim = c(ndepths_modeled, nstates, nmembers)),
-                                   perm = c(2, 1, 3))
+  # Resampling selects whole members, so every state (assimilated or not)
+  # follows idx. Build the full resampled depth array, then overwrite the
+  # assimilated states from the (resampled) EnKF state block. da_updated == 0
+  # states are carried by the resampled member's GLM restart.
+  states_depth_updated <- states_depth_start[, , idx, drop = FALSE]
+  da_block <- x_matrix[seq_len(ndepths_modeled * n_da_states), idx, drop = FALSE]
+  da_block <- aperm(array(c(da_block),
+                          dim = c(ndepths_modeled, n_da_states, nmembers)),
+                    perm = c(2, 1, 3))
+  states_depth_updated[da_idx, , ] <- da_block
   states_height_updated          <- states_height_start[, , idx]
   snow_ice_thickness_updated     <- snow_ice_thickness_start[, idx]
   lake_depth_updated             <- lake_depth_start[idx]

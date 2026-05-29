@@ -24,7 +24,25 @@ generate_states_to_obs_mapping <- function(states_config, obs_config){
     }else{
       values1 <- rep(NA,length(names_temp))
       for(j in 1:length(names_temp)){
-        values1[j] <- which(obs_config$state_names_obs == unlist(names_temp[j]))
+        obs_name <- unlist(names_temp[j])
+        match_index <- which(obs_config$state_names_obs == obs_name)
+        if(length(match_index) == 0){
+          state_label <- if("state_names" %in% names(states_config)){
+            states_config$state_names[i]
+          }else{
+            paste0("row ", i)
+          }
+          stop(paste0(
+            "generate_states_to_obs_mapping(): states_to_obs value '", obs_name,
+            "' (state '", state_label, "') was not found in obs_config$state_names_obs.\n",
+            "  A states_to_obs_* column in states_config refers to an observation variable ",
+            "that is missing or misspelled in obs_config.\n",
+            "  Available state_names_obs: ",
+            paste(obs_config$state_names_obs, collapse = ", "), "\n",
+            "  Fix the typo, add '", obs_name, "' to obs_config, or remove it from states_to_obs."
+          ), call. = FALSE)
+        }
+        values1[j] <- match_index
       }
       values2 <- c(mapping_temp)
     }

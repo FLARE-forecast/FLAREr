@@ -52,7 +52,13 @@ with a value in \code{model_sd}.}
 
 \item{pars_config}{list; list of parameter configurations  (Default = NULL)}
 
-\item{states_config}{list; list of state configurations}
+\item{states_config}{data frame of state configurations (read from
+\code{states_config.csv}). Required columns: \code{state_names},
+\code{model_sd}, \code{vert_decorr_length}, \code{initial_model_sd},
+\code{states_to_obs_1}, \code{states_to_obs_mapping_1}. Optional column:
+\code{da_updated} (integer 0/1; defaults to 1 for all states if absent).
+States with \code{da_updated = 0} are simulated by GLM but excluded from
+the EnKF update step.}
 
 \item{obs_config}{list; list of observation configurations}
 

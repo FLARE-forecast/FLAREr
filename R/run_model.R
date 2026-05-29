@@ -14,9 +14,18 @@ update_glm_restart_file <- function(ens_working_directory,
                                     snow_ice_thickness_start,
                                     num_wq_vars,
                                     include_wq,
-                                    state_names = NULL) {
+                                    state_names = NULL,
+                                    da_updated = NULL) {
   rst_path <- file.path(ens_working_directory, paste0("glm_restart_", m, ".nc"))
   if(!file.exists(rst_path)) return(invisible(NULL))
+
+  # States flagged da_updated == 0 are not assimilated; leave their values in the
+  # restart exactly as GLM wrote them so GLM's own restart carries them forward.
+  # NULL/short vector => treat every state as assimilated (legacy behavior).
+  da_assimilated <- function(state_idx) {
+    is.null(da_updated) || length(da_updated) < state_idx ||
+      isTRUE(da_updated[state_idx] == 1)
+  }
 
   nc <- ncdf4::nc_open(rst_path, write = TRUE)
   native_idx <- which(!is.na(glm_heights_start))
@@ -30,9 +39,10 @@ update_glm_restart_file <- function(ens_working_directory,
   salt_buf[seq_len(nlev)] <- rev(states_heights_start[2, native_idx])
   hgt_buf[seq_len(nlev)]  <- rev(glm_heights_start[native_idx])
 
-  ncdf4::ncvar_put(nc, "lake_temp",   temp_buf)
-  ncdf4::ncvar_put(nc, "lake_salt",   salt_buf)
+  # lake_height is geometry, not a DA state, so it is always written.
   ncdf4::ncvar_put(nc, "lake_height", hgt_buf)
+  if(da_assimilated(1)) ncdf4::ncvar_put(nc, "lake_temp", temp_buf)
+  if(da_assimilated(2)) ncdf4::ncvar_put(nc, "lake_salt", salt_buf)
 
   ncdf4::ncvar_put(nc, "blue_ice",       snow_ice_thickness_start[3])
   ncdf4::ncvar_put(nc, "white_ice",      snow_ice_thickness_start[2])
@@ -47,6 +57,8 @@ update_glm_restart_file <- function(ens_working_directory,
       glm_wq_names <- trimws(ncdf4::ncvar_get(nc, "wq_var_names"))
       flare_wq_names <- state_names[seq(3, 2 + num_wq_vars)]
       for(wq in seq_len(num_wq_vars)) {
+        # da_updated == 0: leave GLM's own restart value in place (carry-through)
+        if(!da_assimilated(2 + wq)) next
         glm_idx <- which(glm_wq_names == flare_wq_names[wq])
         if(length(glm_idx) == 1) {
           wq_buf[seq_len(nlev), glm_idx] <- rev(states_heights_start[2 + wq, native_idx])
@@ -58,6 +70,8 @@ update_glm_restart_file <- function(ens_working_directory,
     } else {
       # Fallback: assume FLARE WQ vars are the first num_wq_vars in GLM
       for(wq in seq_len(min(num_wq_vars, nrow(wq_buf)))) {
+        # da_updated == 0: leave GLM's own restart value in place (carry-through)
+        if(!da_assimilated(2 + wq)) next
         wq_buf[seq_len(nlev), wq] <- rev(states_heights_start[2 + wq, native_idx])
         if(nlev < max_layers_rst) {
           wq_buf[(nlev + 1):max_layers_rst, wq] <- 0.0
@@ -99,6 +113,9 @@ update_glm_restart_file <- function(ens_working_directory,
 #' @param snow_ice_thickness_start vector of snow and ice states
 #' @param nstates number of nstates simulated
 #' @param state_names state names
+#' @param da_updated integer vector (one per state, aligned to state_names)
+#'   flagging assimilated states (1) vs carry-through states (0); states flagged
+#'   0 are left untouched in the GLM restart. NULL writes every state (legacy).
 #' @param include_wq boolean; TRUE = use water quality model
 #' @param states_heights_start matrix of states orientated by height
 #' @param max_layers max number of layers allowed in the GLM
@@ -136,6 +153,7 @@ run_model <- function(i,
                       states_heights_start,
                       max_layers,
                       glm_path,
+                      da_updated = NULL,
                       use_glm_restart = FALSE,
                       glm_nml = NULL,
                       aed_nml = NULL){
@@ -165,6 +183,9 @@ run_model <- function(i,
   x_star_end <- array(NA, dim =c(nstates, max_layers))
   native_heights_index <- which(!is.na(glm_heights_start))
 
+
+
+
   if(isTRUE(npars > 0)){
 
     unique_pars <- unique(par_names)
@@ -182,7 +203,7 @@ run_model <- function(i,
         update_aed_nml_names[list_index_aed] <- unique_pars[par]
         list_index_aed <- list_index_aed + 1
       }else if(curr_nml == "aed_phyto_pars.csv"){
-        update_phyto_nml_list[[list_index_phyto]] <- rep(round(curr_pars_ens[curr_par_set],rounding_level), num_phytos)
+        update_phyto_nml_list[[list_index_phyto]] <- round(curr_pars_ens[curr_par_set],rounding_level)
         update_phyto_nml_names[list_index_phyto] <- unique_pars[par]
         list_index_phyto <- list_index_phyto + 1
       }
@@ -300,9 +321,9 @@ run_model <- function(i,
 
   if(list_index_phyto > 1){
     phytos <- readr::read_csv(file.path(ens_working_directory, "aed_phyto_pars.csv"),show_col_types = FALSE)
-
     for(k in 1:length(update_phyto_nml_names)){
-      phytos[which(stringr::str_detect(phytos$`'p_name'`, update_phyto_nml_names[[k]])),2:ncol(phytos)] <- update_phyto_nml_list[[k]]
+      p_index <- which(phytos$`'p_name'` == paste0("'",update_phyto_nml_names[[k]],"'"))
+      phytos[p_index, 2:ncol(phytos)] <- as.list(update_phyto_nml_list[[k]])
     }
 
     readr::write_csv(phytos, file.path(ens_working_directory, "aed_phyto_pars.csv"))
@@ -318,7 +339,8 @@ run_model <- function(i,
       snow_ice_thickness_start = snow_ice_thickness_start,
       num_wq_vars              = num_wq_vars,
       include_wq               = include_wq,
-      state_names              = state_names
+      state_names              = state_names,
+      da_updated               = da_updated
     )
   }
 
@@ -443,7 +465,7 @@ run_model <- function(i,
       if(num_reruns > 25){
         stop(paste0("Too many re-runs (> 25) due to issues generating output",
                     '\n Suggest testing specific GLM execution with the following code:',
-                    '\n FLAREr:::run_glm(','"' ,ens_working_directory,'")'))
+                    '\n run_glm(','"' ,ens_working_directory,'")'))
       }
     }
 
