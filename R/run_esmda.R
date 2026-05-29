@@ -50,7 +50,9 @@ run_esmda <- function(x_matrix,
                       n_non_vertical,
                       par_fit_method,
                       inflation_start,
-                      lake_max_depth) {
+                      lake_max_depth,
+                      n_da_states = NULL,
+                      da_idx = NULL) {
 
   if (!is.null(pars_config)) {
     npars <- dim(pars_corr)[1]
@@ -60,6 +62,11 @@ run_esmda <- function(x_matrix,
   nmembers        <- dim(states_depth_start)[3]
   nstates         <- dim(states_depth_start)[1]
   ndepths_modeled <- length(config$model_settings$modeled_depths)
+
+  # x_matrix's state block spans only the assimilated states (da_idx); NULL
+  # means all states are assimilated (legacy), so n_da_states == nstates.
+  if (is.null(da_idx)) da_idx <- seq_len(nstates)
+  if (is.null(n_da_states)) n_da_states <- length(da_idx)
 
   n_iter <- config$da_setup$esmda_iterations
 
@@ -113,10 +120,10 @@ run_esmda <- function(x_matrix,
           !is.na(config$da_setup$localization_distance)) {
       p_t <- localization(
         mat                   = p_t,
-        nstates               = nstates,
+        nstates               = n_da_states,
         modeled_depths        = config$model_settings$modeled_depths,
         localization_distance = config$da_setup$localization_distance,
-        num_single_states     = dim(p_t)[1] - nstates * ndepths_modeled
+        num_single_states     = dim(p_t)[1] - n_da_states * ndepths_modeled
       )
     }
 
@@ -146,6 +153,8 @@ run_esmda <- function(x_matrix,
     nmembers                     = nmembers,
     nstates                      = nstates,
     ndepths_modeled              = ndepths_modeled,
-    npars                        = npars
+    npars                        = npars,
+    n_da_states                  = n_da_states,
+    da_idx                       = da_idx
   )
 }
