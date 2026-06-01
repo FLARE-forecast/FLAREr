@@ -41,7 +41,7 @@ well this correction works depends on a small number of hyperparameters:
 | Process uncertainty | `model_sd`, `vert_decorr_length` | `states_config.csv` |
 | Depth-varying process noise | depth × variable table | `depth_model_sd.csv` |
 | Observation uncertainty | `obs_sd` | `observations_config.csv` |
-| Parameter fitting | `par_fit_method`, `perturb_par` | `configure_flare.yml` + `parameter_calibration_config.csv` |
+| Parameter fitting | `par_fit_method`, `perturb_par`, `par_min_sd` | `configure_flare.yml` + `parameter_calibration_config.csv` |
 | Initial ensemble spread | `initial_model_sd`, `par_init_mean`, `par_init_sd`, `par_init_lowerbound/_upperbound` | `states_config.csv`, `parameter_calibration_config.csv` |
 | DA diagnostics | `save_da_diagnostics`, `render_da_diagnostics_report` | `configure_flare.yml` → `da_setup` |
 
@@ -794,7 +794,10 @@ single "Filter appears healthy" tip.
 
 6. **Enable parameter fitting.** Add parameters one at a time, starting
    with those most strongly correlated with assimilated observations.
-   Use `par_fit_method: inflate` with `perturb_par ≈ 1.05`.
+   Use `par_fit_method: inflate` with `perturb_par ≈ 1.05`. If parameter
+   spread collapses within a few cycles, add `par_min_sd` (roughly 1–5 %
+   of the parameter's physical range) as a safety floor rather than
+   aggressively increasing `perturb_par`.
 
 7. **Evaluate with skill scores.** Use CRPS or log-score from
    `score4cast` to compare configurations. A well-tuned system should
@@ -820,6 +823,7 @@ single "Filter appears healthy" tip.
 | Particle filter degenerates (ESS → 1) | Ensemble too small; likelihood too sharp | Increase `ensemble_size`; decrease `pf_tempering_factor` |
 | Distant depths updated spuriously | No localisation | Set `localization_distance` to 2–5 m; consider `letkf` |
 | Parameters converge to implausible values | Bounds too loose; wrong `par_fit_method` | Tighten `par_lowerbound`/`par_upperbound`; check observation coverage |
+| Parameter SD collapses to zero | Filter over-constrains parameter | Set `par_min_sd` to ~1–5 % of parameter range |
 | Negative WQ perturbed observations | Gaussian perturbation of bounded variable | Set `log_transform_wq_obs: TRUE` |
 
 ---
