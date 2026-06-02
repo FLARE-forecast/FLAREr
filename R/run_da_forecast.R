@@ -1257,8 +1257,8 @@ run_da_forecast <- function(states_init,
         non_na_heights <- which(!is.na(model_internal_heights[i, , m]))
         glm_depths <- lake_depth[i, m] - model_internal_heights[i, non_na_heights, m]
         for (s in 1:nstates) {
-          states_depth[i, s, depth_index, m] <- NA
           states_depth[i, s, , m] <- approx(glm_depths, states_height[i, s, non_na_heights, m], config$model_settings$modeled_depths, rule = 2)$y
+          states_depth[i, s, depth_index, m] <- NA
         }
       }
 

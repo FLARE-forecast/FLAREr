@@ -7,6 +7,7 @@
 ## Bug fixes
 
 * missing secchi in forecast output
+* use_s3 for meterology and inflow drivers when s3 is false for forecast and score generation.
 
 # FLAREr 4.0.1
 
