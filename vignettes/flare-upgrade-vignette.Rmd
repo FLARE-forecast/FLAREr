@@ -133,6 +133,28 @@ temp,degC,0.5,temperature,1,NA,NA,NA
 secchi,unitless,0.5,secchi,0,diagnostic,extc_coeff,1.0
 ```
 
+### observations_config.csv — optional `assimilate` column
+
+An optional `assimilate` column (`1` or `0`, default `1`) can be added
+to control whether each observation is used in the DA update:
+
+-   `1` (or absent): observation is assimilated as before.
+-   `0`: observation is simulated, tracked, and written to forecast
+    output but **excluded from the EnKF update**. This is useful when
+    you want to retain observations for forecast scoring without letting
+    them influence the model state — e.g. Secchi depth tracked as a
+    diagnostic.
+
+This applies to both depth-resolved (`multi_depth = 1`) and
+non-depth-resolved (`multi_depth = 0`) observations. Existing
+configurations without the column are unchanged.
+
+```
+state_names_obs,obs_units,obs_sd,target_variable,multi_depth,model_source,model_variable,model_depth_m,assimilate
+temp,degC,0.5,temperature,1,NA,NA,NA,1
+secchi,unitless,0.5,secchi,0,diagnostic,extc_coeff,1.0,0
+```
+
 ### Restart files — format change
 
 Restart files are now **zip archives** rather than plain NetCDF files.

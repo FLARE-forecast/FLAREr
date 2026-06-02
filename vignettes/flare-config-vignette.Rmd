@@ -631,9 +631,9 @@ depth,temp
 Example:
 
 ```
-state_names_obs,obs_units,obs_sd,target_variable,multi_depth,model_source,model_variable,model_depth_m
-temp,degC,0.5,temperature,1,NA,NA,NA
-secchi,unitless,0.5,secchi,0,diagnostic,extc_coeff,1.0
+state_names_obs,obs_units,obs_sd,target_variable,multi_depth,model_source,model_variable,model_depth_m,assimilate
+temp,degC,0.5,temperature,1,NA,NA,NA,1
+secchi,unitless,0.5,secchi,0,diagnostic,extc_coeff,1.0,0
 ```
 
 -   **state_names_obs:** name of the observed state (must match a name
@@ -661,6 +661,17 @@ secchi,unitless,0.5,secchi,0,diagnostic,extc_coeff,1.0
 -   **model_depth_m:** depth (m) at which the diagnostic variable is
     evaluated when computing the derived observation. Use `NA` for
     direct state observations or depth-resolved variables.
+
+-   **assimilate** *(optional)*: integer flag (`1` or `0`) controlling
+    whether this observation is used in the data assimilation update.
+    Default is `1` (assimilated) when the column is absent. Setting
+    `0` keeps the variable simulated, tracked, and written to forecast
+    output but excludes it from the EnKF update. This applies to both
+    depth-resolved (`multi_depth = 1`) and non-depth-resolved
+    (`multi_depth = 0`) observations. Use this to retain observations
+    for forecast scoring without letting them influence the DA step —
+    for example, Secchi depth when you want to predict but not
+    constrain the model with it.
 
 ## non_vertical_noise_config.csv
 

@@ -62,7 +62,7 @@ create_met_files <- function(config, lake_directory, met_forecast_start_datetime
       server_name   = "drivers",
       faasr_prefix  = faasr_prefix,
       local_path    = glue::glue(lake_directory, "/", local_directory, "/", config$met$future_met_model),
-      mode_override = if (config$met$future_met_use_s3) NULL else "local",
+      mode_override = if (config$met$future_met_use_s3) "s3" else "local",
       config        = config
     )
   }
@@ -79,7 +79,7 @@ create_met_files <- function(config, lake_directory, met_forecast_start_datetime
       server_name   = "drivers",
       faasr_prefix  = faasr_prefix,
       local_path    = glue::glue(lake_directory, "/", local_directory, "/", config$met$historical_met_model),
-      mode_override = if (config$met$historical_met_use_s3) NULL else "local",
+      mode_override = if (config$met$historical_met_use_s3) "s3" else "local",
       config        = config
     )
   }else{

@@ -25,10 +25,15 @@
 #' @param model_sd numeric matrix of model error SDs, dimensions
 #'   `[n_states x n_depths]` as returned by initiate_model_error
 #' @return invisibly, a data frame with one row per observation containing
-#'   obs_name, obs_sd, model_sd_obs_space, var_ratio, and contributing_states
+#'   obs_name, assimilate, obs_sd, model_sd_obs_space, var_ratio, and
+#'   contributing_states
 #' @keywords internal
 
 diagnose_error_balance <- function(states_config, obs_config, model_sd) {
+
+  # Normalise optional assimilate column; absent or NA defaults to 1.
+  if (is.null(obs_config$assimilate)) obs_config$assimilate <- 1L
+  obs_config$assimilate[is.na(obs_config$assimilate)] <- 1L
 
   n_obs    <- nrow(obs_config)
   n_states <- nrow(states_config)
@@ -38,6 +43,7 @@ diagnose_error_balance <- function(states_config, obs_config, model_sd) {
   model_sd_out   <- numeric(n_obs)
   ratio_out      <- rep(NA_real_, n_obs)
   states_out     <- character(n_obs)
+  assim_out      <- integer(n_obs)
 
   for (k in seq_len(n_obs)) {
     model_var <- 0
@@ -67,31 +73,35 @@ diagnose_error_balance <- function(states_config, obs_config, model_sd) {
     obs_var          <- obs_config$obs_sd[k]^2
     ratio_out[k]     <- if (obs_var > 0 && model_var > 0) model_var / obs_var else NA_real_
     states_out[k]    <- if (length(contrib) > 0) paste(contrib, collapse = " + ") else "(none)"
+    assim_out[k]     <- obs_config$assimilate[k]
   }
 
   # --- format and emit ---
-  sep <- strrep("-", 95)
+  sep <- strrep("-", 103)
 
   header <- sprintf(
-    "  %-20s  %8s  %12s  %7s  %s",
-    "Observation", "obs_sd", "model_sd(Hx)", "ratio", "Contributing states (mapping coef)"
+    "  %-20s  %6s  %8s  %12s  %7s  %s",
+    "Observation", "DA", "obs_sd", "model_sd(Hx)", "ratio",
+    "Contributing states (mapping coef)"
   )
 
   lines <- vapply(seq_len(n_obs), function(k) {
+    da_flag <- if (assim_out[k] == 1L) "yes" else "no"
     if (states_out[k] == "(none)") {
-      sprintf("  %-20s  %8.3f  %12s  %7s  %s",
-              obs_name_out[k], obs_sd_out[k], "N/A", "N/A",
+      sprintf("  %-20s  %6s  %8.3f  %12s  %7s  %s",
+              obs_name_out[k], da_flag, obs_sd_out[k], "N/A", "N/A",
               "(no state mapping -- non-vertical or diagnostic)")
     } else {
-      sprintf("  %-20s  %8.3f  %12.3f  %7.2f  %s",
-              obs_name_out[k], obs_sd_out[k], model_sd_out[k],
+      sprintf("  %-20s  %6s  %8.3f  %12.3f  %7.2f  %s",
+              obs_name_out[k], da_flag, obs_sd_out[k], model_sd_out[k],
               ratio_out[k], states_out[k])
     }
   }, character(1))
 
   message(paste0(
     "\n", sep, "\n",
-    "  Error Balance Diagnostic\n",
+    "  Obs vs. Model Uncertainty Balance Diagnostic\n",
+    "  DA: whether the observation is used in the data assimilation update\n",
     "  model_sd(Hx) = sqrt(H*Q*Ht): model process noise projected into observation space\n",
     "  ratio = Var(model in obs space) / Var(obs):  ~1 balanced  |  >>1 model dominates  |  <<1 obs dominates\n",
     sep, "\n",
@@ -103,6 +113,7 @@ diagnose_error_balance <- function(states_config, obs_config, model_sd) {
 
   invisible(data.frame(
     obs_name            = obs_name_out,
+    assimilate          = assim_out,
     obs_sd              = obs_sd_out,
     model_sd_obs_space  = model_sd_out,
     var_ratio           = ratio_out,

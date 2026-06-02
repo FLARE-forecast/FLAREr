@@ -94,7 +94,7 @@
    strm_hf_angle = 55
    strmbd_slope = 0.05
    strmbd_drag = 0.03
-   subm_elev = 9.0
+   subm_height = 9.0
    inflow_factor = 1.0
    inflow_fl = 'inflow_file1.csv'
    inflow_varnum = 3

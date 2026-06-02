@@ -109,7 +109,7 @@
    !inflow_factor = 1, 0.5811603370304192
    inflow_factor = 1
    strmbd_drag = 0.03, 0.03
-   subm_elev = 7.166530546, 1.631309262885859
+   subm_height = 7.166530546, 1.631309262885859
    inflow_fl = 'inputs/FCR_weir_inflow_2013_2020_20220411_allfractions_2poolsDOC_1dot5xDOCr.csv', 'inputs/inflow_SSS_K_elevation_waterquality.csv'
    inflow_varnum = 37
    inflow_vars = 'FLOW','TEMP','SALT','TRC_tr1','TRC_age','NCS_ss1','NCS_ss2','OXY_oxy','CAR_dic','CAR_pH','CAR_ch4','CAR_ch4_bub','SIL_rsi','NIT_amm','NIT_nit','PHS_frp','PHS_frp_ads','OGM_doc','OGM_poc','OGM_don','OGM_pon','OGM_dop','OGM_pop','OGM_docr','OGM_donr','OGM_dopr','OGM_cpom','PHY_cyano','PHY_cyano_IN','PHY_cyano_IP','PHY_green','PHY_green_IN','PHY_green_IP','PHY_diatom','PHY_diatom_IN','PHY_diatom_IP','BIV_filtfrac'

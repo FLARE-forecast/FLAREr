@@ -128,7 +128,11 @@ initialize_forecast_arrays <- function(nsteps, nstates, ndepths_modeled,
 #'   `states_to_obs_mapping_1`. Optional column: `da_updated` (integer 0/1;
 #'   defaults to 1 for all states if absent). States with `da_updated = 0` are
 #'   simulated by GLM but excluded from the EnKF update step.
-#' @param obs_config list; list of observation configurations
+#' @param obs_config list; list of observation configurations. Optional column
+#'   `assimilate` (integer 0/1; defaults to 1 for all observations if absent).
+#'   Observations flagged `assimilate = 0` are still simulated, tracked, and
+#'   written to output but are excluded from the DA update; this applies to both
+#'   vertical (`multi_depth = 1`) and non-vertical (`multi_depth = 0`) variables.
 #' @param da_method string; data assimilation method (one of "enkf", "etkf",
 #'   "esmda", "letkf", "pf", or "none"; Default = "enkf"). NOTE: only "enkf" has
 #'   been extensively tested. All other methods ("etkf", "esmda", "letkf", "pf")
@@ -200,6 +204,26 @@ run_da_forecast <- function(states_init,
   # Guard for older obs_config tables that predate the multi_depth column.
   if (!("multi_depth" %in% names(obs_config))) {
     obs_config <- obs_config |> dplyr::mutate(multi_depth = 1)
+  }
+
+  # Observations flagged assimilate == 0 are tracked/output but excluded from the
+  # DA update. Default to all-assimilated when the column is absent (configs/tests
+  # predating the feature) so behavior is unchanged. For vertical (multi_depth ==
+  # 1) observations the exclusion is implemented by masking those rows to NA in a
+  # DA-only copy of the obs array (obs_da); the original obs is returned unchanged
+  # for scoring. Non-vertical observations carry the flag through obs_non_vertical
+  # and are skipped in the augmented-state loops below.
+  if (is.null(obs_config$assimilate)) obs_config$assimilate <- 1L
+  obs_config$assimilate[is.na(obs_config$assimilate)] <- 1L
+
+  # obs[] first dimension is built from the multi_depth == 1 rows of obs_config in
+  # order (see create_obs_matrix), so vert_assimilate aligns with obs rows. Guard
+  # the length match for the NULL-observations dummy array (single all-NA row).
+  obs_da <- obs
+  vert_assimilate <- obs_config$assimilate[obs_config$multi_depth == 1]
+  if (length(vert_assimilate) == dim(obs_da)[1]) {
+    drop_rows <- which(vert_assimilate == 0)
+    if (length(drop_rows) > 0) obs_da[drop_rows, , ] <- NA
   }
 
   nstates <- dim(states_init)[1]
@@ -817,13 +841,14 @@ run_da_forecast <- function(states_init,
 
     ### SETTING OBSERVATIONS FOR POTENTAIL DATA ASSIMILATION
 
-    if (dim(obs)[1] > 1) {
-      obs_count <- length(which(!is.na(c(aperm(obs[, i, ], perm = c(2, 1))))))
+    if (dim(obs_da)[1] > 1) {
+      obs_count <- length(which(!is.na(c(aperm(obs_da[, i, ], perm = c(2, 1))))))
     } else {
-      obs_count <- length(which(!is.na(c(obs[1, i, ]))))
+      obs_count <- length(which(!is.na(c(obs_da[1, i, ]))))
     }
 
     for (nv_var in names(obs_non_vertical)) {
+      if (isTRUE(obs_non_vertical[[nv_var]]$assimilate == 0)) next
       if (!is.na(obs_non_vertical[[nv_var]]$obs[i])) {
         obs_count <- obs_count + 1
       }
@@ -897,6 +922,7 @@ run_da_forecast <- function(states_init,
       # variables return NULL at i==1 before the diagnostics array is populated).
       active_in_xmatrix <- character(0)
       for (nv_var in names(obs_non_vertical)) {
+        if (isTRUE(obs_non_vertical[[nv_var]]$assimilate == 0)) next
         modeled_val <- extract_modeled_non_vertical( # nolint: object_usage_linter.
           var_name      = nv_var,
           meta          = obs_non_vertical[[nv_var]],
@@ -929,11 +955,11 @@ run_da_forecast <- function(states_init,
       forecast_flag[i] <- 0
       da_qc_flag[i] <- 0
 
-      curr_obs <- obs[, i, ]
+      curr_obs <- obs_da[, i, ]
 
       vertical_obs <- length(which(obs_config$multi_depth == 1))
 
-      if (dim(obs)[1] > 1) {
+      if (dim(obs_da)[1] > 1) {
         zt <- c(aperm(curr_obs, perm = c(2, 1)))
       } else {
         zt <- curr_obs
@@ -968,7 +994,7 @@ run_da_forecast <- function(states_init,
           index <- index + 1
           if (!is.na(dplyr::first(states_config$states_to_obs[[k]]))) {
             for (jj in seq_along(states_config$states_to_obs[[k]])) {
-              if (!is.na((obs[states_config$states_to_obs[[k]][jj], i, j]))) {
+              if (!is.na((obs_da[states_config$states_to_obs[[k]][jj], i, j]))) {
                 states_to_obs_index <- states_config$states_to_obs[[k]][jj]
                 index2 <- (states_to_obs_index - 1) * ndepths_modeled + j
                 h[index2, index] <- states_config$states_to_obs_mapping[[k]][jj]
@@ -1231,8 +1257,8 @@ run_da_forecast <- function(states_init,
         non_na_heights <- which(!is.na(model_internal_heights[i, , m]))
         glm_depths <- lake_depth[i, m] - model_internal_heights[i, non_na_heights, m]
         for (s in 1:nstates) {
-          states_depth[i, s, depth_index, m] <- NA
           states_depth[i, s, , m] <- approx(glm_depths, states_height[i, s, non_na_heights, m], config$model_settings$modeled_depths, rule = 2)$y
+          states_depth[i, s, depth_index, m] <- NA
         }
       }
 

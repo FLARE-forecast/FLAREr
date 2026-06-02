@@ -24,6 +24,8 @@
 #'     \item{model_source}{"state" or "diagnostic"}
 #'     \item{model_variable}{name of the corresponding model variable}
 #'     \item{model_depth_m}{depth in metres for extraction, NA, or "bottom"}
+#'     \item{assimilate}{integer 0/1; 0 keeps the variable tracked but excluded
+#'       from the DA update. Defaults to 1 when the column is absent.}
 #'   }
 create_obs_non_vertical <- function(cleaned_observations_file_long,
                                     obs_config,
@@ -51,6 +53,14 @@ create_obs_non_vertical <- function(cleaned_observations_file_long,
       obs_config[[col]] <- NA
     }
   }
+
+  # Optional assimilate flag (0/1); absent or NA defaults to 1 (assimilated) so
+  # behavior is unchanged for configs that predate the column. A value of 0
+  # keeps the variable tracked/output but excludes it from the DA update.
+  if (!("assimilate" %in% names(obs_config))) {
+    obs_config$assimilate <- 1
+  }
+  obs_config$assimilate[is.na(obs_config$assimilate)] <- 1
 
   non_vertical_config <- obs_config |> dplyr::filter(multi_depth == 0)
 
@@ -81,7 +91,8 @@ create_obs_non_vertical <- function(cleaned_observations_file_long,
       sd            = non_vertical_config$obs_sd[i],
       model_source  = non_vertical_config$model_source[i],
       model_variable = non_vertical_config$model_variable[i],
-      model_depth_m  = non_vertical_config$model_depth_m[i]
+      model_depth_m  = non_vertical_config$model_depth_m[i],
+      assimilate     = non_vertical_config$assimilate[i]
     )
   }
 

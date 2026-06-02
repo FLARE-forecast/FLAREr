@@ -1,3 +1,24 @@
+# FLAREr 4.0.2
+
+## Features
+
+* New optional `assimilate` column in `observations_config.csv` (integer `0`/`1`; defaults to `1` when absent). Setting `assimilate = 0` keeps a variable simulated, tracked, and written to forecast output but excludes it from the EnKF update. Applies to both depth-resolved (`multi_depth = 1`) and non-depth-resolved (`multi_depth = 0`) observations. Existing configurations without the column are unaffected.
+
+## Bug fixes
+
+* missing secchi in forecast output
+* use_s3 for meterology and inflow drivers when s3 is false for forecast and score generation.
+
+# FLAREr 4.0.1
+
+## Features
+
+* Model states can be excluded from data assimilation but kept in the state names configuration using the new `da_updated` column in the states_config file.  FLARE uses the state names configuration to filter the inflow variables so all states that are simulated need to be in the states configuration file but use the `da_update` column to use a subset in data assimilation.  All states in the states configuration file will be included in the forecast output and plots.
+
+## Bug fixes
+* flare_io not working for AWS buckets
+
+
 # FLAREr 4.0.0
 
 A major release introducing new data assimilation methods, a generalised non-vertical observation framework, GLM-native restart files, and serverless (FaaSr) execution. FLARE 4.0 requires a build of GLM-AED with the NetCDF restart capacity (GLM-AED version 4); see *Restart files* below for how to obtain it. See the FLAREr upgrade vignette (`vignette("flare-upgrade-vignette")`) for a step-by-step guide to migrating 3.0 configurations.
@@ -18,6 +39,7 @@ A major release introducing new data assimilation methods, a generalised non-ver
 * Generalised non-vertical (non-depth-resolved) observation framework. The `obs_secchi` and `obs_depth` arguments to `run_da_forecast()` are replaced by a single `obs_non_vertical` list produced by `create_obs_non_vertical()`. Users of `run_flare()` are unaffected.
 * New required `non_vertical_noise_config.csv` file specifying process noise for non-depth-resolved variables.
 * New `model_source`, `model_variable`, and `model_depth_m` columns in `observations_config.csv`, allowing an observation to be derived from a GLM diagnostic (e.g. Secchi depth from the extinction coefficient) rather than directly from a state.
+* New optional `assimilate` column in `observations_config.csv` (integer `0`/`1`; defaults to `1` when absent). Setting `assimilate = 0` keeps a variable simulated, tracked, and written to forecast output but excludes it from the EnKF update. Applies to both depth-resolved (`multi_depth = 1`) and non-depth-resolved (`multi_depth = 0`) observations. Existing configurations without the column are unaffected.
 
 ## Restart files
 
