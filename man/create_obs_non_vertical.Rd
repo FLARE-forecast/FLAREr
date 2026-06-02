@@ -38,6 +38,8 @@ state_names_obs).  Each element is a list with:
 \item{model_source}{"state" or "diagnostic"}
 \item{model_variable}{name of the corresponding model variable}
 \item{model_depth_m}{depth in metres for extraction, NA, or "bottom"}
+\item{assimilate}{integer 0/1; 0 keeps the variable tracked but excluded
+from the DA update. Defaults to 1 when the column is absent.}
 }
 }
 \description{

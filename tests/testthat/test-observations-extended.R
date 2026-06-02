@@ -174,3 +174,67 @@ test_that("create_obs_non_vertical returns obs_depth as NULL when depth not in o
   # The default obs_config does not contain a 'depth' state; obs_depth should be NULL
   expect_null(result$obs_depth)
 })
+
+test_that("create_obs_non_vertical defaults assimilate to 1 when column absent", {
+  s <- .obs_setup()
+
+  config   <- s$config
+  start_dt <- lubridate::as_datetime(config$run_config$start_datetime)
+  fcast_dt <- lubridate::as_datetime(config$run_config$forecast_start_datetime)
+  end_dt   <- fcast_dt + lubridate::days(config$run_config$forecast_horizon)
+
+  obs_config <- s$obs_config
+  obs_config$assimilate <- NULL  # simulate a config that predates the column
+
+  obs_file <- tempfile(fileext = ".csv")
+  readr::write_csv(
+    data.frame(datetime = character(), site_id = character(),
+               depth = numeric(), observation = numeric(),
+               variable = character()),
+    obs_file
+  )
+
+  result <- FLAREr:::create_obs_non_vertical(
+    cleaned_observations_file_long = obs_file,
+    obs_config                     = obs_config,
+    start_datetime                 = start_dt,
+    end_datetime                   = end_dt,
+    forecast_start_datetime        = fcast_dt,
+    forecast_horizon               = config$run_config$forecast_horizon
+  )
+
+  expect_false(is.null(result$secchi))
+  expect_equal(result$secchi$assimilate, 1)
+})
+
+test_that("create_obs_non_vertical passes through assimilate = 0", {
+  s <- .obs_setup()
+
+  config   <- s$config
+  start_dt <- lubridate::as_datetime(config$run_config$start_datetime)
+  fcast_dt <- lubridate::as_datetime(config$run_config$forecast_start_datetime)
+  end_dt   <- fcast_dt + lubridate::days(config$run_config$forecast_horizon)
+
+  obs_config <- s$obs_config
+  obs_config$assimilate <- 1
+  obs_config$assimilate[trimws(obs_config$state_names_obs) == "secchi"] <- 0
+
+  obs_file <- tempfile(fileext = ".csv")
+  readr::write_csv(
+    data.frame(datetime = character(), site_id = character(),
+               depth = numeric(), observation = numeric(),
+               variable = character()),
+    obs_file
+  )
+
+  result <- FLAREr:::create_obs_non_vertical(
+    cleaned_observations_file_long = obs_file,
+    obs_config                     = obs_config,
+    start_datetime                 = start_dt,
+    end_datetime                   = end_dt,
+    forecast_start_datetime        = fcast_dt,
+    forecast_horizon               = config$run_config$forecast_horizon
+  )
+
+  expect_equal(result$secchi$assimilate, 0)
+})

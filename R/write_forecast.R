@@ -59,7 +59,7 @@ write_forecast <- function(da_forecast_output,
     obs_config <- obs_config |> dplyr::mutate(multi_depth = 1)
   }
 
-  obs_config <- obs_config |>
+  obs_config_depth <- obs_config |>
     dplyr::filter(multi_depth == 1)
 
   pieces <- list()
@@ -85,9 +85,9 @@ write_forecast <- function(da_forecast_output,
   )
 
   tmp_index <- 0
-  for(s in 1:length(obs_config$state_names_obs)){
-    if(!(obs_config$state_names_obs[s] %in% states_config$state_names) &
-       obs_config$multi_depth[s] == 1){
+  for(s in 1:length(obs_config_depth$state_names_obs)){
+    if(!(obs_config_depth$state_names_obs[s] %in% states_config$state_names) &
+       obs_config_depth$multi_depth[s] == 1){
       tmp_index <- tmp_index + 1
       first_index <- 1
       for(ii in 1:length(states_config$state_names)){

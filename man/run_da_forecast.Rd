@@ -53,14 +53,17 @@ with a value in \code{model_sd}.}
 \item{pars_config}{list; list of parameter configurations  (Default = NULL)}
 
 \item{states_config}{data frame of state configurations (read from
-\code{states_config.csv}). Required columns: \code{state_names},
-\code{model_sd}, \code{vert_decorr_length}, \code{initial_model_sd},
-\code{states_to_obs_1}, \code{states_to_obs_mapping_1}. Optional column:
-\code{da_updated} (integer 0/1; defaults to 1 for all states if absent).
-States with \code{da_updated = 0} are simulated by GLM but excluded from
-the EnKF update step.}
+\code{states_config.csv}). Required columns: \code{state_names}, \code{model_sd},
+\code{vert_decorr_length}, \code{initial_model_sd}, \code{states_to_obs_1},
+\code{states_to_obs_mapping_1}. Optional column: \code{da_updated} (integer 0/1;
+defaults to 1 for all states if absent). States with \code{da_updated = 0} are
+simulated by GLM but excluded from the EnKF update step.}
 
-\item{obs_config}{list; list of observation configurations}
+\item{obs_config}{list; list of observation configurations. Optional column
+\code{assimilate} (integer 0/1; defaults to 1 for all observations if absent).
+Observations flagged \code{assimilate = 0} are still simulated, tracked, and
+written to output but are excluded from the DA update; this applies to both
+vertical (\code{multi_depth = 1}) and non-vertical (\code{multi_depth = 0}) variables.}
 
 \item{da_method}{string; data assimilation method (one of "enkf", "etkf",
 "esmda", "letkf", "pf", or "none"; Default = "enkf"). NOTE: only "enkf" has

@@ -11,14 +11,16 @@ diagnose_error_balance(states_config, obs_config, model_sd)
 must already contain the \code{states_to_obs} and \code{states_to_obs_mapping} list
 columns}
 
-\item{obs_config}{data frame of observation configuration}
+\item{obs_config}{data frame of observation configuration; optional
+\code{assimilate} column (integer 0/1, default 1) controls whether each
+observation enters the DA update}
 
 \item{model_sd}{numeric matrix of model error SDs, dimensions
 \verb{[n_states x n_depths]} as returned by initiate_model_error}
 }
 \value{
 invisibly, a data frame with one row per observation containing
-obs_name, obs_sd, model_sd_obs_space, var_ratio, and contributing_states
+obs_name, assimilate, obs_sd, model_sd_obs_space, var_ratio, and contributing_states
 }
 \description{
 Diagnose balance between model process error and observation error
