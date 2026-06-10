@@ -33,7 +33,7 @@ set_up_model <- function(config,
   }
 
 
-  if(!is.null(config$model_settings$base_AED_phyto_pars_nml)){
+  if(!is.null(config$model_settings$base_AED_nml)){
     file.copy(from = file.path(config$file_path$configuration_directory, config$model_settings$base_AED_nml),
               to = file.path(ens_working_directory, "aed2.nml"), overwrite = TRUE)
   }

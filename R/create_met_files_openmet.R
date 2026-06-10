@@ -36,7 +36,7 @@ create_met_files_openmet <- function(out_dir,
   }
 
 
-  if(lubridate::as_date(forecast_start_datetime) != Sys.Date() & !use_archive){
+  if(lubridate::as_date(forecast_start_datetime) != Sys.Date() & !use_archive & openmeteo_api %in% c("seasonal","ensemble")){
     warning(paste0("forecast_start_datetime needs to be current day (", Sys.Date(),") when using the real-time openmeteo"))
   }
 
@@ -51,8 +51,11 @@ create_met_files_openmet <- function(out_dir,
                           paste0("reference_date=", lubridate::as_date(forecast_start_datetime)),
                           paste0("site_id=", site_id))
 
-      config$s3$drivers$anonymous <- TRUE
-      s3 <- flare_arrow_s3_bucket(server_name = "drivers", faasr_prefix = prefix, config = config)
+      server_name <- "drivers"
+      config$faasr$DataStores$drivers$Anonymous <- "TRUE"
+
+      s3 <- FaaSr::faasr_arrow_s3_bucket(server_name = server_name,faasr_prefix = prefix,faasr_config=config$faasr)
+      config$faasr$DataStores$drivers$Anonymous <- ""
 
       # bucket <- file.path(bucket,
       #                     "seasonal_forecast",
@@ -96,9 +99,9 @@ create_met_files_openmet <- function(out_dir,
       ropenmeteo::add_longwave() |>
       ropenmeteo::write_glm_format(path = out_dir)
 
-  }else if(openmeteo_api == "ensemble_forecast"){
+  }else if(openmeteo_api == "ensemble"){
 
-    if(is.null(model)) model <- "gfs_seamless"
+    if(is.null(model)) model <- "ncep_gefs_seamless"
 
     if(use_archive){
 
@@ -114,10 +117,11 @@ create_met_files_openmet <- function(out_dir,
       #                     paste0("site_id=", site_id))
 
 
-      config$s3$drivers$anonymous <- TRUE
+      server_name <- "drivers"
+      config$faasr$DataStores$drivers$Anonymous <- "TRUE"
       #s3 <- arrow::s3_bucket(bucket = bucket, endpoint_override = endpoint, anonymous = TRUE)
 
-      s3 <- flare_arrow_s3_bucket(server_name = "drivers", faasr_prefix = prefix, config = config)
+      s3 <- FaaSr::faasr_arrow_s3_bucket(server_name = "drivers",faasr_prefix = prefix,faasr_config=config$faasr)
       df <- arrow::open_dataset(s3) |>
         dplyr::collect() |>
         mutate(model_id = model,
@@ -152,9 +156,11 @@ create_met_files_openmet <- function(out_dir,
                             paste0("reference_date=", lubridate::as_date(forecast_start_datetime)),
                             paste0("site_id=", site_id))
 
-        config$s3$drivers$anonymous <- TRUE
+        server_name <- "drivers"
+        config$faasr$DataStores$drivers$Anonymous <- "TRUE"
 
-        s3 <- flare_arrow_s3_bucket(server_name = "drivers", faasr_prefix = prefix, config = config)
+        s3 <- FaaSr::faasr_arrow_s3_bucket(server_name = "drivers",faasr_prefix = prefix,faasr_config=config$faasr)
+        config$faasr$DataStores$drivers$Anonymous <- ""
 
         # bucket <- file.path(bucket,
         #                     "ensemble_forecast",
@@ -164,7 +170,7 @@ create_met_files_openmet <- function(out_dir,
 
 
 
-       # s3 <- arrow::s3_bucket(bucket = bucket, endpoint_override = endpoint, anonymous = TRUE)
+        # s3 <- arrow::s3_bucket(bucket = bucket, endpoint_override = endpoint, anonymous = TRUE)
         shortwave_df <- arrow::open_dataset(s3) |>
           dplyr::filter(variable == "shortwave_radiation") |>
           dplyr::collect() |>
@@ -202,6 +208,8 @@ create_met_files_openmet <- function(out_dir,
 
   }else if(openmeteo_api == "historical"){
 
+    model <- "ERA5"
+
     if(is.na(end_datetime)){
       end_datetime <- lubridate::as_date(lubridate::as_datetime(forecast_start_datetime) + lubridate::days(forecast_horizon + 1))
     }
@@ -237,7 +245,9 @@ create_met_files_openmet <- function(out_dir,
       ropenmeteo::write_glm_format(path = out_dir)
   }
 
-  current_filenames <- list.files(path = out_dir, pattern = paste0("met_",model),full.names = TRUE)
+  print("here")
+
+  current_filenames <- list.files(path = out_dir, pattern = paste0("met_"),full.names = TRUE)
 
   return(list(filenames = current_filenames))
 }

@@ -197,9 +197,9 @@ apply_da_updates <- function(update,
 
   if(isTRUE(npars > 0)){
     if(par_fit_method != "perturb_init"){
-      pars_updated <- update[(dim(update)[1]-npars+1):dim(update)[1], ]
+      pars_updated <- update[(dim(update)[1]-npars+1):dim(update)[1], , drop = FALSE]
     }else{
-      pars_updated <- pars_corr
+      pars_updated <- matrix(pars_corr, nrow = npars)
     }
   }else{
     pars_updated <- NULL
