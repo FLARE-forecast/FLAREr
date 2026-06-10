@@ -169,7 +169,7 @@ run_flare <- function(lake_directory,
   message('Setting states and initial conditions...')
 
   nml_file_phy <- config$model_settings$base_AED_nml
-  if (!is.null(nml_file_phy) && !is.na(nml_file_phy)) {
+  if (!is.null(nml_file_phy) && !is.na(nml_file_phy) && any(grepl("^PHY_", states_config$state_names))) {
     message('Using xcc from aed.nml in states_config...')
     states_config <- update_phy_states_obs_mapping(
       states_config,
