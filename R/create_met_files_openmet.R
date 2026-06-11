@@ -245,8 +245,6 @@ create_met_files_openmet <- function(out_dir,
       ropenmeteo::write_glm_format(path = out_dir)
   }
 
-  print("here")
-
   current_filenames <- list.files(path = out_dir, pattern = paste0("met_"),full.names = TRUE)
 
   return(list(filenames = current_filenames))

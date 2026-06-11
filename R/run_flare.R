@@ -99,10 +99,10 @@ run_flare <- function(lake_directory,
   if(any(states_config$da_updated == 1L) == FALSE){
     stop("at least one state must have da_updated == 1")
   }
-  for(req in c("temp", "salt")){
+  for(req in c("temp")){
     req_row <- which(states_config$state_names == req)
     if(length(req_row) == 1 && states_config$da_updated[req_row] == 0L){
-      warning(paste0("state '", req, "' has da_updated == 0; temp and salt are ",
+      warning(paste0("state '", req, "' has da_updated == 0; temp are ",
                      "normally assimilated and are always written to the GLM nml"))
     }
   }
@@ -125,6 +125,11 @@ run_flare <- function(lake_directory,
   if(config$met$use_openmeteo){
 
     message('Using OpenMeteo Met Drivers...')
+
+    fnames <- list.files(config$file_path$execute_directory, pattern = "met_", full.names = TRUE)
+
+    unlink(fnames)
+
 
     met_out <- create_met_files_openmet(out_dir = config$file_path$execute_directory,
                                           start_datetime = met_start_datetime,
@@ -235,7 +240,8 @@ run_flare <- function(lake_directory,
                                               use_s3 = config$run_config$use_s3,
                                               bucket = config$s3$forecasts_parquet$bucket,
                                               endpoint = config$s3$forecasts_parquet$endpoint,
-                                              local_directory = file.path(lake_directory, "forecasts/parquet"),config)
+                                              local_directory = file.path(lake_directory, "forecasts/parquet"),
+                                         config)
 
   if (isTRUE(config$da_setup$save_da_diagnostics)) {
     message("writing DA diagnostics")
