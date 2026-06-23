@@ -8,7 +8,7 @@
 #' @param latitude latitude
 #' @param longitude longitude (west is negative)
 #' @param site_id site code
-#' @param openmeteo_api type of weather data or forecast (ensemble_forecast, season, climate, historical)
+#' @param openmeteo_api type of weather data or forecast (ensemble_forecast, seasonal, climate, historical)
 #' @param model forecast model
 #' @param use_archive Boolen (default = FALSE); TRUE = use forecasts stored on s3 bucket, FALSE = use open-meteo download directly
 #' @param bucket s3 bucket for archive
@@ -47,7 +47,7 @@ create_met_files_openmet <- function(out_dir,
       if(is.null(bucket)) warning("missing s3 bucket for config$s3$drivers")
       if(is.null(endpoint)) warning("missing s3 endpoint for config$s3$drivers")
 
-      prefix <- file.path(stringr::str_split_fixed(bucket, "/", n = 2)[2],"seasonal_forecast","model_id=cfs",
+      prefix <- file.path(stringr::str_split_fixed(bucket, "/", n = 2)[2],"seasonal_forecast","model_id=ecmwf_seasonal_seamless",
                           paste0("reference_date=", lubridate::as_date(forecast_start_datetime)),
                           paste0("site_id=", site_id))
 
@@ -63,7 +63,7 @@ create_met_files_openmet <- function(out_dir,
       # s3 <- arrow::s3_bucket(bucket = bucket, endpoint_override = endpoint, anonymous = TRUE)
       df <- arrow::open_dataset(s3) |>
         dplyr::collect() |>
-        mutate(model_id = "cfs",
+        mutate(model_id = "ecmwf_seasonal_seamless",
                site_id = site_id)
 
     }else{
@@ -76,19 +76,6 @@ create_met_files_openmet <- function(out_dir,
         past_days = as.numeric(forecast_start_datetime - start_datetime),
         variables = ropenmeteo::glm_variables(product = "seasonal_forecast",
                                               time_step = "6hourly"))
-    }
-
-
-    max_datetime_table <- df |>
-      na.omit() |>
-      summarize(max_datetime = max(datetime), .by = ensemble) |>
-      filter(ensemble == "02") |>
-      pull(max_datetime)
-
-
-    if(forecast_start_datetime + lubridate::days(forecast_horizon) > max_datetime_table){
-      df <- df |>
-        dplyr::filter(ensemble == "01")
     }
 
     df |>
@@ -135,64 +122,6 @@ create_met_files_openmet <- function(out_dir,
         model = model,
         variables = ropenmeteo::glm_variables(product = "ensemble_forecast",
                                               time_step = "hourly"))
-    }
-
-    if(model == "ecmwf_ifs04"){
-
-      max_datetime_table <- df |>
-        na.omit() |>
-        summarize(max_datetime = max(datetime), .by = ensemble) |>
-        filter(ensemble == "00") |>
-        pull("max_datetime")
-
-      if(use_archive){
-
-        prefix <- file.path(stringr::str_split_fixed(bucket, "/", n = 2)[2],"ensemble_forecast",
-                            paste0("model_id=gfs_seamless"),
-                            paste0("reference_date=", lubridate::as_date(forecast_start_datetime)),
-                            paste0("site_id=", site_id))
-
-        config$s3$drivers$anonymous <- TRUE
-
-        s3 <- flare_arrow_s3_bucket(server_name = "drivers", faasr_prefix = prefix, config = config)
-        # bucket <- file.path(bucket,
-        #                     "ensemble_forecast",
-        #                     paste0("model_id=gfs_seamless"),
-        #                     paste0("reference_date=", lubridate::as_date(forecast_start_datetime)),
-        #                     paste0("site_id=", site_id))
-
-
-
-        # s3 <- arrow::s3_bucket(bucket = bucket, endpoint_override = endpoint, anonymous = TRUE)
-        shortwave_df <- arrow::open_dataset(s3) |>
-          dplyr::filter(variable == "shortwave_radiation") |>
-          dplyr::collect() |>
-          mutate(model_id = "ecmwf_ifs04",
-                 site_id = site_id)
-
-      }else{
-
-        shortwave_df <-  ropenmeteo::get_ensemble_forecast(
-          latitude = latitude,
-          longitude = longitude,
-          site_id = site_id,
-          forecast_days = forecast_horizon,
-          past_days = as.numeric(forecast_start_datetime - start_datetime),
-          model = "gfs_seamless",
-          variables = "shortwave_radiation") |>
-          mutate(model_id = "ecmwf_ifs04")
-
-      }
-
-      shortwave_df1 <- shortwave_df |>
-        mutate(ensemble = as.numeric(ensemble) + 31,
-               ensemble = as.character(ensemble))
-
-      shortwave_df <- dplyr::bind_rows(shortwave_df, shortwave_df1) |>
-        filter(as.numeric(ensemble) <= max(as.numeric(df$ensemble)))
-
-      df <- dplyr::bind_rows(df, shortwave_df) |>
-        filter(datetime <= max_datetime_table)
     }
 
     df |>
