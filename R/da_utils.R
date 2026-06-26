@@ -1,8 +1,8 @@
-#' @title Build observation error covariance matrix
-#' @param psi vector of observation standard deviations (all types)
-#' @param z_index integer indices of active observations this time-step
-#' @noRd
-#' @return diagonal `[nobs, nobs]` matrix with squared SDs on the diagonal
+#' Build observation error covariance matrix
+#' @param psi Numeric vector of observation standard deviations (all obs types).
+#' @param z_index Integer vector of active observation indices for this timestep.
+#' @return Diagonal matrix \code{[nobs, nobs]} with squared SDs on the diagonal.
+#' @export
 build_R_matrix <- function(psi, z_index) {
   diag(psi[z_index]^2, nrow = length(z_index))
 }

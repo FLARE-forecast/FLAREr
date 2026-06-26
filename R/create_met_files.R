@@ -6,13 +6,14 @@
 ##' @param met_start_datetime start datetime of met simulation
 ##' @return list; vector of full path for the converted files and boolean flag if issues with historical meteorology files
 ##' @import dplyr
-##' @keywords internal
+##' @export
 ##' @importFrom stringr str_sub str_split str_detect
 ##' @importFrom tibble tibble
 ##' @importFrom lubridate as_datetime days hours ymd_hm
 ##' @author Quinn Thomas
 ##'
-create_met_files <- function(config, lake_directory, met_forecast_start_datetime, met_start_datetime){
+create_met_files <- function(config, lake_directory, met_forecast_start_datetime, met_start_datetime,
+                              include_wind_direction = FALSE, out_dir_fn = NULL){
 
   out_dir <- config$file_path$execute_directory
   forecast_horizon <-  config$run_config$forecast_horizon
@@ -20,7 +21,7 @@ create_met_files <- function(config, lake_directory, met_forecast_start_datetime
   bucket <- config$s3$drivers$bucket
   endpoint <- config$s3$drivers$endpoint
   local_directory <- config$met$local_met_directory
-  use_ler_vars <- config$met$use_ler_vars
+  use_ler_vars <- isTRUE(config$met$use_ler_vars)
   site_id <- config$location$site_id
 
   start_datetime <- lubridate::as_datetime(met_start_datetime)
@@ -112,10 +113,15 @@ create_met_files <- function(config, lake_directory, met_forecast_start_datetime
 
     if(!("wind_speed" %in% colnames(hist_met))){
       hist_met <- hist_met |>
-        dplyr::mutate(WindSpeed = sqrt(eastward_wind^2 + northward_wind^2))
+        dplyr::mutate(
+          WindSpeed = sqrt(eastward_wind^2 + northward_wind^2),
+          WindDir   = (90 - atan2(northward_wind / WindSpeed,
+                                  eastward_wind  / WindSpeed) * 180 / pi + 180) %% 360
+        )
     }else{
       hist_met <- hist_met |>
-        dplyr::mutate(WindSpeed = wind_speed)
+        dplyr::mutate(WindSpeed = wind_speed,
+                      WindDir   = NA_real_)
     }
 
     hist_met <- hist_met |>
@@ -136,7 +142,7 @@ create_met_files <- function(config, lake_directory, met_forecast_start_datetime
                        list(~round(., 2))) |>
       dplyr::mutate(Rain = round(Rain, 5),
                     time = format(time, format="%Y-%m-%d %H:%M", tz = "UTC")) |>
-      dplyr::select(ensemble, time, AirTemp,ShortWave, LongWave, RelHum, WindSpeed,Rain, Snow) |>
+      dplyr::select(ensemble, time, AirTemp, ShortWave, LongWave, RelHum, WindSpeed, WindDir, Rain, Snow) |>
       dplyr::group_by(ensemble) |>
       dplyr::slice(-dplyr::n()) |>
       dplyr::ungroup()
@@ -181,6 +187,8 @@ create_met_files <- function(config, lake_directory, met_forecast_start_datetime
         dplyr::select(-ensemble) |>
         dplyr::arrange(time)
 
+      if (!include_wind_direction) df <- dplyr::select(df, -dplyr::any_of("WindDir"))
+
       if(use_ler_vars){
 
         df <- df |>
@@ -197,8 +205,11 @@ create_met_files <- function(config, lake_directory, met_forecast_start_datetime
       # check for bad data
       missing_data_check(df)
 
+      ens_idx <- which(ensemble_members == ens)
+      ens_out_dir <- if (!is.null(out_dir_fn)) out_dir_fn(ens_idx) else out_dir
+      dir.create(ens_out_dir, recursive = TRUE, showWarnings = FALSE)
       fn <- paste0("met_",stringr::str_pad(ens, width = 2, side = "left", pad = "0"),".csv")
-      fn <- file.path(out_dir, fn)
+      fn <- file.path(ens_out_dir, fn)
       write.csv(df, file = fn, quote = FALSE, row.names = FALSE)
       return(fn)
     },
@@ -225,10 +236,15 @@ create_met_files <- function(config, lake_directory, met_forecast_start_datetime
 
     if(!("wind_speed" %in% colnames(forecast))){
       forecast <- forecast |>
-        dplyr::mutate(WindSpeed = sqrt(eastward_wind^2 + northward_wind^2))
+        dplyr::mutate(
+          WindSpeed = sqrt(eastward_wind^2 + northward_wind^2),
+          WindDir   = (90 - atan2(northward_wind / WindSpeed,
+                                  eastward_wind  / WindSpeed) * 180 / pi + 180) %% 360
+        )
     }else{
       forecast <- forecast |>
-        dplyr::mutate(WindSpeed = wind_speed)
+        dplyr::mutate(WindSpeed = wind_speed,
+                      WindDir   = NA_real_)
     }
     forecast <- forecast |>
       dplyr::mutate(use_ler_vars = use_ler_vars) |>
@@ -247,7 +263,7 @@ create_met_files <- function(config, lake_directory, met_forecast_start_datetime
       dplyr::mutate_at(dplyr::vars(all_of(c("AirTemp", "ShortWave","LongWave","RelHum","WindSpeed"))), list(~round(., 2))) |>
       dplyr::mutate(Rain = round(Rain, 5),
                     time = strftime(time, format="%Y-%m-%d %H:%M", tz = "UTC")) |>
-      dplyr::select(ensemble, time, AirTemp,ShortWave, LongWave, RelHum, WindSpeed,Rain, Snow) |>
+      dplyr::select(ensemble, time, AirTemp, ShortWave, LongWave, RelHum, WindSpeed, WindDir, Rain, Snow) |>
       dplyr::group_by(ensemble) |>
       dplyr::slice(-dplyr::n()) |>
       dplyr::ungroup()
@@ -273,6 +289,7 @@ create_met_files <- function(config, lake_directory, met_forecast_start_datetime
         stop(paste0("Weather forecasts do not cover full forecast horizon. Current max time: ", max(forecast$time), " ; Requested max time: ", strftime(end_datetime - lubridate::hours(1), format="%Y-%m-%d %H:%M", tz = "UTC")))
       }
 
+      if (!include_wind_direction) df <- dplyr::select(df, -dplyr::any_of("WindDir"))
 
       if(use_ler_vars){
 
@@ -290,14 +307,44 @@ create_met_files <- function(config, lake_directory, met_forecast_start_datetime
       # check for bad data
       missing_data_check(df)
 
+      ens_idx <- which(ensemble_members == ens)
+      ens_out_dir <- if (!is.null(out_dir_fn)) out_dir_fn(ens_idx) else out_dir
+      dir.create(ens_out_dir, recursive = TRUE, showWarnings = FALSE)
       fn <- paste0("met_",stringr::str_pad(ens, width = 2, side = "left", pad = "0"),".csv")
-      fn <- file.path(out_dir, fn)
+      fn <- file.path(ens_out_dir, fn)
       write.csv(df, file = fn, quote = FALSE, row.names = FALSE)
       return(fn)
     },
     out_dir = out_dir,
     forecast,
     hist_met)
+  }
+
+  # Recycle met files when ensemble_size exceeds available met members,
+  # or truncate when ensemble_size is smaller.
+  if (!is.null(out_dir_fn) && !is.null(config$da_setup$ensemble_size)) {
+    n_met    <- length(current_filename)
+    nmembers <- config$da_setup$ensemble_size
+    if (nmembers > n_met) {
+      message(sprintf(
+        "ensemble_size (%d) > met members (%d): recycling met files",
+        nmembers, n_met))
+      recycled <- character(nmembers - n_met)
+      for (ens in seq(n_met + 1L, nmembers)) {
+        src_ens  <- ((ens - 1L) %% n_met) + 1L
+        dest_dir <- out_dir_fn(ens)
+        dir.create(dest_dir, recursive = TRUE, showWarnings = FALSE)
+        dest_fn  <- file.path(
+          dest_dir,
+          paste0("met_", stringr::str_pad(ens - 1L, 2L, "left", "0"), ".csv")
+        )
+        file.copy(current_filename[src_ens], dest_fn, overwrite = TRUE)
+        recycled[ens - n_met] <- dest_fn
+      }
+      current_filename <- c(current_filename, recycled)
+    } else if (nmembers < n_met) {
+      current_filename <- current_filename[seq_len(nmembers)]
+    }
   }
 
   return(list(filenames = current_filename))

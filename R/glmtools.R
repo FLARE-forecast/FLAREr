@@ -3,22 +3,11 @@
 #was not keeping up with R updates
 
 
-#'@title read in a GLM simulation *.nml file
-#'@description
-#'read in a GLM simulation *.nml file and create a list.  \cr
+#' Read a GLM/ELCOM namelist file into an R list
 #'
-#'
-#'@param nml_file a string with the path to the GLM glm2.nml file, or
-#'\code{'template'} for loading the GLM template nml file with GLMr (default)
-#'@return glm_nml a nml (a list) for GLM config
-#'@keywords methods
-#'@author
-#'Jordan S. Read
-#'@seealso \link{get_nml_value}
-#'@examples
-#'glm_nml <- read_nml()
-#'print(glm_nml)
-#'@noRd
+#' @param nml_file Path to a \code{.nml} file.
+#' @return A named list of class \code{"nml"} with one element per namelist block.
+#' @export
 read_nml  <-	function(nml_file = 'template'){
 
   #nml_file <- nml_path_norm(nml_file)
@@ -256,7 +245,12 @@ class(nml) <- "nml"
 invisible(nml)
 }
 
-#'@noRd
+#' Write an nml list to a namelist file
+#'
+#' @param glm_nml A named list of class \code{"nml"} (from \code{read_nml}).
+#' @param file Path of the output \code{.nml} file.
+#' @return Invisibly, \code{NULL}.
+#' @export
 write_nml  <-	function(glm_nml,file){
   sink(file)
 
@@ -281,12 +275,11 @@ nml_template_path <- function(){
 
 #' Print NML
 #'
-#' @param x nml name
-#' @param ...
-#'
-#' @return text
-#'@noRd
-#'
+#' @param x An object of class \code{"nml"}.
+#' @param ... Ignored.
+#' @return Invisibly, \code{x}.
+#' @method print nml
+#' @export
 print.nml <- function(x, ...){
   glm_nml <- x
   for (i in seq_len(length(names(glm_nml)))){ # these are the blocks
@@ -320,7 +313,8 @@ print.nml <- function(x, ...){
     cat('/\n')
   }
 }
-#'@noRd
+#' @method summary nml
+#' @export
 summary.nml <- function(object,...){
   print(object,...)
 }

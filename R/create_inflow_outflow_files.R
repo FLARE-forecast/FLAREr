@@ -4,35 +4,36 @@
 #' @param config_set_name specific name of configuration within the configuration directory
 #' @param lake_directory directory for FLARE application
 #' @return list with two vectors. One vector is the matrix of inflow_file_names and the other is the matrix of outflow_file_names
-#' @keywords internal
+#' @param out_dir_fn Optional function of the ensemble positional index (integer,
+#'   1-based) returning the directory for that member's flow files. Passed
+#'   through to \code{create_flow_files}. Default \code{NULL}.
+#' @export
 #'
-create_inflow_outflow_files  <- function(config, config_set_name, lake_directory) {
+create_inflow_outflow_files  <- function(config, config_set_name, lake_directory,
+                                         out_dir_fn = NULL) {
 
 
-  # The variables differ between inflow and outflow
-  #variables_in <- unique(c('time',
-  #                         'TEMP',
-  #                         'SALT',
-  #                         'FLOW',
-  #                         toupper(readr::read_csv(file.path('configuration',
-  #                                                           config_set_name,
-  #                                                           config$model_settings$states_config_file),
-  #                                                 show_col_types = F)$state_names))) # state variables need to match the inflow
+  # Base hydro inflow variables always requested.  Additional state variables
+  # (e.g. AED scalars) are appended only when
+  # config$flows$inflow_include_states == TRUE, because most inflow driver
+  # parquets (e.g. VERA4cast) carry only FLOW / TEMP / SALT.  If you need
+  # AED state concentrations in the inflow, set that flag and make sure the
+  # parquet contains the matching columns.
+  variables_in <- c('time', 'FLOW', 'TEMP', 'SALT')
 
+  if (isTRUE(config$flows$inflow_include_states)) {
+    state_names_extra <- readr::read_csv(
+      file.path(lake_directory, 'configuration', config_set_name,
+                config$model_settings$states_config_file),
+      show_col_types = FALSE
+    )$state_names
+    # Exclude lowercase duplicates of TEMP / SALT (already included above)
+    state_names_extra <- state_names_extra[!(state_names_extra %in% c("salt", "temp"))]
+    variables_in <- unique(c(variables_in, state_names_extra))
+  }
 
-  variables_in <- unique(c('time',
-                           'FLOW',
-                           'TEMP',
-                           'SALT',
-                           readr::read_csv(file.path(lake_directory, 'configuration',
-                                                     config_set_name,
-                                                     config$model_settings$states_config_file),
-                                           show_col_types = F)$state_names)) # state variables need to match the inflow
-
-  #Use the upper case TEMP and SALT by excluding the lowercase ones
-  variables_in <- variables_in[!(variables_in %in% c("salt", "temp"))]
-
-  variables_out <- c('time', 'FLOW')
+  # Outflow files carry FLOW and TEMP; ELCOM requires temperature on all BCs.
+  variables_out <- c('time', 'FLOW', 'TEMP')
 
   site_id <- config$location$site_id
 
@@ -87,7 +88,7 @@ create_inflow_outflow_files  <- function(config, config_set_name, lake_directory
     # bucket = config$s3$inflow_drivers$bucket
     # endpoint = config$s3$inflow_drivers$endpoint
     # local_directory = file.path(lake_directory, config$flows$local_inflow_directory)
-    # use_ler_vars = config$flows$use_ler_vars
+    # use_ler_vars = isTRUE(config$flows$use_ler_vars)
 
     # Generate inflow and outflow files
     inflow_outflow_files <- purrr::pmap(list(flow_forecast_dir = list(inflow_forecast_dir, outflow_forecast_dir),
@@ -105,7 +106,8 @@ create_inflow_outflow_files  <- function(config, config_set_name, lake_directory
                                              endpoint = list(config$s3$inflow_drivers$endpoint , config$s3$outflow_drivers$endpoint) ,
                                              local_directory = list(file.path(lake_directory, config$flows$local_inflow_directory),
                                                                     file.path(lake_directory, config$flows$local_outflow_directory)),
-                                             use_ler_vars = config$flows$use_ler_vars, config=list(config,config)
+                                             use_ler_vars = isTRUE(config$flows$use_ler_vars), config=list(config,config),
+                                             out_dir_fn = list(out_dir_fn, out_dir_fn)
                                             ),
                                         create_flow_files
                                         ) |>
@@ -158,7 +160,8 @@ create_inflow_outflow_files  <- function(config, config_set_name, lake_directory
                                              endpoint = config$s3$inflow_drivers$endpoint ,
                                              local_directory = list(file.path(lake_directory, config$flows$local_inflow_directory),
                                                                     file.path(lake_directory, config$flows$local_outflow_directory)),
-                                             use_ler_vars = config$flows$use_ler_vars,config = list(config,config)
+                                             use_ler_vars = isTRUE(config$flows$use_ler_vars),config = list(config,config),
+                                             out_dir_fn = list(out_dir_fn, out_dir_fn)
                                              ),
                                         create_flow_files)  |>
       purrr::set_names('inflow_file_names', 'outflow_file_names')
@@ -211,8 +214,9 @@ create_inflow_outflow_files  <- function(config, config_set_name, lake_directory
                                              endpoint = config$s3$inflow_drivers$endpoint ,
                                              local_directory = list(file.path(lake_directory, config$flows$local_inflow_directory),
                                                                     file.path(lake_directory, config$flows$local_outflow_directory)),
-                                             use_ler_vars = config$flows$use_ler_vars,
-                                             config=list(config,config)),
+                                             use_ler_vars = isTRUE(config$flows$use_ler_vars),
+                                             config=list(config,config),
+                                             out_dir_fn = list(out_dir_fn, out_dir_fn)),
                                         create_flow_files) |>
       purrr::set_names('inflow_file_names', 'outflow_file_names')
 

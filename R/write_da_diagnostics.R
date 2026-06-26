@@ -15,7 +15,7 @@
 #' @param local_directory  path to write parquet files (created if needed)
 #'
 #' @return invisibly, the path to the output directory
-#' @keywords internal
+#' @export
 write_da_diagnostics <- function(da_forecast_output, local_directory) {
 
   steps <- da_forecast_output$da_diagnostics

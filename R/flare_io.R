@@ -11,7 +11,7 @@
 #' @param config FLAREr config list (must contain `run_config$use_s3`
 #'   and optionally `run_config$use_faasr`).
 #' @return Character scalar: `"faasr"`, `"s3"`, or `"local"`.
-#' @keywords internal
+#' @export
 flare_io_mode <- function(config) {
   use_s3    <- isTRUE(config$run_config$use_s3)
   use_faasr <- isTRUE(config$run_config$use_faasr)

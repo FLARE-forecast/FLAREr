@@ -13,7 +13,7 @@
 #' @return named list with elements \code{filter_health}, \code{innovations},
 #'   \code{ensemble_spread}, \code{parameters} (NULL when no pars), \code{ranks}.
 #'   Each element is a \code{\link[tibble]{tibble}}.
-#' @keywords internal
+#' @export
 collect_da_diagnostics <- function(da_diag, time, states_config,
                                    pars_config, modeled_depths) {
 

@@ -1,11 +1,10 @@
-#' Apply in-memory updates to a parsed GLM namelist
+#' Apply in-memory updates to a parsed GLM/ELCOM namelist
 #'
-#' @param nml parsed nml list (from `read_nml`)
-#' @param var_list list of values, parallel to `var_name_list`
-#' @param var_name_list character vector of variable names to update
-#'
-#' @return the modified nml list
-#' @noRd
+#' @param nml Parsed nml list (from \code{read_nml}).
+#' @param var_list List of values, parallel to \code{var_name_list}.
+#' @param var_name_list Character vector of variable names to update.
+#' @return The modified nml list.
+#' @export
 modify_nml <- function(nml, var_list, var_name_list) {
   for (k in seq_along(var_list)) {
     index1 <- NA; index2 <- NA
@@ -74,15 +73,14 @@ update_var <- function(var_value, var_name, working_directory, nml) {
   write_nml(orig_nml, paste0(working_directory, "/", nml))
 }
 
-#' Update multiple variables in a GLM namelist file
+#' Update multiple variables in a GLM/ELCOM namelist file (read-modify-write)
 #'
-#' @param var_list list of values to write, parallel to `var_name_list`
-#' @param var_name_list character vector of namelist variable names to update
-#' @param working_directory path to the directory containing the nml file
-#' @param nml filename of the namelist file (e.g. "glm3.nml")
-#'
-#' @return invisibly, the updated nml written to disk
-#' @noRd
+#' @param var_list List of values to write, parallel to \code{var_name_list}.
+#' @param var_name_list Character vector of namelist variable names to update.
+#' @param working_directory Path to the directory containing the nml file.
+#' @param nml Filename of the namelist file (e.g. \code{"glm3.nml"}).
+#' @return Invisibly, the updated nml list.
+#' @export
 update_nml <- function(var_list, var_name_list, working_directory, nml) {
   orig_nml <- read_nml(paste0(working_directory, "/", nml))
   orig_nml <- modify_nml(orig_nml, var_list, var_name_list)

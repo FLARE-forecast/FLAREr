@@ -16,14 +16,36 @@
 #' @param local_directory local storage location
 #' @param use_ler_vars T/F
 #'
+#' @param out_dir_fn Optional function of the ensemble positional index (integer,
+#'   1-based) returning the directory for that member's flow file. When non-NULL
+#'   each file is written to \code{out_dir_fn(i)}; when NULL files are written
+#'   to \code{out_dir}. Default \code{NULL}.
 #' @return matrix of flow_file_names
-#' @noRd
+#' @export
 #'
+
+# Check that all requested variables exist in a wide-format slice; stop with
+# a clear message listing what is missing and what is available in the data.
+.check_flow_vars <- function(wide_df, variables, context = "flow") {
+  missing <- setdiff(variables, names(wide_df))
+  if (length(missing) > 0) {
+    stop(
+      "Variable(s) [", paste(missing, collapse = ", "), "] requested for the ",
+      context, " inflow/outflow file are not present in the driver parquet.\n",
+      "Available columns: ", paste(sort(names(wide_df)), collapse = ", "), "\n",
+      "Check that your inflow driver parquet contains all required variables.\n",
+      "If these are AED state variables (e.g. OXY_oxy), they must either be ",
+      "included in the inflow parquet or removed from the variables list in ",
+      "inflow_boundary_config.csv.",
+      call. = FALSE
+    )
+  }
+}
 
 # Prepare one ensemble member's historical period data slice
 prep_hist_slice <- function(df, flow_num, member, start_dt,
                             forecast_start_dt, variables, round_level) {
-  df |>
+  wide <- df |>
     dplyr::filter(
       flow_number == flow_num,
       parameter == member,
@@ -31,7 +53,9 @@ prep_hist_slice <- function(df, flow_num, member, start_dt,
       datetime < lubridate::as_date(forecast_start_dt)
     ) |>
     tidyr::pivot_wider(names_from = variable, values_from = prediction) |>
-    dplyr::rename(time = datetime) |>
+    dplyr::rename(time = datetime)
+  .check_flow_vars(wide, variables, "historical")
+  wide |>
     dplyr::select(dplyr::all_of(variables)) |>
     dplyr::mutate_if(where(is.numeric), list(~round(., round_level)))
 }
@@ -39,21 +63,23 @@ prep_hist_slice <- function(df, flow_num, member, start_dt,
 # Prepare one ensemble member's future period data slice
 prep_future_slice <- function(df, flow_num, member,
                               forecast_start_dt, variables, round_level) {
-  df |>
+  wide <- df |>
     dplyr::filter(
       flow_number == flow_num,
       parameter == member,
       datetime >= lubridate::as_date(forecast_start_dt)
     ) |>
     tidyr::pivot_wider(names_from = variable, values_from = prediction) |>
-    dplyr::rename(time = datetime) |>
+    dplyr::rename(time = datetime)
+  .check_flow_vars(wide, variables, "forecast")
+  wide |>
     dplyr::select(dplyr::all_of(variables)) |>
     dplyr::mutate_if(where(is.numeric), list(~round(., round_level)))
 }
 
 # Apply LER variable renaming (or plain date conversion), then write the CSV
 write_flow_csv <- function(flow, use_ler_vars, hour_step, flow_type,
-                           flow_num, ens_index, out_dir) {
+                           flow_num, ens_index, out_dir, out_dir_fn = NULL) {
   ler_vars_lookup <- c(
     Flow_metersCubedPerSecond       = "FLOW",
     Water_Temperature_celsius       = "TEMP",
@@ -72,8 +98,10 @@ write_flow_csv <- function(flow, use_ler_vars, hour_step, flow_type,
     flow <- dplyr::mutate(flow, time = lubridate::as_date(time))
   }
 
+  ens_out_dir <- if (!is.null(out_dir_fn)) out_dir_fn(ens_index) else out_dir
+  dir.create(ens_out_dir, recursive = TRUE, showWarnings = FALSE)
   flow_file_name <- file.path(
-    out_dir, paste0(flow_type, flow_num, "_ens", ens_index, ".csv")
+    ens_out_dir, paste0(flow_type, flow_num, "_ens", ens_index, ".csv")
   )
   readr::write_csv(x = flow, file = flow_file_name, quote = "none")
   flow_file_name
@@ -94,7 +122,8 @@ create_flow_files <- function(flow_forecast_dir = NULL,
                               endpoint = NULL,
                               local_directory = NULL,
                               use_ler_vars = FALSE,
-                              config = config) {
+                              config = config,
+                              out_dir_fn = NULL) {
 
   server_name <- if (flow_type == "inflow") {
     "inflow_drivers"
@@ -229,7 +258,7 @@ create_flow_files <- function(flow_forecast_dir = NULL,
                                        forecast_start_datetime, variables, round_level)
         flow <- dplyr::bind_rows(hist_ens, future_ens) |> dplyr::arrange(time)
         flow_file_names[i, j] <- write_flow_csv(flow, use_ler_vars, hour_step,
-                                                flow_type, j, i, out_dir)
+                                                flow_type, j, i, out_dir, out_dir_fn)
       }
     }
 
@@ -244,7 +273,7 @@ create_flow_files <- function(flow_forecast_dir = NULL,
                                 forecast_start_datetime, variables, round_level) |>
           dplyr::arrange(time)
         flow_file_names[i, j] <- write_flow_csv(flow, use_ler_vars, hour_step,
-                                                flow_type, j, i, out_dir)
+                                                flow_type, j, i, out_dir, out_dir_fn)
       }
     }
 
@@ -259,7 +288,7 @@ create_flow_files <- function(flow_forecast_dir = NULL,
                                   forecast_start_datetime, variables, round_level) |>
           dplyr::arrange(time)
         flow_file_names[i, j] <- write_flow_csv(flow, use_ler_vars, hour_step,
-                                                flow_type, j, i, out_dir)
+                                                flow_type, j, i, out_dir, out_dir_fn)
       }
     }
   }

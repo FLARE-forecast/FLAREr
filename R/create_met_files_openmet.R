@@ -13,7 +13,16 @@
 #' @param use_archive Boolen (default = FALSE); TRUE = use forecasts stored on s3 bucket, FALSE = use open-meteo download directly
 #' @param bucket s3 bucket for archive
 #' @param endpoint s3 endpoint for archive
-#' @keywords internal
+#' @param include_wind_direction Logical (default \code{FALSE}); when \code{TRUE},
+#'   adds a \code{WindDir} column to each output CSV. Only supported when
+#'   \code{openmeteo_api = "ensemble"} and wind direction data is available from
+#'   the OpenMeteo API; ignored for other pathways.
+#' @param out_dir_fn Optional function of the ensemble positional index (integer,
+#'   1-based) returning the directory path for that member's met file. When
+#'   non-NULL each file is moved to \code{out_dir_fn(i)} after writing; the
+#'   returned filenames reflect the new locations. When NULL (default) files
+#'   remain in \code{out_dir}.
+#' @export
 #'
 #' @return list of meteorology file names
 create_met_files_openmet <- function(out_dir,
@@ -29,7 +38,9 @@ create_met_files_openmet <- function(out_dir,
                                      use_archive = FALSE,
                                      bucket = NULL,
                                      endpoint = NULL,
-                                     config = NULL){
+                                     config = NULL,
+                                     include_wind_direction = FALSE,
+                                     out_dir_fn = NULL){
 
   if (!requireNamespace("ropenmeteo", quietly = TRUE)) {
     stop("Package ropenmeteo needed.")
@@ -167,7 +178,52 @@ create_met_files_openmet <- function(out_dir,
       ropenmeteo::write_glm_format(path = out_dir)
   }
 
-  current_filenames <- list.files(path = out_dir, pattern = paste0("met_"),full.names = TRUE)
+  current_filenames <- list.files(path = out_dir, pattern = paste0("met_"), full.names = TRUE)
+
+  # Distribute files to per-ensemble directories if out_dir_fn is provided
+  if (!is.null(out_dir_fn) && length(current_filenames) > 0) {
+    current_filenames <- current_filenames[order(current_filenames)]
+    new_filenames <- character(length(current_filenames))
+    for (i in seq_along(current_filenames)) {
+      ens_dir <- out_dir_fn(i)
+      dir.create(ens_dir, recursive = TRUE, showWarnings = FALSE)
+      new_fn <- file.path(ens_dir, basename(current_filenames[i]))
+      file.copy(current_filenames[i], new_fn, overwrite = TRUE)
+      file.remove(current_filenames[i])
+      new_filenames[i] <- new_fn
+    }
+    current_filenames <- new_filenames
+  }
+
+  # Recycle met files when ensemble_size exceeds available met members,
+  # or truncate when ensemble_size is smaller.  Mirrors FLAREr's run-time
+  # met_index cycling in run_da_forecast.R but copies files on disk so
+  # model backends that need a physical file per run directory can find them.
+  if (!is.null(out_dir_fn) && !is.null(config) &&
+      !is.null(config$da_setup$ensemble_size)) {
+    n_met    <- length(current_filenames)
+    nmembers <- config$da_setup$ensemble_size
+    if (nmembers > n_met) {
+      message(sprintf(
+        "ensemble_size (%d) > met members (%d): recycling met files",
+        nmembers, n_met))
+      recycled <- character(nmembers - n_met)
+      for (ens in seq(n_met + 1L, nmembers)) {
+        src_ens  <- ((ens - 1L) %% n_met) + 1L
+        dest_dir <- out_dir_fn(ens)
+        dir.create(dest_dir, recursive = TRUE, showWarnings = FALSE)
+        dest_fn  <- file.path(
+          dest_dir,
+          paste0("met_", stringr::str_pad(ens - 1L, 2L, "left", "0"), ".csv")
+        )
+        file.copy(current_filenames[src_ens], dest_fn, overwrite = TRUE)
+        recycled[ens - n_met] <- dest_fn
+      }
+      current_filenames <- c(current_filenames, recycled)
+    } else if (nmembers < n_met) {
+      current_filenames <- current_filenames[seq_len(nmembers)]
+    }
+  }
 
   return(list(filenames = current_filenames))
 }
