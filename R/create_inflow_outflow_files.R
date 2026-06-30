@@ -32,8 +32,8 @@ create_inflow_outflow_files  <- function(config, config_set_name, lake_directory
     variables_in <- unique(c(variables_in, state_names_extra))
   }
 
-  # Outflow files carry FLOW and TEMP; ELCOM requires temperature on all BCs.
-  variables_out <- c('time', 'FLOW', 'TEMP')
+  # Outflow files carry FLOW; ELCOM requires TEMP on all BCs but GLM does not.
+  variables_out <- c('time', 'FLOW')
 
   site_id <- config$location$site_id
 

@@ -170,7 +170,10 @@ create_met_files <- function(config, lake_directory, met_forecast_start_datetime
       dplyr::mutate(time = lubridate::ymd_hm(time)) |>
       tsibble::as_tsibble(index = time, key = ensemble) |>
       tsibble::fill_gaps() |>
-      dplyr::mutate(across(AirTemp:Snow,imputeTS::na_interpolation)) |>
+      dplyr::mutate(across(AirTemp:Snow, function(x) {
+        if (sum(!is.na(x)) >= 2) imputeTS::na_interpolation(x)
+        else zoo::na.locf(zoo::na.locf(x, na.rm = FALSE), fromLast = TRUE, na.rm = FALSE)
+      })) |>
       dplyr::as_tibble() |>
       dplyr::mutate(time = format(time, format="%Y-%m-%d %H:%M", tz = "UTC"))
 
