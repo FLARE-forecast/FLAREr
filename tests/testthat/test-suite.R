@@ -266,11 +266,16 @@ test_that("initial conditions from per-ensemble parameter CSV", {
   nmembers <- config$da_setup$ensemble_size
 
   # Overwrite one free parameter (zone1temp) per ensemble member from a CSV,
-  # leaving the other parameters to be sampled from pars_config.
+  # leaving the other parameters to be sampled from pars_config. Rows are written
+  # in a shuffled order to confirm matching is by ensemble_member, not row order.
   overwrite_par <- "zone1temp"
   overwrite_vals <- seq(11.0, 11.9, length.out = nmembers)
+  shuffle <- sample(nmembers)
+  par_init_ens <- data.frame(ensemble_member = shuffle,
+                             zone1temp = overwrite_vals[shuffle])
+  names(par_init_ens)[2] <- overwrite_par
   par_init_file <- "par_init_ensemble.csv"
-  readr::write_csv(stats::setNames(data.frame(overwrite_vals), overwrite_par),
+  readr::write_csv(par_init_ens,
                    file.path(config$file_path$configuration_directory, par_init_file))
   config$model_settings$par_init_file <- par_init_file
 
@@ -289,12 +294,20 @@ test_that("initial conditions from per-ensemble parameter CSV", {
   testthat::expect_true(all(init$pars[other_index, ] >= pars_config$par_init_lowerbound[other_index] &
                               init$pars[other_index, ] <= pars_config$par_init_upperbound[other_index]))
 
-  # Wrong number of rows is an error.
-  readr::write_csv(stats::setNames(data.frame(overwrite_vals[-1]), overwrite_par),
+  # Missing ensemble_member column is an error.
+  readr::write_csv(stats::setNames(data.frame(overwrite_vals), overwrite_par),
                    file.path(config$file_path$configuration_directory, par_init_file))
   testthat::expect_error(
     FLAREr:::generate_initial_conditions(states_config, obs_config, pars_config, obs, config, obs_non_vertical),
-    "one row per ensemble member"
+    "ensemble_member"
+  )
+
+  # Wrong number of rows is an error.
+  readr::write_csv(par_init_ens[-1, ],
+                   file.path(config$file_path$configuration_directory, par_init_file))
+  testthat::expect_error(
+    FLAREr:::generate_initial_conditions(states_config, obs_config, pars_config, obs, config, obs_non_vertical),
+    "ensemble_size"
   )
 })
 

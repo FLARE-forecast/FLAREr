@@ -1,6 +1,6 @@
 #' @title Generate initial conditions for FLARE
 #' @details Function to generate initial conditions from either default values in the states_config, observations (if available), or a previous run using the output as a restart file.
-#'   For new simulations (no restart file), parameters are initialized from `pars_config`. If `config$model_settings$par_init_file` is set, the per-ensemble member parameter values in that CSV (rows = ensemble members, columns named by `par_names_save`) overwrite the config-initialized parameters; any parameter not present as a column keeps its config-sampled value.
+#'   For new simulations (no restart file), parameters are initialized from `pars_config`. If `config$model_settings$par_init_file` is set, the per-ensemble member parameter values in that CSV (an `ensemble_member` column with values `1:ensemble_size` plus one column per parameter named by `par_names_save`) overwrite the config-initialized parameters; any parameter not present as a column keeps its config-sampled value.
 #' @param states_config list; list of state configurations
 #' @param obs_config list; list of observation configurations
 #' @param pars_config list; list of parameter configurations  (Default = NULL)
@@ -206,19 +206,27 @@ generate_initial_conditions <- function(states_config,
       }
 
       # Optionally overwrite the config-initialized parameters with a per-ensemble
-      # member CSV (rows = ensemble members, columns named by par_names_save).
-      # Parameters not present as columns keep their config-sampled values.
+      # member CSV. The CSV must have an 'ensemble_member' column (values 1:nmembers)
+      # and one column per parameter named by par_names_save. Parameters not present
+      # as columns keep their config-sampled values.
       par_init_file <- config$model_settings$par_init_file
       if (!is.null(par_init_file) && !is.na(par_init_file)) {
         par_init_ens <- readr::read_csv(
           file.path(config$file_path$configuration_directory, par_init_file),
           col_types = readr::cols()
         )
-        if (nrow(par_init_ens) != nmembers) {
-          stop(paste0("par_init_file '", par_init_file, "' has ", nrow(par_init_ens),
-                      " rows but ensemble_size is ", nmembers,
-                      ". Provide exactly one row per ensemble member."))
+        if (!("ensemble_member" %in% names(par_init_ens))) {
+          stop(paste0("par_init_file '", par_init_file,
+                      "' must contain an 'ensemble_member' column identifying each member."))
         }
+        if (nrow(par_init_ens) != nmembers ||
+            !setequal(par_init_ens$ensemble_member, 1:nmembers)) {
+          stop(paste0("par_init_file '", par_init_file,
+                      "' must have exactly one row for each ensemble_member in 1:",
+                      nmembers, " (ensemble_size)."))
+        }
+        # Order rows so that row m corresponds to ensemble member m.
+        par_init_ens <- par_init_ens[order(par_init_ens$ensemble_member), ]
         for (par in 1:npars) {
           col_name <- pars_config$par_names_save[par]
           if (col_name %in% names(par_init_ens)) {

@@ -34,7 +34,7 @@ Generate initial conditions for FLARE
 }
 \details{
 Function to generate initial conditions from either default values in the states_config, observations (if available), or a previous run using the output as a restart file.
-For new simulations (no restart file), parameters are initialized from \code{pars_config}. If \code{config$model_settings$par_init_file} is set, the per-ensemble member parameter values in that CSV (rows = ensemble members, columns named by \code{par_names_save}) overwrite the config-initialized parameters; any parameter not present as a column keeps its config-sampled value.
+For new simulations (no restart file), parameters are initialized from \code{pars_config}. If \code{config$model_settings$par_init_file} is set, the per-ensemble member parameter values in that CSV (an \code{ensemble_member} column with values \code{1:ensemble_size} plus one column per parameter named by \code{par_names_save}) overwrite the config-initialized parameters; any parameter not present as a column keeps its config-sampled value.
 }
 \author{
 Quinn Thomas
