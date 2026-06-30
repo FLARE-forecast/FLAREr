@@ -235,6 +235,70 @@ test_that("initial conditions", {
 })
 
 
+test_that("initial conditions from per-ensemble parameter CSV", {
+
+  skip_on_os(c("windows", "mac"))
+
+  dir <-  file.path(normalizePath(tempdir(),  winslash = "/"))
+  lake_directory <- file.path(dir, "extdata")
+  configure_run_file <- "configure_run.yml"
+  config_set_name <- "default"
+
+  file.copy(system.file("extdata", package = "FLAREr"), dir, recursive = TRUE)
+  config <- FLAREr:::set_up_simulation(configure_run_file, lake_directory, config_set_name = config_set_name)
+  config <- FLAREr:::get_restart_file(config, lake_directory)
+  pars_config <- readr::read_csv(file.path(config$file_path$configuration_directory, config$model_settings$par_config_file), col_types = readr::cols())
+  obs_config <- readr::read_csv(file.path(config$file_path$configuration_directory, config$model_settings$obs_config_file), col_types = readr::cols())
+  states_config <- readr::read_csv(file.path(config$file_path$configuration_directory, config$model_settings$states_config_file), col_types = readr::cols())
+
+  obs_insitu_file <- file.path(config$file_path$qaqc_data_directory, config$da_setup$obs_filename)
+  obs <- FLAREr:::create_obs_matrix(cleaned_observations_file_long = obs_insitu_file,
+                                    obs_config = obs_config,
+                                    config)
+  states_config <- FLAREr:::generate_states_to_obs_mapping(states_config, obs_config)
+  obs_non_vertical <- FLAREr:::create_obs_non_vertical(cleaned_observations_file_long = file.path(config$file_path$qaqc_data_directory,paste0(config$location$site_id, "-targets-insitu.csv")),
+                                                       obs_config,
+                                                       start_datetime = config$run_config$start_datetime,
+                                                       end_datetime = config$run_config$end_datetime,
+                                                       forecast_start_datetime = config$run_config$forecast_start_datetime,
+                                                       forecast_horizon =  config$run_config$forecast_horizon)
+
+  nmembers <- config$da_setup$ensemble_size
+
+  # Overwrite one free parameter (zone1temp) per ensemble member from a CSV,
+  # leaving the other parameters to be sampled from pars_config.
+  overwrite_par <- "zone1temp"
+  overwrite_vals <- seq(11.0, 11.9, length.out = nmembers)
+  par_init_file <- "par_init_ensemble.csv"
+  readr::write_csv(stats::setNames(data.frame(overwrite_vals), overwrite_par),
+                   file.path(config$file_path$configuration_directory, par_init_file))
+  config$model_settings$par_init_file <- par_init_file
+
+  init <- FLAREr:::generate_initial_conditions(states_config,
+                                               obs_config,
+                                               pars_config,
+                                               obs,
+                                               config,
+                                               obs_non_vertical)
+
+  overwrite_index <- which(pars_config$par_names_save == overwrite_par)
+  testthat::expect_equal(as.numeric(init$pars[overwrite_index, ]), overwrite_vals)
+
+  # A parameter absent from the CSV keeps its config-sampled values within bounds.
+  other_index <- which(pars_config$par_names_save == "lw_factor")
+  testthat::expect_true(all(init$pars[other_index, ] >= pars_config$par_init_lowerbound[other_index] &
+                              init$pars[other_index, ] <= pars_config$par_init_upperbound[other_index]))
+
+  # Wrong number of rows is an error.
+  readr::write_csv(stats::setNames(data.frame(overwrite_vals[-1]), overwrite_par),
+                   file.path(config$file_path$configuration_directory, par_init_file))
+  testthat::expect_error(
+    FLAREr:::generate_initial_conditions(states_config, obs_config, pars_config, obs, config, obs_non_vertical),
+    "one row per ensemble member"
+  )
+})
+
+
 test_that("run_flare enkf and restart works", {
 
   skip_on_os(c("windows", "mac"))

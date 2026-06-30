@@ -9,7 +9,7 @@
 #' @param da_method data assimilation method
 #' @param hist_days number of simulation days before forecasting
 #' @param include_uncertainty include parameter uncertainty in forecasts
-#' @noRd
+#' @export
 #' @return vector of new parameter values for the ensemble member
 propose_parameters <- function(i, m, pars, pars_config, npars, par_fit_method, da_method, hist_days,
                                include_uncertainty){
@@ -27,7 +27,8 @@ propose_parameters <- function(i, m, pars, pars_config, npars, par_fit_method, d
       if(pars_config$fix_par[par] == 1){
         curr_pars_ens[par] <- pars_config$par_init_mean[par]
       }else{
-        if(par_fit_method == "inflate" & da_method %in% c("enkf", "etkf", "esmda", "nudging", "letkf")){
+        if(par_fit_method == "inflate" & da_method %in% c("enkf", "etkf", "esmda", "nudging", "letkf",
+                                                           "enkf_esqrt", "eakf", "eakf_local")){
           curr_pars_ens[par] <-  pars[i-1, par , m]
           if(i > (hist_days + 1) & !include_uncertainty){
             curr_pars_ens[par] <- mean(pars[i-1, par, ])

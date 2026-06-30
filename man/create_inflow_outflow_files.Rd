@@ -4,7 +4,12 @@
 \alias{create_inflow_outflow_files}
 \title{Generating inflow and outflow files in the GLM format using arrow}
 \usage{
-create_inflow_outflow_files(config, config_set_name, lake_directory)
+create_inflow_outflow_files(
+  config,
+  config_set_name,
+  lake_directory,
+  out_dir_fn = NULL
+)
 }
 \arguments{
 \item{config}{configuration file}
@@ -12,6 +17,10 @@ create_inflow_outflow_files(config, config_set_name, lake_directory)
 \item{config_set_name}{specific name of configuration within the configuration directory}
 
 \item{lake_directory}{directory for FLARE application}
+
+\item{out_dir_fn}{Optional function of the ensemble positional index (integer,
+1-based) returning the directory for that member's flow files. Passed
+through to \code{create_flow_files}. Default \code{NULL}.}
 }
 \value{
 list with two vectors. One vector is the matrix of inflow_file_names and the other is the matrix of outflow_file_names
@@ -22,4 +31,3 @@ Generating inflow and outflow files in the GLM format using arrow
 \details{
 Processes historical model data and future model files into the GLM format
 }
-\keyword{internal}

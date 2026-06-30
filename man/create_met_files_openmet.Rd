@@ -18,7 +18,9 @@ create_met_files_openmet(
   use_archive = FALSE,
   bucket = NULL,
   endpoint = NULL,
-  config = NULL
+  config = NULL,
+  include_wind_direction = FALSE,
+  out_dir_fn = NULL
 )
 }
 \arguments{
@@ -38,7 +40,7 @@ create_met_files_openmet(
 
 \item{site_id}{site code}
 
-\item{openmeteo_api}{type of weather data or forecast (ensemble_forecast, season, climate, historical)}
+\item{openmeteo_api}{type of weather data or forecast (ensemble_forecast, seasonal, climate, historical)}
 
 \item{model}{forecast model}
 
@@ -47,6 +49,17 @@ create_met_files_openmet(
 \item{bucket}{s3 bucket for archive}
 
 \item{endpoint}{s3 endpoint for archive}
+
+\item{include_wind_direction}{Logical (default \code{FALSE}); when \code{TRUE},
+adds a \code{WindDir} column to each output CSV. Only supported when
+\code{openmeteo_api = "ensemble"} and wind direction data is available from
+the OpenMeteo API; ignored for other pathways.}
+
+\item{out_dir_fn}{Optional function of the ensemble positional index (integer,
+1-based) returning the directory path for that member's met file. When
+non-NULL each file is moved to \code{out_dir_fn(i)} after writing; the
+returned filenames reflect the new locations. When NULL (default) files
+remain in \code{out_dir}.}
 }
 \value{
 list of meteorology file names
@@ -57,4 +70,3 @@ Generate GLM ready met files from open meteo
 \details{
 Generate GLM ready met files from open meteo
 }
-\keyword{internal}

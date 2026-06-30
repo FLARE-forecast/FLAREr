@@ -1,5 +1,6 @@
 #' @title Generate initial conditions for FLARE
 #' @details Function to generate initial conditions from either default values in the states_config, observations (if available), or a previous run using the output as a restart file.
+#'   For new simulations (no restart file), parameters are initialized from `pars_config`. If `config$model_settings$par_init_file` is set, the per-ensemble member parameter values in that CSV (rows = ensemble members, columns named by `par_names_save`) overwrite the config-initialized parameters; any parameter not present as a column keeps its config-sampled value.
 #' @param states_config list; list of state configurations
 #' @param obs_config list; list of observation configurations
 #' @param pars_config list; list of parameter configurations  (Default = NULL)
@@ -201,6 +202,40 @@ generate_initial_conditions <- function(states_config,
           }
         } else {
           init$pars[par, ] <- pars_config$par_init_mean[par]
+        }
+      }
+
+      # Optionally overwrite the config-initialized parameters with a per-ensemble
+      # member CSV (rows = ensemble members, columns named by par_names_save).
+      # Parameters not present as columns keep their config-sampled values.
+      par_init_file <- config$model_settings$par_init_file
+      if (!is.null(par_init_file) && !is.na(par_init_file)) {
+        par_init_ens <- readr::read_csv(
+          file.path(config$file_path$configuration_directory, par_init_file),
+          col_types = readr::cols()
+        )
+        if (nrow(par_init_ens) != nmembers) {
+          stop(paste0("par_init_file '", par_init_file, "' has ", nrow(par_init_ens),
+                      " rows but ensemble_size is ", nmembers,
+                      ". Provide exactly one row per ensemble member."))
+        }
+        for (par in 1:npars) {
+          col_name <- pars_config$par_names_save[par]
+          if (col_name %in% names(par_init_ens)) {
+            if (pars_config$fix_par[par] == 1) {
+              warning(paste0("par_init_file overwrites '", col_name,
+                             "' which has fix_par = 1; this parameter will now vary ",
+                             "across ensemble members instead of being fixed."))
+            }
+            vals <- par_init_ens[[col_name]]
+            lb <- pars_config$par_lowerbound[par]
+            ub <- pars_config$par_upperbound[par]
+            if (any(vals < lb | vals > ub, na.rm = TRUE)) {
+              warning(paste0("par_init_file values for '", col_name,
+                             "' fall outside [par_lowerbound, par_upperbound]; clamping."))
+            }
+            init$pars[par, ] <- pmax(lb, pmin(ub, vals))
+          }
         }
       }
     }

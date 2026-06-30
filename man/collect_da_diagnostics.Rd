@@ -33,4 +33,3 @@ Takes the \code{da_diag} list produced by \code{.compute_enkf_da_diag}
 plus step metadata and returns five tidy tibbles ready to accumulate and
 write to disk.
 }
-\keyword{internal}

@@ -26,4 +26,3 @@ Combines the per-step diagnostic tibbles accumulated during
 \item \code{da_ranks.parquet}         — observation rank within prior ensemble
 }
 }
-\keyword{internal}

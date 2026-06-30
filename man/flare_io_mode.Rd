@@ -20,4 +20,3 @@ cloud-backed. Falls back to \code{"s3"} with a warning when
 \code{use_faasr=TRUE} but the FaaSr RPC stubs are not loaded into
 \code{globalenv()}, i.e. when not running inside a FaaSr container.
 }
-\keyword{internal}

@@ -8,7 +8,9 @@ create_met_files(
   config,
   lake_directory,
   met_forecast_start_datetime,
-  met_start_datetime
+  met_start_datetime,
+  include_wind_direction = FALSE,
+  out_dir_fn = NULL
 )
 }
 \arguments{
@@ -32,4 +34,3 @@ Function combines historical meteorology and NOAA forecasts to create meteorolog
 \author{
 Quinn Thomas
 }
-\keyword{internal}
