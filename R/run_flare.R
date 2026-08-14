@@ -164,7 +164,7 @@ run_flare <- function(lake_directory,
                                    config)
 
 
-  obs_non_vertical <- create_obs_non_vertical(cleaned_observations_file_long = file.path(config$file_path$qaqc_data_directory,paste0(config$location$site_id, "-targets-insitu.csv")),
+  obs_non_vertical <- create_obs_non_vertical(cleaned_observations_file_long = obs_insitu_file,
                                                       obs_config,
                                                       start_datetime = config$run_config$start_datetime,
                                                       end_datetime = config$run_config$end_datetime,
@@ -261,7 +261,7 @@ run_flare <- function(lake_directory,
 
   if(config$output_settings$generate_plot){
     message("Generating plot")
-    targets_df <- read_csv(file.path(config$file_path$qaqc_data_directory,paste0(config$location$site_id, "-targets-insitu.csv")), show_col_types = FALSE)
+    targets_df <- read_csv(obs_insitu_file, show_col_types = FALSE)
 
     targets_df <- obs_config |>
       rename(variable = target_variable) |>

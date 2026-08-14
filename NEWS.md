@@ -1,3 +1,15 @@
+# FLAREr 4.0.5
+
+* minor bug fixes
+
+# FLAREr 4.0.4
+
+* debugging openmeteo integration.
+
+# FLAREr 4.0.3
+
+* openmeteo, single parmeter fitting debugging
+
 # FLAREr 4.0.2
 
 ## Features
@@ -7,7 +19,7 @@
 ## Bug fixes
 
 * missing secchi in forecast output
-* use_s3 for meterology and inflow drivers when s3 is false for forecast and score generation.
+* use_s3 for meteorology and inflow drivers when s3 is false for forecast and score generation.
 
 # FLAREr 4.0.1
 

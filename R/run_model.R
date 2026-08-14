@@ -178,7 +178,7 @@ run_model <- function(i,
   update_glm_nml_names[list_index] <- "stop"
   list_index <- list_index + 1
 
-  glm_heights_end <- rep(NA,length(max_layers))
+  glm_heights_end <- rep(NA,max_layers)
   diagnostics <- array(NA, dim = c(length(diagnostics_names),max_layers))
   x_star_end <- array(NA, dim =c(nstates, max_layers))
   native_heights_index <- which(!is.na(glm_heights_start))
@@ -426,6 +426,16 @@ run_model <- function(i,
           unlink(paste0(ens_working_directory, "/output.nc"))
 
           num_glm_heights <- length(GLM_temp_wq_out$heights)
+          if(num_glm_heights > max_layers){
+            stop(paste0(
+              "GLM produced ", num_glm_heights, " vertical layers for ensemble member ", m,
+              ", which exceeds config$model_settings$max_model_layers (", max_layers, "). ",
+              "Increase max_model_layers in configure_flare.yml -- it must be at least as large ",
+              "as the number of layers GLM can produce for this lake's depth and glm3.nml ",
+              "&morphometry min_layer_thick/min_layer_vol (and no larger than glm3.nml's own ",
+              "&morphometry max_layers)."
+            ), call. = FALSE)
+          }
           glm_heights_end[1:num_glm_heights] <- rev(GLM_temp_wq_out$heights)
           x_star_end[1,1:num_glm_heights] <- rev(GLM_temp_wq_out$output[ ,1])
           x_star_end[2,1:num_glm_heights] <- rev(GLM_temp_wq_out$output[ ,2])
