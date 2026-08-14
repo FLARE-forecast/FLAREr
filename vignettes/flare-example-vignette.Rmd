@@ -1,0 +1,241 @@
+---
+title: "FLAREr example"
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{FLAREr example}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+```{r, include = FALSE}
+knitr::opts_chunk$set(
+  collapse = TRUE,
+  comment = "#>"
+)
+```
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(dplyr)
+library(ggplot2)
+library(readr)
+library(lubridate)
+set.seed(1)
+```
+
+## Background
+
+This document serves as a users guide and a tutorial for the FLARE (Forecasting Lake and Reservoir Ecosystems) system ([Thomas et al. 2020](https://agupubs.onlinelibrary.wiley.com/doi/abs/10.1029/2019WR026138)). FLARE generates forecasts and forecast uncertainty of water temperature and water quality for 1 to 35-dau ahead time horizon at multiple depths of a lake or reservoir. It uses data assimilation to update the initial starting point for a forecast and the model parameters based a real-time statistical comparisons to observations.  It has been developed, tested, and evaluated for Falling  Creek Reservoir in Vinton,VA ([Thomas et al. 2020](https://agupubs.onlinelibrary.wiley.com/doi/abs/10.1029/2019WR026138)) and National Ecological Observatory Network lakes ([Thomas et al. 2023](https://doi.org/10.1002/fee.2623)
+
+FLARE is a set of R scripts that
+
+* Generating the inputs and configuration files required by the General Lake Model (GLM)
+* Applying data assimilation to GLM
+* Processing and archiving forecast output
+* Visualizing forecast output
+
+FLARE uses the 1-D General Lake Model ([Hipsey et al. 2019](https://www.geosci-model-dev.net/12/473/2019/)) as the mechanistic process model that predicts hydrodynamics of the lake or reservoir.  For forecasts of water quality, it uses GLM with the Aquatic Ecosystem Dynamics library.   The binaries for GLM and GLM-AED are included in the FLARE code that is available on GitHub. FLARE requires GLM version 3.3 or higher.
+
+More information about the GLM can be found here:
+
+* [GLM 3.0.0 manuscript](https://www.geosci-model-dev.net/12/473/2019/) 
+* [GLM on GitHub](https://github.com/AquaticEcoDynamics/glm-aed)
+* [GLM users guide](https://aquaticecodynamics.github.io/glm-workbook/) 
+
+FLARE development has been supported by grants from National Science Foundation (CNS-1737424, DEB-1753639, EF-1702506, DBI-1933016, DEB-1926050)
+
+## Requirements
+* [RStudio](https://rstudio.com/products/rstudio/download/)
+* `FLAREr` R package
+* `FLAREr` dependencies
+
+## 1: Set up
+
+First, install the `FLAREr` package from GitHub. There will be other required packages that will also be downloaded.
+
+```{r eval = FALSE}
+remotes::install_github("flare-forecast/FLAREr")
+```
+
+Second, download the General Lake Model (GLM) code.  You can get in using multiple pathways
+
+The easiest way is to install the `GLMAEDr` package from Github, which downloads and manages the GLM binary for you:
+
+```{r}
+remotes::install_github("flare-forecast/GLMAEDr")
+GLMAEDr::glm_install()
+Sys.setenv('GLM_PATH'=GLMAEDr::glm_path())
+```
+
+Third, create a directory that will be your working directory for your FLARE run.  To find this directory on your computer you can use `print(lake_directory)`
+
+```{r}
+lake_directory <-  normalizePath(tempdir(),  winslash = "/")
+dir.create(file.path(lake_directory, "configuration/default"), recursive = TRUE)
+dir.create(file.path(lake_directory, "targets")) # For QAQC data
+dir.create(file.path(lake_directory, "drivers")) # Weather and inflow forecasts
+```
+
+## 2: Configuration files
+
+First, `FLAREr` requires two configuration yaml files.  The code below copies examples from the `FLAREr` package.
+
+```{r}
+file.copy(system.file("extdata", "configuration", "default", "configure_flare.yml", package = "FLAREr"), file.path(lake_directory, "configuration", "default", "configure_flare.yml"))
+file.copy(system.file("extdata", "configuration", "default", "configure_run.yml", package = "FLAREr"), file.path(lake_directory, "configuration", "default", "configure_run.yml"))
+```
+
+Second, `FLAREr` requires a set of configuration CSV files.  The CSV files are used to define the states that are simulated and the parameters that are calibrated. The code below copies examples from the `FLAREr` package
+
+```{r}
+file.copy(system.file("extdata", "configuration", "default", "parameter_calibration_config.csv", package = "FLAREr"), file.path(lake_directory, "configuration", "default", "parameter_calibration_config.csv"))
+file.copy(system.file("extdata", "configuration", "default", "states_config.csv", package = "FLAREr"), file.path(lake_directory, "configuration", "default", "states_config.csv"))
+file.copy(system.file("extdata", "configuration", "default", "depth_model_sd.csv", package = "FLAREr"), file.path(lake_directory, "configuration", "default", "depth_model_sd.csv"))
+file.copy(system.file("extdata", "configuration", "default", "observations_config.csv", package = "FLAREr"), file.path(lake_directory, "configuration", "default", "observations_config.csv"))
+```
+
+Third, FLAREr requires GLM specific configurations files.  For applications that require on water temperature, only the GLM namelist file is needed.  Applications that require other water quality variables will require additional namelist files that are associated with the aed model.
+
+```{r}
+file.copy(system.file("extdata", "configuration", "default", "glm3.nml", package = "FLAREr"), file.path(lake_directory, "configuration", "default", "glm3.nml"))
+```
+
+## 3: Observation and driver files
+
+Since the FLAREr package for general application, scripts to download and process observation and drivers are not included in the package.  Therefore the application of FLARE to a lake will require a set of additional scripts that are specific to the data formats for the lakes.  The example includes files for application to FCR.  
+
+```{r}
+file.copy(from = system.file("extdata/targets", package = "FLAREr"), to = lake_directory, recursive = TRUE)
+file.copy(from = system.file("extdata/drivers", package = "FLAREr"), to = lake_directory, recursive = TRUE)
+```
+
+First, FLAREr requires the observation file to have a specific name (observations_postQAQC_long.csv) and format.
+
+```{r}
+head(read_csv(file.path(lake_directory,"targets/fcre/fcre-targets-insitu.csv"), show_col_types = FALSE))
+```
+
+## 2: Configure simulation (GLM)
+
+The configuration functions are spread across the files. These files are described in more detail below
+
+ * `glm3.nml`
+ * `configure_flare.yml`
+ * `configure_run.yml`
+ * `states_config.csv`
+ * `observations_config.csv`
+ * `parameter_calibration_config.csv`
+ * `depth_model_sd.csv`
+
+### configure_run.yml
+
+This file is the configuration file that define the specific timing of the run. 
+
+* `restart_file`: This is the full path to the file that you want to use as initial conditions for the simulation. You will set this to `NA` if the simulation is not a continuation of a previous simulation.
+* `sim_name`: a string with the name of your simulation. This will appear in your output file names
+* `forecast_days`: This is your forecast horizon. The max is `16` days. Set to `0`if only doing data assimilation with observed drivers.
+* `start_datetime`: The date time of day you want to start a forecast. Because GLM is a daily timestep model, the simulation will start at this time. It uses `YYYY-MM-DD mm:hh:ss` format and must only be a whole hour. It is in the UTC time. It can be any hour if only doing data assimilation with observed drivers (forecast_days = 0). If forecasting (forecast_days > 0) it is required to match up with the availability of a NOAA forecast. NOAA forecasts are available at the following times UTC so you must select a local time that matches one of these times (i.e., 07:00:00 at FCR is the 12:00:00 UTC NOAA forecast).
+  * 00:00:00 UTC
+  * 06:00:00 UTC
+  * 12:00:00 UTC
+  * 18:00:00 UTC
+* `forecast_start_datetime`: The date that you want forecasting to start in your simulation. Uses the YYYY-MM-DD mm:hh:ss format (e.g., "2019-09-20 00:00:00"). The difference between `start_time` and `forecast_start_datetime` determines how many days of data assimilation occur using observed drivers before handing off to forecasted drivers and not assimilating data
+* `configure_flare`: name of FLARE configuration file located in your `configuration/[config_set]` directory (`configure_flare.yml`)
+* `configure_obs`: name of optional observation processing configuration file located in your `configuration/[config_set]` directory (`configure_obs.yml`)
+* `use_s3`: use s3 cloud storage for saving forecast, scores, and restart files.
+
+### glm3.nml
+
+`glm3.nml` is the configuration file that is required by GLM.  It can be configured to run only GLM or GLM + AED.  This version is already configured to run only GLM for FCR and you do not need to modify it for the example simulation.
+
+### configure_flare.yml
+
+`configure_flare.yml` has the bulk of the configurations for FLARE that you will set once and reuse. The end of this document describes all of the configurations in `configure_flare.yml`. Later in the tutorial, you will modify key configurations in `configure_flare.yml`
+
+### states_config.csv
+
+Needs to be in `configuration/[config_set]`
+
+### observations_config.csv
+
+Needs to be in your `configuration/[config_set]`
+
+### parameter_calibration_config.csv
+
+Needs to be in your `configuration/[config_set]`
+
+## 3: Run your GLM example simulation
+
+Read configuration files
+
+The following reads in the configuration files and overwrites the directory locations based on the lake_directory and directories provided above.  In practice you will specific these directories in the configure file and not overwrite them.
+
+```{r}
+next_restart <- FLAREr::run_flare(lake_directory = lake_directory,configure_run_file = "configure_run.yml", config_set_name = "default")
+  
+```  
+
+Visualizing output
+
+```{r}
+df <- arrow::open_dataset(file.path(lake_directory,"forecasts/parquet")) |> collect()
+```
+
+```{r}
+head(df)
+```
+
+```{r}
+df |> 
+  filter(variable == "temperature",
+         depth == 1) |> 
+  ggplot(aes(x = datetime, y = prediction, group = parameter)) +
+  geom_line() +
+  geom_vline(aes(xintercept = as_datetime(reference_datetime))) +
+  labs(title = "1 m water temperature forecast")
+```
+
+
+```{r}
+targets_df <- read_csv(file.path(lake_directory, "targets/fcre/fcre-targets-insitu.csv"), show_col_types = FALSE)
+combined_df <- left_join(df, targets_df, by = join_by(datetime, depth, variable, site_id))
+combined_df |> 
+  filter(variable == "temperature",
+         depth == 1) |> 
+  ggplot(aes(x = datetime, y = prediction, group = parameter)) +
+  geom_line() +
+  geom_vline(aes(xintercept = as_datetime(reference_datetime))) +
+  geom_point(aes(y = observation), color = "red") +
+  labs(title = "1 m water temperature forecast")
+```
+
+```{r}
+df |> 
+  filter(variable == "lw_factor") |> 
+  ggplot(aes(x = datetime, y = prediction, group = parameter)) +
+  geom_line() +
+  geom_vline(aes(xintercept = as_datetime(reference_datetime))) +
+  labs(title = "lw_factor parameter")
+
+
+```
+## 5. Comparing to observations
+
+
+## 6: Modifying FLARE
+
+### Turning off data assimilation
+
+In configure_flare.yml you can change `da_method` to "none"
+
+### Removing parameter estimation
+
+Set `par_config_file = .na` in the `configure_flare.yml`
+
+### Increasing observational uncertainty
+
+The second modification you will do is to to increase the observational uncertainty. In `observations_config.csv` set `obs_sd = 1`.
+
+### Changing the ensemble size
+
+The variable `ensemble_size` allows you to adjust the size of the ensemble. 
