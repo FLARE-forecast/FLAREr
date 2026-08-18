@@ -1,0 +1,324 @@
+# Driver file formats: meteorology, inflows, and outflows
+
+This vignette describes the format FLARE expects for its three external
+driver inputs: meteorological forcing, inflows, and outflows. All three
+are stored as **Apache Parquet datasets** organised by a directory
+partitioning scheme that FLARE uses to locate the correct files for a
+given run. The formats are identical for both local and S3-hosted
+storage.
+
+## How FLARE finds driver files
+
+Every driver type has two sources that cover different time windows:
+
+| Period | Met | Inflow / Outflow |
+|----|----|----|
+| Hindcast | `historical_met_model` | `historical_inflow_model` / `historical_outflow_model` |
+| Forecast | `future_met_model` | `future_inflow_model` / `future_outflow_model` |
+
+The values of these keys in `configure_flare.yml` are path templates
+evaluated with
+[`glue::glue()`](https://glue.tidyverse.org/reference/glue.html). Two
+variables are substituted at runtime:
+
+- `{reference_date}` — the forecast issue date (`YYYY-MM-DD`)
+- `{site_id}` — the four-letter site code from `location$site_id`
+
+These templates are appended to `local_met_directory` (or the S3 bucket)
+to form the full path. For example, with the default configuration:
+
+``` yaml
+met:
+  local_met_directory: drivers/met
+  future_met_model: gefs/st2/reference_datetime={reference_date}/site_id={site_id}
+  historical_met_model: gefs/stage3/site_id={site_id}
+```
+
+FLARE looks for forecast met data at:
+
+    drivers/met/gefs/st2/reference_datetime=2022-10-02/site_id=fcre/
+
+and historical met data at:
+
+    drivers/met/gefs/stage3/site_id=fcre/
+
+The directory leaf must contain one or more Parquet files (the naming of
+individual files does not matter; FLARE opens the whole directory as an
+Arrow dataset).
+
+------------------------------------------------------------------------
+
+## Meteorological drivers
+
+### Overview
+
+FLARE expects met data in a **long format** (one row per variable per
+timestep per ensemble member). Data must be hourly and in UTC. The
+required variables are listed below.
+
+### Required columns
+
+| Column       | Type        | Description                                       |
+|--------------|-------------|---------------------------------------------------|
+| `datetime`   | POSIXct UTC | Timestamp of the observation or forecast (hourly) |
+| `variable`   | character   | Variable name (see table below)                   |
+| `prediction` | numeric     | Value in the units listed below                   |
+| `parameter`  | integer     | Ensemble member index (1-based)                   |
+| `family`     | character   | `"ensemble"`                                      |
+
+Additional columns (`horizon`, `reference_datetime`, `longitude`,
+`latitude`, `height`, `forecast_valid`) may be present and are silently
+ignored.
+
+### Required variables
+
+| `variable` value | Units | Notes |
+|----|----|----|
+| `air_temperature` | K | Kelvin; converted to °C internally |
+| `surface_downwelling_shortwave_flux_in_air` | W m⁻² |  |
+| `surface_downwelling_longwave_flux_in_air` | W m⁻² |  |
+| `relative_humidity` | fraction 0–1 | Converted to % internally |
+| `eastward_wind` | m s⁻¹ | Used with `northward_wind` to compute wind speed |
+| `northward_wind` | m s⁻¹ | Used with `eastward_wind` to compute wind speed |
+| `precipitation_flux` | kg m⁻² s⁻¹ | Converted to mm day⁻¹ (or mm hr⁻¹ for LER) internally |
+| `air_pressure` | Pa | Optional; ignored by GLM but may be present |
+
+If your source provides `wind_speed` (scalar) instead of the two
+directional components, that column is also accepted.
+
+### Ensemble members
+
+Both the historical and forecast datasets must have the same number of
+ensemble members, matching `ensemble_size` in `configure_flare.yml`. For
+the historical period, if only observations are available, replicate
+them across all ensemble members (same value, different `parameter`
+values):
+
+``` r
+
+n_members <- 31
+
+obs_met |>
+  mutate(parameter = 1) |>
+  reframe(
+    prediction = rnorm(n_members, mean = prediction, sd = 0),
+    parameter  = seq_len(n_members),
+    .by = c(datetime, variable)
+  ) |>
+  arrow::write_dataset(
+    path = file.path(lake_directory, "drivers/met/obs/site_id=fcre")
+  )
+```
+
+### Historical vs. forecast directory structure
+
+**Historical** data (used to force the hindcast period) is stored in a
+single partitioned directory without a `reference_datetime` level. All
+ensemble members and all dates live in the same dataset:
+
+    drivers/met/
+    └── gefs/stage3/
+        └── site_id=fcre/
+            └── part-0.parquet
+
+**Forecast** data (used to force the forecast period) is partitioned by
+issue date so that each day’s forecast is stored separately:
+
+    drivers/met/
+    └── gefs/st2/
+        └── reference_datetime=2022-10-02/
+        │   └── site_id=fcre/
+        │       └── part-0.parquet
+        └── reference_datetime=2022-10-03/
+            └── site_id=fcre/
+                └── part-0.parquet
+
+### Minimal example
+
+``` r
+
+library(dplyr)
+library(arrow)
+
+met_df <- tibble(
+  datetime   = rep(seq(as.POSIXct("2022-10-02", tz = "UTC"),
+                       as.POSIXct("2022-10-18", tz = "UTC"),
+                       by = "1 hour"), each = 31),
+  variable   = "air_temperature",
+  prediction = rnorm(n(), mean = 285, sd = 3),  # Kelvin
+  parameter  = rep(1:31, times = 17 * 24),
+  family     = "ensemble"
+)
+
+# repeat for each of the 8 required variables, then write:
+write_dataset(met_df,
+              path = "drivers/met/gefs/st2/reference_datetime=2022-10-02/site_id=fcre",
+              format = "parquet")
+```
+
+------------------------------------------------------------------------
+
+## Inflow drivers
+
+### Overview
+
+Inflow files describe water entering the lake (streams, groundwater
+seeps, direct precipitation-driven runoff). Multiple separate inflows
+are supported via the `flow_number` column. Inflow data is daily.
+
+### Required columns
+
+| Column | Type | Description |
+|----|----|----|
+| `datetime` | Date or POSIXct UTC | Daily timestep |
+| `variable` | character | `"FLOW"`, `"TEMP"`, or `"SALT"` (or WQ state names) |
+| `prediction` | numeric | Value in the units listed below |
+| `flow_number` | integer | Inflow index (1-based); use `1` if there is only one inflow |
+| `parameter` | integer | Ensemble member index (1-based) |
+
+A `site_id` column may be present and is ignored.
+
+### Required variables
+
+| `variable` value | Units  | Description                                  |
+|------------------|--------|----------------------------------------------|
+| `FLOW`           | m³ s⁻¹ | Volumetric flow rate                         |
+| `TEMP`           | °C     | Inflow water temperature                     |
+| `SALT`           | g kg⁻¹ | Inflow salinity (set to `0` for fresh water) |
+
+If the simulation includes **water quality states** (GLM-AED), add one
+column per WQ state using the same names as in `states_config.csv`. The
+state names must match exactly (e.g., OXY_oxy). Rows for states that are
+not present in `states_config.csv` are silently ignored.
+
+### Multiple inflows
+
+Add additional inflows by increasing `flow_number`. Each `flow_number`
+value represents one physical inflow (e.g. a tributary or a direct
+groundwater input). All `flow_number` values must be present in both the
+historical and forecast datasets.
+
+### Directory structure
+
+Follows the same convention as met files:
+
+    drivers/iflow/
+    ├── h/                                     # historical
+    │   └── model_id=h/
+    │       └── site_id=fcre/
+    │           └── part-0.parquet
+    └── f/                                     # forecast
+        └── model_id=h/
+            └── reference_datetime=2022-10-02/
+            │   └── site_id=fcre/
+            │       └── p.parquet
+            └── reference_datetime=2022-10-03/
+                └── site_id=fcre/
+                    └── p.parquet
+
+The template in `configure_flare.yml` resolves to these paths:
+
+``` yaml
+flows:
+  local_inflow_directory: drivers/iflow
+  historical_inflow_model: h/model_id=h/site_id={site_id}
+  future_inflow_model:     f/model_id=h/reference_datetime={reference_date}/site_id={site_id}
+```
+
+### Minimal example (single inflow, temperature only)
+
+``` r
+
+library(dplyr)
+library(arrow)
+
+dates <- seq(as.Date("2022-09-28"), as.Date("2022-10-18"), by = "1 day")
+
+inflow_df <- bind_rows(
+  tibble(datetime = dates, variable = "FLOW",
+         prediction = 0.005, flow_number = 1L, parameter = 1L),
+  tibble(datetime = dates, variable = "TEMP",
+         prediction = 10,   flow_number = 1L, parameter = 1L),
+  tibble(datetime = dates, variable = "SALT",
+         prediction = 0,    flow_number = 1L, parameter = 1L)
+)
+
+# Historical (no reference_datetime partition)
+write_dataset(inflow_df,
+              path = "drivers/iflow/h/model_id=h/site_id=fcre",
+              format = "parquet")
+
+# Forecast (partitioned by issue date)
+write_dataset(inflow_df |> filter(datetime >= "2022-10-02"),
+              path = "drivers/iflow/f/model_id=h/reference_datetime=2022-10-02/site_id=fcre",
+              format = "parquet")
+```
+
+------------------------------------------------------------------------
+
+## Outflow drivers
+
+### Overview
+
+Outflow files describe water leaving the lake (dam releases, overflow,
+outlets). The format is a subset of the inflow format — only `FLOW` is
+required; temperature and salinity are not needed because outflow
+properties are determined by the model state at the outlet depth.
+
+### Required columns
+
+| Column        | Type                | Description                     |
+|---------------|---------------------|---------------------------------|
+| `datetime`    | Date or POSIXct UTC | Daily timestep                  |
+| `variable`    | character           | `"FLOW"`                        |
+| `prediction`  | numeric             | Volumetric flow rate (m³ s⁻¹)   |
+| `flow_number` | integer             | Outlet index (1-based)          |
+| `parameter`   | integer             | Ensemble member index (1-based) |
+
+### Directory structure
+
+Identical in layout to inflow files, using `local_outflow_directory`:
+
+    drivers/oflow/
+    ├── h/
+    │   └── model_id=h/
+    │       └── site_id=fcre/
+    │           └── p.parquet
+    └── f/
+        └── model_id=h/
+            └── reference_datetime=2022-10-02/
+                └── site_id=fcre/
+                    └── p.parquet
+
+------------------------------------------------------------------------
+
+## Common issues
+
+**FLARE cannot find met/inflow files.** The most common cause is a
+mismatch between the `future_met_model` path template and the actual
+directory structure. Print the resolved path to diagnose:
+
+``` r
+
+config <- yaml::read_yaml("configuration/default/configure_flare.yml")
+glue::glue(config$met$future_met_model,
+           reference_date = "2022-10-02",
+           site_id = "fcre")
+```
+
+**Date gaps in the historical record.** FLARE interpolates small gaps in
+met data using
+[`imputeTS::na_interpolation()`](https://SteffenMoritz.github.io/imputeTS/reference/na_interpolation.html).
+Gaps longer than a few days will cause degraded forecast quality. For
+inflow and outflow, no interpolation is performed — missing dates will
+cause GLM to use zero flow for that timestep.
+
+**Forecast does not cover the full horizon.** If the forecast met
+dataset ends before `forecast_start_datetime + forecast_horizon` days,
+FLARE will stop with an error. Ensure the forecast file covers at least
+`forecast_horizon + 1` days beyond the issue date.
+
+**Multiple inflows with mismatched `flow_number` values.** The set of
+`flow_number` values in the historical and forecast inflow datasets must
+be identical. If the historical file has `flow_number` 1 and 2 but the
+forecast file only has 1, FLARE will error.
