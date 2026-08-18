@@ -52,6 +52,7 @@
    ionic = 0.1
    co2_piston_model = 1
    ch4_initial = 5
+   simCH4 = .true.
    Rch4ox = 0.2
    Kch4ox = 0.2
    vTch4ox = 1.2
