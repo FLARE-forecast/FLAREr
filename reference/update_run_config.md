@@ -103,7 +103,7 @@ file.copy(system.file("extdata", package = "FLAREr"),
           recursive = TRUE)
 #> [1] TRUE
 print(lake_directory)
-#> [1] "/tmp/RtmpxWpUHz/extdata"
+#> [1] "/tmp/RtmpznmqY1/extdata"
 dir.create(file.path(lake_directory, "restart/fcre/test"),
            recursive = TRUE,
            showWarnings = FALSE)

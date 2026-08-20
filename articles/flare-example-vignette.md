@@ -261,92 +261,92 @@ next_restart <- FLAREr::run_flare(lake_directory = lake_directory,configure_run_
 #> Creating inflow/outflow files...
 #> Setting states and initial conditions...
 #> Warning: Unknown or uninitialised column: `assimilate`.
-#> Running time step 1/20 : 2022-09-28 00:00 - 2022-09-29 00:00 [2026-08-18 19:56:48.714805]
+#> Running time step 1/20 : 2022-09-28 00:00 - 2022-09-29 00:00 [2026-08-20 17:35:57.631042]
 #> performing data assimilation
 #> zone1temp: mean 11.188 sd 1.1821
 #> zone2temp: mean 14.5435 sd 1.3112
 #> lw_factor: mean 0.9813 sd 0.0533
-#> Running time step 2/20 : 2022-09-29 00:00 - 2022-09-30 00:00 [2026-08-18 19:56:54.45889]
+#> Running time step 2/20 : 2022-09-29 00:00 - 2022-09-30 00:00 [2026-08-20 17:36:03.393963]
 #> performing data assimilation
 #> zone1temp: mean 11.7664 sd 1.4657
 #> zone2temp: mean 14.5105 sd 1.5636
 #> lw_factor: mean 0.9975 sd 0.0479
-#> Running time step 3/20 : 2022-09-30 00:00 - 2022-10-01 00:00 [2026-08-18 19:57:00.600236]
+#> Running time step 3/20 : 2022-09-30 00:00 - 2022-10-01 00:00 [2026-08-20 17:36:12.351299]
 #> performing data assimilation
 #> zone1temp: mean 12.3533 sd 1.5439
 #> zone2temp: mean 14.8564 sd 2.0016
 #> lw_factor: mean 0.9934 sd 0.047
-#> Running time step 4/20 : 2022-10-01 00:00 - 2022-10-02 00:00 [2026-08-18 19:57:06.887583]
+#> Running time step 4/20 : 2022-10-01 00:00 - 2022-10-02 00:00 [2026-08-20 17:36:18.162487]
 #> performing data assimilation
 #> zone1temp: mean 11.9662 sd 1.3712
 #> zone2temp: mean 14.6174 sd 2.0034
 #> lw_factor: mean 0.9992 sd 0.0453
-#> Running time step 5/20 : 2022-10-02 00:00 - 2022-10-03 00:00 [2026-08-18 19:57:12.970921]
+#> Running time step 5/20 : 2022-10-02 00:00 - 2022-10-03 00:00 [2026-08-20 17:36:22.913521]
 #> zone1temp: mean 11.9904 sd 1.6024
 #> zone2temp: mean 14.353 sd 2.0466
 #> lw_factor: mean 0.9977 sd 0.054
-#> Running time step 6/20 : 2022-10-03 00:00 - 2022-10-04 00:00 [2026-08-18 19:57:19.04611]
+#> Running time step 6/20 : 2022-10-03 00:00 - 2022-10-04 00:00 [2026-08-20 17:36:27.999557]
 #> zone1temp: mean 12.352 sd 1.6812
 #> zone2temp: mean 14.1183 sd 2.107
 #> lw_factor: mean 1.0023 sd 0.0579
-#> Running time step 7/20 : 2022-10-04 00:00 - 2022-10-05 00:00 [2026-08-18 19:57:25.255808]
+#> Running time step 7/20 : 2022-10-04 00:00 - 2022-10-05 00:00 [2026-08-20 17:36:35.033207]
 #> zone1temp: mean 12.528 sd 1.9128
 #> zone2temp: mean 14.143 sd 2.4284
 #> lw_factor: mean 0.9989 sd 0.0584
-#> Running time step 8/20 : 2022-10-05 00:00 - 2022-10-06 00:00 [2026-08-18 19:57:31.440991]
+#> Running time step 8/20 : 2022-10-05 00:00 - 2022-10-06 00:00 [2026-08-20 17:36:39.690692]
 #> zone1temp: mean 12.7071 sd 2.0838
 #> zone2temp: mean 14.0597 sd 2.7414
 #> lw_factor: mean 0.9961 sd 0.0604
-#> Running time step 9/20 : 2022-10-06 00:00 - 2022-10-07 00:00 [2026-08-18 19:57:37.606032]
+#> Running time step 9/20 : 2022-10-06 00:00 - 2022-10-07 00:00 [2026-08-20 17:36:44.836219]
 #> zone1temp: mean 12.6385 sd 2.7449
 #> zone2temp: mean 14.1229 sd 2.8831
 #> lw_factor: mean 0.9958 sd 0.0655
-#> Running time step 10/20 : 2022-10-07 00:00 - 2022-10-08 00:00 [2026-08-18 19:57:43.807696]
+#> Running time step 10/20 : 2022-10-07 00:00 - 2022-10-08 00:00 [2026-08-20 17:36:50.472121]
 #> zone1temp: mean 12.8744 sd 3.0863
 #> zone2temp: mean 14.5036 sd 3.421
 #> lw_factor: mean 0.9959 sd 0.0679
-#> Running time step 11/20 : 2022-10-08 00:00 - 2022-10-09 00:00 [2026-08-18 19:57:50.062257]
+#> Running time step 11/20 : 2022-10-08 00:00 - 2022-10-09 00:00 [2026-08-20 17:36:56.321451]
 #> zone1temp: mean 12.9975 sd 3.1569
 #> zone2temp: mean 14.6116 sd 3.3147
 #> lw_factor: mean 0.9906 sd 0.0688
-#> Running time step 12/20 : 2022-10-09 00:00 - 2022-10-10 00:00 [2026-08-18 19:57:56.361273]
+#> Running time step 12/20 : 2022-10-09 00:00 - 2022-10-10 00:00 [2026-08-20 17:37:02.919452]
 #> zone1temp: mean 13.0151 sd 3.592
 #> zone2temp: mean 14.7904 sd 3.5892
 #> lw_factor: mean 0.9831 sd 0.0729
-#> Running time step 13/20 : 2022-10-10 00:00 - 2022-10-11 00:00 [2026-08-18 19:58:02.631475]
+#> Running time step 13/20 : 2022-10-10 00:00 - 2022-10-11 00:00 [2026-08-20 17:37:07.902837]
 #> zone1temp: mean 13.1916 sd 3.745
 #> zone2temp: mean 14.7768 sd 3.7286
 #> lw_factor: mean 0.981 sd 0.0707
-#> Running time step 14/20 : 2022-10-11 00:00 - 2022-10-12 00:00 [2026-08-18 19:58:08.95817]
+#> Running time step 14/20 : 2022-10-11 00:00 - 2022-10-12 00:00 [2026-08-20 17:37:13.720685]
 #> zone1temp: mean 13.133 sd 3.9506
 #> zone2temp: mean 14.5343 sd 3.9267
 #> lw_factor: mean 0.9869 sd 0.079
-#> Running time step 15/20 : 2022-10-12 00:00 - 2022-10-13 00:00 [2026-08-18 19:58:15.190258]
+#> Running time step 15/20 : 2022-10-12 00:00 - 2022-10-13 00:00 [2026-08-20 17:37:19.458425]
 #> zone1temp: mean 13.3424 sd 4.1387
 #> zone2temp: mean 14.7532 sd 3.8953
 #> lw_factor: mean 0.9856 sd 0.085
-#> Running time step 16/20 : 2022-10-13 00:00 - 2022-10-14 00:00 [2026-08-18 19:58:21.459053]
+#> Running time step 16/20 : 2022-10-13 00:00 - 2022-10-14 00:00 [2026-08-20 17:37:25.401447]
 #> zone1temp: mean 13.1681 sd 4.0783
 #> zone2temp: mean 14.6548 sd 4.2755
 #> lw_factor: mean 0.9787 sd 0.0871
-#> Running time step 17/20 : 2022-10-14 00:00 - 2022-10-15 00:00 [2026-08-18 19:58:27.754474]
+#> Running time step 17/20 : 2022-10-14 00:00 - 2022-10-15 00:00 [2026-08-20 17:37:31.091883]
 #> zone1temp: mean 12.8269 sd 4.4543
 #> zone2temp: mean 14.6539 sd 4.0511
 #> lw_factor: mean 0.9766 sd 0.0899
-#> Running time step 18/20 : 2022-10-15 00:00 - 2022-10-16 00:00 [2026-08-18 19:58:34.033834]
+#> Running time step 18/20 : 2022-10-15 00:00 - 2022-10-16 00:00 [2026-08-20 17:37:36.969649]
 #> zone1temp: mean 12.689 sd 4.9591
 #> zone2temp: mean 14.651 sd 4.1249
 #> lw_factor: mean 0.9749 sd 0.0922
-#> Running time step 19/20 : 2022-10-16 00:00 - 2022-10-17 00:00 [2026-08-18 19:58:40.350389]
+#> Running time step 19/20 : 2022-10-16 00:00 - 2022-10-17 00:00 [2026-08-20 17:37:42.597151]
 #> zone1temp: mean 12.6355 sd 5.0001
 #> zone2temp: mean 14.3843 sd 4.2505
 #> lw_factor: mean 0.9789 sd 0.0932
-#> Running time step 20/20 : 2022-10-17 00:00 - 2022-10-18 00:00 [2026-08-18 19:58:46.689139]
+#> Running time step 20/20 : 2022-10-17 00:00 - 2022-10-18 00:00 [2026-08-20 17:37:47.798636]
 #> zone1temp: mean 12.3381 sd 5.4279
 #> zone2temp: mean 14.603 sd 4.5023
 #> lw_factor: mean 0.9757 sd 0.0988
 #> Writing restart
-#> GLM restart zip written to: /tmp/RtmpY5oAan/restart/fcre/test/fcre-2022-10-02-test.zip
+#> GLM restart zip written to: /tmp/Rtmpc23qvM/restart/fcre/test/fcre-2022-10-02-test.zip
 #> writing forecast
 #> successfully generated flare forecats for: fcre-2022-10-02-test
 ```
@@ -364,12 +364,12 @@ head(df)
 #> # A tibble: 6 × 14
 #>   reference_datetime  datetime            pub_datetime        depth family  
 #>   <dttm>              <dttm>              <dttm>              <dbl> <chr>   
-#> 1 2022-10-02 00:00:00 2022-09-28 00:00:00 2026-08-18 19:58:53     0 ensemble
-#> 2 2022-10-02 00:00:00 2022-09-28 00:00:00 2026-08-18 19:58:53     0 ensemble
-#> 3 2022-10-02 00:00:00 2022-09-28 00:00:00 2026-08-18 19:58:53     0 ensemble
-#> 4 2022-10-02 00:00:00 2022-09-28 00:00:00 2026-08-18 19:58:53     0 ensemble
-#> 5 2022-10-02 00:00:00 2022-09-28 00:00:00 2026-08-18 19:58:53     0 ensemble
-#> 6 2022-10-02 00:00:00 2022-09-28 00:00:00 2026-08-18 19:58:53     0 ensemble
+#> 1 2022-10-02 00:00:00 2022-09-28 00:00:00 2026-08-20 17:37:52     0 ensemble
+#> 2 2022-10-02 00:00:00 2022-09-28 00:00:00 2026-08-20 17:37:52     0 ensemble
+#> 3 2022-10-02 00:00:00 2022-09-28 00:00:00 2026-08-20 17:37:52     0 ensemble
+#> 4 2022-10-02 00:00:00 2022-09-28 00:00:00 2026-08-20 17:37:52     0 ensemble
+#> 5 2022-10-02 00:00:00 2022-09-28 00:00:00 2026-08-20 17:37:52     0 ensemble
+#> 6 2022-10-02 00:00:00 2022-09-28 00:00:00 2026-08-20 17:37:52     0 ensemble
 #> # ℹ 9 more variables: parameter <int>, variable <chr>, prediction <dbl>,
 #> #   forecast <dbl>, variable_type <chr>, log_weight <dbl>, site_id <chr>,
 #> #   model_id <chr>, reference_date <chr>
