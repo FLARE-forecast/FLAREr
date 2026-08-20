@@ -457,11 +457,11 @@ test_that("open meteo run works", {
   skip_on_os(c("windows", "mac"))
   skip_if_offline()
   skip_on_cran()
-  skip_if_not_installed("GLM3r")
+  skip_if_not_installed("GLMAEDr")
 
   remotes::install_github("flare-forecast/ropenmeteo")
 
-  Sys.setenv('GLM_PATH'=GLMAEDr::glm_path())
+  Sys.setenv('GLM_PATH'='GLMAEDr')
 
   dir <-  file.path(normalizePath(tempdir(),  winslash = "/"))
   lake_directory <- file.path(dir, "extdata")

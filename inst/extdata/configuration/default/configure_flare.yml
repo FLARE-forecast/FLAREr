@@ -67,7 +67,7 @@ met:
    forecast_lag_days: 0
    use_ler_vars: FALSE
    use_openmeteo: FALSE
-   openmeteo_api: "ensemble_forecast"
+   openmeteo_api: "ensemble"
    openmeteo_model: "gfs_seamless"
    use_openmeteo_archive: FALSE
    local_met_directory: drivers/met

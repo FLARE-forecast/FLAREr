@@ -382,7 +382,7 @@ settings, inputs, and outputs.
 
 -   **openmeteo_api:** Open-Meteo API endpoint to use (only when
     `use_openmeteo: TRUE`); options are `seasonal`,
-    `ensemble_forecast`, `historical`, `climate`
+    `ensemble`, `historical`, `climate`
 
 -   **openmeteo_model:** Open-Meteo model name (only when
     `use_openmeteo: TRUE`); see <https://open-meteo.com/en/docs> for
