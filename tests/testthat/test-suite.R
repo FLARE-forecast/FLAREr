@@ -379,7 +379,7 @@ test_that("run_flare aed works", {
   skip_if_offline()
   skip_on_cran()
 
-  Sys.setenv('GLM_PATH'=GLMAEDr::glm_path())
+  Sys.setenv('GLM_PATH'='GLMAEDr')
 
   dir <-  file.path(normalizePath(tempdir(),  winslash = "/"))
   lake_directory <- file.path(dir, "extdata")

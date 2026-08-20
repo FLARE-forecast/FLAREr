@@ -646,7 +646,7 @@ run_da_forecast <- function(states_init,
       step_inputs <- lapply(seq_len(nmembers), function(m) {
         # In forecast mode with weather uncertainty disabled, all members
         # share the deterministic (first) met file.
-        curr_met_file <- if (!config$uncertainty$weather & i > (hist_days + 1)) {
+        curr_met_file <- if (!config$uncertainty$weather & i >= (hist_days + 1)) {
           met_file_names[met_index[1]]
         } else {
           met_file_names[met_index[m]]
