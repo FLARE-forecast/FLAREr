@@ -404,10 +404,17 @@ settings, inputs, and outputs.
     (`TRUE` or `FALSE`)
 
 -   **weather:** use multiple weather forecast ensemble members (`TRUE`
-    or `FALSE`)
+    or `FALSE`). When `FALSE`, weather ensemble member 1 is used for all FLARE
+    ensemble members throughout the forecast period, so every member is forced
+    by the same meteorology. The hindcast period, including the final
+    assimilation step, still uses the full weather ensemble.
 
--   **initial_condition:** include uncertainty in states at forecast
-    initiation (`TRUE` or `FALSE`)
+-   **initial_condition:** include ensemble spread in the model states at
+    forecast initiation (`TRUE` or `FALSE`). When `FALSE`, on the first
+    forecast day (`forecast_start_datetime`) ensemble member 1's model states
+    and GLM restart file are copied to every ensemble member, so the forecast
+    propagates from a single initial condition. Parameters are not affected --
+    parameter spread is controlled by **parameter**.
 
 -   **parameter:** include parameter uncertainty during the forecast
     (`TRUE` or `FALSE`)

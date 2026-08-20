@@ -405,6 +405,8 @@ run_da_forecast <- function(states_init,
     config$da_setup$esmda_iterations <- 4L
   }
 
+  config <- apply_uncertainty_defaults(config)
+
 
   ### START EnKF
 
@@ -431,6 +433,38 @@ run_da_forecast <- function(states_init,
   member_aed_nml <- vector("list", nmembers)
 
   da_diag_steps <- list()
+
+  # When hist_days == 0 and assimilate_first_step is FALSE, start_step is 2 and
+  # time index 1 -- which *is* the forecast start -- is never visited inside the
+  # loop below. Collapse it here instead. Must run after the per-member
+  # directory setup above, which restores restart files unpacked from the zip.
+  if ((hist_days + 1) < start_step && isFALSE(config$uncertainty$initial_condition)) {
+    collapsed <- collapse_states_to_member1(
+      list(
+        states_height          = states_height,
+        states_depth           = states_depth,
+        model_internal_heights = model_internal_heights,
+        lake_depth             = lake_depth,
+        snow_ice_thickness     = snow_ice_thickness,
+        diagnostics            = diagnostics,
+        diagnostics_daily      = diagnostics_daily,
+        log_particle_weights   = log_particle_weights
+      ),
+      idx = 1
+    )
+    states_height          <- collapsed$states_height
+    states_depth           <- collapsed$states_depth
+    model_internal_heights <- collapsed$model_internal_heights
+    lake_depth             <- collapsed$lake_depth
+    snow_ice_thickness     <- collapsed$snow_ice_thickness
+    diagnostics            <- collapsed$diagnostics
+    diagnostics_daily      <- collapsed$diagnostics_daily
+    log_particle_weights   <- collapsed$log_particle_weights
+
+    if (has_zip_restart) {
+      collapse_glm_restart_to_member1(working_directory, nmembers)
+    }
+  }
 
   for (i in start_step:nsteps) {
     if (i > 1) {
@@ -612,7 +646,7 @@ run_da_forecast <- function(states_init,
       step_inputs <- lapply(seq_len(nmembers), function(m) {
         # In forecast mode with weather uncertainty disabled, all members
         # share the deterministic (first) met file.
-        curr_met_file <- if (!config$uncertainty$weather & i >= (hist_days + 1)) {
+        curr_met_file <- if (!config$uncertainty$weather & i > (hist_days + 1)) {
           met_file_names[met_index[1]]
         } else {
           met_file_names[met_index[m]]
@@ -877,17 +911,6 @@ run_da_forecast <- function(states_init,
 
 
       if (npars > 0) pars[i, , ] <- pars_corr
-
-      # At the history/forecast boundary, collapse ensemble spread to the
-      # ensemble mean when initial-condition uncertainty is disabled.
-      if (i == (hist_days + 1) && config$uncertainty$initial_condition == FALSE) {
-        if (npars > 0) pars[i, , ] <- pars_corr
-        for (s in 1:nstates) {
-          for (k in 1:ndepths_modeled) {
-            states_depth[i, s, k, ] <- mean(states_depth_wo_noise[s, k, ])
-          }
-        }
-      }
 
       for (s in 1:nstates) {
         for (m in 1:nmembers) {
@@ -1272,6 +1295,48 @@ run_da_forecast <- function(states_init,
       }
     }
 
+    # Deterministic forecast initial conditions: on the first forecast day give
+    # every member ensemble member 1's model states and GLM restart file, so the
+    # forecast propagates from a single initial condition. Runs after the DA /
+    # no-DA branches join so it applies either way, and writes the [i, ...]
+    # slices that seed step i + 1. Parameters are deliberately left alone --
+    # parameter spread is governed by config$uncertainty$parameter.
+    if (i == (hist_days + 1) && isFALSE(config$uncertainty$initial_condition)) {
+      collapsed <- collapse_states_to_member1(
+        list(
+          states_height          = states_height,
+          states_depth           = states_depth,
+          model_internal_heights = model_internal_heights,
+          lake_depth             = lake_depth,
+          snow_ice_thickness     = snow_ice_thickness,
+          diagnostics            = diagnostics,
+          diagnostics_daily      = diagnostics_daily,
+          log_particle_weights   = log_particle_weights
+        ),
+        idx = i
+      )
+      states_height          <- collapsed$states_height
+      states_depth           <- collapsed$states_depth
+      model_internal_heights <- collapsed$model_internal_heights
+      lake_depth             <- collapsed$lake_depth
+      snow_ice_thickness     <- collapsed$snow_ice_thickness
+      diagnostics            <- collapsed$diagnostics
+      diagnostics_daily      <- collapsed$diagnostics_daily
+      log_particle_weights   <- collapsed$log_particle_weights
+
+      collapse_glm_restart_to_member1(working_directory, nmembers)
+
+      # The restart bytes for this date were staged before the collapse; keep
+      # the staged copy consistent with what is now on disk.
+      collapse_date_label <- format(as.Date(full_time[i]), "%Y-%m-%d")
+      staged <- glm_restart_staged[[collapse_date_label]]
+      if (!is.null(staged) && !is.null(staged[["glm_restart_1.nc"]])) {
+        for (m in seq_len(nmembers)) {
+          staged[[paste0("glm_restart_", m, ".nc")]] <- staged[["glm_restart_1.nc"]]
+        }
+        glm_restart_staged[[collapse_date_label]] <- staged
+      }
+    }
 
     ###############
 

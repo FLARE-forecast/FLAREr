@@ -168,8 +168,7 @@ generate_initial_conditions <- function(states_config,
                                       model_internal_heights_ens =  init$model_internal_heights[ ,m],
                                       lake_depth_ens = init$lake_depth[m],
                                       modeled_depths = config$model_settings$modeled_depths,
-                                      vert_decorr_length = states_config$vert_decorr_length,
-                                      include_uncertainty = config$uncertainty$initial_condition)
+                                      vert_decorr_length = states_config$vert_decorr_length)
 
       init$states[,1:ndepths_modeled , m] <- with_noise$states_height_ens
 

@@ -1,3 +1,18 @@
+# FLAREr 4.0.6
+
+* `uncertainty: initial_condition: FALSE` now gives every ensemble member
+  ensemble member 1's model states and GLM restart file on the first forecast
+  day, so the forecast propagates from a single initial condition. Previously
+  the flag only rewrote one timestep of the output array and was ignored
+  whenever data assimilation ran at the forecast boundary. Parameters are
+  unaffected.
+* `uncertainty: weather: FALSE` now switches to a single meteorological
+  ensemble member on the first forecast step rather than one step earlier, so
+  the final assimilation step keeps its full met ensemble. This matches the
+  `process`, `inflow`, and `parameter` flags and changes results for existing
+  `weather: FALSE` runs.
+* Missing `uncertainty:` flags now default to TRUE instead of erroring.
+
 # FLAREr 4.0.5
 
 * minor bug fixes

@@ -649,6 +649,9 @@ its sources. For example:
   meteorological forcing.
 - Set `parameter: FALSE` to propagate the ensemble-mean parameter value
   rather than the full parameter distribution.
+- Set `initial_condition: FALSE` to start every member from ensemble member
+  1's states and GLM restart file on the first forecast day, removing initial
+  condition spread while leaving the parameter ensemble intact.
 - Set all flags to `FALSE` to produce a deterministic ensemble where all
   members are identical — useful as a benchmark.
 
