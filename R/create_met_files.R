@@ -4,8 +4,6 @@
 ##' @param lake_directory directory of lake configurations
 ##' @param met_forecast_start_datetime start datetime of met forecasts
 ##' @param met_start_datetime start datetime of met simulation
-##' @param include_wind_direction Logical (default FALSE); when TRUE, adds a WindDir column to each output CSV.
-##' @param out_dir_fn Optional function of the ensemble positional index (integer, 1-based) returning the directory path for that member's met file. When non-NULL each file is written to out_dir_fn(i); when NULL (default) files remain in the run's execute directory.
 ##' @return list; vector of full path for the converted files and boolean flag if issues with historical meteorology files
 ##' @import dplyr
 ##' @export

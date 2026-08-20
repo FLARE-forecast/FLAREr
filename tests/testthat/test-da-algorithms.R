@@ -228,7 +228,6 @@ test_that("run_enkf log_particle_weights_updated are all log(1)", {
 # run_particle_filter() ----------------------------------------------------
 
 test_that("run_particle_filter returns a list with the expected 10 named elements", {
-  skip("particle filter is not included in this build of FLAREr")
   d   <- .make_da_inputs()
   dir <- tempdir()
   result <- FLAREr:::run_particle_filter(
@@ -268,7 +267,6 @@ test_that("run_particle_filter returns a list with the expected 10 named element
 })
 
 test_that("run_particle_filter resamples and resets weights when observation is extreme", {
-  skip("particle filter is not included in this build of FLAREr")
   # Place all members near 20 °C; put observation at 40 °C with tight SD.
   # This makes one range of temperatures vastly more likely → ESS << N/2.
   set.seed(77)
@@ -310,7 +308,6 @@ test_that("run_particle_filter resamples and resets weights when observation is 
 })
 
 test_that("run_particle_filter preserves states_depth shape [nstates, ndepths, nmembers]", {
-  skip("particle filter is not included in this build of FLAREr")
   d   <- .make_da_inputs()
   dir <- tempdir()
   result <- FLAREr:::run_particle_filter(

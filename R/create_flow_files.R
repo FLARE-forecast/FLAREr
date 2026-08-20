@@ -1,3 +1,29 @@
+#' @title Generating a list of flow files in the flare_tempdir
+
+#' @param flow_forecast_dir location of the forecast files
+#' @param flow_historical_dir location of the historical files
+#' @param flow_type inflow or outflow
+#' @param variables what variables are included in the flow file
+#' @param out_dir the directory in which to put the flow files (e.g. flare_tempdir)
+#' @param start_datetime start of simulation
+#' @param end_datetime end of simulation
+#' @param forecast_start_datetime start of the forecast period (break between historical + future periods)
+#' @param forecast_horizon horizon
+#' @param site_id site code
+#' @param use_s3 logical
+#' @param bucket s3 storage location
+#' @param endpoint s3 storage location
+#' @param local_directory local storage location
+#' @param use_ler_vars T/F
+#'
+#' @param out_dir_fn Optional function of the ensemble positional index (integer,
+#'   1-based) returning the directory for that member's flow file. When non-NULL
+#'   each file is written to \code{out_dir_fn(i)}; when NULL files are written
+#'   to \code{out_dir}. Default \code{NULL}.
+#' @return matrix of flow_file_names
+#' @export
+#'
+
 # Check that all requested variables exist in a wide-format slice; stop with
 # a clear message listing what is missing and what is available in the data.
 .check_flow_vars <- function(wide_df, variables, context = "flow") {
@@ -81,30 +107,6 @@ write_flow_csv <- function(flow, use_ler_vars, hour_step, flow_type,
   flow_file_name
 }
 
-#' @title Generating a list of flow files in the flare_tempdir
-#' @param flow_forecast_dir location of the forecast files
-#' @param flow_historical_dir location of the historical files
-#' @param flow_type inflow or outflow
-#' @param variables what variables are included in the flow file
-#' @param out_dir the directory in which to put the flow files (e.g. flare_tempdir)
-#' @param start_datetime start of simulation
-#' @param end_datetime end of simulation
-#' @param forecast_start_datetime start of the forecast period (break between historical + future periods)
-#' @param forecast_horizon horizon
-#' @param site_id site code
-#' @param use_s3 logical
-#' @param bucket s3 storage location
-#' @param endpoint s3 storage location
-#' @param local_directory local storage location
-#' @param use_ler_vars T/F
-#' @param config list of FLARE configurations, used for S3 access when \code{use_s3 = TRUE}
-#' @param out_dir_fn Optional function of the ensemble positional index (integer,
-#'   1-based) returning the directory for that member's flow file. When non-NULL
-#'   each file is written to \code{out_dir_fn(i)}; when NULL files are written
-#'   to \code{out_dir}. Default \code{NULL}.
-#' @return matrix of flow_file_names
-#' @importFrom utils tail
-#' @export
 create_flow_files <- function(flow_forecast_dir = NULL,
                               flow_historical_dir = NULL,
                               flow_type = "inflow",

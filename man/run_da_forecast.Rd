@@ -65,7 +65,10 @@ Observations flagged \code{assimilate = 0} are still simulated, tracked, and
 written to output but are excluded from the DA update; this applies to both
 vertical (\code{multi_depth = 1}) and non-vertical (\code{multi_depth = 0}) variables.}
 
-\item{da_method}{string; data assimilation method ("enkf" or "none"; Default = "enkf").}
+\item{da_method}{string; data assimilation method (one of "enkf", "etkf",
+"esmda", "letkf", "pf", or "none"; Default = "enkf"). NOTE: only "enkf" has
+been extensively tested. All other methods ("etkf", "esmda", "letkf", "pf")
+are experimental and should be used with caution.}
 
 \item{par_fit_method}{string; method for adding noise to parameters during calibration}
 
@@ -93,7 +96,7 @@ a named list with the following elements:
 \item{data_assimilation_flag, forecast_flag, da_qc_flag}{integer vectors flagging DA/forecast/QC status per timestep}
 \item{config, states_config, pars_config, obs_config}{configuration lists passed through}
 \item{met_file_names}{meteorology file paths used}
-\item{log_particle_weights}{internal bookkeeping array, always log(1) for the EnKF used in this build}
+\item{log_particle_weights}{log particle weights (particle filter only; NULL for EnKF)}
 \item{inflation}{covariance inflation factor}
 \item{glm_restart_staged}{path to the staged GLM restart file}
 }

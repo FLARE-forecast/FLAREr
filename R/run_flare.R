@@ -58,16 +58,6 @@ run_flare <- function(lake_directory,
 
   config <- get_restart_file(config, lake_directory)
 
-  # `diagnostics_daily` (daily-summary GLM output variables, e.g. inflow/
-  # outflow volumes or daily max/min from lake.csv/outlet CSVs) is not
-  # supported in this build of FLAREr. The internal plumbing that reads,
-  # restarts, and writes these variables (generate_initial_conditions(),
-  # run_da_forecast(), write_forecast(), write_restart(), etc.) is left in
-  # place and is already gated on `length(diagnostics_daily$names) > 0`, so
-  # to restore this feature, delete the next line (and stop stripping the
-  # `diagnostics_daily` block from example configs).
-  config$output_settings$diagnostics_daily <- NULL
-
   message(paste0("Running forecast that starts on: ", config$run_config$start_datetime))
 
   if(!is.null(config$model_settings$par_config_file)){
@@ -132,9 +122,31 @@ run_flare <- function(lake_directory,
 
   message('Generating Met Forecasts...')
 
-  if(isTRUE(config$met$use_openmeteo)){
-    met_out <- create_met_files_openmet(config, lake_directory, met_forecast_start_datetime, met_start_datetime)
+  if(config$met$use_openmeteo){
+
+    message('Using OpenMeteo Met Drivers...')
+
+    fnames <- list.files(config$file_path$execute_directory, pattern = "met_", full.names = TRUE)
+
+    unlink(fnames)
+
+
+    met_out <- create_met_files_openmet(out_dir = config$file_path$execute_directory,
+                                          start_datetime = met_start_datetime,
+                                          end_datetime = config$run_config$end_datetime,
+                                          forecast_start_datetime = met_forecast_start_datetime,
+                                          forecast_horizon =  config$run_config$forecast_horizon,
+                                          latitude = config$location$latitude,
+                                          longitude = config$location$longitude,
+                                          site_id = config$location$site_id,
+                                          openmeteo_api = config$met$openmeteo_api,
+                                          model = config$met$openmeteo_model,
+                                          use_archive = config$met$use_openmeteo_archive,
+                                          bucket = config$s3$drivers$bucket,
+                                          endpoint = config$s3$drivers$endpoint,
+                                        config= config)
   }else{
+
     met_out <- create_met_files(config, lake_directory, met_forecast_start_datetime, met_start_datetime)
   }
 
@@ -151,6 +163,14 @@ run_flare <- function(lake_directory,
                                    obs_config = obs_config,
                                    config)
 
+
+  obs_non_vertical <- create_obs_non_vertical(cleaned_observations_file_long = obs_insitu_file,
+                                                      obs_config,
+                                                      start_datetime = config$run_config$start_datetime,
+                                                      end_datetime = config$run_config$end_datetime,
+                                                      forecast_start_datetime = config$run_config$forecast_start_datetime,
+                                                      forecast_horizon =  config$run_config$forecast_horizon)
+
   message('Setting states and initial conditions...')
 
   nml_file_phy <- config$model_settings$base_AED_nml
@@ -165,12 +185,18 @@ run_flare <- function(lake_directory,
 
   model_sd <- initiate_model_error(config, states_config)
 
-  # Non-vertical observation assimilation is not part of this build of
-  # FLAREr; these stay NULL so the (still-present) downstream plumbing in
-  # generate_initial_conditions()/run_da_forecast() takes its already-safe
-  # no-op path.
-  obs_non_vertical <- NULL
-  non_vertical_noise_config <- NULL
+  diagnose_error_balance(states_config, obs_config, model_sd)
+
+  nv_noise_file <- config$model_settings$non_vertical_noise_config_file
+  if (!is.null(nv_noise_file) && !is.na(nv_noise_file)) {
+    non_vertical_noise_config <- readr::read_csv(
+      file.path(config$file_path$configuration_directory, nv_noise_file),
+      col_types = readr::cols()
+    )
+  } else {
+    non_vertical_noise_config <- NULL
+  }
+  validate_non_vertical_noise_config(non_vertical_noise_config, config)
 
   init <- generate_initial_conditions(states_config,
                                               obs_config,
@@ -217,8 +243,21 @@ run_flare <- function(lake_directory,
                                               local_directory = file.path(lake_directory, "forecasts/parquet"),
                                          config)
 
+  if (isTRUE(config$da_setup$save_da_diagnostics)) {
+    message("writing DA diagnostics")
+    write_da_diagnostics(
+      da_forecast_output = da_forecast_output,
+      local_directory    = file.path(lake_directory, "da_diagnostics")
+    )
+  }
+
   rm(da_forecast_output)
   gc()
+
+  if (isTRUE(config$da_setup$save_da_diagnostics) &&
+      isTRUE(config$da_setup$render_da_diagnostics_report)) {
+    render_da_diagnostics(lake_directory = lake_directory)
+  }
 
   if(config$output_settings$generate_plot){
     message("Generating plot")

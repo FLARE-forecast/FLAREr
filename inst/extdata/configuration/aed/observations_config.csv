@@ -7,3 +7,6 @@ NIT_nit,mmol m-3,0.05,NO3NO2,1,NA,NA,NA
 PHS_frp,mmol m-3,0.05,SRP,1,NA,NA,NA
 OGM_doc_total,mmol m-3,18.7,fdom,1,NA,NA,NA
 PHY_TCHLA,ugL,2,chla,1,NA,NA,NA
+depth,m,0.5,depth,0,state,lake_depth,NA
+secchi,unitless,0.5,secchi,0,diagnostic,extc_coeff,1.0
+

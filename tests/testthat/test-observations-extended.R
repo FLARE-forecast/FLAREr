@@ -111,7 +111,6 @@ test_that("create_obs_matrix masks observations after forecast_start_datetime as
 # create_obs_non_vertical() ----
 
 test_that("create_obs_non_vertical returns obs_secchi$obs as all-NA when no secchi data", {
-  skip("non-vertical observation assimilation is not included in this build of FLAREr")
   s <- .obs_setup()
 
   config <- s$config
@@ -148,7 +147,6 @@ test_that("create_obs_non_vertical returns obs_secchi$obs as all-NA when no secc
 })
 
 test_that("create_obs_non_vertical returns obs_depth as NULL when depth not in obs_config", {
-  skip("non-vertical observation assimilation is not included in this build of FLAREr")
   s <- .obs_setup()
 
   config <- s$config
@@ -178,7 +176,6 @@ test_that("create_obs_non_vertical returns obs_depth as NULL when depth not in o
 })
 
 test_that("create_obs_non_vertical defaults assimilate to 1 when column absent", {
-  skip("non-vertical observation assimilation is not included in this build of FLAREr")
   s <- .obs_setup()
 
   config   <- s$config
@@ -211,7 +208,6 @@ test_that("create_obs_non_vertical defaults assimilate to 1 when column absent",
 })
 
 test_that("create_obs_non_vertical passes through assimilate = 0", {
-  skip("non-vertical observation assimilation is not included in this build of FLAREr")
   s <- .obs_setup()
 
   config   <- s$config

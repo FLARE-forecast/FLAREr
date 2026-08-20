@@ -2,54 +2,71 @@
 % Please edit documentation in R/create_met_files_openmet.R
 \name{create_met_files_openmet}
 \alias{create_met_files_openmet}
-\title{Generate GLM ready met files from the Open-Meteo ensemble API}
+\title{Generate GLM ready met files from open meteo}
 \usage{
 create_met_files_openmet(
-  config,
-  lake_directory,
-  met_forecast_start_datetime,
-  met_start_datetime,
+  out_dir,
+  start_datetime,
+  end_datetime = NA,
+  forecast_start_datetime = NA,
+  forecast_horizon = 0,
+  latitude,
+  longitude,
+  site_id,
+  openmeteo_api = "ensemble",
+  model = NULL,
+  use_archive = FALSE,
+  bucket = NULL,
+  endpoint = NULL,
+  config = NULL,
   include_wind_direction = FALSE,
   out_dir_fn = NULL
 )
 }
 \arguments{
-\item{config}{list of FLARE configurations}
+\item{out_dir}{path to where the GLM formatted met file will be written}
 
-\item{lake_directory}{directory of lake configurations}
+\item{start_datetime}{start date of weather data}
 
-\item{met_forecast_start_datetime}{start datetime of met forecasts}
+\item{end_datetime}{end date of weather data}
 
-\item{met_start_datetime}{start datetime of met simulation}
+\item{forecast_start_datetime}{start datetime of forecast}
 
-\item{include_wind_direction}{Logical (default \code{FALSE}); when \code{TRUE}, adds
-a \code{WindDir} column to each output CSV using Open-Meteo's
-\code{wind_direction_10m} variable.}
+\item{forecast_horizon}{number of days in the future}
 
-\item{out_dir_fn}{Optional function of the ensemble positional index
-(integer, 1-based) returning the directory path for that member's met
-file. When non-NULL each file is written to \code{out_dir_fn(i)}; the
-returned filenames reflect those locations. When \code{NULL} (default) files
-are written to \code{config$file_path$execute_directory}.}
+\item{latitude}{latitude}
+
+\item{longitude}{longitude (west is negative)}
+
+\item{site_id}{site code}
+
+\item{openmeteo_api}{type of weather data or forecast (ensemble_forecast, seasonal, climate, historical)}
+
+\item{model}{forecast model}
+
+\item{use_archive}{Boolen (default = FALSE); TRUE = use forecasts stored on s3 bucket, FALSE = use open-meteo download directly}
+
+\item{bucket}{s3 bucket for archive}
+
+\item{endpoint}{s3 endpoint for archive}
+
+\item{include_wind_direction}{Logical (default \code{FALSE}); when \code{TRUE},
+adds a \code{WindDir} column to each output CSV. Only supported when
+\code{openmeteo_api = "ensemble"} and wind direction data is available from
+the OpenMeteo API; ignored for other pathways.}
+
+\item{out_dir_fn}{Optional function of the ensemble positional index (integer,
+1-based) returning the directory path for that member's met file. When
+non-NULL each file is moved to \code{out_dir_fn(i)} after writing; the
+returned filenames reflect the new locations. When NULL (default) files
+remain in \code{out_dir}.}
 }
 \value{
-list; vector of full path for the converted files
+list of meteorology file names
 }
 \description{
-Generate GLM ready met files from the Open-Meteo ensemble API
+Generate GLM ready met files from open meteo
 }
 \details{
-Downloads a live ensemble weather forecast from the Open-Meteo
-ensemble API (\url{https://open-meteo.com/en/docs/ensemble-api}) using the
-\code{ropenmeteo} package and writes one GLM-formatted meteorology CSV per
-ensemble member. Only the ensemble-forecast API is supported (no
-seasonal/historical/climate modes, no S3-archived alternative to the
-live API call). The pivot/rename step intentionally reimplements (rather
-than calls) \code{ropenmeteo::write_glm_format()} so files land directly in
-FLAREr's per-ensemble-member directory/filename layout and so
-\code{include_wind_direction} is supported (\code{write_glm_format()}'s own column
-selection always drops wind direction).
-}
-\author{
-Quinn Thomas
+Generate GLM ready met files from open meteo
 }

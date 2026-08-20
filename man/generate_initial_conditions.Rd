@@ -10,7 +10,7 @@ generate_initial_conditions(
   pars_config = NULL,
   obs,
   config,
-  obs_non_vertical = NULL
+  obs_non_vertical
 )
 }
 \arguments{
@@ -24,8 +24,7 @@ generate_initial_conditions(
 
 \item{config}{list; list of configurations}
 
-\item{obs_non_vertical}{list; observations of variables that don't have vertical dimension.
-Default = NULL (non-vertical observation assimilation is not part of this build of FLAREr).}
+\item{obs_non_vertical}{list; observations of variables that don't have vertical dimension.}
 }
 \value{
 list; list contains the initial conditions objects required by run_da_forecast()

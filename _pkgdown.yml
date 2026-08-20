@@ -20,6 +20,9 @@ articles:
   contents:
   - flare-config-vignette
   - flare-da-hyperparameters-vignette
+- title: Upgrading
+  contents:
+  - flare-upgrade-vignette
 
 reference:
 - title: Core Workflow
@@ -60,12 +63,14 @@ reference:
   - create_met_files_openmet
   - create_inflow_outflow_files
   - create_obs_matrix
+  - create_obs_non_vertical
 
 - subtitle: Output
   contents:
   - write_forecast
   - write_restart
   - plotting_general
+  - render_da_diagnostics
 
 - subtitle: Storage and targets
   contents:
@@ -81,18 +86,3 @@ reference:
   - flare_put_file
   - flare_delete_file
   - flare_get_folder_list
-  - flare_io_mode
-
-- subtitle: NML utilities
-  contents:
-  - read_nml
-  - write_nml
-  - modify_nml
-  - update_nml
-  - print.nml
-
-- subtitle: Model utilities
-  contents:
-  - build_R_matrix
-  - propose_parameters
-  - create_flow_files

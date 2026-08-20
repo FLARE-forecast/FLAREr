@@ -7,7 +7,6 @@
 #' @param obs array; array of the observations. Required dimensions are `[nobs, time, depth]`
 #' @param config list; list of configurations
 #' @param obs_non_vertical list; observations of variables that don't have vertical dimension.
-#'   Default = NULL (non-vertical observation assimilation is not part of this build of FLAREr).
 #' @import ncdf4
 #' @return list; list contains the initial conditions objects required by run_da_forecast()
 #' @author Quinn Thomas
@@ -17,7 +16,7 @@ generate_initial_conditions <- function(states_config,
                                         pars_config = NULL,
                                         obs,
                                         config,
-                                        obs_non_vertical = NULL){
+                                        obs_non_vertical){
   has_restart <- !is.null(config$run_config$restart_file) &&
     !is.na(config$run_config$restart_file)
 
@@ -169,8 +168,7 @@ generate_initial_conditions <- function(states_config,
                                       model_internal_heights_ens =  init$model_internal_heights[ ,m],
                                       lake_depth_ens = init$lake_depth[m],
                                       modeled_depths = config$model_settings$modeled_depths,
-                                      vert_decorr_length = states_config$vert_decorr_length,
-                                      include_uncertainty = config$uncertainty$initial_condition)
+                                      vert_decorr_length = states_config$vert_decorr_length)
 
       init$states[,1:ndepths_modeled , m] <- with_noise$states_height_ens
 

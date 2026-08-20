@@ -171,7 +171,8 @@ FLAREr prints a warning and falls back to `s3` mode.
 Inside a FaaSr action function, call `initialize_faasr(config)` once
 before `run_flare()` to validate the configuration: it errors on the
 inconsistent `use_faasr: TRUE` / `use_s3: FALSE` combination and warns
-early if AWS credentials are missing. See `?initialize_faasr` for
+early if AWS credentials are missing. See `?initialize_faasr` and the
+[FLAREr upgrade vignette](articles/flare-upgrade-vignette.html) for
 details.
 
 

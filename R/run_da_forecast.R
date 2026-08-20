@@ -133,7 +133,10 @@ initialize_forecast_arrays <- function(nsteps, nstates, ndepths_modeled,
 #'   Observations flagged `assimilate = 0` are still simulated, tracked, and
 #'   written to output but are excluded from the DA update; this applies to both
 #'   vertical (`multi_depth = 1`) and non-vertical (`multi_depth = 0`) variables.
-#' @param da_method string; data assimilation method ("enkf" or "none"; Default = "enkf").
+#' @param da_method string; data assimilation method (one of "enkf", "etkf",
+#'   "esmda", "letkf", "pf", or "none"; Default = "enkf"). NOTE: only "enkf" has
+#'   been extensively tested. All other methods ("etkf", "esmda", "letkf", "pf")
+#'   are experimental and should be used with caution.
 #' @param par_fit_method string; method for adding noise to parameters during calibration
 #' @param obs_non_vertical named list of non-vertical observations (from create_obs_non_vertical)
 #' @return a named list with the following elements:
@@ -157,7 +160,7 @@ initialize_forecast_arrays <- function(nsteps, nstates, ndepths_modeled,
 #'     \item{data_assimilation_flag, forecast_flag, da_qc_flag}{integer vectors flagging DA/forecast/QC status per timestep}
 #'     \item{config, states_config, pars_config, obs_config}{configuration lists passed through}
 #'     \item{met_file_names}{meteorology file paths used}
-#'     \item{log_particle_weights}{internal bookkeeping array, always log(1) for the EnKF used in this build}
+#'     \item{log_particle_weights}{log particle weights (particle filter only; NULL for EnKF)}
 #'     \item{inflation}{covariance inflation factor}
 #'     \item{glm_restart_staged}{path to the staged GLM restart file}
 #'   }
@@ -185,7 +188,9 @@ run_da_forecast <- function(states_init,
   # Only the Ensemble Kalman Filter ("enkf") has been extensively tested.
   # Warn users that the remaining data assimilation methods are experimental.
   if (da_method %in% c("etkf", "esmda", "letkf", "pf")) {
-    warning(paste0("da_method = '", da_method, "' is not supported "),
+    warning(paste0("da_method = '", da_method, "' is experimental and has not ",
+                   "been extensively tested. Only 'enkf' is recommended for ",
+                   "production use; use other methods with caution."),
             call. = FALSE)
   }
 
@@ -396,6 +401,13 @@ run_da_forecast <- function(states_init,
     config$da_setup$log_transform_wq_zero_collapse <- FALSE
   }
 
+  if (is.null(config$da_setup$esmda_iterations)) {
+    config$da_setup$esmda_iterations <- 4L
+  }
+
+  config <- apply_uncertainty_defaults(config)
+
+
   ### START EnKF
 
   nml_glm <- read_nml(file.path(config$file_path$configuration_directory, config$model_settings$base_GLM_nml))
@@ -421,6 +433,38 @@ run_da_forecast <- function(states_init,
   member_aed_nml <- vector("list", nmembers)
 
   da_diag_steps <- list()
+
+  # When hist_days == 0 and assimilate_first_step is FALSE, start_step is 2 and
+  # time index 1 -- which *is* the forecast start -- is never visited inside the
+  # loop below. Collapse it here instead. Must run after the per-member
+  # directory setup above, which restores restart files unpacked from the zip.
+  if ((hist_days + 1) < start_step && isFALSE(config$uncertainty$initial_condition)) {
+    collapsed <- collapse_states_to_member1(
+      list(
+        states_height          = states_height,
+        states_depth           = states_depth,
+        model_internal_heights = model_internal_heights,
+        lake_depth             = lake_depth,
+        snow_ice_thickness     = snow_ice_thickness,
+        diagnostics            = diagnostics,
+        diagnostics_daily      = diagnostics_daily,
+        log_particle_weights   = log_particle_weights
+      ),
+      idx = 1
+    )
+    states_height          <- collapsed$states_height
+    states_depth           <- collapsed$states_depth
+    model_internal_heights <- collapsed$model_internal_heights
+    lake_depth             <- collapsed$lake_depth
+    snow_ice_thickness     <- collapsed$snow_ice_thickness
+    diagnostics            <- collapsed$diagnostics
+    diagnostics_daily      <- collapsed$diagnostics_daily
+    log_particle_weights   <- collapsed$log_particle_weights
+
+    if (has_zip_restart) {
+      collapse_glm_restart_to_member1(working_directory, nmembers)
+    }
+  }
 
   for (i in start_step:nsteps) {
     if (i > 1) {
@@ -602,7 +646,7 @@ run_da_forecast <- function(states_init,
       step_inputs <- lapply(seq_len(nmembers), function(m) {
         # In forecast mode with weather uncertainty disabled, all members
         # share the deterministic (first) met file.
-        curr_met_file <- if (!config$uncertainty$weather & i >= (hist_days + 1)) {
+        curr_met_file <- if (!config$uncertainty$weather & i > (hist_days + 1)) {
           met_file_names[met_index[1]]
         } else {
           met_file_names[met_index[m]]
@@ -734,80 +778,74 @@ run_da_forecast <- function(states_init,
         }
 
         if (config$da_setup$add_random_noise != 0) {
-          # Non-vertical process noise (e.g. lake depth, light extinction) is
-          # not part of this build of FLAREr; apply_non_vertical_process_noise()
-          # only exists (and is only called) when a non_vertical_noise_config
-          # is actually supplied, which it isn't by default.
-          if (!is.null(non_vertical_noise_config)) {
-            nv_noise <- apply_non_vertical_process_noise(
-              non_vertical_noise_config = non_vertical_noise_config,
-              lake_depth_m = lake_depth[i, m],
-              diagnostics_slice = if (length(config$output_settings$diagnostics_names) > 0) {
-                diagnostics[, i, , m]
-              } else {
-                NULL
-              },
-              diagnostics_daily_slice = if (length(config$output_settings$diagnostics_daily$names) > 0) {
-                diagnostics_daily[, i, m]
-              } else {
-                NULL
-              },
-              config = config
-            )
-            # GLM-output surface (== max(model_internal_heights)) before depth noise
-            glm_lake_depth <- lake_depth[i, m]
-            lake_depth[i, m] <- nv_noise$lake_depth_m
-            # Cap the lake surface (top height) at the basin's maximum height
-            # (last H minus first H from the GLM morphometry; see lake_max_depth
-            # above). Process noise on lake depth can otherwise push the surface
-            # above the basin top, which is physically impossible and would be
-            # written to the next GLM restart. The DA step applies the same cap
-            # in apply_da_updates(); this covers the process-noise path that runs
-            # before (and independently of) data assimilation.
-            if (lake_depth[i, m] > lake_max_depth) {
+          nv_noise <- apply_non_vertical_process_noise(
+            non_vertical_noise_config = non_vertical_noise_config,
+            lake_depth_m = lake_depth[i, m],
+            diagnostics_slice = if (length(config$output_settings$diagnostics_names) > 0) {
+              diagnostics[, i, , m]
+            } else {
+              NULL
+            },
+            diagnostics_daily_slice = if (length(config$output_settings$diagnostics_daily$names) > 0) {
+              diagnostics_daily[, i, m]
+            } else {
+              NULL
+            },
+            config = config
+          )
+          # GLM-output surface (== max(model_internal_heights)) before depth noise
+          glm_lake_depth <- lake_depth[i, m]
+          lake_depth[i, m] <- nv_noise$lake_depth_m
+          # Cap the lake surface (top height) at the basin's maximum height
+          # (last H minus first H from the GLM morphometry; see lake_max_depth
+          # above). Process noise on lake depth can otherwise push the surface
+          # above the basin top, which is physically impossible and would be
+          # written to the next GLM restart. The DA step applies the same cap
+          # in apply_da_updates(); this covers the process-noise path that runs
+          # before (and independently of) data assimilation.
+          if (lake_depth[i, m] > lake_max_depth) {
+            message(sprintf(
+              paste0("Top height %.3f m exceeded basin max height %.3f m after ",
+                     "process noise (member %d, %s); capping at basin max."),
+              lake_depth[i, m], lake_max_depth, m,
+              format(as.Date(full_time[i]), "%Y-%m-%d")
+            ))
+            lake_depth[i, m] <- lake_max_depth
+          }
+          # Process noise perturbed lake depth; rigidly shift the GLM layer
+          # heights by the same (capped) change so max(heights) tracks the
+          # perturbed surface. Done before add_process_noise() and DA so both
+          # operate on a consistent depth/height grid (lake_depth ==
+          # max(model_internal_heights) at GLM output). Layers driven below the
+          # bottom are pruned; a too-deep downward shift is clamped to keep at
+          # least 2 layers.
+          diff_height <- lake_depth[i, m] - glm_lake_depth
+          if (diff_height != 0) {
+            h_before <- model_internal_heights[i, , m]
+            res <- shift_heights_for_depth_change(h_before, diff_height,
+                                                  min_layers = 2L)
+            model_internal_heights[i, , m] <- res$heights
+            # If the >=2-layer guard clamped the shift, pull lake_depth back so
+            # it still equals the new top height.
+            if (res$diff_height != diff_height) {
+              lake_depth[i, m] <- glm_lake_depth + res$diff_height
               message(sprintf(
-                paste0("Top height %.3f m exceeded basin max height %.3f m after ",
-                       "process noise (member %d, %s); capping at basin max."),
-                lake_depth[i, m], lake_max_depth, m,
-                format(as.Date(full_time[i]), "%Y-%m-%d")
+                paste0("Depth process noise would prune below 2 layers ",
+                       "(member %d, %s); limiting downward shift and lake ",
+                       "depth to keep 2 layers."),
+                m, format(as.Date(full_time[i]), "%Y-%m-%d")
               ))
-              lake_depth[i, m] <- lake_max_depth
             }
-            # Process noise perturbed lake depth; rigidly shift the GLM layer
-            # heights by the same (capped) change so max(heights) tracks the
-            # perturbed surface. Done before add_process_noise() and DA so both
-            # operate on a consistent depth/height grid (lake_depth ==
-            # max(model_internal_heights) at GLM output). Layers driven below the
-            # bottom are pruned; a too-deep downward shift is clamped to keep at
-            # least 2 layers.
-            diff_height <- lake_depth[i, m] - glm_lake_depth
-            if (diff_height != 0) {
-              h_before <- model_internal_heights[i, , m]
-              res <- shift_heights_for_depth_change(h_before, diff_height,
-                                                    min_layers = 2L)
-              model_internal_heights[i, , m] <- res$heights
-              # If the >=2-layer guard clamped the shift, pull lake_depth back so
-              # it still equals the new top height.
-              if (res$diff_height != diff_height) {
-                lake_depth[i, m] <- glm_lake_depth + res$diff_height
-                message(sprintf(
-                  paste0("Depth process noise would prune below 2 layers ",
-                         "(member %d, %s); limiting downward shift and lake ",
-                         "depth to keep 2 layers."),
-                  m, format(as.Date(full_time[i]), "%Y-%m-%d")
-                ))
-              }
-              newly_pruned <- which(is.na(res$heights) & !is.na(h_before))
-              if (length(newly_pruned) > 0) {
-                states_height[i, , newly_pruned, m] <- NA
-              }
+            newly_pruned <- which(is.na(res$heights) & !is.na(h_before))
+            if (length(newly_pruned) > 0) {
+              states_height[i, , newly_pruned, m] <- NA
             }
-            if (length(config$output_settings$diagnostics_names) > 0) {
-              diagnostics[, i, , m] <- nv_noise$diagnostics_slice
-            }
-            if (length(config$output_settings$diagnostics_daily$names) > 0) {
-              diagnostics_daily[, i, m] <- nv_noise$diagnostics_daily_slice
-            }
+          }
+          if (length(config$output_settings$diagnostics_names) > 0) {
+            diagnostics[, i, , m] <- nv_noise$diagnostics_slice
+          }
+          if (length(config$output_settings$diagnostics_daily$names) > 0) {
+            diagnostics_daily[, i, m] <- nv_noise$diagnostics_daily_slice
           }
 
           with_noise <- add_process_noise(
@@ -874,17 +912,6 @@ run_da_forecast <- function(states_init,
 
       if (npars > 0) pars[i, , ] <- pars_corr
 
-      # At the history/forecast boundary, collapse ensemble spread to the
-      # ensemble mean when initial-condition uncertainty is disabled.
-      if (i == (hist_days + 1) && config$uncertainty$initial_condition == FALSE) {
-        if (npars > 0) pars[i, , ] <- pars_corr
-        for (s in 1:nstates) {
-          for (k in 1:ndepths_modeled) {
-            states_depth[i, s, k, ] <- mean(states_depth_wo_noise[s, k, ])
-          }
-        }
-      }
-
       for (s in 1:nstates) {
         for (m in 1:nmembers) {
           depth_index <- which(config$model_settings$modeled_depths > lake_depth[i, m])
@@ -907,7 +934,7 @@ run_da_forecast <- function(states_init,
       # Parameters are stripped from x_matrix so the state filter has no
       # parameter-state cross-covariance; a dedicated parameter EnKF runs
       # afterward using the forecast predicted observations.
-      use_one_step_lag <- FALSE
+      use_one_step_lag <- isTRUE(config$da_setup$use_one_step_lag) && npars > 0
 
       # Build the EnKF state block from only the assimilated states (da_idx).
       # Row order is (assimilated-state, depth) matching the h columns below.
@@ -1045,10 +1072,19 @@ run_da_forecast <- function(states_init,
         diagnostics_daily_start <- NA
       }
 
-      # DA diagnostics reporting is not part of this build of FLAREr;
-      # run_enkf() only computes diagnostics when config$da_setup$save_da_diagnostics
-      # is TRUE, so obs_diag_meta is unused (and unforced) in the shipped default.
-      obs_diag_meta <- NULL
+      # Pre-build obs labels for diagnostic output (no cost unless option is set)
+      obs_diag_meta <- if (isTRUE(config$da_setup$save_da_diagnostics) &&
+                            length(z_index) > 0L) {
+        obs_config_vert <- obs_config[obs_config$multi_depth == 1, ]
+        all_vars   <- c(rep(obs_config_vert$state_names_obs, each = ndepths_modeled),
+                        active_in_xmatrix)
+        all_depths <- c(rep(config$model_settings$modeled_depths,
+                            times = nrow(obs_config_vert)),
+                        rep(NA_real_, length(active_in_xmatrix)))
+        list(variable = all_vars[z_index], depth = all_depths[z_index])
+      } else {
+        NULL
+      }
 
       if (da_method == "enkf") {
         updates <- run_enkf(x_matrix,
@@ -1078,8 +1114,114 @@ run_da_forecast <- function(states_init,
           n_da_states = n_da_states,
           da_idx = da_idx
         )
+      } else if (da_method == "pf") {
+        updates <- run_particle_filter(x_matrix,
+          h,
+          pars_corr,
+          zt,
+          psi,
+          z_index,
+          states_depth_start = states_depth_w_noise,
+          states_height_start = states_height[i, , , ],
+          model_internal_heights_start = model_internal_heights[i, , ],
+          lake_depth_start = lake_depth[i, ],
+          log_particle_weights_start = log_particle_weights[i - 1, ],
+          snow_ice_thickness_start = snow_ice_thickness[, i, ],
+          diagnostics_start = diagnostics_start,
+          diagnostics_daily_start = diagnostics_daily_start,
+          pars_config,
+          config,
+          obs_non_vertical,
+          active_in_xmatrix,
+          n_non_vertical,
+          par_fit_method,
+          vertical_obs,
+          working_directory,
+          obs_config,
+          inflation_start = inflation[i - 1],
+          n_da_states = n_da_states,
+          da_idx = da_idx
+        )
+      } else if (da_method == "etkf") {
+        updates <- run_etkf(x_matrix,
+          h,
+          pars_corr,
+          zt,
+          psi,
+          z_index,
+          states_depth_start = states_depth_w_noise,
+          states_height_start = states_height[i, , , ],
+          model_internal_heights_start = model_internal_heights[i, , ],
+          lake_depth_start = lake_depth[i, ],
+          log_particle_weights_start = log_particle_weights[i - 1, ],
+          snow_ice_thickness_start = snow_ice_thickness[, i, ],
+          diagnostics_start,
+          diagnostics_daily_start,
+          pars_config,
+          config,
+          obs_non_vertical,
+          active_in_xmatrix,
+          n_non_vertical,
+          par_fit_method,
+          inflation_start = inflation[i - 1],
+          lake_max_depth = lake_max_depth,
+          n_da_states = n_da_states,
+          da_idx = da_idx
+        )
+      } else if (da_method == "esmda") {
+        updates <- run_esmda(x_matrix,
+          h,
+          pars_corr,
+          zt,
+          psi,
+          z_index,
+          states_depth_start = states_depth_w_noise,
+          states_height_start = states_height[i, , , ],
+          model_internal_heights_start = model_internal_heights[i, , ],
+          lake_depth_start = lake_depth[i, ],
+          log_particle_weights_start = log_particle_weights[i - 1, ],
+          snow_ice_thickness_start = snow_ice_thickness[, i, ],
+          diagnostics_start,
+          diagnostics_daily_start,
+          pars_config,
+          config,
+          obs_non_vertical,
+          active_in_xmatrix,
+          n_non_vertical,
+          par_fit_method,
+          inflation_start = inflation[i - 1],
+          lake_max_depth = lake_max_depth,
+          n_da_states = n_da_states,
+          da_idx = da_idx
+        )
+      } else if (da_method == "letkf") {
+        updates <- run_letkf(x_matrix,
+          h,
+          pars_corr,
+          zt,
+          psi,
+          z_index,
+          states_depth_start = states_depth_w_noise,
+          states_height_start = states_height[i, , , ],
+          model_internal_heights_start = model_internal_heights[i, , ],
+          lake_depth_start = lake_depth[i, ],
+          log_particle_weights_start = log_particle_weights[i - 1, ],
+          snow_ice_thickness_start = snow_ice_thickness[, i, ],
+          diagnostics_start,
+          diagnostics_daily_start,
+          pars_config,
+          config,
+          obs_non_vertical,
+          active_in_xmatrix,
+          n_non_vertical,
+          par_fit_method,
+          inflation_start = inflation[i - 1],
+          lake_max_depth = lake_max_depth,
+          n_da_states = n_da_states,
+          da_idx = da_idx
+        )
       } else {
-        stop("da_method not supported; enkf or none")
+        stop("da_method not supported; select enkf, etkf, esmda, letkf, or pf or none")
       }
 
       if (!is.null(updates$da_diag)) {
@@ -1153,6 +1295,48 @@ run_da_forecast <- function(states_init,
       }
     }
 
+    # Deterministic forecast initial conditions: on the first forecast day give
+    # every member ensemble member 1's model states and GLM restart file, so the
+    # forecast propagates from a single initial condition. Runs after the DA /
+    # no-DA branches join so it applies either way, and writes the [i, ...]
+    # slices that seed step i + 1. Parameters are deliberately left alone --
+    # parameter spread is governed by config$uncertainty$parameter.
+    if (i == (hist_days + 1) && isFALSE(config$uncertainty$initial_condition)) {
+      collapsed <- collapse_states_to_member1(
+        list(
+          states_height          = states_height,
+          states_depth           = states_depth,
+          model_internal_heights = model_internal_heights,
+          lake_depth             = lake_depth,
+          snow_ice_thickness     = snow_ice_thickness,
+          diagnostics            = diagnostics,
+          diagnostics_daily      = diagnostics_daily,
+          log_particle_weights   = log_particle_weights
+        ),
+        idx = i
+      )
+      states_height          <- collapsed$states_height
+      states_depth           <- collapsed$states_depth
+      model_internal_heights <- collapsed$model_internal_heights
+      lake_depth             <- collapsed$lake_depth
+      snow_ice_thickness     <- collapsed$snow_ice_thickness
+      diagnostics            <- collapsed$diagnostics
+      diagnostics_daily      <- collapsed$diagnostics_daily
+      log_particle_weights   <- collapsed$log_particle_weights
+
+      collapse_glm_restart_to_member1(working_directory, nmembers)
+
+      # The restart bytes for this date were staged before the collapse; keep
+      # the staged copy consistent with what is now on disk.
+      collapse_date_label <- format(as.Date(full_time[i]), "%Y-%m-%d")
+      staged <- glm_restart_staged[[collapse_date_label]]
+      if (!is.null(staged) && !is.null(staged[["glm_restart_1.nc"]])) {
+        for (m in seq_len(nmembers)) {
+          staged[[paste0("glm_restart_", m, ".nc")]] <- staged[["glm_restart_1.nc"]]
+        }
+        glm_restart_staged[[collapse_date_label]] <- staged
+      }
+    }
 
     ###############
 

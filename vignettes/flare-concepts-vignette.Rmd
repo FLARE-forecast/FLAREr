@@ -185,14 +185,54 @@ accumulates. The output of this period is the actual forecast product.
 
 ## Data assimilation methods
 
-FLAREr performs data assimilation using the **Ensemble Kalman Filter
-(`enkf`)**. It approximates the covariance of the model state using the
-spread of the ensemble, then computes an update that is optimal under
-the assumption that the prior and observation errors are Gaussian. To
+FLAREr supports several DA algorithms. All of them operate on the same
+ensemble of model states and share the same analysis-cycle structure;
+they differ in how they compute the update.
+
+> **Note:** Only the Ensemble Kalman Filter (`enkf`) has been extensively
+> tested and is recommended for production use. The other methods described
+> below (`etkf`, `letkf`, `esmda`, and `pf`) are **experimental** and have
+> not undergone extensive testing — use them with caution and verify
+> results carefully.
+
+**Ensemble Kalman Filter (`enkf`).** The standard algorithm in FLARE.
+It approximates the covariance of the model state using the spread of
+the ensemble, then computes an update that is optimal under the
+assumption that the prior and observation errors are Gaussian. To
 account for sampling noise with small ensembles, it adds a small random
 perturbation to each observation before computing the update (the
 "stochastic" variant). This is the method used in Thomas et al. 2020
 and 2023.
+
+**Ensemble Transform Kalman Filter (`etkf`).** A deterministic
+alternative to the EnKF that avoids adding random noise to observations.
+Instead it computes an exact matrix transform that produces the
+posterior ensemble directly. The result has the same posterior mean as
+the EnKF but lower variance and no sampling noise from observation
+perturbations.
+
+**Local Ensemble Transform Kalman Filter (`letkf`).** An extension of
+the ETKF that performs a separate update for each depth layer, using
+only observations that are close to that depth. This "localisation"
+prevents distant observations from spuriously changing the model state
+at depths where they carry no real information — a problem that becomes
+significant in high-dimensional state vectors typical of multi-variable
+GLM-AED runs.
+
+**Ensemble Smoother with Multiple Data Assimilation (`esmda`).** Rather
+than updating the state in a single step, ES-MDA applies a sequence of
+partial updates (controlled by `esmda_iterations`), inflating
+observation uncertainty each iteration so that the combined result is
+statistically correct. This is particularly effective in strongly
+nonlinear systems where a single large update can collapse the ensemble
+or introduce inconsistencies.
+
+**Particle filter (`pf`).** A non-parametric alternative that makes no
+Gaussian assumption. Each ensemble member (particle) is weighted by how
+well its prediction matches the observations, and particles are
+periodically resampled so that well-performing members replace
+poorly-performing ones. This is the most flexible method but requires
+larger ensembles to work well, especially in high-dimensional systems.
 
 **Open loop (`none`).** No data assimilation is performed. The ensemble
 is propagated forward by GLM without any observational correction.
@@ -289,7 +329,7 @@ one time:
 | `parameter` | ensemble member index |
 | `variable_type` | `"state"` or `"parameter"` |
 | `forecast` | `1` = forecast period, `0` = hindcast period |
-| `log_weight` | internal bookkeeping column, always `0` for the EnKF |
+| `log_weight` | log particle weight (particle filter only) |
 
 The separation of forecast and hindcast rows in a single file means you
 can always retrieve what the model predicted before it saw observations
@@ -426,4 +466,9 @@ overnight, and issues a fresh forecast.
   Ecological Observatory Network (GLEON). *Geoscientific Model
   Development*, 12, 473–523.
   <https://doi.org/10.5194/gmd-12-473-2019>
-  
+
+### Data assimilation methods
+
+- Emerick, A.A. and Reynolds, A.C. (2013). Ensemble smoother with
+  multiple data assimilation. *Computers & Geosciences*, 55, 3–15.
+  <https://doi.org/10.1016/j.cageo.2012.03.011>

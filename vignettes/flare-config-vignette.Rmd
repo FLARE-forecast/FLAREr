@@ -20,7 +20,8 @@ knitr::opts_chunk$set(
 
 A guide to the variables in `configure_run.yml`, `configure_flare.yml`,
 `observations_config.csv`, `parameter_calibration_config.csv`,
-`states_config.csv`, and `depth_model_sd.csv`.
+`states_config.csv`, `depth_model_sd.csv`, and
+`non_vertical_noise_config.csv`.
 
 All configuration files are required to be located in your
 `{lake_directory}/configuration/{config_set_name}` directory unless
@@ -79,7 +80,8 @@ use_faasr: FALSE
     errors at startup if `use_faasr` is set while `use_s3` is `FALSE`. If
     the FaaSr runtime helpers are not present (e.g. the configuration is
     run outside a FaaSr container) FLAREr warns and falls back to plain
-    S3 access.
+    S3 access. See the *Storage backends* section of the upgrade vignette
+    for details.
 
 Together `use_s3` and `use_faasr` select the storage backend for a run:
 
@@ -108,10 +110,43 @@ settings, inputs, and outputs.
 
 -   **da_method:** data assimilation algorithm to use. Options:
 
+    > **Note:** Only the Ensemble Kalman Filter (`enkf`) has been
+    > extensively tested and is recommended for production use. The other
+    > methods (`etkf`, `letkf`, `esmda`, and `pf`) are **experimental** and
+    > have not undergone extensive testing — use them with caution and
+    > verify results carefully.
+
     -   **`enkf`**: Ensemble Kalman Filter. The classic stochastic EnKF
         — perturbs observations with random noise and updates the full
         ensemble covariance. Supports localization via
         `localization_distance`.
+
+    -   **`etkf`**: Ensemble Transform Kalman Filter. A deterministic
+        (square-root) variant of the EnKF that avoids sampling noise by
+        computing an exact ensemble transform matrix. Produces the same
+        posterior mean as the EnKF but with lower ensemble variance.
+        Also supports `localization_distance`.
+
+    -   **`letkf`**: Local Ensemble Transform Kalman Filter. Runs a
+        separate ETKF update for each depth layer using only nearby
+        observations, with observation weights scaled by
+        `localization_distance`. Non-depth-resolved variables (lake
+        depth, Secchi, parameters) receive a global ETKF update.
+        Recommended when the state vector spans many depths and
+        observation coverage varies with depth.
+
+    -   **`esmda`**: Ensemble Smoother with Multiple Data Assimilation
+        (Emerick & Reynolds 2013). Applies the EnKF update
+        `esmda_iterations` times per assimilation window, inflating
+        the observation error by √(`esmda_iterations`) per iteration so
+        that the combined update is statistically consistent. Reduces
+        filter inbreeding for strongly nonlinear systems.
+
+    -   **`pf`**: Bootstrap resampling particle filter. Weights
+        particles by their likelihood given the observations and
+        resamples when the effective sample size drops below a
+        threshold. Does not use covariance inflation. Controlled by
+        `pf_always_resample`.
 
     -   **`none`**: No data assimilation. The model runs in open-loop
         forecast mode; observations are not assimilated even if
@@ -122,7 +157,8 @@ settings, inputs, and outputs.
     -   **`inflate`** inflates the parameter ensemble after each DA
         update using `perturb_par` as a per-parameter multiplicative
         inflation factor (≥ 1). Counteracts ensemble collapse without
-        adding random noise.
+        adding random noise. Compatible with `enkf`, `etkf`, `esmda`,
+        `nudging`, and `letkf`.
 
     -   **`perturb`** adds normal random noise to each parameter at
         every step using `perturb_par` as the standard deviation.
@@ -145,7 +181,8 @@ settings, inputs, and outputs.
 
 -   **localization_distance:** distance in meters over which covariances
     are diminished via exponential decay. Set to `.na` to disable
-    localization.
+    localization. Used by `enkf`, `etkf`, and `letkf`; ignored by
+    `esmda` and `pf`.
 
 -   **inflation_factor:** multiplicative inflation factor applied to the
     state ensemble after each DA update (value ≥ 1; only used when
@@ -157,11 +194,16 @@ settings, inputs, and outputs.
     ensemble after each DA update (`TRUE` or `FALSE`; default `FALSE`).
     See `inflation_factor`.
 
+-   **esmda_iterations:** number of assimilation iterations per
+    timestep for ES-MDA (only used when `da_method: esmda`; default
+    `4`). Higher values reduce filter inbreeding at the cost of
+    additional model evaluations per step.
+
 -   **use_one_step_lag:** update parameters with a one-step lag — the
     state update runs first using only state–state covariances, then a
     separate parameter EnKF update uses the just-updated state as the
     forecast (`TRUE` or `FALSE`; default `FALSE`). Reduces spurious
-    state–parameter covariances.
+    state–parameter covariances. Not available for `pf`.
 
 -   **no_negative_states:** force non-temperature states to be
     non-negative (`TRUE` or `FALSE`)
@@ -175,11 +217,57 @@ settings, inputs, and outputs.
 -   **obs_filename:** file name of the targets file, required to be
     located in `lake_directory/targets/{site_id}/`
 
+-   **pf_always_resample:** force the particle filter to resample at
+    every timestep (only used when `da_method: pf`) (`TRUE` or `FALSE`)
+
+-   **pf_tempering_factor:** tempers the likelihood used to compute
+    particle weights by raising it to this power before normalising
+    (only used when `da_method: pf`; default `1.0`). Must be a single
+    number in `(0, 1]`. Values less than `1` soften the influence of
+    observations on the weights, preventing weight collapse when
+    observations are very informative relative to the prior ensemble
+    spread. `1.0` recovers the standard bootstrap particle filter.
+
 -   **add_random_noise:** enable process noise during the forecast (`1`
     = on, `0` = off). When enabled, small random perturbations are added
-    to the model state at each timestep to represent irreducible model
-    error. Set to `0` to run a deterministic ensemble with no process
-    noise.
+    to the model state and non-vertical diagnostic variables at each
+    timestep to represent irreducible model error. Set to `0` to run a
+    deterministic ensemble with no process noise. Not used by the
+    particle filter (`pf`).
+
+-   **log_transform_wq_obs:** sample perturbed water-quality
+    observations in log space to avoid zero-clamping bias (`TRUE` or
+    `FALSE`)
+
+-   **log_transform_wq_zero_collapse:** when an observation equals zero,
+    collapse the observation error matrix to zero (unbiased) rather than
+    clamping (`TRUE` or `FALSE`)
+
+-   **save_da_diagnostics:** write per-step DA diagnostic tables to
+    `<lake_directory>/da_diagnostics/` as parquet files after each run
+    (`TRUE` or `FALSE`; default `FALSE`). Seven files are produced:
+    `da_filter_health.parquet` (NIS, DFS, n_obs per step),
+    `da_innovations.parquet` (per-observation innovation and influence),
+    `da_ensemble_spread.parquet` (prior/posterior mean and SD per state
+    × depth), `da_ranks.parquet` (observation rank within the prior
+    ensemble), `da_parameters.parquet` (parameter evolution and bound
+    fractions; only when parameters are estimated),
+    `da_cross_state.parquet` and `da_cross_depth.parquet` (cross-variable
+    and cross-depth update structure; only when PHY_TCHLA observations are
+    active). Each file includes `site_id`, `model_id`, and
+    `reference_date` columns so that diagnostics from successive runs can
+    be accumulated. See the [DA hyperparameters
+    vignette](flare-da-hyperparameters-vignette.html) for guidance on
+    interpreting these files.
+
+-   **render_da_diagnostics_report:** after writing the diagnostic parquet
+    files, render the built-in Quarto template into a self-contained HTML
+    report at `<lake_directory>/da_diagnostics_report.html` (`TRUE` or
+    `FALSE`; default `FALSE`). Requires `save_da_diagnostics: TRUE` and
+    the `quarto` R package. The report can also be generated manually at
+    any time by calling `FLAREr::render_da_diagnostics(lake_directory)`,
+    which additionally accepts `site_id`, `model_id`, `diagnostics_dir`,
+    and `output_file` arguments to filter or redirect the output.
 
 ### model_settings:
 
@@ -208,6 +296,11 @@ settings, inputs, and outputs.
 -   **depth_model_sd_config_file:** optional CSV specifying
     depth-varying process uncertainty. Required to be in the
     configuration directory if used.
+
+-   **non_vertical_noise_config_file:** optional CSV specifying process
+    noise for non-vertical (non-depth-resolved) diagnostic variables
+    such as Secchi depth. Required to be in the configuration directory
+    if used.
 
 ### default_init:
 
@@ -284,15 +377,20 @@ settings, inputs, and outputs.
 -   **future_met_use_s3:** access forecast met data from an S3 bucket
     (`TRUE` or `FALSE`)
 
--   **use_openmeteo:** use the Open-Meteo ensemble forecast API for
-    meteorological inputs instead of `future_met_model`/
-    `historical_met_model` (`TRUE` or `FALSE`). Only the ensemble-forecast
-    API is supported (max 35-day forecast horizon, max 3-day lookback);
-    requires the `ropenmeteo` package.
+-   **use_openmeteo:** use Open-Meteo for meteorological inputs (`TRUE`
+    or `FALSE`)
 
--   **openmeteo_model:** Open-Meteo ensemble model name (only used when
-    `use_openmeteo: TRUE`; default `"ncep_gefs_seamless"`); see
-    <https://open-meteo.com/en/docs/ensemble-api> for available models
+-   **openmeteo_api:** Open-Meteo API endpoint to use (only when
+    `use_openmeteo: TRUE`); options are `seasonal`,
+    `ensemble_forecast`, `historical`, `climate`
+
+-   **openmeteo_model:** Open-Meteo model name (only when
+    `use_openmeteo: TRUE`); see <https://open-meteo.com/en/docs> for
+    available models
+
+-   **use_openmeteo_archive:** use an archived version of Open-Meteo
+    served from S3 instead of calling the API directly (only when
+    `use_openmeteo: TRUE`) (`TRUE` or `FALSE`)
 
 -   **local_met_directory:** directory for met files when not using S3
     or Open-Meteo, relative to `lake_directory`
@@ -306,10 +404,17 @@ settings, inputs, and outputs.
     (`TRUE` or `FALSE`)
 
 -   **weather:** use multiple weather forecast ensemble members (`TRUE`
-    or `FALSE`)
+    or `FALSE`). When `FALSE`, weather ensemble member 1 is used for all FLARE
+    ensemble members throughout the forecast period, so every member is forced
+    by the same meteorology. The hindcast period, including the final
+    assimilation step, still uses the full weather ensemble.
 
--   **initial_condition:** include uncertainty in states at forecast
-    initiation (`TRUE` or `FALSE`)
+-   **initial_condition:** include ensemble spread in the model states at
+    forecast initiation (`TRUE` or `FALSE`). When `FALSE`, on the first
+    forecast day (`forecast_start_datetime`) ensemble member 1's model states
+    and GLM restart file are copied to every ensemble member, so the forecast
+    propagates from a single initial condition. Parameters are not affected --
+    parameter spread is controlled by **parameter**.
 
 -   **parameter:** include parameter uncertainty during the forecast
     (`TRUE` or `FALSE`)
@@ -328,6 +433,26 @@ settings, inputs, and outputs.
 
 -   **diagnostics_names:** names of non-state GLM variables to save in
     the forecast output (e.g. `[extc]`)
+
+-   **diagnostics_daily:** configuration for saving daily summary
+    variables from GLM output files
+
+    -   **names:** variable names as they appear in the GLM CSV or NetCDF
+        output. Options are listed at
+        <https://github.com/AquaticEcoDynamics/glm-aed/wiki/Navigating-GLM-outputs>
+
+    -   **save_names:** the name of the variable in the FLARE forecast
+        output. For `output.nc`-sourced variables the name must encode
+        the aggregation function — e.g. `temp_mean` computes the daily
+        mean, `temp_1m_max` computes the daily maximum at 1 m. Supported
+        aggregations are `mean`, `min`, and `max`. Requires `nsave = 1`
+        in `glm3.nml` for sub-daily output.
+
+    -   **file:** name of the GLM output file containing the variable.
+        Examples: `lake.csv`, `outlet_00.csv`, `output.nc`
+
+    -   **depth:** depth (m) for the daily diagnostic. Use `NA` for
+        variables that are not depth-resolved (e.g. CO₂ flux).
 
 ### s3:
 
@@ -515,6 +640,7 @@ Example:
 ```
 state_names_obs,obs_units,obs_sd,target_variable,multi_depth,model_source,model_variable,model_depth_m,assimilate
 temp,degC,0.5,temperature,1,NA,NA,NA,1
+secchi,unitless,0.5,secchi,0,diagnostic,extc_coeff,1.0,0
 ```
 
 -   **state_names_obs:** name of the observed state (must match a name
@@ -547,6 +673,36 @@ temp,degC,0.5,temperature,1,NA,NA,NA,1
     whether this observation is used in the data assimilation update.
     Default is `1` (assimilated) when the column is absent. Setting
     `0` keeps the variable simulated, tracked, and written to forecast
-    output but excludes it from the EnKF update. Use this to retain an
-    observation for forecast scoring without letting it influence the DA
-    step.
+    output but excludes it from the EnKF update. This applies to both
+    depth-resolved (`multi_depth = 1`) and non-depth-resolved
+    (`multi_depth = 0`) observations. Use this to retain observations
+    for forecast scoring without letting them influence the DA step —
+    for example, Secchi depth when you want to predict but not
+    constrain the model with it.
+
+## non_vertical_noise_config.csv
+
+`non_vertical_noise_config.csv` is optional. It specifies process noise
+for non-vertical (non-depth-resolved) model variables such as Secchi
+depth that are tracked as diagnostics rather than full depth profiles.
+
+Example:
+
+```
+model_variable,model_source,model_depth_m,process_noise_sd
+lake_depth,state,NA,0.01
+extc,diagnostic,1.0,NA
+```
+
+-   **model_variable:** name of the model variable (must match a
+    variable tracked by GLM or FLAREr)
+
+-   **model_source:** whether the variable comes from the model state
+    (`state`) or a GLM diagnostic output (`diagnostic`)
+
+-   **model_depth_m:** depth (m) at which the diagnostic is evaluated.
+    Use `NA` for variables without a depth dimension.
+
+-   **process_noise_sd:** standard deviation of the process noise added
+    to this variable each timestep. Use `NA` to suppress process noise
+    for that variable.

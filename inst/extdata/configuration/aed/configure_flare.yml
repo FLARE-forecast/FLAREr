@@ -8,6 +8,7 @@ da_setup:
     par_fit_method: perturb
     ensemble_size:  31
     localization_distance: .na #distance in meters were covariances in the model error are used
+    pf_always_resample: FALSE
     no_negative_states: FALSE
     assimilate_first_step: FALSE
     use_obs_constraint: TRUE
@@ -16,6 +17,8 @@ da_setup:
     add_random_noise: 1
     log_transform_wq_obs: TRUE #sample WQ perturbed observations in log space to avoid zero-clamping bias
     log_transform_wq_zero_collapse: FALSE #when yt=0, collapse d_mat to 0 (unbiased) instead of clamping
+    save_da_diagnostics: FALSE #write per-step DA diagnostic parquet files to da_diagnostics/
+    render_da_diagnostics_report: FALSE #render da_diagnostics_report.html after each run
 model_settings:
    ncore: 1
    max_model_layers: 75
@@ -39,6 +42,7 @@ model_settings:
    obs_config_file: observations_config.csv
    states_config_file: states_config.csv
    depth_model_sd_config_file: depth_model_sd.csv
+   non_vertical_noise_config_file: non_vertical_noise_config.csv
 default_init:
    lake_depth: 9.1
    temp: [25.667, 24.9101, 23.067, 21.8815, 19.6658, 16.5739, 12.9292, 12.8456, 12.8127, 12.8079, 12.778]
@@ -66,7 +70,9 @@ met:
    forecast_lag_days: 0
    use_ler_vars: FALSE
    use_openmeteo: FALSE
+   openmeteo_api: "ensemble_forecast"
    openmeteo_model: "gfs_seamless"
+   use_openmeteo_archive: FALSE
    local_met_directory: drivers/met
 uncertainty:
    observation: TRUE
@@ -79,3 +85,8 @@ output_settings:
    generate_plot: FALSE
    restart_save_timesteps: [-2, 0]  # days relative to forecast_start_datetime; use "all" to save every timestep
    diagnostics_names:  [extc]
+   diagnostics_daily:
+    names: ['CAR_ch4_atm']
+    save_names: ['ch4_flux_mean']
+    file: ['output.nc']
+    depth: .na

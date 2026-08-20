@@ -1,3 +1,22 @@
+#' @title Fill in missing uncertainty flags
+#'
+#' Older `configure_flare.yml` files may omit part or all of the `uncertainty:`
+#' block. Every flag defaults to TRUE (full uncertainty) so a missing key never
+#' silently disables a source of uncertainty, and so that expressions such as
+#' `!config$uncertainty$weather` are not evaluated on NULL (which errors).
+#'
+#' @param config FLARE config list
+#' @noRd
+#' @return `config` with every `uncertainty` flag present
+apply_uncertainty_defaults <- function(config) {
+  if (is.null(config$uncertainty)) config$uncertainty <- list()
+  for (flag in c("observation", "process", "weather",
+                 "initial_condition", "parameter", "inflow")) {
+    if (is.null(config$uncertainty[[flag]])) config$uncertainty[[flag]] <- TRUE
+  }
+  config
+}
+
 #' Build observation error covariance matrix
 #' @param psi Numeric vector of observation standard deviations (all obs types).
 #' @param z_index Integer vector of active observation indices for this timestep.
@@ -7,7 +26,7 @@ build_R_matrix <- function(psi, z_index) {
   diag(psi[z_index]^2, nrow = length(z_index))
 }
 
-#' Rigidly shift GLM internal heights by a lake-depth change
+#' @title Rigidly shift GLM internal heights by a lake-depth change
 #'
 #' Adds `diff_height` to every non-NA layer height and prunes (sets NA) any layer
 #' pushed below the basin bottom. Mirrors the depth-update shift in

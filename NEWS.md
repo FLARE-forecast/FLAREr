@@ -1,18 +1,72 @@
-# FLAREr 3.9 (public release)
+# FLAREr 4.0.6
 
-A major release introducing GLM-native restart files and serverless (FaaSr) execution. FLARE 3.9 requires a build of GLM-AED with the NetCDF restart capacity (GLM-AED version 4); see *Restart files* below for how to obtain it.
+* `uncertainty: initial_condition: FALSE` now gives every ensemble member
+  ensemble member 1's model states and GLM restart file on the first forecast
+  day, so the forecast propagates from a single initial condition. Previously
+  the flag only rewrote one timestep of the output array and was ignored
+  whenever data assimilation ran at the forecast boundary. Parameters are
+  unaffected.
+* `uncertainty: weather: FALSE` now switches to a single meteorological
+  ensemble member on the first forecast step rather than one step earlier, so
+  the final assimilation step keeps its full met ensemble. This matches the
+  `process`, `inflow`, and `parameter` flags and changes results for existing
+  `weather: FALSE` runs.
+* Missing `uncertainty:` flags now default to TRUE instead of erroring.
+
+# FLAREr 4.0.5
+
+* minor bug fixes
+
+# FLAREr 4.0.4
+
+* debugging openmeteo integration.
+
+# FLAREr 4.0.3
+
+* openmeteo, single parmeter fitting debugging
+
+# FLAREr 4.0.2
+
+## Features
+
+* New optional `assimilate` column in `observations_config.csv` (integer `0`/`1`; defaults to `1` when absent). Setting `assimilate = 0` keeps a variable simulated, tracked, and written to forecast output but excludes it from the EnKF update. Applies to both depth-resolved (`multi_depth = 1`) and non-depth-resolved (`multi_depth = 0`) observations. Existing configurations without the column are unaffected.
+
+## Bug fixes
+
+* missing secchi in forecast output
+* use_s3 for meteorology and inflow drivers when s3 is false for forecast and score generation.
+
+# FLAREr 4.0.1
+
+## Features
+
+* Model states can be excluded from data assimilation but kept in the state names configuration using the new `da_updated` column in the states_config file.  FLARE uses the state names configuration to filter the inflow variables so all states that are simulated need to be in the states configuration file but use the `da_update` column to use a subset in data assimilation.  All states in the states configuration file will be included in the forecast output and plots.
+
+## Bug fixes
+* flare_io not working for AWS buckets
+
+
+# FLAREr 4.0.0
+
+A major release introducing new data assimilation methods, a generalised non-vertical observation framework, GLM-native restart files, and serverless (FaaSr) execution. FLARE 4.0 requires a build of GLM-AED with the NetCDF restart capacity (GLM-AED version 4); see *Restart files* below for how to obtain it. See the FLAREr upgrade vignette (`vignette("flare-upgrade-vignette")`) for a step-by-step guide to migrating 3.0 configurations.
 
 ## Data assimilation
 
-* New optional `da_setup` fields: `use_inflation_factor` and `use_one_step_lag` (decouples state and parameter updates).
+* New data assimilation methods selectable via `da_method`: `etkf` (Ensemble Transform Kalman Filter), `letkf` (Local ETKF), `esmda` (Ensemble Smoother with Multiple Data Assimilation), and `none` (open-loop / free run), in addition to the existing `enkf` and `pf`.
+* **Note:** all data assimilation approaches other than the EnKF (`enkf`) are experimental and have not been extensively tested. Use them with caution and validate results for your application.
+* New optional `da_setup` fields for the new methods: `use_inflation_factor`, `esmda_iterations`, and `use_one_step_lag` (decouples state and parameter updates).
 * New required `add_random_noise` field controlling how process noise is added.
 * Optional log-space handling of water-quality observations via `log_transform_wq_obs` and `log_transform_wq_zero_collapse` to avoid zero-clamping bias.
 * Reflective bounds and a minimum parameter standard deviation to stabilise parameter estimation; fixes to parameter inflation.
-* Option to initialize parameters from a normal distribution.
+* Option to initialise parameters from a normal distribution.
+* Improved DA diagnostics, with new `save_da_diagnostics` and `render_da_diagnostics_report` options and an exported `render_da_diagnostics()` function.
 
 ## Observations
 
-* New optional `assimilate` column in `observations_config.csv` (integer `0`/`1`; defaults to `1` when absent). Setting `assimilate = 0` keeps a variable simulated, tracked, and written to forecast output but excludes it from the EnKF update. Existing configurations without the column are unaffected.
+* Generalised non-vertical (non-depth-resolved) observation framework. The `obs_secchi` and `obs_depth` arguments to `run_da_forecast()` are replaced by a single `obs_non_vertical` list produced by `create_obs_non_vertical()`. Users of `run_flare()` are unaffected.
+* New required `non_vertical_noise_config.csv` file specifying process noise for non-depth-resolved variables.
+* New `model_source`, `model_variable`, and `model_depth_m` columns in `observations_config.csv`, allowing an observation to be derived from a GLM diagnostic (e.g. Secchi depth from the extinction coefficient) rather than directly from a state.
+* New optional `assimilate` column in `observations_config.csv` (integer `0`/`1`; defaults to `1` when absent). Setting `assimilate = 0` keeps a variable simulated, tracked, and written to forecast output but excludes it from the EnKF update. Applies to both depth-resolved (`multi_depth = 1`) and non-depth-resolved (`multi_depth = 0`) observations. Existing configurations without the column are unaffected.
 
 ## Restart files
 
@@ -36,7 +90,7 @@ A major release introducing GLM-native restart files and serverless (FaaSr) exec
 
 ## Documentation and performance
 
-* New and expanded vignettes: concepts, configuration, drivers, and DA hyperparameters.
+* New and expanded vignettes: concepts, configuration, drivers, DA hyperparameters, and upgrade guides.
 * Performance improvements to `run_da_forecast()` and the forecast write step.
 
 ## Bug fixes
@@ -63,9 +117,12 @@ A major release introducing GLM-native restart files and serverless (FaaSr) exec
 
 # FLAREr 3.0.0
 
+* New particle filter data assimilation method
 * Able to one parameter from a set of parameters that share the same name (e.g., the temperature in one of three sediment zones)
+* Able to assimilate depth and secchi depth
 * Separate inflow and outflow models
 * Openmeteo API as an option for meteorological inputs
 * Updates to restart capacity that now requires GLM-AED version 3.4 or higher
 * Access to daily summaries (e.g., lake.csv) from GLM-AED in FLAREr output
 * Flexible paths for directory and partitioning of driver files.  Uses `glue::glue` to create path from internal variables.
+* Capacity to save subdaily statistics (like max temperature at a depth or mean co2 flux)
